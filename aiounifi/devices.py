@@ -59,6 +59,21 @@ class Device:
     def port_table(self):
         return self.raw['port_table']
 
+    async def async_set_port_poe_mode(self, port_idx, mode):
+        """Set port poe mode.
+
+        Auto, 24v, passthrough, off
+        """
+        url = 's/{site}/rest/device/' + self.id
+        data = {
+            'port_overrides': [{
+                'port_idx': port_idx,
+                'portconf_id': self.ports[port_idx].portconf_id,
+                'poe_mode': mode
+            }]
+        }
+        await self._request('put', url, json=data)
+
     def __repr__(self):
         """Return the representation."""
         return "<Device {}: {}>".format(self.name, self.mac)
