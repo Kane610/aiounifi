@@ -65,5 +65,4 @@ class Controller:
 def _raise_on_error(data):
     """Check response for error message."""
     if isinstance(data, dict) and data['meta']['rc'] == 'error':
-        print('raise on error', data['meta']['msg'])
         raise_error(data['meta']['msg'])

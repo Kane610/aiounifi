@@ -1,4 +1,4 @@
-"""UniFi devices are hardware produced by Ubiquiti.
+"""UniFi devices are network infrastructure.
 
 Access points, Gateways, Switches.
 """
@@ -62,7 +62,7 @@ class Device:
     async def async_set_port_poe_mode(self, port_idx, mode):
         """Set port poe mode.
 
-        Auto, 24v, passthrough, off
+        Auto, 24v, passthrough, off.
         """
         url = 's/{site}/rest/device/' + self.id
         data = {

@@ -1,3 +1,10 @@
+import logging
+
+from pprint import pformat
+
+LOGGER = logging.getLogger(__name__)
+
+
 class APIItems:
     """Base class for a map of API Items."""
 
@@ -7,6 +14,8 @@ class APIItems:
         self._item_cls = item_cls
         self._items = {}
         self.process_raw(raw)
+        LOGGER.debug(pformat(raw))
+
 
     async def update(self):
         raw = await self._request('get', self._path)
@@ -26,7 +35,10 @@ class APIItems:
         return self._items.values()
 
     def __getitem__(self, obj_id):
-        return self._items[obj_id]
+        try:
+            return self._items[obj_id]
+        except KeyError:
+            LOGGER.error("Couldn't find key: '{}'".format(obj_id))
 
     def __iter__(self):
         return iter(self._items)
