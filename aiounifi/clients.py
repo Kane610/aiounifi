@@ -67,6 +67,15 @@ class Client:
         """Bytes transferred over wired connection."""
         return self.raw.get('wired-tx_bytes', 0)
 
+    async def async_block_wifi_client(self):
+        """Block wifi client."""
+        url = 's/{site}/cmd/stamgr/'
+        data = {
+            'mac': self.mac,
+            'cmd': 'block-sta'
+        }
+        await self._request('post', url, json=data)
+
     def __repr__(self):
         """Return the representation."""
         name = self.name
