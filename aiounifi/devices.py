@@ -19,7 +19,7 @@ class Device:
 
     def __init__(self, raw, request):
         self._raw = raw
-        self.ports = Ports(raw['port_table'])
+        self.ports = Ports(raw.get('port_table', []))
         self._request = request
 
     @property
@@ -29,7 +29,7 @@ class Device:
     @raw.setter
     def raw(self, raw):
         self._raw = raw
-        self.ports.update(raw['port_table'])
+        self.ports.update(raw.get('port_table', []))
 
     @property
     def id(self):
@@ -57,7 +57,7 @@ class Device:
 
     @property
     def port_table(self):
-        return self.raw['port_table']
+        return self.raw.get('port_table', [])
 
     async def async_set_port_poe_mode(self, port_idx, mode):
         """Set port poe mode.

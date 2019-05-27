@@ -2,7 +2,9 @@
 
 from .api import APIItems
 
-URL = 's/{site}/stat/sta'
+URL = 's/{site}/stat/sta'  #Active clients
+
+URL_CLIENT_STATE_MANAGER = 's/{site}/cmd/stamgr/'
 
 
 class Clients(APIItems):
@@ -11,6 +13,22 @@ class Clients(APIItems):
     def __init__(self, raw, request):
         super().__init__(raw, request, URL, Client)
 
+    async def async_block(self, mac):
+        """Block client from controller."""
+        data = {
+            'mac': mac,
+            'cmd': 'block-sta'
+        }
+        await self._request('post', URL_CLIENT_STATE_MANAGER, json=data)
+
+    async def async_unblock(self, mac):
+        """Unblock client from controller."""
+        data = {
+            'mac': mac,
+            'cmd': 'unblock-sta'
+        }
+        await self._request('post', URL_CLIENT_STATE_MANAGER, json=data)
+
 
 class Client:
     """Represents a client network device."""
@@ -18,6 +36,10 @@ class Client:
     def __init__(self, raw, request):
         self.raw = raw
         self._request = request
+
+    @property
+    def essid(self):
+        return self.raw.get('essid')
 
     @property
     def hostname(self):
@@ -30,6 +52,10 @@ class Client:
     @property
     def is_wired(self):
         return self.raw.get('is_wired')
+
+    @property
+    def last_seen(self):
+        return self.raw.get('last_seen')
 
     @property
     def mac(self):
