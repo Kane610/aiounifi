@@ -1,5 +1,6 @@
 """Setup for aioUnifi"""
 
+# https://ubntwiki.com/products/software/unifi-controller/api
 # https://jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
 # http://peterdowns.com/posts/first-time-with-pypi.html
 # pip install -e .
@@ -12,13 +13,13 @@ from setuptools import setup
 setup(
     name='aiounifi',
     packages=['aiounifi'],
-    version='4',
+    version='5',
     description='An asynchronous Python library for communicating with Unifi Controller API',
     author='Robert Svensson',
     author_email='Kane610@users.noreply.github.com',
     license='MIT',
     url='https://github.com/Kane610/aiounifi',
-    download_url='https://github.com/Kane610/aiounifi/archive/v4.tar.gz',
+    download_url='https://github.com/Kane610/aiounifi/archive/v5.tar.gz',
     install_requires=['aiohttp'],
     keywords=['unifi', 'homeassistant'],
     classifiers=[
