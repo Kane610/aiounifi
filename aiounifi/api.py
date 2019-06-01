@@ -16,7 +16,6 @@ class APIItems:
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
-
     async def update(self):
         raw = await self._request('get', self._path)
         self.process_raw(raw)
