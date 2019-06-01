@@ -11,13 +11,15 @@ class Controller:
     """Control a UniFi controller."""
 
     def __init__(self, host, websession, *,
-                 username, password, port=8443, site='default'):
+                 username, password, port=8443, site='default',
+                 sslcontext=None):
         self.host = host
         self.session = websession
         self.port = port
         self.username = username
         self.password = password
         self.site = site
+        self.sslcontext = sslcontext
 
         self.clients = None
         self.devices = None
@@ -48,7 +50,8 @@ class Controller:
         url += path.format(site=self.site)
 
         try:
-            async with self.session.request(method, url, json=json) as res:
+            async with self.session.request(
+                    method, url, json=json, ssl=self.sslcontext) as res:
                 if res.content_type != 'application/json':
                     raise ResponseError(
                         'Invalid content type: {}'.format(res.content_type))
