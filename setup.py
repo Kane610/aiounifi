@@ -13,13 +13,13 @@ from setuptools import setup
 setup(
     name='aiounifi',
     packages=['aiounifi'],
-    version='6',
+    version='7',
     description='An asynchronous Python library for communicating with Unifi Controller API',
     author='Robert Svensson',
     author_email='Kane610@users.noreply.github.com',
     license='MIT',
     url='https://github.com/Kane610/aiounifi',
-    download_url='https://github.com/Kane610/aiounifi/archive/v6.tar.gz',
+    download_url='https://github.com/Kane610/aiounifi/archive/v7.tar.gz',
     install_requires=['aiohttp'],
     keywords=['unifi', 'homeassistant'],
     classifiers=[
