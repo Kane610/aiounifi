@@ -3,6 +3,8 @@
 from .api import APIItems
 
 URL = 's/{site}/stat/sta'  #Active clients
+# URL_ALL = 's/{site}/stat/user'  #All known and configured clients
+URL_ALL = 's/{site}/rest/user'  #All known and configured clients
 
 URL_CLIENT_STATE_MANAGER = 's/{site}/cmd/stamgr/'
 
@@ -12,6 +14,10 @@ class Clients(APIItems):
 
     def __init__(self, raw, request):
         super().__init__(raw, request, URL, Client)
+
+    # async def async_get_client(self, mac):
+    #     get_client_url = URL_ALL + '/' + mac
+    #     await self._request('get', get_client_url)
 
     async def async_block(self, mac):
         """Block client from controller."""
@@ -30,12 +36,23 @@ class Clients(APIItems):
         await self._request('post', URL_CLIENT_STATE_MANAGER, json=data)
 
 
+class ClientsAll(APIItems):
+    """Represents all client network devices."""
+
+    def __init__(self, raw, request):
+        super().__init__(raw, request, URL_ALL, Client)
+
+
 class Client:
     """Represents a client network device."""
 
     def __init__(self, raw, request):
         self.raw = raw
         self._request = request
+
+    @property
+    def blocked(self):
+        return self.raw.get('blocked')
 
     @property
     def essid(self):
@@ -95,7 +112,5 @@ class Client:
 
     def __repr__(self):
         """Return the representation."""
-        name = self.name
-        if not name:
-            name = self.hostname
+        name = self.name or self.hostname
         return "<Client {}: {} {}\n>".format(name, self.mac, self.raw)

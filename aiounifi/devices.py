@@ -3,9 +3,14 @@
 Access points, Gateways, Switches.
 """
 
+import logging
+
 from .api import APIItems
 
+LOGGER = logging.getLogger(__name__)
+
 URL = 's/{site}/stat/device'
+
 
 class Devices(APIItems):
     """Represents network devices."""
@@ -65,6 +70,8 @@ class Device:
         Auto, 24v, passthrough, off.
         Make sure to not overwrite any existing configs.
         """
+        LOGGER.debug("Override port %d with mode %s", port_idx, mode)
+
         no_existing_config = True
         for port_override in self.port_overrides:
             if port_idx == port_override['port_idx']:
