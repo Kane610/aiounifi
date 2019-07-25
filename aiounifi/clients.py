@@ -3,7 +3,6 @@
 from .api import APIItems
 
 URL = 's/{site}/stat/sta'  #Active clients
-# URL_ALL = 's/{site}/stat/user'  #All known and configured clients
 URL_ALL = 's/{site}/rest/user'  #All known and configured clients
 
 URL_CLIENT_STATE_MANAGER = 's/{site}/cmd/stamgr/'
