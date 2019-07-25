@@ -2,7 +2,8 @@
 
 from aiohttp import client_exceptions
 
-from .clients import Clients, URL as client_url
+from .clients import (Clients, URL as client_url,
+                      ClientsAll, URL_ALL as all_client_url)
 from .devices import Devices, URL as device_url
 from .errors import raise_error, ResponseError, RequestError
 
@@ -22,6 +23,7 @@ class Controller:
         self.sslcontext = sslcontext
 
         self.clients = None
+        self.clients_all = None
         self.devices = None
 
     async def login(self):
@@ -43,6 +45,8 @@ class Controller:
         self.clients = Clients(clients, self.request)
         devices = await self.request('get', device_url)
         self.devices = Devices(devices, self.request)
+        all_clients = await self.request('get', all_client_url)
+        self.clients_all = ClientsAll(all_clients, self.request)
 
     async def request(self, method, path, json=None):
         """Make a request to the API."""
