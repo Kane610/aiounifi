@@ -53,8 +53,40 @@ class Device:
         return self.raw['type']
 
     @property
+    def last_seen(self):
+        return self.raw['last_seen']
+
+    @property
+    def board_rev(self):
+        return self.raw['board_rev']
+
+    @property
+    def has_fan(self):
+        return self.raw.get('has_fan')
+
+    @property
+    def fan_level(self):
+        return self.raw.get('fan_level')
+
+    @property
+    def model(self):
+        return self.raw['model']
+
+    @property
     def name(self):
         return self.raw['name']
+
+    @property
+    def version(self):
+        return self.raw['version']
+
+    @property
+    def overheating(self):
+        return self.raw.get('overheating')
+
+    @property
+    def upgradable(self):
+        return self.raw['upgradable']
 
     @property
     def port_overrides(self):
