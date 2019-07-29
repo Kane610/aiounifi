@@ -66,6 +66,10 @@ class Client:
         return self.raw.get('ip')
 
     @property
+    def is_guest(self):
+        return self.raw.get('is_guest')
+
+    @property
     def is_wired(self):
         return self.raw.get('is_wired')
 
