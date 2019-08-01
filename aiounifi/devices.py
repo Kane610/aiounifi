@@ -37,6 +37,14 @@ class Device:
         self.ports.update(raw.get('port_table', []))
 
     @property
+    def board_rev(self):
+        return self.raw['board_rev']
+
+    @property
+    def disabled(self):
+        return self.raw.get('disabled', False)
+
+    @property
     def id(self):
         return self.raw['device_id']
 
@@ -45,28 +53,20 @@ class Device:
         return self.raw['ip']
 
     @property
-    def mac(self):
-        return self.raw['mac']
-
-    @property
-    def type(self):
-        return self.raw['type']
-
-    @property
-    def last_seen(self):
-        return self.raw['last_seen']
-
-    @property
-    def board_rev(self):
-        return self.raw['board_rev']
+    def fan_level(self):
+        return self.raw.get('fan_level')
 
     @property
     def has_fan(self):
-        return self.raw.get('has_fan')
+        return self.raw.get('has_fan', False)
 
     @property
-    def fan_level(self):
-        return self.raw.get('fan_level')
+    def last_seen(self):
+        return self.raw.get('last_seen')
+
+    @property
+    def mac(self):
+        return self.raw['mac']
 
     @property
     def model(self):
@@ -77,16 +77,8 @@ class Device:
         return self.raw['name']
 
     @property
-    def version(self):
-        return self.raw['version']
-
-    @property
     def overheating(self):
         return self.raw.get('overheating')
-
-    @property
-    def upgradable(self):
-        return self.raw['upgradable']
 
     @property
     def port_overrides(self):
@@ -95,6 +87,18 @@ class Device:
     @property
     def port_table(self):
         return self.raw.get('port_table', [])
+
+    @property
+    def type(self):
+        return self.raw['type']
+
+    @property
+    def version(self):
+        return self.raw['version']
+
+    @property
+    def upgradable(self):
+        return self.raw['upgradable']
 
     async def async_set_port_poe_mode(self, port_idx, mode):
         """Set port poe mode.
