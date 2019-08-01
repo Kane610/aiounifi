@@ -1,11 +1,17 @@
 """Unifi implementation."""
 
+import logging
+
+from pprint import pformat
+
 from aiohttp import client_exceptions
 
 from .clients import (Clients, URL as client_url,
                       ClientsAll, URL_ALL as all_client_url)
 from .devices import Devices, URL as device_url
 from .errors import raise_error, ResponseError, RequestError
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Controller:
@@ -38,6 +44,7 @@ class Controller:
     async def sites(self):
         url = 'self/sites'
         sites = await self.request('get', url)
+        LOGGER.debug(pformat(sites))
         return {site['desc']: site for site in sites}
 
     async def initialize(self):
