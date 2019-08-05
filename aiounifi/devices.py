@@ -74,7 +74,7 @@ class Device:
 
     @property
     def name(self):
-        return self.raw['name']
+        return self.raw.get('name')
 
     @property
     def overheating(self):
