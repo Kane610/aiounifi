@@ -89,6 +89,10 @@ class Device:
         return self.raw.get('port_table', [])
 
     @property
+    def state(self):
+        return self.raw['state']
+
+    @property
     def type(self):
         return self.raw['type']
 
@@ -98,7 +102,7 @@ class Device:
 
     @property
     def upgradable(self):
-        return self.raw['upgradable']
+        return self.raw.get('upgradable')
 
     async def async_set_port_poe_mode(self, port_idx, mode):
         """Set port poe mode.
