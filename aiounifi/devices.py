@@ -15,6 +15,8 @@ URL = "s/{site}/stat/device"
 class Devices(APIItems):
     """Represents network devices."""
 
+    KEY = "mac"
+
     def __init__(self, raw, request):
         super().__init__(raw, request, URL, Device)
 
