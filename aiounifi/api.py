@@ -17,18 +17,23 @@ class APIItems:
         LOGGER.debug(pformat(raw))
 
     async def update(self):
-        raw = await self._request('get', self._path)
+        raw = await self._request("get", self._path)
         self.process_raw(raw)
 
     def process_raw(self, raw):
+        new_items = set()
+
         for raw_item in raw:
-            mac = raw_item['mac']
+            mac = raw_item["mac"]
             obj = self._items.get(mac)
 
             if obj is not None:
-                obj.raw = raw_item
+                obj.update(raw_item)
             else:
                 self._items[mac] = self._item_cls(raw_item, self._request)
+                new_items.add(mac)
+
+        return new_items
 
     def values(self):
         return self._items.values()
@@ -37,7 +42,37 @@ class APIItems:
         try:
             return self._items[obj_id]
         except KeyError:
-            LOGGER.error("Couldn't find key: '{}'".format(obj_id))
+            LOGGER.error(f"Couldn't find key: {obj_id}")
 
     def __iter__(self):
         return iter(self._items)
+
+
+class APIItem:
+    def __init__(self, raw, request):
+        self._raw = raw
+        self._request = request
+        self._callbacks = []
+
+    @property
+    def raw(self):
+        """Read only raw data."""
+        return self._raw
+
+    def update(self, raw):
+        """Update raw data and signal new data is available."""
+        self._raw = raw
+        for signal_update in self._callbacks:
+            signal_update()
+
+    def register_callback(self, callback):
+        """Register callback for signalling.
+
+        Callback will be used by update.
+        """
+        self._callbacks.append(callback)
+
+    def remove_callback(self, callback):
+        """Remove all registered callbacks."""
+        if callback in self._callbacks:
+            self._callbacks.remove(callback)
