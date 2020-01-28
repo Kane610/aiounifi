@@ -11,19 +11,16 @@
 from setuptools import setup
 
 setup(
-    name='aiounifi',
-    packages=['aiounifi'],
-    version='11',
-    description='An asynchronous Python library for communicating with Unifi Controller API',
-    author='Robert Svensson',
-    author_email='Kane610@users.noreply.github.com',
-    license='MIT',
-    url='https://github.com/Kane610/aiounifi',
-    download_url='https://github.com/Kane610/aiounifi/archive/v11.tar.gz',
-    install_requires=['aiohttp'],
-    keywords=['unifi', 'homeassistant'],
-    classifiers=[
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-    ],
+    name="aiounifi",
+    packages=["aiounifi"],
+    version="12",
+    description="An asynchronous Python library for communicating with Unifi Controller API",
+    author="Robert Svensson",
+    author_email="Kane610@users.noreply.github.com",
+    license="MIT",
+    url="https://github.com/Kane610/aiounifi",
+    download_url="https://github.com/Kane610/aiounifi/archive/v12.tar.gz",
+    install_requires=["aiohttp"],
+    keywords=["unifi", "homeassistant"],
+    classifiers=["Natural Language :: English", "Programming Language :: Python :: 3"],
 )
