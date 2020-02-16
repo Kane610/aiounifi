@@ -11,6 +11,8 @@ URL_CLIENT_STATE_MANAGER = "s/{site}/cmd/stamgr/"
 class Clients(APIItems):
     """Represents client network devices."""
 
+    KEY = "mac"
+
     def __init__(self, raw, request):
         super().__init__(raw, request, URL, Client)
 
@@ -27,6 +29,8 @@ class Clients(APIItems):
 
 class ClientsAll(APIItems):
     """Represents all client network devices."""
+
+    KEY = "mac"
 
     def __init__(self, raw, request):
         super().__init__(raw, request, URL_ALL, Client)

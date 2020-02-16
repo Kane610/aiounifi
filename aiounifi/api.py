@@ -8,6 +8,8 @@ LOGGER = logging.getLogger(__name__)
 class APIItems:
     """Base class for a map of API Items."""
 
+    KEY = None
+
     def __init__(self, raw, request, path, item_cls):
         self._request = request
         self._path = path
@@ -24,14 +26,14 @@ class APIItems:
         new_items = set()
 
         for raw_item in raw:
-            mac = raw_item["mac"]
-            obj = self._items.get(mac)
+            key = raw_item[self.KEY]
+            obj = self._items.get(key)
 
             if obj is not None:
                 obj.update(raw_item)
             else:
-                self._items[mac] = self._item_cls(raw_item, self._request)
-                new_items.add(mac)
+                self._items[key] = self._item_cls(raw_item, self._request)
+                new_items.add(key)
 
         return new_items
 
