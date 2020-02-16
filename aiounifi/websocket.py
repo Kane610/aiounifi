@@ -87,13 +87,13 @@ class WSClient:
                         break
 
         except aiohttp.ClientConnectorError:
-            LOGGER.error("Client connection error")
             if self.state != STATE_STOPPED:
+                LOGGER.error("Client connection error")
                 self.state = STATE_DISCONNECTED
 
         except Exception as err:
-            LOGGER.error("Unexpected error %s", err)
             if self.state != STATE_STOPPED:
+                LOGGER.error("Unexpected error %s", err)
                 self.state = STATE_DISCONNECTED
 
         else:

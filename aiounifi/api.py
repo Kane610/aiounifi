@@ -27,7 +27,7 @@ class APIItems:
 
         for raw_item in raw:
             key = raw_item[self.KEY]
-            obj = self._items.get(self.KEY)
+            obj = self._items.get(key)
 
             if obj is not None:
                 obj.update(raw_item)

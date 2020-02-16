@@ -80,8 +80,8 @@ class Controller:
         self.devices = Devices(devices, self.request)
         all_clients = await self.request("get", all_client_url)
         self.clients_all = ClientsAll(all_clients, self.request)
-        # wlans = await self.request('get', wlan_url)
-        # self.wlans = Wlans(wlans, self.request)
+        wlans = await self.request("get", wlan_url)
+        self.wlans = Wlans(wlans, self.request)
 
     def start_websocket(self):
         """Start websession and websocket to UniFi."""
@@ -135,7 +135,6 @@ class Controller:
             new_items = {"devices": self.devices.process_raw(message[ATTR_DATA])}
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            print(message)
             new_items = {"event": event(message[ATTR_DATA][0])}
 
         return new_items
