@@ -8,7 +8,7 @@ from aiohttp import client_exceptions
 
 from .clients import Clients, URL as client_url, ClientsAll, URL_ALL as all_client_url
 from .devices import Devices, URL as device_url
-from .errors import raise_error, ResponseError, RequestError
+from .errors import raise_error, LoginRequired, ResponseError, RequestError
 from .events import event
 from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA, STATE_RUNNING
 from .wlan import Wlans, URL as wlan_url
@@ -45,6 +45,7 @@ class Controller:
         self.username = username
         self.password = password
         self.site = site
+        self.use_proxy_path = False
         self.sslcontext = sslcontext
 
         self.callback = callback
@@ -65,7 +66,12 @@ class Controller:
             "password": self.password,
             "remember": True,
         }
-        await self.request("post", url, json=auth)
+        try:
+            await self.request("post", url, json=auth)
+        except LoginRequired:
+            url = "auth/login"
+            await self.request("post", url, json=auth)
+            self.use_proxy_path = True
 
     async def sites(self):
         url = "self/sites"
@@ -141,14 +147,18 @@ class Controller:
 
     async def request(self, method, path, json=None):
         """Make a request to the API."""
-        url = f"https://{self.host}:{self.port}/api/"
+        base_path = "api/"
+        if self.use_proxy_path:
+            base_path = "proxy/network/api/"
+
+        url = f"https://{self.host}:{self.port}/{base_path}"
         url += path.format(site=self.site)
 
         try:
             async with self.session.request(
                 method, url, json=json, ssl=self.sslcontext
             ) as res:
-
+                print(res)
                 if res.content_type != "application/json":
                     raise ResponseError(f"Invalid content type: {res.content_type}")
 

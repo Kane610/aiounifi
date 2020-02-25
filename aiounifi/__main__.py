@@ -34,6 +34,9 @@ async def unifi_controller(
             await controller.login()
         return controller
 
+    except aiounifi.LoginRequired:
+        LOGGER.warning(f"Connected to UniFi at {host} but couldn't log in")
+
     except aiounifi.Unauthorized:
         LOGGER.warning(f"Connected to UniFi at {host} but not registered")
 
@@ -65,7 +68,8 @@ async def main(host, username, password, port, site, sslcontext=False):
     )
 
     if not controller:
-        LOGGER.error("Couldn't connect to UniFi controller.")
+        LOGGER.error("Couldn't connect to UniFi controller")
+        await websession.close()
         return
 
     await controller.initialize()
@@ -79,13 +83,13 @@ async def main(host, username, password, port, site, sslcontext=False):
     except KeyboardInterrupt:
         pass
 
-    finally:
-        controller.stop_websocket()
-        await controller.session.close()
+    controller.stop_websocket()
+    await websession.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+    # logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("host", type=str)
     parser.add_argument("username", type=str)
