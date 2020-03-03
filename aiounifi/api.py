@@ -2,6 +2,8 @@ import logging
 
 from pprint import pformat
 
+from .events import event as event_class
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -22,7 +24,7 @@ class APIItems:
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
-    def process_raw(self, raw):
+    def process_raw(self, raw: list) -> set:
         new_items = set()
 
         for raw_item in raw:
@@ -30,10 +32,24 @@ class APIItems:
             obj = self._items.get(key)
 
             if obj is not None:
-                obj.update(raw_item)
+                obj.update(raw=raw_item)
             else:
                 self._items[key] = self._item_cls(raw_item, self._request)
                 new_items.add(key)
+
+        return new_items
+
+    def process_event(self, events: list) -> set:
+        new_items = set()
+
+        for raw_event in events:
+            event = event_class(raw_event)
+            obj = self._items.get(event.mac)
+
+            if obj is not None:
+                print(obj.mac, raw_event)
+                obj.update(event=event)
+                new_items.add(event.mac)
 
         return new_items
 
@@ -54,6 +70,7 @@ class APIItem:
     def __init__(self, raw, request):
         self._raw = raw
         self._request = request
+        self._event = None
         self._callbacks = []
 
     @property
@@ -61,9 +78,17 @@ class APIItem:
         """Read only raw data."""
         return self._raw
 
-    def update(self, raw):
+    @property
+    def event(self):
+        """Read only event data."""
+        return self._event
+
+    def update(self, raw=None, event=None):
         """Update raw data and signal new data is available."""
-        self._raw = raw
+        if raw:
+            self._raw = raw
+        elif event:
+            self._event = event
         for signal_update in self._callbacks:
             signal_update()
 
