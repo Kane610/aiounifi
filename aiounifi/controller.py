@@ -160,6 +160,7 @@ class Controller:
             ) as res:
                 print(res)
                 if res.content_type != "application/json":
+                    LOGGER.debug("Unexpected content type: %s", res)
                     raise ResponseError(f"Invalid content type: {res.content_type}")
 
                 response = await res.json()
