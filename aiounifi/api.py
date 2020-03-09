@@ -50,7 +50,6 @@ class APIItems:
             obj = self._items.get(event.mac)
 
             if obj is not None:
-                print(obj.mac, raw_event)
                 obj.update(event=event)
                 new_items.add(event.mac)
 
