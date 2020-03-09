@@ -120,23 +120,20 @@ class Controller:
 
     def message_handler(self, message: dict) -> dict:
         """Receive event from websocket and identifies where the event belong."""
-        new_items = None
+        new_items = {}
 
-        if message[ATTR_META][ATTR_MESSAGE] not in (
-            MESSAGE_CLIENT,
-            MESSAGE_DEVICE,
-            MESSAGE_EVENT,
-        ):
-            LOGGER.debug(f"Unsupported message type {message}")
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT:
-            new_items = {"clients": self.clients.process_raw(message[ATTR_DATA])}
+        if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT:
+            new_items["clients"] = self.clients.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
-            new_items = {"devices": self.devices.process_raw(message[ATTR_DATA])}
+            new_items["devices"] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            new_items = {"event": event(message[ATTR_DATA][0])}
+            self.clients.process_event(message[ATTR_DATA])
+            new_items["event"] = event(message[ATTR_DATA][0])
+
+        else:
+            LOGGER.debug(f"Unsupported message type {message}")
 
         return new_items
 

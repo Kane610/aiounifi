@@ -41,57 +41,57 @@ class Client(APIItem):
 
     @property
     def blocked(self):
-        return self.raw.get("blocked")
+        return self.raw.get("blocked", "")
 
     @property
     def essid(self):
-        return self.raw.get("essid")
+        return self.raw.get("essid", "")
 
     @property
     def hostname(self):
-        return self.raw.get("hostname")
+        return self.raw.get("hostname", "")
 
     @property
     def ip(self):
-        return self.raw.get("ip")
+        return self.raw.get("ip", "")
 
     @property
     def is_guest(self):
-        return self.raw.get("is_guest")
+        return self.raw.get("is_guest", "")
 
     @property
     def is_wired(self):
-        return self.raw.get("is_wired")
+        return self.raw.get("is_wired", "")
 
     @property
     def last_seen(self):
-        return self.raw.get("last_seen")
+        return self.raw.get("last_seen", "")
 
     @property
     def mac(self):
-        return self.raw.get("mac")
+        return self.raw.get("mac", "")
 
     @property
     def name(self):
-        return self.raw.get("name")
+        return self.raw.get("name", "")
 
     @property
     def oui(self):
-        return self.raw.get("oui")
+        return self.raw.get("oui", "")
 
     @property
     def site_id(self):
-        return self.raw.get("site_id")
+        return self.raw.get("site_id", "")
 
     @property
     def sw_mac(self):
         """MAC for switch client is connected to."""
-        return self.raw.get("sw_mac")
+        return self.raw.get("sw_mac", "")
 
     @property
     def sw_port(self):
         """Switch port client is connected to."""
-        return self.raw.get("sw_port")
+        return self.raw.get("sw_port", "")
 
     @property
     def wired_rx_bytes(self):
