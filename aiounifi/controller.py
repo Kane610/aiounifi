@@ -129,7 +129,6 @@ class Controller:
             new_items["devices"] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            # print(message)
             self.clients.process_event(message[ATTR_DATA])
             new_items["event"] = event(message[ATTR_DATA][0])
 

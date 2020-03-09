@@ -28,22 +28,27 @@ SWITCH_POE_DISCONNECT = "EVT_SW_POE_DISCONNECT"
 SWITCH_RESTARTED = "EVT_SW_RESTARTED"
 SWITCH_UPGRADED = "EVT_SW_UPGRADED"
 
-CLIENT_BLOCKED = "EVT_WC_BLOCKED"
-CLIENT_UNBLOCKED = "EVT_WC_UNBLOCKED"
-WIRED_CLIENT_CONNECTED = "EVT_LU_CONNECTED"
-WIRED_CLIENT_DISCONNECTED = "EVT_LU_DISCONNECTED"
-WIRELESS_CLIENT_CONNECTED = "EVT_WU_CONNECTED"
-WIRELESS_CLIENT_DISCONNECTED = "EVT_WU_DISCONNECTED"
-WIRELESS_GUEST_CONNECTED = "EVT_WG_CONNECTED"
-WIRELESS_GUEST_DISCONNECTED = "EVT_WG_DISCONNECTED"
+
+WIRED_CLIENT_CONNECTED = "EVT_LU_Connected"
+WIRED_CLIENT_DISCONNECTED = "EVT_LU_Disconnected"
+WIRED_CLIENT_BLOCKED = "EVT_LC_Blocked"
+WIRED_CLIENT_UNBLOCKED = "EVT_LC_Unblocked"
+WIRELESS_CLIENT_CONNECTED = "EVT_WU_Connected"
+WIRELESS_CLIENT_DISCONNECTED = "EVT_WU_Disconnected"
+WIRELESS_CLIENT_BLOCKED = "EVT_WC_Blocked"
+WIRELESS_CLIENT_UNBLOCKED = "EVT_WC_Unblocked"
+WIRELESS_GUEST_CONNECTED = "EVT_WG_Connected"
+WIRELESS_GUEST_DISCONNECTED = "EVT_WG_Disconnected"
 
 CLIENT_EVENTS = (
-    CLIENT_BLOCKED,
-    CLIENT_UNBLOCKED,
     WIRED_CLIENT_CONNECTED,
     WIRED_CLIENT_DISCONNECTED,
+    WIRED_CLIENT_BLOCKED,
+    WIRED_CLIENT_UNBLOCKED,
     WIRELESS_CLIENT_CONNECTED,
     WIRELESS_CLIENT_DISCONNECTED,
+    WIRELESS_CLIENT_BLOCKED,
+    WIRELESS_CLIENT_UNBLOCKED,
     WIRELESS_GUEST_CONNECTED,
     WIRELESS_GUEST_DISCONNECTED,
 )
@@ -104,7 +109,12 @@ class event:
     @property
     def client(self) -> str:
         """MAC address of client."""
-        return self.raw.get("user", "")
+        return (
+            self.raw.get("user")
+            or self.raw.get("client")
+            or self.raw.get("guest")
+            or ""
+        )
 
     @property
     def hostname(self) -> str:
@@ -121,7 +131,7 @@ class event:
         return self.raw.get("ssid", "")
 
     @property
-    def mac(self):
+    def mac(self) -> str:
         if self.client:
             return self.client
 

@@ -6,6 +6,9 @@ from .events import event as event_class
 
 LOGGER = logging.getLogger(__name__)
 
+SOURCE_DATA = "data"
+SOURCE_EVENT = "event"
+
 
 class APIItems:
     """Base class for a map of API Items."""
@@ -71,35 +74,48 @@ class APIItem:
         self._raw = raw
         self._request = request
         self._event = None
+        self._source = SOURCE_DATA
         self._callbacks = []
 
     @property
-    def raw(self):
+    def raw(self) -> dict:
         """Read only raw data."""
         return self._raw
 
     @property
-    def event(self):
+    def event(self) -> dict:
         """Read only event data."""
         return self._event
 
-    def update(self, raw=None, event=None):
+    @property
+    def last_updated(self) -> str:
+        """Which source, data or event last called update."""
+        return self._source
+
+    def update(self, raw=None, event=None) -> None:
         """Update raw data and signal new data is available."""
         if raw:
             self._raw = raw
+            self._source = SOURCE_DATA
+
         elif event:
             self._event = event
+            self._source = SOURCE_EVENT
+
+        else:
+            return
+
         for signal_update in self._callbacks:
             signal_update()
 
-    def register_callback(self, callback):
+    def register_callback(self, callback) -> None:
         """Register callback for signalling.
 
         Callback will be used by update.
         """
         self._callbacks.append(callback)
 
-    def remove_callback(self, callback):
+    def remove_callback(self, callback) -> None:
         """Remove all registered callbacks."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
