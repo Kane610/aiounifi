@@ -2,7 +2,7 @@
 
 from .api import APIItem, APIItems
 
-URL = "s/{site}/rest/wlanconf"  # List WLAN configuration
+URL = "rest/wlanconf"  # List WLAN configuration
 
 
 class Wlans(APIItems):
@@ -24,8 +24,6 @@ class Wlans(APIItems):
     async def async_disable(self, wlan):
         """Unblock client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
-        print(wlan_url)
-        # data = dict(wlan.raw)
         data = dict()
         data["enabled"] = False
         await self._request("put", wlan_url, json=data)

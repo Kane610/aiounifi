@@ -45,6 +45,7 @@ class Controller:
         self.username = username
         self.password = password
         self.site = site
+        self.unifi_os = False
         self.use_proxy_path = False
         self.sslcontext = sslcontext
 
@@ -59,6 +60,13 @@ class Controller:
         self.devices = None
         self.wlans = None
 
+    async def is_unifi_os(self):
+        response = await self.request("get", "")
+        print(response.status)
+        if response.status == 200:
+            self.unifi_os = True
+            # self.use_proxy_path = True
+
     async def login(self):
         url = "login"
         auth = {
@@ -66,11 +74,10 @@ class Controller:
             "password": self.password,
             "remember": True,
         }
-        try:
-            await self.request("post", url, json=auth)
-        except LoginRequired:
+        if self.unifi_os:
             url = "auth/login"
-            await self.request("post", url, json=auth)
+        await self.request("post", url, json=auth)
+        if self.unifi_os:
             self.use_proxy_path = True
 
     async def sites(self):
@@ -145,27 +152,21 @@ class Controller:
 
     async def request(self, method, path, json=None):
         """Make a request to the API."""
-        base_path = "api/"
+        base_path = "api"
         if self.use_proxy_path:
-            base_path = "proxy/network/api/"
+            base_path = "proxy/network/api"
 
-        url = f"https://{self.host}:{self.port}/{base_path}"
-        url += path.format(site=self.site)
+        url = f"https://{self.host}:{self.port}/{base_path}/s/{self.site}/{path}"
 
         try:
             async with self.session.request(
                 method, url, json=json, ssl=self.sslcontext
             ) as res:
-                print(res)
-                if res.content_type != "application/json":
-                    LOGGER.debug("Unexpected content type: %s", res)
-                    raise ResponseError(f"Invalid content type: {res.content_type}")
-
-                response = await res.json()
-
-                _raise_on_error(response)
-
-                return response["data"]
+                if res.content_type == "application/json":
+                    response = await res.json()
+                    _raise_on_error(response)
+                    return response["data"]
+                return res
 
         except client_exceptions.ClientError as err:
             raise RequestError(

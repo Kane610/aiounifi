@@ -31,6 +31,7 @@ async def unifi_controller(
 
     try:
         with async_timeout.timeout(10):
+            # await controller.is_unifi_os()
             await controller.login()
         return controller
 
@@ -41,7 +42,7 @@ async def unifi_controller(
         LOGGER.warning(f"Connected to UniFi at {host} but not registered")
 
     except (asyncio.TimeoutError, aiounifi.RequestError):
-        LOGGER.error(f"Error connecting to the UniFi controller at {host}")
+        LOGGER.exception(f"Error connecting to the UniFi controller at {host}")
 
     except aiounifi.AiounifiException:
         LOGGER.exception("Unknown UniFi communication error occurred")
