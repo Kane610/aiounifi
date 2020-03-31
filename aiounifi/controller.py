@@ -62,13 +62,7 @@ class Controller:
         self.wlans = None
 
     async def check_unifi_os(self):
-        self.is_unifi_os = True
-        try:
-            response = await self.request("get", include_site=False)
-        except:
-            print("FAIL")
-            return
-        print(response.status)
+        response = await self.request("get", include_site=False)
         if response.status == 200:
             self.is_unifi_os = True
 
@@ -83,6 +77,7 @@ class Controller:
         if self.is_unifi_os:
             url = "auth/login"
         await self.request("post", url, json=auth, include_site=False)
+
         if self.is_unifi_os:
             self.base_path = "proxy/network/api"
 
@@ -158,11 +153,10 @@ class Controller:
 
         return new_items
 
-    async def request(
-        self, method, path=None, json=None, include_site=True,
-    ):
+    async def request(self, method, path=None, json=None, include_site=True, url=None):
         """Make a request to the API."""
         url = f"https://{self.host}:{self.port}/{self.base_path}"
+        url = f"https://{self.host}/{self.base_path}"
 
         if include_site:
             url += f"/s/{self.site}"
@@ -175,8 +169,13 @@ class Controller:
             async with self.session.request(
                 method, url, json=json, ssl=self.sslcontext
             ) as res:
-                print(res.status)
-                print(res)
+                print(res.status, res)
+                if res.status == 401:
+                    raise LoginRequired(f"Call {url} received 401 Unauthorized")
+
+                if res.status == 404:
+                    raise ResponseError(f"Call {url} received 404 Not Found")
+
                 if res.content_type == "application/json":
                     response = await res.json()
                     _raise_on_error(response)
