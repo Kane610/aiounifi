@@ -1,0 +1,9 @@
+# PyCharm stuff
+.idea/
+build/
+dist/
+
+# Python files/virtual environments
+venv/
+**/__pycache__/
+**.egg-info/

@@ -51,10 +51,9 @@ async def unifi_controller(
 async def main(host, username, password, port, site, sslcontext=False):
     """Main function."""
     LOGGER.info("Starting aioUniFi")
-    loop = asyncio.get_event_loop()
 
     websession = aiohttp.ClientSession(
-        loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)
+        cookie_jar=aiohttp.CookieJar(unsafe=True)
     )
 
     controller = await unifi_controller(
