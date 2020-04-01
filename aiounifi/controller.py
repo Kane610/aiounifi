@@ -61,10 +61,13 @@ class Controller:
         self.devices = None
         self.wlans = None
 
+        self.headers = None
+
     async def check_unifi_os(self):
         response = await self.request("get", include_site=False)
         if response.status == 200:
             self.is_unifi_os = True
+            self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
     async def login(self):
         self.base_path = "api"
@@ -72,6 +75,11 @@ class Controller:
             "username": self.username,
             "password": self.password,
             "remember": True,
+        }
+        auth = {
+            "username": self.username,
+            "password": self.password,
+            "strict": True,
         }
         url = "login"
         if self.is_unifi_os:
@@ -106,6 +114,7 @@ class Controller:
             self.sslcontext,
             self.site,
             callback=self.session_handler,
+            is_unifi_os=self.is_unifi_os,
         )
         self.websocket.start()
 
@@ -154,7 +163,6 @@ class Controller:
     async def request(self, method, path=None, json=None, include_site=True, url=None):
         """Make a request to the API."""
         url = f"https://{self.host}:{self.port}/{self.base_path}"
-        url = f"https://{self.host}/{self.base_path}"
 
         if include_site:
             url += f"/s/{self.site}"
@@ -165,7 +173,7 @@ class Controller:
 
         try:
             async with self.session.request(
-                method, url, json=json, ssl=self.sslcontext
+                method, url, json=json, ssl=self.sslcontext, headers=self.headers
             ) as res:
                 print(res.status, res)
                 if res.status == 401:
@@ -177,7 +185,9 @@ class Controller:
                 if res.content_type == "application/json":
                     response = await res.json()
                     _raise_on_error(response)
-                    return response["data"]
+                    if "data" in response:
+                        return response["data"]
+                    return response
                 return res
 
         except client_exceptions.ClientError as err:
@@ -188,5 +198,7 @@ class Controller:
 
 def _raise_on_error(data):
     """Check response for error message."""
-    if isinstance(data, dict) and data["meta"]["rc"] == "error":
+    if not isinstance(data, dict):
+        return
+    if "meta" in data and data["meta"]["rc"] == "error":
         raise_error(data["meta"]["msg"])
