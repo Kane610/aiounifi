@@ -64,7 +64,7 @@ class Controller:
         self.headers = None
 
     async def check_unifi_os(self):
-        response = await self.request("get", include_site=False)
+        response = await self.request("get", include_site=False, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
@@ -75,11 +75,6 @@ class Controller:
             "username": self.username,
             "password": self.password,
             "remember": True,
-        }
-        auth = {
-            "username": self.username,
-            "password": self.password,
-            "strict": True,
         }
         url = "login"
         if self.is_unifi_os:
@@ -160,7 +155,7 @@ class Controller:
 
         return new_items
 
-    async def request(self, method, path=None, json=None, include_site=True, url=None):
+    async def request(self, method, path=None, json=None, include_site=True, **kwargs):
         """Make a request to the API."""
         url = f"https://{self.host}:{self.port}/{self.base_path}"
 
@@ -173,9 +168,14 @@ class Controller:
 
         try:
             async with self.session.request(
-                method, url, json=json, ssl=self.sslcontext, headers=self.headers
+                method,
+                url,
+                json=json,
+                ssl=self.sslcontext,
+                headers=self.headers,
+                **kwargs,
             ) as res:
-                print(res.status, res)
+                print(res.status, res.content_type, res)
                 if res.status == 401:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
@@ -185,6 +185,7 @@ class Controller:
                 if res.content_type == "application/json":
                     response = await res.json()
                     _raise_on_error(response)
+                    print(response)
                     if "data" in response:
                         return response["data"]
                     return response

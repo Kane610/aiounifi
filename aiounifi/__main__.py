@@ -53,7 +53,6 @@ async def main(host, username, password, port, site, sslcontext=False):
     LOGGER.info("Starting aioUniFi")
 
     websession = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True))
-    # websession = aiohttp.ClientSession()
 
     controller = await unifi_controller(
         host=host,
@@ -87,8 +86,8 @@ async def main(host, username, password, port, site, sslcontext=False):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(message)s", level=logging.DEBUG)
-    # logging.basicConfig(format="%(message)s", level=logging.INFO)
+    # logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("host", type=str)
     parser.add_argument("username", type=str)
