@@ -47,8 +47,9 @@ class Controller:
         self.site = site
         self.sslcontext = sslcontext
 
-        self.base_path = ""
+        self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
+        self.headers = None
 
         self.callback = callback
         self.add_device_callback = None
@@ -61,32 +62,33 @@ class Controller:
         self.devices = None
         self.wlans = None
 
-        self.headers = None
-
     async def check_unifi_os(self):
-        response = await self.request("get", include_site=False, allow_redirects=False)
+        response = await self.request("get", url=self.url, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
     async def login(self):
-        self.base_path = "api"
+        if self.is_unifi_os:
+            url = f"{self.url}/api/auth/login"
+        else:
+            url = f"{self.url}/api/login"
+
         auth = {
             "username": self.username,
             "password": self.password,
             "remember": True,
         }
-        url = "login"
-        if self.is_unifi_os:
-            url = "auth/login"
-        await self.request("post", url, json=auth, include_site=False)
 
-        if self.is_unifi_os:
-            self.base_path = "proxy/network/api"
+        await self.request("post", url=url, json=auth)
 
     async def sites(self):
-        url = "self/sites"
-        sites = await self.request("get", url, include_site=False)
+        if self.is_unifi_os:
+            url = f"{self.url}/proxy/network/api/self/sites"
+        else:
+            url = f"{self.url}/api/self/sites"
+
+        sites = await self.request("get", url=url)
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
@@ -155,16 +157,18 @@ class Controller:
 
         return new_items
 
-    async def request(self, method, path=None, json=None, include_site=True, **kwargs):
+    async def request(self, method, path=None, json=None, url=None, **kwargs):
         """Make a request to the API."""
-        url = f"https://{self.host}:{self.port}/{self.base_path}"
+        if not url:
+            if self.is_unifi_os:
+                url = f"{self.url}/proxy/network/api/s/{self.site}"
+            else:
+                url = f"{self.url}/api/s/{self.site}"
 
-        if include_site:
-            url += f"/s/{self.site}"
+            if path is not None:
+                url += f"/{path}"
 
-        if path is not None:
-            url += f"/{path}"
-        print(url)
+        LOGGER.debug("%s", url)
 
         try:
             async with self.session.request(
@@ -175,7 +179,8 @@ class Controller:
                 headers=self.headers,
                 **kwargs,
             ) as res:
-                print(res.status, res.content_type, res)
+                LOGGER.debug("%s %s %s", res.status, res.content_type, res)
+
                 if res.status == 401:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
@@ -185,7 +190,6 @@ class Controller:
                 if res.content_type == "application/json":
                     response = await res.json()
                     _raise_on_error(response)
-                    print(response)
                     if "data" in response:
                         return response["data"]
                     return response

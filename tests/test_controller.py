@@ -59,7 +59,7 @@ async def test_controller(controller, loop):
     assert controller.session.request.called
     controller.session.request.assert_called_with(
         "get",
-        "https://127.0.0.1:8443/",
+        "https://127.0.0.1:8443",
         allow_redirects=False,
         headers=None,
         json=None,
@@ -158,7 +158,7 @@ async def test_unifios_controller(controller, loop):
     assert controller.session.request.called
     controller.session.request.assert_called_with(
         "get",
-        "https://127.0.0.1:8443/",
+        "https://127.0.0.1:8443",
         allow_redirects=False,
         headers=None,
         json=None,
