@@ -166,7 +166,7 @@ class Controller:
                 url = f"{self.url}/api/s/{self.site}"
 
             if path is not None:
-                url += f"/{path}"
+                url += f"{path}"
 
         LOGGER.debug("%s", url)
 

@@ -2,10 +2,10 @@
 
 from .api import APIItem, APIItems
 
-URL = "stat/sta"  # Active clients
-URL_ALL = "rest/user"  # All known and configured clients
+URL = "/stat/sta"  # Active clients
+URL_ALL = "/rest/user"  # All known and configured clients
 
-URL_CLIENT_STATE_MANAGER = "cmd/stamgr"
+URL_CLIENT_STATE_MANAGER = "/cmd/stamgr"
 
 
 class Clients(APIItems):

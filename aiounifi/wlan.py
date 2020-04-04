@@ -2,7 +2,7 @@
 
 from .api import APIItem, APIItems
 
-URL = "rest/wlanconf"  # List WLAN configuration
+URL = "/rest/wlanconf"  # List WLAN configuration
 
 
 class Wlans(APIItems):
