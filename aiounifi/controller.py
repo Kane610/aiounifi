@@ -205,5 +205,9 @@ def _raise_on_error(data):
     """Check response for error message."""
     if not isinstance(data, dict):
         return
+
     if "meta" in data and data["meta"]["rc"] == "error":
         raise_error(data["meta"]["msg"])
+
+    if "errors" in data:
+        raise_error(data["errors"][0])
