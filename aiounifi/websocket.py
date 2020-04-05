@@ -28,10 +28,10 @@ class WSClient:
         self.ssl_context = ssl_context
         self.session_handler_callback = callback
 
-        if not is_unifi_os:
-            self.url = f"wss://{host}:{port}/wss/s/{site}/events"
-        else:
+        if is_unifi_os:
             self.url = f"wss://{host}:{port}/proxy/network/wss/s/{site}/events"
+        else:
+            self.url = f"wss://{host}:{port}/wss/s/{site}/events"
 
         self._loop = asyncio.get_running_loop()
 
