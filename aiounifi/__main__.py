@@ -31,14 +31,18 @@ async def unifi_controller(
 
     try:
         with async_timeout.timeout(10):
+            await controller.check_unifi_os()
             await controller.login()
         return controller
+
+    except aiounifi.LoginRequired:
+        LOGGER.warning(f"Connected to UniFi at {host} but couldn't log in")
 
     except aiounifi.Unauthorized:
         LOGGER.warning(f"Connected to UniFi at {host} but not registered")
 
     except (asyncio.TimeoutError, aiounifi.RequestError):
-        LOGGER.error(f"Error connecting to the UniFi controller at {host}")
+        LOGGER.exception(f"Error connecting to the UniFi controller at {host}")
 
     except aiounifi.AiounifiException:
         LOGGER.exception("Unknown UniFi communication error occurred")
@@ -47,11 +51,8 @@ async def unifi_controller(
 async def main(host, username, password, port, site, sslcontext=False):
     """Main function."""
     LOGGER.info("Starting aioUniFi")
-    loop = asyncio.get_event_loop()
 
-    websession = aiohttp.ClientSession(
-        loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)
-    )
+    websession = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True))
 
     controller = await unifi_controller(
         host=host,
@@ -65,7 +66,8 @@ async def main(host, username, password, port, site, sslcontext=False):
     )
 
     if not controller:
-        LOGGER.error("Couldn't connect to UniFi controller.")
+        LOGGER.error("Couldn't connect to UniFi controller")
+        await websession.close()
         return
 
     await controller.initialize()
@@ -79,13 +81,13 @@ async def main(host, username, password, port, site, sslcontext=False):
     except KeyboardInterrupt:
         pass
 
-    finally:
-        controller.stop_websocket()
-        await controller.session.close()
+    controller.stop_websocket()
+    await websession.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+    # logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("host", type=str)
     parser.add_argument("username", type=str)

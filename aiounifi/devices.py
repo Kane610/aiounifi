@@ -9,7 +9,7 @@ from .api import APIItem, APIItems
 
 LOGGER = logging.getLogger(__name__)
 
-URL = "s/{site}/stat/device"
+URL = "/stat/device"
 
 
 class Devices(APIItems):
@@ -124,7 +124,7 @@ class Device(APIItem):
                 }
             )
 
-        url = "s/{site}/rest/device/" + self.id
+        url = "/rest/device/{self.id}"
         data = {"port_overrides": self.port_overrides}
 
         await self._request("put", url, json=data)
