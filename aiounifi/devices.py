@@ -124,7 +124,7 @@ class Device(APIItem):
                 }
             )
 
-        url = "/rest/device/{self.id}"
+        url = f"/rest/device/{self.id}"
         data = {"port_overrides": self.port_overrides}
 
         await self._request("put", url, json=data)
