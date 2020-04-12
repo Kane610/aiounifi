@@ -84,6 +84,10 @@ class Client(APIItem):
         return self.raw.get("site_id", "")
 
     @property
+    def sw_depth(self):
+        return self.raw.get("sw_depth", "")
+
+    @property
     def sw_mac(self):
         """MAC for switch client is connected to."""
         return self.raw.get("sw_mac", "")
@@ -92,6 +96,20 @@ class Client(APIItem):
     def sw_port(self):
         """Switch port client is connected to."""
         return self.raw.get("sw_port", "")
+
+    @property
+    def rx_bytes(self):
+        """Bytes received over wireless connection."""
+        return self.raw.get("rx_bytes", 0)
+
+    @property
+    def tx_bytes(self):
+        """Bytes transferred over wireless connection."""
+        return self.raw.get("tx_bytes", 0)
+
+    @property
+    def uptime(self):
+        return self.raw.get("uptime", 0)
 
     @property
     def wired_rx_bytes(self):
