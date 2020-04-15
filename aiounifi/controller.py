@@ -16,6 +16,7 @@ from .wlan import Wlans, URL as wlan_url
 LOGGER = logging.getLogger(__name__)
 
 MESSAGE_CLIENT = "sta:sync"
+MESSAGE_CLIENT_REMOVED = "user:delete"
 MESSAGE_DEVICE = "device:sync"
 MESSAGE_EVENT = "events"
 
@@ -24,6 +25,7 @@ ATTR_META = "meta"
 ATTR_DATA = "data"
 
 DATA_CLIENT = "client"
+DATA_CLIENT_REMOVED = "client_removed"
 DATA_DEVICE = "device"
 DATA_EVENT = "event"
 
@@ -144,22 +146,25 @@ class Controller:
 
     def message_handler(self, message: dict) -> dict:
         """Receive event from websocket and identifies where the event belong."""
-        new_items = {}
+        changes = {}
 
         if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT:
-            new_items[DATA_CLIENT] = self.clients.process_raw(message[ATTR_DATA])
+            changes[DATA_CLIENT] = self.clients.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
-            new_items[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
+            changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
             self.clients.process_event(message[ATTR_DATA])
-            new_items[DATA_EVENT] = event(message[ATTR_DATA][0])
+            changes[DATA_EVENT] = event(message[ATTR_DATA][0])
+
+        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT_REMOVED:
+            changes[DATA_CLIENT_REMOVED] = self.clients.remove(message[ATTR_DATA])
 
         else:
             LOGGER.debug(f"Unsupported message type {message}")
 
-        return new_items
+        return changes
 
     async def request(self, method, path=None, json=None, url=None, **kwargs):
         """Make a request to the API."""

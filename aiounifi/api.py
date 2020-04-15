@@ -55,6 +55,18 @@ class APIItems:
 
         return new_items
 
+    def remove(self, raw: list) -> set:
+        removed_items = set()
+
+        for raw_item in raw:
+            key = raw_item[self.KEY]
+
+            if key in self._items:
+                self._items.pop(key)
+                removed_items.add(key)
+
+        return removed_items
+
     def values(self):
         return self._items.values()
 
