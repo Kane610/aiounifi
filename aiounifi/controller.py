@@ -23,6 +23,10 @@ ATTR_MESSAGE = "message"
 ATTR_META = "meta"
 ATTR_DATA = "data"
 
+DATA_CLIENT = "client"
+DATA_DEVICE = "device"
+DATA_EVENT = "event"
+
 
 class Controller:
     """Control a UniFi controller."""
@@ -133,7 +137,7 @@ class Controller:
         if signal == SIGNAL_DATA:
             new_items = self.message_handler(self.websocket.data)
             if new_items and self.callback:
-                self.callback("new_data", new_items)
+                self.callback(SIGNAL_DATA, new_items)
 
         elif signal == SIGNAL_CONNECTION_STATE and self.callback:
             self.callback(SIGNAL_CONNECTION_STATE, self.websocket.state)
@@ -143,14 +147,14 @@ class Controller:
         new_items = {}
 
         if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT:
-            new_items["clients"] = self.clients.process_raw(message[ATTR_DATA])
+            new_items[DATA_CLIENT] = self.clients.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
-            new_items["devices"] = self.devices.process_raw(message[ATTR_DATA])
+            new_items[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
             self.clients.process_event(message[ATTR_DATA])
-            new_items["event"] = event(message[ATTR_DATA][0])
+            new_items[DATA_EVENT] = event(message[ATTR_DATA][0])
 
         else:
             LOGGER.debug(f"Unsupported message type {message}")
