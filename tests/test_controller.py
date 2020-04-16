@@ -4,18 +4,17 @@ pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller
 """
 
 import asyncio
-from asynctest import MagicMock, Mock
+from asynctest import MagicMock, Mock, patch
+from collections import deque
 import pytest
 
-from aiounifi.controller import Controller
+from aiounifi.controller import Controller, DATA_CLIENT_REMOVED
 from aiounifi.clients import (
-    Clients,
     URL as client_url,
-    ClientsAll,
     URL_ALL as all_client_url,
 )
-from aiounifi.devices import Devices, URL as device_url
-from aiounifi.wlan import Wlans, URL as wlan_url
+from aiounifi.devices import URL as device_url
+from aiounifi.wlan import URL as wlan_url
 
 HOST = "127.0.0.1"
 PORT = "80"
@@ -43,6 +42,50 @@ def mock_request_response(
     controller.session.request.return_value.__aenter__.side_effect = Mock(
         return_value=mock_response
     )
+
+
+async def mock_initialize(
+    controller,
+    *,
+    clients_response=None,
+    devices_response=None,
+    clients_all_response=None,
+    wlans_response=None,
+):
+
+    mock_client_responses = deque()
+    if clients_response:
+        mock_client_responses.append(clients_response)
+
+    mock_device_responses = deque()
+    if devices_response:
+        mock_device_responses.append(devices_response)
+
+    mock_client_all_responses = deque()
+    if clients_all_response:
+        mock_client_all_responses.append(clients_all_response)
+
+    mock_wlans_responses = deque()
+    if wlans_response:
+        mock_wlans_responses.append(wlans_response)
+
+    mock_requests = []
+
+    async def mock_request(self, method, path, json=None):
+        mock_requests.append({"method": method, "path": path, "json": json})
+
+        if path == "/stat/sta" and mock_client_responses:
+            return mock_client_responses.popleft()
+        if path == "/stat/device" and mock_device_responses:
+            return mock_device_responses.popleft()
+        if path == "/rest/user" and mock_client_all_responses:
+            return mock_client_all_responses.popleft()
+        if path == "/rest/wlanconf" and mock_wlans_responses:
+            return mock_wlans_responses.popleft()
+        return {}
+
+    with patch("aiounifi.Controller.request", new=mock_request):
+        await controller.initialize()
 
 
 async def test_controller(controller, loop):
@@ -246,6 +289,16 @@ async def test_unifios_controller(controller, loop):
     )
 
 
+async def test_message_client_removed(controller, loop):
+    """Test controller communicating with a UniFi controller"""
+    await mock_initialize(controller, clients_response=[CLIENT_1])
+    assert len(controller.clients._items) == 1
+
+    changes = controller.message_handler(MESSAGE_CLIENT_1_REMOVED)
+    assert changes == {DATA_CLIENT_REMOVED: {CLIENT_1["mac"]}}
+    assert len(controller.clients._items) == 0
+
+
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
 
 LOGIN_UNIFIOS_JSON_RESPONSE = {
@@ -424,6 +477,32 @@ SITE_UNIFIOS_RESPONSE = {
             "attr_hidden_id": "default",
             "attr_no_delete": True,
             "role": "admin",
+        }
+    ],
+}
+
+
+CLIENT_1 = {
+    "essid": "ssid",
+    "hostname": "client_1",
+    "ip": "10.0.0.1",
+    "is_wired": False,
+    "last_seen": 1562600145,
+    "mac": "00:00:00:00:00:01",
+}
+
+MESSAGE_CLIENT_1_REMOVED = {
+    "meta": {"rc": "ok", "message": "user:delete"},
+    "data": [
+        {
+            "_id": "5cdb099be4b01dd218123456",
+            "mac": CLIENT_1["mac"],
+            "site_id": "5a32aa4ee4b047ede3123456",
+            "oui": "NortelNe",
+            "is_guest": False,
+            "first_seen": 1557858715,
+            "last_seen": CLIENT_1["last_seen"] + 10,
+            "is_wired": CLIENT_1["is_wired"],
         }
     ],
 }
