@@ -78,32 +78,42 @@ async def main(host, username, password, port, site, sslcontext=False):
         while True:
             await asyncio.sleep(1)
 
-    except KeyboardInterrupt:
+    except asyncio.CancelledError:
         pass
 
-    controller.stop_websocket()
-    await websession.close()
+    finally:
+        controller.stop_websocket()
+        await websession.close()
 
 
 if __name__ == "__main__":
-    # logging.basicConfig(format="%(message)s", level=logging.DEBUG)
-    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("host", type=str)
     parser.add_argument("username", type=str)
     parser.add_argument("password", type=str)
     parser.add_argument("-p", "--port", type=int, default=8443)
     parser.add_argument("-s", "--site", type=str, default="default")
+    parser.add_argument("-D", "--debug", action="store_true")
     args = parser.parse_args()
+
+    loglevel = logging.INFO
+    if args.debug:
+        loglevel = logging.DEBUG
+    logging.basicConfig(format="%(message)s", level=loglevel)
+
     LOGGER.info(
-        "%s %s %s %s %s", args.host, args.username, args.password, args.port, args.site
+        f"{args.host}, {args.username}, {args.password}, {args.port}, {args.site}"
     )
-    asyncio.run(
-        main(
-            host=args.host,
-            username=args.username,
-            password=args.password,
-            port=args.port,
-            site=args.site,
+
+    try:
+        asyncio.run(
+            main(
+                host=args.host,
+                username=args.username,
+                password=args.password,
+                port=args.port,
+                site=args.site,
+            )
         )
-    )
+    except KeyboardInterrupt:
+        pass

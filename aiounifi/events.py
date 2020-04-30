@@ -2,31 +2,32 @@
 
 #  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
 
-CONTROLLER_UPDATE_AVAILABLE = "EVT_AD_UPDATE_AVAILABLE"
+CONTROLLER_UPDATE_AVAILABLE = "EVT_AD_Update_Available"
 
-ACCESS_POINT_ADOPTED = "EVT_AP_ADOPTED"
-ACCESS_POINT_CONFIGURED = "EVT_AP_CONFIGURED"
-ACCESS_POINT_CONNECTED = "EVT_AP_CONNECTED"
-ACCESS_POINT_DELETED = "EVT_AP_DELETED"
-ACCESS_POINT_RESTARTED = "EVT_AP_RESTARTED"
-ACCESS_POINT_UPGRADED = "EVT_AP_UPGRADED"
+ACCESS_POINT_ADOPTED = "EVT_AP_Adopted"
+ACCESS_POINT_CONFIGURED = "EVT_AP_Configured"
+ACCESS_POINT_CONNECTED = "EVT_AP_Connected"
+ACCESS_POINT_DELETED = "EVT_AP_Deleted"
+ACCESS_POINT_RESTARTED = "EVT_AP_Restarted"
+ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
 
-GATEWAY_ADOPTED = "EVT_GW_ADOPTED"
-GATEWAY_CONNECTED = "EVT_GW_CONNECTED"
-GATEWAY_DELETED = "EVT_GW_DELETED"
-GATEWAY_LOST_CONTACT = "EVT_GW_LOST_CONTACT"
-GATEWAY_RESTART = "EVT_GW_RESTARTED"
-GATEWAY_UPGRADED = "EVT_GW_UPGRADED"
+GATEWAY_ADOPTED = "EVT_GW_Adopted"
+GATEWAY_CONNECTED = "EVT_GW_Connected"
+GATEWAY_DELETED = "EVT_GW_Deleted"
+GATEWAY_LOST_CONTACT = "EVT_GW_Lost_Contact"
+GATEWAY_RESTART = "EVT_GW_Restarted"
+GATEWAY_UPGRADED = "EVT_GW_Upgraded"
 
-SWITCH_ADOPTED = "EVT_SW_ADOPTED"
-SWITCH_CONNECTED = "EVT_SW_CONNECTED"
-SWITCH_DELETED = "EVT_SW_DELETED"
-SWITCH_LOST_CONTACT = "EVT_SW_LOST_CONTACT"
-SWITCH_OVERHEAT = "EVT_SW_OVERHEAT"
-SWITCH_POE_OVERLOAD = "EVT_SW_POE_OVERLOAD"
-SWITCH_POE_DISCONNECT = "EVT_SW_POE_DISCONNECT"
-SWITCH_RESTARTED = "EVT_SW_RESTARTED"
-SWITCH_UPGRADED = "EVT_SW_UPGRADED"
+SWITCH_ADOPTED = "EVT_SW_Adopted"
+SWITCH_CONNECTED = "EVT_SW_Connected"
+SWITCH_DELETED = "EVT_SW_Deleted"
+SWITCH_LOST_CONTACT = "EVT_SW_Lost_Contact"
+SWITCH_OVERHEAT = "EVT_SW_Overheat"
+SWITCH_POE_OVERLOAD = "EVT_SW_POE_Overload"
+SWITCH_POE_DISCONNECT = "EVT_SW_POE_Disconnect"
+SWITCH_RESTARTED = "EVT_SW_Restarted"
+SWITCH_RESTARTED_UNKNOWN = "EVT_SW_RestartedUnknown"
+SWITCH_UPGRADED = "EVT_SW_Upgraded"
 
 WIRED_CLIENT_CONNECTED = "EVT_LU_Connected"
 WIRED_CLIENT_DISCONNECTED = "EVT_LU_Disconnected"
@@ -86,7 +87,7 @@ class event:
 
     @property
     def event(self) -> str:
-        """Event key 'EVT_WU_Disconnected'"""
+        """Event key e.g. 'EVT_WU_Disconnected'"""
         return self.raw["key"]
 
     @property
@@ -120,6 +121,11 @@ class event:
         )
 
     @property
+    def device(self) -> str:
+        """MAC address of device."""
+        return self.raw.get("ap") or self.raw.get("gw") or self.raw.get("sw") or ""
+
+    @property
     def hostname(self) -> str:
         """Nice name"""
         return self.raw.get("hostname", "")
@@ -137,5 +143,6 @@ class event:
     def mac(self) -> str:
         if self.client:
             return self.client
-
+        if self.device:
+            return self.device
         return ""

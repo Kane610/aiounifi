@@ -8,13 +8,21 @@ from asynctest import MagicMock, Mock, patch
 from collections import deque
 import pytest
 
-from aiounifi.controller import Controller, DATA_CLIENT_REMOVED
+from aiounifi.controller import Controller, DATA_CLIENT_REMOVED, DATA_EVENT, SIGNAL_DATA
 from aiounifi.clients import (
     URL as client_url,
     URL_ALL as all_client_url,
 )
 from aiounifi.devices import URL as device_url
+from aiounifi.events import (
+    WIRED_CLIENT_CONNECTED,
+    WIRED_CLIENT_DISCONNECTED,
+    WIRELESS_CLIENT_CONNECTED,
+    WIRELESS_CLIENT_DISCONNECTED,
+)
 from aiounifi.wlan import URL as wlan_url
+
+from fixtures import WIRELESS_CLIENT, WLANS
 
 HOST = "127.0.0.1"
 PORT = "80"
@@ -26,7 +34,10 @@ PASSWORD = "password"
 def controller() -> Controller:
     """Returns the session object."""
     session = MagicMock()
-    return Controller(HOST, session, username=USERNAME, password=PASSWORD)
+    callback = Mock()
+    return Controller(
+        HOST, session, username=USERNAME, password=PASSWORD, callback=callback
+    )
 
 
 def mock_request_response(
@@ -69,7 +80,7 @@ async def mock_initialize(
     if wlans_response:
         mock_wlans_responses.append(wlans_response)
 
-    mock_requests = []
+    controller.mock_requests = mock_requests = []
 
     async def mock_request(self, method, path, json=None):
         mock_requests.append({"method": method, "path": path, "json": json})
@@ -86,10 +97,11 @@ async def mock_initialize(
 
     with patch("aiounifi.Controller.request", new=mock_request):
         await controller.initialize()
+    controller.start_websocket()
 
 
-async def test_controller(controller, loop):
-    """Test controller communicating with a UniFi controller"""
+async def test_controller(controller):
+    """Test controller communicating with a non UniFiOS UniFi controller."""
 
     assert controller.session.request.call_count == 0
 
@@ -187,8 +199,8 @@ async def test_controller(controller, loop):
     assert controller.websocket.url == "wss://127.0.0.1:8443/wss/s/default/events"
 
 
-async def test_unifios_controller(controller, loop):
-    """Test controller communicating with a UniFi OS controller"""
+async def test_unifios_controller(controller):
+    """Test controller communicating with a UniFi OS controller."""
 
     assert controller.session.request.call_count == 0
 
@@ -289,13 +301,40 @@ async def test_unifios_controller(controller, loop):
     )
 
 
-async def test_message_client_removed(controller, loop):
-    """Test controller communicating with a UniFi controller"""
-    await mock_initialize(controller, clients_response=[CLIENT_1])
+async def test_client(controller):
+    """Test controller communicating client class."""
+    await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
     assert len(controller.clients._items) == 1
 
-    changes = controller.message_handler(MESSAGE_CLIENT_1_REMOVED)
-    assert changes == {DATA_CLIENT_REMOVED: {CLIENT_1["mac"]}}
+
+async def test_message_client_events(controller):
+    """Test controller communicating different client events."""
+    await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
+    assert len(controller.clients._items) == 1
+
+    controller.websocket._data = EVENT_CLIENT_1_WIRELESS_CONNECTED
+    controller.session_handler(SIGNAL_DATA)
+    controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_EVENT: {controller.clients[WIRELESS_CLIENT["mac"]].event}}
+    )
+
+    assert (
+        controller.clients[WIRELESS_CLIENT["mac"]].event.event
+        == WIRELESS_CLIENT_CONNECTED
+    )
+
+
+async def test_message_client_removed(controller):
+    """Test controller communicating client has been removed."""
+    await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
+    assert len(controller.clients._items) == 1
+
+    controller.websocket._data = MESSAGE_CLIENT_1_REMOVED
+    controller.session_handler(SIGNAL_DATA)
+    controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_CLIENT_REMOVED: {WIRELESS_CLIENT["mac"]}}
+    )
+
     assert len(controller.clients._items) == 0
 
 
@@ -422,50 +461,7 @@ LOGIN_UNIFIOS_JSON_RESPONSE = {
     "isSuperAdmin": True,
 }
 
-WLAN_UNIFIOS_RESPONSE = {
-    "meta": {"rc": "ok"},
-    "data": [
-        {
-            "_id": "5e231d8e931eb902acf25117",
-            "enabled": True,
-            "name": "Wi-Fi Network",
-            "security": "wpapsk",
-            "wpa_enc": "ccmp",
-            "wpa_mode": "wpa2",
-            "x_passphrase": "password",
-            "wlangroup_id": "5e231c14931eb902acf25113",
-            "name_combine_enabled": False,
-            "name_combine_suffix": "_2G",
-            "site_id": "5e231c10931eb902acf25112",
-            "x_iapp_key": "2a71691714511b8e496c0062565d111a",
-            "no2ghz_oui": False,
-            "minrate_ng_enabled": True,
-            "minrate_ng_beacon_rate_kbps": 6000,
-            "minrate_ng_data_rate_kbps": 6000,
-            "wep_idx": 1,
-            "usergroup_id": "5e231c14931eb902acf25112",
-            "dtim_mode": "default",
-            "dtim_ng": 1,
-            "dtim_na": 1,
-            "minrate_ng_advertising_rates": False,
-            "minrate_ng_cck_rates_enabled": True,
-            "minrate_na_enabled": False,
-            "minrate_na_advertising_rates": False,
-            "minrate_na_data_rate_kbps": 6000,
-            "mac_filter_enabled": False,
-            "mac_filter_policy": "allow",
-            "mac_filter_list": [],
-            "bc_filter_enabled": False,
-            "bc_filter_list": [],
-            "group_rekey": 3600,
-            "radius_das_enabled": False,
-            "schedule": [],
-            "minrate_ng_mgmt_rate_kbps": 6000,
-            "minrate_na_mgmt_rate_kbps": 6000,
-            "minrate_na_beacon_rate_kbps": 6000,
-        }
-    ],
-}
+WLAN_UNIFIOS_RESPONSE = {"meta": {"rc": "ok"}, "data": WLANS}
 
 SITE_UNIFIOS_RESPONSE = {
     "meta": {"rc": "ok"},
@@ -482,27 +478,114 @@ SITE_UNIFIOS_RESPONSE = {
 }
 
 
-CLIENT_1 = {
-    "essid": "ssid",
-    "hostname": "client_1",
-    "ip": "10.0.0.1",
-    "is_wired": False,
-    "last_seen": 1562600145,
-    "mac": "00:00:00:00:00:01",
-}
-
 MESSAGE_CLIENT_1_REMOVED = {
     "meta": {"rc": "ok", "message": "user:delete"},
     "data": [
         {
             "_id": "5cdb099be4b01dd218123456",
-            "mac": CLIENT_1["mac"],
-            "site_id": "5a32aa4ee4b047ede3123456",
+            "mac": WIRELESS_CLIENT["mac"],
+            "site_id": WIRELESS_CLIENT["essid"],
             "oui": "NortelNe",
             "is_guest": False,
             "first_seen": 1557858715,
-            "last_seen": CLIENT_1["last_seen"] + 10,
-            "is_wired": CLIENT_1["is_wired"],
+            "last_seen": WIRELESS_CLIENT["last_seen"] + 10,
+            "is_wired": WIRELESS_CLIENT["is_wired"],
         }
     ],
 }
+
+
+EVENT_CLIENT_1_WIRELESS_DISCONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "user": WIRELESS_CLIENT["mac"],
+            "ssid": "ssid",
+            "hostname": WIRELESS_CLIENT["hostname"],
+            "ap": "80:2a:a8:00:00:01",
+            "duration": 467,
+            "bytes": 459039,
+            "key": "EVT_WU_Disconnected",
+            "subsystem": "wlan",
+            "site_id": WIRELESS_CLIENT["essid"],
+            "time": 1587752927000,
+            "datetime": "2020-04-24T18:28:47Z",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "{"ssid"}" (7m 47s connected, 448.28K bytes, last AP["80:2a:a8:00:00:01"])',
+            "_id": "5ea32ff730c49e00f90dca1a",
+        }
+    ],
+}
+EVENT_CLIENT_1_WIRED_CONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "user": WIRELESS_CLIENT["mac"],
+            "network": "LAN",
+            "key": "EVT_LU_Connected",
+            "subsystem": "lan",
+            "site_id": WIRELESS_CLIENT["essid"],
+            "time": 1587753022473,
+            "datetime": "2020-04-24T18:30:22Z",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to LAN',
+            "_id": "5ea3304330c49e00f90dcc35",
+        }
+    ],
+}
+EVENT_CLIENT_1_WIRED_DISCONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "user": WIRELESS_CLIENT["mac"],
+            "hostname": WIRELESS_CLIENT["hostname"],
+            "network": "LAN",
+            "duration": 5,
+            "bytes": 0,
+            "key": "EVT_LU_Disconnected",
+            "subsystem": "lan",
+            "site_id": WIRELESS_CLIENT["essid"],
+            "time": 1587753027000,
+            "datetime": "2020-04-24T18:30:27Z",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "LAN" (5s connected, 0.00 bytes)',
+            "_id": "5ea3318a30c49e00f90dd8c4",
+        }
+    ],
+}
+EVENT_CLIENT_1_WIRELESS_CONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "user": WIRELESS_CLIENT["mac"],
+            "ssid": "ssid",
+            "ap": "80:2a:a8:00:00:01",
+            "radio": "na",
+            "channel": "44",
+            "hostname": WIRELESS_CLIENT["hostname"],
+            "key": "EVT_WU_Connected",
+            "subsystem": "wlan",
+            "site_id": WIRELESS_CLIENT["essid"],
+            "time": 1587753456179,
+            "datetime": "2020-04-24T18:37:36Z",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to AP["80:2a:a8:00:00:01"] with "ssid" "{"ssid"}" on "channel 44(na)"',
+            "_id": "5ea331fa30c49e00f90ddc1a",
+        }
+    ],
+}
+
+
+EVENT_DEVICE = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "sw": "fc:ec:da:78:37:73",
+            "sw_name": "Switch 16",
+            "key": "EVT_SW_RestartedUnknown",
+            "subsystem": "lan",
+            "site_id": "5a32aa4ee4b047ede36a859f",
+            "time": 1588192044198,
+            "datetime": "2020-04-29T20:27:24Z",
+            "msg": "Switch[fc:ec:da:78:37:73] was restarted",
+            "_id": "5ea9e37030c49e010363ee0b",
+        }
+    ],
+}
+

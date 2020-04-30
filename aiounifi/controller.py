@@ -10,7 +10,7 @@ from .clients import Clients, URL as client_url, ClientsAll, URL_ALL as all_clie
 from .devices import Devices, URL as device_url
 from .errors import raise_error, LoginRequired, ResponseError, RequestError
 from .events import event
-from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA, STATE_RUNNING
+from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA
 from .wlan import Wlans, URL as wlan_url
 
 LOGGER = logging.getLogger(__name__)
@@ -52,14 +52,11 @@ class Controller:
         self.password = password
         self.site = site
         self.sslcontext = sslcontext
+        self.callback = callback
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
         self.headers = None
-
-        self.callback = callback
-        self.add_device_callback = None
-        self.connection_status_callback = None
 
         self.websocket = None
 
@@ -155,8 +152,11 @@ class Controller:
             changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            self.clients.process_event(message[ATTR_DATA])
-            changes[DATA_EVENT] = event(message[ATTR_DATA][0])
+            events = []
+            for item in message[ATTR_DATA]:
+                events.append(event(item))
+            self.clients.process_event(events)
+            changes[DATA_EVENT] = set(events)
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT_REMOVED:
             changes[DATA_CLIENT_REMOVED] = self.clients.remove(message[ATTR_DATA])
