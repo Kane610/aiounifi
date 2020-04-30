@@ -185,7 +185,7 @@ class Port:
 
     @property
     def media(self):
-        return self.raw["media"]
+        return self.raw.get("media")
 
     @property
     def name(self):
@@ -219,7 +219,7 @@ class Port:
 
     @property
     def portconf_id(self):
-        return self.raw["portconf_id"]
+        return self.raw.get("portconf_id")
 
     @property
     def port_poe(self):

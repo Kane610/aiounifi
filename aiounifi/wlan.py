@@ -16,16 +16,13 @@ class Wlans(APIItems):
     async def async_enable(self, wlan):
         """Block client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
-        # data = dict(wlan.raw)
-        data = dict()
-        data["enabled"] = True
+        data = {"enabled": True}
         await self._request("put", wlan_url, json=data)
 
     async def async_disable(self, wlan):
         """Unblock client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
-        data = dict()
-        data["enabled"] = False
+        data = {"enabled": False}
         await self._request("put", wlan_url, json=data)
 
 

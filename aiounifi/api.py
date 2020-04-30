@@ -1,8 +1,8 @@
+"""API management class and base class for the different end points."""
+
 import logging
 
 from pprint import pformat
-
-from .events import event as event_class
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,8 +45,7 @@ class APIItems:
     def process_event(self, events: list) -> set:
         new_items = set()
 
-        for raw_event in events:
-            event = event_class(raw_event)
+        for event in events:
             obj = self._items.get(event.mac)
 
             if obj is not None:
@@ -81,6 +80,8 @@ class APIItems:
 
 
 class APIItem:
+    """Base class for all end points using APIItems class."""
+
     def __init__(self, raw, request):
         self._raw = raw
         self._request = request
@@ -127,6 +128,6 @@ class APIItem:
         self._callbacks.append(callback)
 
     def remove_callback(self, callback) -> None:
-        """Remove all registered callbacks."""
+        """Remove registered callback."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)

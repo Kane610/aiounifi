@@ -124,4 +124,4 @@ class Client(APIItem):
     def __repr__(self):
         """Return the representation."""
         name = self.name or self.hostname
-        return f"<Client {name}: {self.mac} {self.raw}\n>"
+        return f"<Client {name}: {self.mac} {self.raw}>"
