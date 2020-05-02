@@ -55,6 +55,8 @@ async def test_ports():
     assert wlan.minrate_ng_enabled is False
     assert wlan.minrate_ng_mgmt_rate_kbps == 1000
     assert wlan.name == "SSID 1"
+    assert wlan.name_combine_enabled is True
+    assert wlan.name_combine_suffix == ""
     assert wlan.no2ghz_oui is False
     assert wlan.schedule == []
     assert wlan.security == "wpapsk"
