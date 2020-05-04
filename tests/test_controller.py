@@ -572,20 +572,53 @@ EVENT_CLIENT_1_WIRELESS_CONNECTED = {
 }
 
 
-EVENT_DEVICE = {
+EVENT_DEVICE_CONNECTED = {
     "meta": {"rc": "ok", "message": "events"},
     "data": [
         {
-            "sw": "fc:ec:da:78:37:73",
-            "sw_name": "Switch 16",
-            "key": "EVT_SW_RestartedUnknown",
+            "_id": "5eae82572ab79c00f9d39b38",
+            "datetime": "2020-05-03T08:35:35Z",
+            "key": "EVT_SW_Connected",
+            "msg": "Switch[fc:ec:da:11:22:33] was connected",
+            "site_id": "5a32aa4ee4b0412345678910",
             "subsystem": "lan",
-            "site_id": "5a32aa4ee4b047ede36a859f",
-            "time": 1588192044198,
-            "datetime": "2020-04-29T20:27:24Z",
-            "msg": "Switch[fc:ec:da:78:37:73] was restarted",
-            "_id": "5ea9e37030c49e010363ee0b",
+            "sw": "fc:ec:da:11:22:33",
+            "sw_name": "Switch 16",
+            "time": 1588494935241,
         }
     ],
 }
 
+
+EVENT_DEVICE_RESTARTED_UNKOWN = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "sw": "fc:ec:da:11:22:33",
+            "sw_name": "Switch 16",
+            "key": "EVT_SW_RestartedUnknown",
+            "subsystem": "lan",
+            "site_id": "5a32aa4ee4b0412345678910",
+            "time": 1588192044198,
+            "datetime": "2020-04-29T20:27:24Z",
+            "msg": "Switch[fc:ec:da:11:22:33] was restarted",
+            "_id": "5ea9e37030c49e010363ee0b",
+        }
+    ],
+}
+EVENT_DEVICE_LOST_CONTACT = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "_id": "5eae7fe02ab79c00f9d38960",
+            "datetime": "2020-05-03T08:25:04Z",
+            "key": "EVT_SW_Lost_Contact",
+            "msg": "Switch[fc:ec:da:11:22:33] was disconnected",
+            "site_id": "5a32aa4ee4b0412345678910",
+            "subsystem": "lan",
+            "sw": "fc:ec:da:11:22:33",
+            "sw_name": "Switch 16",
+            "time": 1588494304030,
+        }
+    ],
+}

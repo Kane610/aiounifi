@@ -17,90 +17,131 @@ class Devices(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw, request):
+    def __init__(self, raw: list, request):
         super().__init__(raw, request, URL, Device)
 
 
 class Device(APIItem):
     """Represents a network device."""
 
-    def __init__(self, raw, request):
+    def __init__(self, raw: dict, request):
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
 
-    def update(self, raw):
+    def update(self, raw: dict) -> None:
         self.ports.update(raw.get("port_table", []))
         super().update(raw)
 
     @property
-    def board_rev(self):
+    def board_rev(self) -> int:
         return self.raw["board_rev"]
 
     @property
-    def disabled(self):
+    def considered_lost_at(self) -> int:
+        return self.raw["considered_lost_at"]
+
+    @property
+    def disabled(self) -> bool:
         return self.raw.get("disabled", False)
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.raw["device_id"]
 
     @property
-    def ip(self):
+    def ip(self) -> str:
         return self.raw["ip"]
 
     @property
-    def fan_level(self):
+    def fan_level(self) -> int:
         return self.raw.get("fan_level")
 
     @property
-    def has_fan(self):
+    def has_fan(self) -> bool:
         return self.raw.get("has_fan", False)
 
     @property
-    def last_seen(self):
+    def last_seen(self) -> int:
         return self.raw.get("last_seen")
 
     @property
-    def mac(self):
+    def mac(self) -> str:
         return self.raw["mac"]
 
     @property
-    def model(self):
+    def model(self) -> str:
         return self.raw["model"]
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.raw.get("name")
 
     @property
-    def overheating(self):
-        return self.raw.get("overheating")
+    def next_heartbeat_at(self) -> int:
+        """Next heart beat full UNIX time."""
+        return self.raw.get("next_heartbeat_at")
 
     @property
-    def port_overrides(self):
+    def next_interval(self) -> int:
+        """Next heart beat in seconds."""
+        return self.raw.get("next_interval", 30)
+
+    @property
+    def overheating(self) -> bool:
+        return self.raw.get("overheating", False)
+
+    @property
+    def port_overrides(self) -> list:
         return self.raw.get("port_overrides", [])
 
     @property
-    def port_table(self):
+    def port_table(self) -> list:
         return self.raw.get("port_table", [])
 
     @property
-    def state(self):
+    def state(self) -> int:
         return self.raw["state"]
 
     @property
-    def type(self):
+    def sys_stats(self) -> dict:
+        """Output from top."""
+        return self.raw["sys_stats"]
+
+    @property
+    def type(self) -> str:
         return self.raw["type"]
 
     @property
-    def version(self):
+    def version(self) -> str:
+        """Firmware version."""
         return self.raw["version"]
 
     @property
-    def upgradable(self):
-        return self.raw.get("upgradable")
+    def upgradable(self) -> bool:
+        """New firmware available."""
+        return self.raw.get("upgradable", False)
 
-    async def async_set_port_poe_mode(self, port_idx, mode):
+    @property
+    def upgrade_to_firmware(self) -> str:
+        """Firmware version to update to."""
+        return self.raw.get("upgrade_to_firmware", "")
+
+    @property
+    def uplink_depth(self) -> int:
+        """Hops to gateway."""
+        return self.raw.get("uplink_depth")
+
+    @property
+    def user_num_sta(self) -> int:
+        """Amount of connected clients."""
+        return self.raw["user-num_sta"]
+
+    @property
+    def wlan_overrides(self) -> list:
+        """Wlan configuration override."""
+        return self.raw.get("wlan_overrides", [])
+
+    async def async_set_port_poe_mode(self, port_idx, mode) -> None:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
@@ -129,7 +170,7 @@ class Device(APIItem):
 
         await self._request("put", url, json=data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the representation."""
         return f"<Device {self.name}: {self.mac}>"
 

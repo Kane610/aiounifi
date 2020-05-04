@@ -32,6 +32,7 @@ async def test_device_access_point():
 
     access_point = devices[ACCESS_POINT_AC_PRO["mac"]]
     assert access_point.board_rev == 21
+    assert access_point.considered_lost_at == 1588175837
     assert access_point.disabled is False
     assert access_point.id == "235678987654345678"
     assert access_point.ip == "192.168.0.4"
@@ -41,13 +42,33 @@ async def test_device_access_point():
     assert access_point.mac == "80:2a:a8:00:01:02"
     assert access_point.model == "U7PG2"
     assert access_point.name == "ACCESS POINT AC PRO"
-    assert access_point.overheating is None
+    assert access_point.next_heartbeat_at == 1588175763
+    assert access_point.overheating is False
     assert access_point.port_overrides == []
     assert access_point.port_table == ACCESS_POINT_AC_PRO["port_table"]
     assert access_point.state == 1
+    assert access_point.sys_stats == {
+        "loadavg_1": "0.15",
+        "loadavg_15": "0.02",
+        "loadavg_5": "0.08",
+        "mem_buffer": 0,
+        "mem_total": 128622592,
+        "mem_used": 63606784,
+    }
     assert access_point.type == "uap"
     assert access_point.version == "4.0.69.10871"
     assert access_point.upgradable is True
+    assert access_point.upgrade_to_firmware == "4.0.80.10875"
+    assert access_point.uplink_depth is None
+    assert access_point.user_num_sta == 12
+    assert access_point.wlan_overrides == [
+        {
+            "name": "My5GHzSSID1",
+            "radio": "na",
+            "radio_name": "wifi1",
+            "wlan_id": "012345678910111213141516",
+        },
+    ]
     assert (
         access_point.__repr__() == f"<Device {access_point.name}: {access_point.mac}>"
     )
@@ -101,6 +122,7 @@ async def test_device_security_gateway():
 
     gateway = devices[GATEWAY_USG3["mac"]]
     assert gateway.board_rev == 16
+    assert gateway.considered_lost_at == 1588175842
     assert gateway.disabled is False
     assert gateway.id == "235678987654345678"
     assert gateway.ip == "1.2.3.4"
@@ -110,13 +132,26 @@ async def test_device_security_gateway():
     assert gateway.mac == "78:8a:20:33:44:55"
     assert gateway.model == "UGW3"
     assert gateway.name == "USG"
-    assert gateway.overheating is None
+    assert gateway.next_heartbeat_at == 1588175774
+    assert gateway.overheating is False
     assert gateway.port_overrides == []
     assert gateway.port_table == GATEWAY_USG3["port_table"]
     assert gateway.state == 1
+    assert gateway.sys_stats == {
+        "loadavg_1": "0.03",
+        "loadavg_15": "0.08",
+        "loadavg_5": "0.07",
+        "mem_buffer": 57561088,
+        "mem_total": 507412480,
+        "mem_used": 293453824,
+    }
     assert gateway.type == "ugw"
     assert gateway.version == "4.4.44.5213844"
     assert gateway.upgradable is True
+    assert gateway.upgrade_to_firmware == "4.4.50.5272448"
+    assert gateway.uplink_depth is None
+    assert gateway.user_num_sta == 20
+    assert gateway.wlan_overrides == []
     assert gateway.__repr__() == f"<Device {gateway.name}: {gateway.mac}>"
 
     assert len(gateway.ports.values()) == 3
@@ -186,6 +221,7 @@ async def test_device_switch():
 
     switch = devices[SWITCH_16_PORT_POE["mac"]]
     assert switch.board_rev == 9
+    assert switch.considered_lost_at == 1588175821
     assert switch.disabled is False
     assert switch.id == "235678987654345678"
     assert switch.ip == "192.168.0.57"
@@ -195,29 +231,43 @@ async def test_device_switch():
     assert switch.mac == "fc:ec:da:11:22:33"
     assert switch.model == "US16P150"
     assert switch.name == "Switch 16"
+    assert switch.next_interval == 23
+    assert switch.next_heartbeat_at == 1588175755
     assert switch.overheating is False
     assert switch.port_overrides == [
         {
+            "poe_mode": "off",
             "port_idx": 3,
             "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-            "poe_mode": "auto",
         },
         {
+            "poe_mode": "auto",
             "port_idx": 4,
             "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-            "poe_mode": "auto",
         },
         {
+            "poe_mode": "auto",
             "port_idx": 16,
             "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-            "poe_mode": "auto",
         },
     ]
     assert switch.port_table == SWITCH_16_PORT_POE["port_table"]
     assert switch.state == 1
+    assert switch.sys_stats == {
+        "loadavg_1": "2.82",
+        "loadavg_15": "2.81",
+        "loadavg_5": "2.80",
+        "mem_buffer": 0,
+        "mem_total": 262402048,
+        "mem_used": 129331200,
+    }
     assert switch.type == "usw"
     assert switch.version == "4.0.66.10832"
     assert switch.upgradable is True
+    assert switch.upgrade_to_firmware == "4.0.80.10875"
+    assert switch.uplink_depth == 2
+    assert switch.user_num_sta == 4
+    assert switch.wlan_overrides == []
     assert switch.__repr__() == f"<Device {switch.name}: {switch.mac}>"
 
     await switch.async_set_port_poe_mode(1, "off")
@@ -227,19 +277,19 @@ async def test_device_switch():
         json={
             "port_overrides": [
                 {
+                    "poe_mode": "off",
                     "port_idx": 3,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "auto",
                 },
                 {
+                    "poe_mode": "auto",
                     "port_idx": 4,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "auto",
                 },
                 {
+                    "poe_mode": "auto",
                     "port_idx": 16,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "auto",
                 },
                 {
                     "port_idx": 1,
@@ -257,24 +307,24 @@ async def test_device_switch():
         json={
             "port_overrides": [
                 {
+                    "poe_mode": "off",
                     "port_idx": 3,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "off",
                 },
                 {
+                    "poe_mode": "auto",
                     "port_idx": 4,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "auto",
                 },
                 {
+                    "poe_mode": "auto",
                     "port_idx": 16,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "auto",
                 },
                 {
+                    "poe_mode": "off",
                     "port_idx": 1,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "off",
                 },
             ]
         },
