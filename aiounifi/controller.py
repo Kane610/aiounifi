@@ -9,7 +9,7 @@ from aiohttp import client_exceptions
 from .clients import Clients, URL as client_url, ClientsAll, URL_ALL as all_client_url
 from .devices import Devices, URL as device_url
 from .errors import raise_error, LoginRequired, ResponseError, RequestError
-from .events import event
+from .events import event, CLIENT_EVENTS, DEVICE_EVENTS
 from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA
 from .wlan import Wlans, URL as wlan_url
 
@@ -155,7 +155,20 @@ class Controller:
             events = []
             for item in message[ATTR_DATA]:
                 events.append(event(item))
-            self.clients.process_event(events)
+            self.clients.process_event(
+                [
+                    client_event
+                    for client_event in events
+                    if client_event.event in CLIENT_EVENTS
+                ]
+            )
+            self.devices.process_event(
+                [
+                    device_event
+                    for device_event in events
+                    if device_event.event in DEVICE_EVENTS
+                ]
+            )
             changes[DATA_EVENT] = set(events)
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT_REMOVED:
