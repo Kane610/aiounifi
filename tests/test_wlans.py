@@ -60,7 +60,7 @@ async def test_ports():
     assert wlan.no2ghz_oui is False
     assert wlan.schedule == []
     assert wlan.security == "wpapsk"
-    assert wlan.site_id == "012345678910111213141517"
+    assert wlan.site_id == "5a32aa4ee4b0412345678910"
     assert wlan.usergroup_id == "012345678910111213141518"
     assert wlan.wep_idx == 1
     assert wlan.wlangroup_id == "012345678910111213141519"
