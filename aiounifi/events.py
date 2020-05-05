@@ -97,8 +97,13 @@ DEVICE_EVENTS = (
 
 
 class event:
-    def __init__(self, raw: dict):
+    def __init__(self, raw: dict) -> None:
         self.raw = raw
+
+    @property
+    def datetime(self) -> str:
+        """Datetime of event '2020-03-01T15:35:08Z'."""
+        return self.raw["datetime"]
 
     @property
     def event(self) -> str:
@@ -116,14 +121,25 @@ class event:
         return self.raw["time"]
 
     @property
-    def datetime(self) -> str:
-        """Datetime of event '2020-03-01T15:35:08Z'."""
-        return self.raw["datetime"]
+    def mac(self) -> str:
+        if self.client:
+            return self.client
+        if self.device:
+            return self.device
+        return ""
 
     @property
     def ap(self) -> str:
         """Access point connected to."""
-        return self.raw("ap", "")
+        return self.raw.get("ap", "")
+
+    @property
+    def bytes(self) -> int:
+        return self.raw.get("bytes", 0)
+
+    @property
+    def channel(self) -> int:
+        return self.raw.get("channel", 0)
 
     @property
     def client(self) -> str:
@@ -141,9 +157,17 @@ class event:
         return self.raw.get("ap") or self.raw.get("gw") or self.raw.get("sw") or ""
 
     @property
+    def duration(self) -> int:
+        return self.raw.get("duration", 0)
+
+    @property
     def hostname(self) -> str:
         """Nice name"""
         return self.raw.get("hostname", "")
+
+    @property
+    def radio(self) -> str:
+        return self.raw.get("radio", "")
 
     @property
     def subsystem(self) -> str:
@@ -151,13 +175,9 @@ class event:
         return self.raw.get("subsystem", "")
 
     @property
-    def ssid(self) -> str:
-        return self.raw.get("ssid", "")
+    def site_id(self) -> str:
+        return self.raw.get("site_id", "")
 
     @property
-    def mac(self) -> str:
-        if self.client:
-            return self.client
-        if self.device:
-            return self.device
-        return ""
+    def ssid(self) -> str:
+        return self.raw.get("ssid", "")

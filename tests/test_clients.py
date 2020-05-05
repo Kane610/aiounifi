@@ -41,9 +41,9 @@ async def test_clients():
     assert client.mac == WIRELESS_CLIENT["mac"]
     assert client.name == "Client 1"
     assert client.oui == "Apple"
-    assert client.site_id == "SITE_ID"
+    assert client.site_id == "5a32aa4ee4b0412345678910"
     assert client.sw_depth == -1
-    assert client.sw_mac == "fc:ec:da:00:00:01"
+    assert client.sw_mac == "fc:ec:da:11:22:33"
     assert client.sw_port == 1
     assert client.rx_bytes == 12867114
     assert client.tx_bytes == 52852089

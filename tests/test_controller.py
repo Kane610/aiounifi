@@ -22,7 +22,12 @@ from aiounifi.events import (
 )
 from aiounifi.wlan import URL as wlan_url
 
-from fixtures import WIRELESS_CLIENT, WLANS
+from fixtures import (
+    EVENT_WIRELESS_CLIENT_CONNECTED,
+    MESSAGE_WIRELESS_CLIENT_REMOVED,
+    WIRELESS_CLIENT,
+    WLANS,
+)
 
 HOST = "127.0.0.1"
 PORT = "80"
@@ -312,7 +317,7 @@ async def test_message_client_events(controller):
     await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
     assert len(controller.clients._items) == 1
 
-    controller.websocket._data = EVENT_CLIENT_1_WIRELESS_CONNECTED
+    controller.websocket._data = EVENT_WIRELESS_CLIENT_CONNECTED
     controller.session_handler(SIGNAL_DATA)
     controller.callback.assert_called_with(
         SIGNAL_DATA, {DATA_EVENT: {controller.clients[WIRELESS_CLIENT["mac"]].event}}
@@ -329,7 +334,7 @@ async def test_message_client_removed(controller):
     await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
     assert len(controller.clients._items) == 1
 
-    controller.websocket._data = MESSAGE_CLIENT_1_REMOVED
+    controller.websocket._data = MESSAGE_WIRELESS_CLIENT_REMOVED
     controller.session_handler(SIGNAL_DATA)
     controller.callback.assert_called_with(
         SIGNAL_DATA, {DATA_CLIENT_REMOVED: {WIRELESS_CLIENT["mac"]}}
@@ -478,23 +483,6 @@ SITE_UNIFIOS_RESPONSE = {
 }
 
 
-MESSAGE_CLIENT_1_REMOVED = {
-    "meta": {"rc": "ok", "message": "user:delete"},
-    "data": [
-        {
-            "_id": "5cdb099be4b01dd218123456",
-            "mac": WIRELESS_CLIENT["mac"],
-            "site_id": WIRELESS_CLIENT["essid"],
-            "oui": "NortelNe",
-            "is_guest": False,
-            "first_seen": 1557858715,
-            "last_seen": WIRELESS_CLIENT["last_seen"] + 10,
-            "is_wired": WIRELESS_CLIENT["is_wired"],
-        }
-    ],
-}
-
-
 EVENT_CLIENT_1_WIRELESS_DISCONNECTED = {
     "meta": {"rc": "ok", "message": "events"},
     "data": [
@@ -567,58 +555,6 @@ EVENT_CLIENT_1_WIRELESS_CONNECTED = {
             "datetime": "2020-04-24T18:37:36Z",
             "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to AP["80:2a:a8:00:00:01"] with "ssid" "{"ssid"}" on "channel 44(na)"',
             "_id": "5ea331fa30c49e00f90ddc1a",
-        }
-    ],
-}
-
-
-EVENT_DEVICE_CONNECTED = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "_id": "5eae82572ab79c00f9d39b38",
-            "datetime": "2020-05-03T08:35:35Z",
-            "key": "EVT_SW_Connected",
-            "msg": "Switch[fc:ec:da:11:22:33] was connected",
-            "site_id": "5a32aa4ee4b0412345678910",
-            "subsystem": "lan",
-            "sw": "fc:ec:da:11:22:33",
-            "sw_name": "Switch 16",
-            "time": 1588494935241,
-        }
-    ],
-}
-
-
-EVENT_DEVICE_RESTARTED_UNKOWN = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "sw": "fc:ec:da:11:22:33",
-            "sw_name": "Switch 16",
-            "key": "EVT_SW_RestartedUnknown",
-            "subsystem": "lan",
-            "site_id": "5a32aa4ee4b0412345678910",
-            "time": 1588192044198,
-            "datetime": "2020-04-29T20:27:24Z",
-            "msg": "Switch[fc:ec:da:11:22:33] was restarted",
-            "_id": "5ea9e37030c49e010363ee0b",
-        }
-    ],
-}
-EVENT_DEVICE_LOST_CONTACT = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "_id": "5eae7fe02ab79c00f9d38960",
-            "datetime": "2020-05-03T08:25:04Z",
-            "key": "EVT_SW_Lost_Contact",
-            "msg": "Switch[fc:ec:da:11:22:33] was disconnected",
-            "site_id": "5a32aa4ee4b0412345678910",
-            "subsystem": "lan",
-            "sw": "fc:ec:da:11:22:33",
-            "sw_name": "Switch 16",
-            "time": 1588494304030,
         }
     ],
 }
