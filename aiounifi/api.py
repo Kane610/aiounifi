@@ -15,7 +15,7 @@ class APIItems:
 
     KEY = None
 
-    def __init__(self, raw, request, path, item_cls):
+    def __init__(self, raw: list, request, path: str, item_cls) -> None:
         self._request = request
         self._path = path
         self._item_cls = item_cls
@@ -23,7 +23,7 @@ class APIItems:
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
-    async def update(self):
+    async def update(self) -> None:
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
@@ -66,7 +66,7 @@ class APIItems:
 
         return removed_items
 
-    def values(self):
+    def values(self) -> list:
         return self._items.values()
 
     def __getitem__(self, obj_id):
@@ -82,7 +82,7 @@ class APIItems:
 class APIItem:
     """Base class for all end points using APIItems class."""
 
-    def __init__(self, raw, request):
+    def __init__(self, raw: dict, request) -> None:
         self._raw = raw
         self._request = request
         self._event = None
@@ -104,7 +104,7 @@ class APIItem:
         """Which source, data or event last called update."""
         return self._source
 
-    def update(self, raw=None, event=None) -> None:
+    def update(self, raw: dict = None, event=None) -> None:
         """Update raw data and signal new data is available."""
         if raw:
             self._raw = raw

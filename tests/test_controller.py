@@ -8,23 +8,32 @@ from asynctest import MagicMock, Mock, patch
 from collections import deque
 import pytest
 
-from aiounifi.controller import Controller, DATA_CLIENT_REMOVED, DATA_EVENT, SIGNAL_DATA
+from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
+from aiounifi.controller import (
+    ATTR_MESSAGE,
+    ATTR_META,
+    Controller,
+    DATA_CLIENT,
+    DATA_CLIENT_REMOVED,
+    DATA_DEVICE,
+    DATA_EVENT,
+    MESSAGE_CLIENT,
+    MESSAGE_DEVICE,
+)
 from aiounifi.clients import (
     URL as client_url,
     URL_ALL as all_client_url,
 )
 from aiounifi.devices import URL as device_url
-from aiounifi.events import (
-    WIRED_CLIENT_CONNECTED,
-    WIRED_CLIENT_DISCONNECTED,
-    WIRELESS_CLIENT_CONNECTED,
-    WIRELESS_CLIENT_DISCONNECTED,
-)
+from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
+from aiounifi.websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA
 from aiounifi.wlan import URL as wlan_url
 
 from fixtures import (
+    EVENT_SWITCH_16_CONNECTED,
     EVENT_WIRELESS_CLIENT_CONNECTED,
     MESSAGE_WIRELESS_CLIENT_REMOVED,
+    SWITCH_16_PORT_POE,
     WIRELESS_CLIENT,
     WLANS,
 )
@@ -306,27 +315,84 @@ async def test_unifios_controller(controller):
     )
 
 
+async def test_no_data(controller, caplog):
+    """Test controller initialize."""
+    assert not controller.session_handler(SIGNAL_DATA)
+    assert not controller.session_handler(SIGNAL_CONNECTION_STATE)
+
+    await mock_initialize(controller)
+
+    assert len(controller.clients._items) == 0
+    assert len(controller.clients_all._items) == 0
+    assert len(controller.devices._items) == 0
+    assert len(controller.wlans._items) == 0
+
+    assert not controller.clients[1]
+    assert "Couldn't find key: 1" in caplog.text
+
+    message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
+    assert controller.message_handler(message) == {}
+
+    assert not controller.stop_websocket()
+
+
 async def test_client(controller):
-    """Test controller communicating client class."""
+    """Test controller adding client on initialize."""
     await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
     assert len(controller.clients._items) == 1
 
 
-async def test_message_client_events(controller):
-    """Test controller communicating different client events."""
-    await mock_initialize(controller, clients_response=[WIRELESS_CLIENT])
+async def test_clients(controller):
+    """Test controller managing clients."""
+    await mock_initialize(controller)
+    assert len(controller.clients._items) == 0
+
+    # Add client from websocket
+    controller.websocket._data = {
+        "meta": {"message": MESSAGE_CLIENT},
+        "data": [WIRELESS_CLIENT],
+    }
+    controller.session_handler(SIGNAL_DATA)
     assert len(controller.clients._items) == 1
 
+    # Verify expected callback signalling
+    client = controller.clients[WIRELESS_CLIENT["mac"]]
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_CLIENT: {client.mac}})
+
+    # Verify APIItems.__getitem__
+    client_mac = next(iter(controller.clients))
+    assert client_mac == client.mac
+
+    assert client.update() is None
+
+    # Register callback
+    mock_callback = MagicMock()
+    client.register_callback(mock_callback)
+    assert len(client._callbacks) == 1
+
+    # Retrieve websocket data
+    controller.websocket._data = {
+        "meta": {"message": MESSAGE_CLIENT},
+        "data": [WIRELESS_CLIENT],
+    }
+    controller.session_handler(SIGNAL_DATA)
+
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_CLIENT: set()})
+    assert client.last_updated == SOURCE_DATA
+    assert mock_callback.call_count == 1
+
+    # Retrieve websocket event
     controller.websocket._data = EVENT_WIRELESS_CLIENT_CONNECTED
     controller.session_handler(SIGNAL_DATA)
-    controller.callback.assert_called_with(
-        SIGNAL_DATA, {DATA_EVENT: {controller.clients[WIRELESS_CLIENT["mac"]].event}}
-    )
 
-    assert (
-        controller.clients[WIRELESS_CLIENT["mac"]].event.event
-        == WIRELESS_CLIENT_CONNECTED
-    )
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_EVENT: {client.event}})
+    assert client.event.event == WIRELESS_CLIENT_CONNECTED
+    assert client.last_updated == SOURCE_EVENT
+    assert mock_callback.call_count == 2
+
+    # Remove callback
+    client.remove_callback(mock_callback)
+    assert len(client._callbacks) == 0
 
 
 async def test_message_client_removed(controller):
@@ -341,6 +407,69 @@ async def test_message_client_removed(controller):
     )
 
     assert len(controller.clients._items) == 0
+
+
+async def test_device(controller):
+    """Test controller adding device on initialize."""
+    await mock_initialize(controller, devices_response=[SWITCH_16_PORT_POE])
+    assert len(controller.devices._items) == 1
+
+
+async def test_devices(controller):
+    """Test controller managing devices."""
+    await mock_initialize(controller)
+    assert len(controller.devices._items) == 0
+
+    # Add client from websocket
+    controller.websocket._data = {
+        "meta": {"message": MESSAGE_DEVICE},
+        "data": [SWITCH_16_PORT_POE],
+    }
+    controller.session_handler(SIGNAL_DATA)
+    assert len(controller.devices._items) == 1
+
+    # Verify expected callback signalling
+    device = controller.devices[SWITCH_16_PORT_POE["mac"]]
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DEVICE: {device.mac}})
+
+    # Verify APIItems.__getitem__
+    device_mac = next(iter(controller.devices))
+    assert device_mac == device.mac
+
+    # Verify Device.Port.__iter__
+    port_1 = next(iter(device.ports))
+    assert port_1 == 1
+
+    assert device.update() is None
+
+    # Register callback
+    mock_callback = MagicMock()
+    device.register_callback(mock_callback)
+    assert len(device._callbacks) == 1
+
+    # Retrieve websocket data
+    controller.websocket._data = {
+        "meta": {"message": MESSAGE_DEVICE},
+        "data": [SWITCH_16_PORT_POE],
+    }
+    controller.session_handler(SIGNAL_DATA)
+
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DEVICE: set()})
+    assert device.last_updated == SOURCE_DATA
+    assert mock_callback.call_count == 1
+
+    # Retrieve websocket event
+    controller.websocket._data = EVENT_SWITCH_16_CONNECTED
+    controller.session_handler(SIGNAL_DATA)
+
+    controller.callback.assert_called_with(SIGNAL_DATA, {DATA_EVENT: {device.event}})
+    assert device.event.event == SWITCH_CONNECTED
+    assert device.last_updated == SOURCE_EVENT
+    assert mock_callback.call_count == 2
+
+    # Remove callback
+    device.remove_callback(mock_callback)
+    assert len(device._callbacks) == 0
 
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
@@ -478,83 +607,6 @@ SITE_UNIFIOS_RESPONSE = {
             "attr_hidden_id": "default",
             "attr_no_delete": True,
             "role": "admin",
-        }
-    ],
-}
-
-
-EVENT_CLIENT_1_WIRELESS_DISCONNECTED = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "user": WIRELESS_CLIENT["mac"],
-            "ssid": "ssid",
-            "hostname": WIRELESS_CLIENT["hostname"],
-            "ap": "80:2a:a8:00:00:01",
-            "duration": 467,
-            "bytes": 459039,
-            "key": "EVT_WU_Disconnected",
-            "subsystem": "wlan",
-            "site_id": WIRELESS_CLIENT["essid"],
-            "time": 1587752927000,
-            "datetime": "2020-04-24T18:28:47Z",
-            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "{"ssid"}" (7m 47s connected, 448.28K bytes, last AP["80:2a:a8:00:00:01"])',
-            "_id": "5ea32ff730c49e00f90dca1a",
-        }
-    ],
-}
-EVENT_CLIENT_1_WIRED_CONNECTED = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "user": WIRELESS_CLIENT["mac"],
-            "network": "LAN",
-            "key": "EVT_LU_Connected",
-            "subsystem": "lan",
-            "site_id": WIRELESS_CLIENT["essid"],
-            "time": 1587753022473,
-            "datetime": "2020-04-24T18:30:22Z",
-            "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to LAN',
-            "_id": "5ea3304330c49e00f90dcc35",
-        }
-    ],
-}
-EVENT_CLIENT_1_WIRED_DISCONNECTED = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "user": WIRELESS_CLIENT["mac"],
-            "hostname": WIRELESS_CLIENT["hostname"],
-            "network": "LAN",
-            "duration": 5,
-            "bytes": 0,
-            "key": "EVT_LU_Disconnected",
-            "subsystem": "lan",
-            "site_id": WIRELESS_CLIENT["essid"],
-            "time": 1587753027000,
-            "datetime": "2020-04-24T18:30:27Z",
-            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "LAN" (5s connected, 0.00 bytes)',
-            "_id": "5ea3318a30c49e00f90dd8c4",
-        }
-    ],
-}
-EVENT_CLIENT_1_WIRELESS_CONNECTED = {
-    "meta": {"rc": "ok", "message": "events"},
-    "data": [
-        {
-            "user": WIRELESS_CLIENT["mac"],
-            "ssid": "ssid",
-            "ap": "80:2a:a8:00:00:01",
-            "radio": "na",
-            "channel": "44",
-            "hostname": WIRELESS_CLIENT["hostname"],
-            "key": "EVT_WU_Connected",
-            "subsystem": "wlan",
-            "site_id": WIRELESS_CLIENT["essid"],
-            "time": 1587753456179,
-            "datetime": "2020-04-24T18:37:36Z",
-            "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to AP["80:2a:a8:00:00:01"] with "ssid" "{"ssid"}" on "channel 44(na)"',
-            "_id": "5ea331fa30c49e00f90ddc1a",
         }
     ],
 }

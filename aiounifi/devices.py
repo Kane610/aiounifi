@@ -28,9 +28,10 @@ class Device(APIItem):
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
 
-    def update(self, raw: dict) -> None:
-        self.ports.update(raw.get("port_table", []))
-        super().update(raw)
+    def update(self, raw: dict = None, event=None) -> None:
+        if raw:
+            self.ports.update(raw.get("port_table", []))
+        super().update(raw, event)
 
     @property
     def board_rev(self) -> int:
@@ -183,10 +184,13 @@ class Ports:
         for raw in raw_list:
             port = Port(raw)
             index = None
+
             if port.port_idx is not None:
                 index = port.port_idx
+
             elif port.ifname is not None:
                 index = port.ifname
+
             if index is not None:
                 self.ports[index] = port
 

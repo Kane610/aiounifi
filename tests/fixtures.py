@@ -2082,7 +2082,6 @@ SWITCH_16_PORT_POE = {
     "x_ssh_hostkey_fingerprint": "3456787654567898765",
 }
 
-
 SWITCH_8_PORT = {
     "_id": "5a7cc21ae4b068sbddb234565324134",
     "port_table": [
@@ -2729,7 +2728,6 @@ WLANS = [
     },
 ]
 
-
 WIRELESS_CLIENT = {
     "_id": "5a32b0c9e4b047ede36a85cc",
     "_is_guest_by_uap": False,
@@ -2828,19 +2826,78 @@ EVENT_WIRELESS_CLIENT_CONNECTED = {
     "meta": {"rc": "ok", "message": "events"},
     "data": [
         {
-            "user": WIRELESS_CLIENT["mac"],
-            "ssid": WIRELESS_CLIENT["essid"],
+            "_id": "5ea331fa30c49e00f90ddc1a",
             "ap": WIRELESS_CLIENT["ap_mac"],
-            "radio": WIRELESS_CLIENT["radio"],
             "channel": WIRELESS_CLIENT["channel"],
+            "datetime": "2020-04-24T18:37:36Z",
             "hostname": WIRELESS_CLIENT["hostname"],
             "key": "EVT_WU_Connected",
-            "subsystem": "wlan",
-            "site_id": WIRELESS_CLIENT["site_id"],
-            "time": 1587753456179,
-            "datetime": "2020-04-24T18:37:36Z",
             "msg": f'User[{WIRELESS_CLIENT["mac"]}] has connected to AP[{WIRELESS_CLIENT["ap_mac"]}] with SSID "{WIRELESS_CLIENT["essid"]}" on "channel {WIRELESS_CLIENT["channel"]}({WIRELESS_CLIENT["radio"]})"',
-            "_id": "5ea331fa30c49e00f90ddc1a",
+            "radio": WIRELESS_CLIENT["radio"],
+            "site_id": WIRELESS_CLIENT["site_id"],
+            "ssid": WIRELESS_CLIENT["essid"],
+            "subsystem": "wlan",
+            "time": 1587753456179,
+            "user": WIRELESS_CLIENT["mac"],
+        }
+    ],
+}
+
+
+EVENT_WIRELESS_CLIENT_DISCONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "_id": "5ea32ff730c49e00f90dca1a",
+            "ap": WIRELESS_CLIENT["ap_mac"],
+            "bytes": 459039,
+            "datetime": "2020-04-24T18:28:47Z",
+            "duration": 467,
+            "hostname": WIRELESS_CLIENT["hostname"],
+            "key": "EVT_WU_Disconnected",
+            "msg": f'User[{WIRELESS_CLIENT["mac"]}] disconnected from "{WIRELESS_CLIENT["essid"]}" (7m 47s connected, 448.28K bytes, last AP[{WIRELESS_CLIENT["ap_mac"]}])',
+            "site_id": WIRELESS_CLIENT["site_id"],
+            "ssid": WIRELESS_CLIENT["essid"],
+            "subsystem": "wlan",
+            "time": 1587752927000,
+            "user": WIRELESS_CLIENT["mac"],
+        }
+    ],
+}
+
+EVENT_WIRELESS_CLIENT_WIRED_CONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "_id": "5ea3304330c49e00f90dcc35",
+            "datetime": "2020-04-24T18:30:22Z",
+            "key": "EVT_LU_Connected",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} has connected to LAN',
+            "network": "LAN",
+            "site_id": WIRELESS_CLIENT["site_id"],
+            "subsystem": "lan",
+            "time": 1587753022473,
+            "user": WIRELESS_CLIENT["mac"],
+        }
+    ],
+}
+
+EVENT_WIRELESS_CLIENT_WIRED_DISCONNECTED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "_id": "5ea3318a30c49e00f90dd8c4",
+            "bytes": 0,
+            "datetime": "2020-04-24T18:30:27Z",
+            "duration": 5,
+            "hostname": WIRELESS_CLIENT["hostname"],
+            "key": "EVT_LU_Disconnected",
+            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "LAN" (5s connected, 0.00 bytes)',
+            "network": "LAN",
+            "site_id": WIRELESS_CLIENT["site_id"],
+            "subsystem": "lan",
+            "time": 1587753027000,
+            "user": WIRELESS_CLIENT["mac"],
         }
     ],
 }
@@ -2878,6 +2935,7 @@ EVENT_SWITCH_16_RESTARTED_UNKOWN = {
         }
     ],
 }
+
 EVENT_SWITCH_16_LOST_CONTACT = {
     "meta": {"rc": "ok", "message": "events"},
     "data": [
