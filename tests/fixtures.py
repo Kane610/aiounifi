@@ -704,7 +704,13 @@ ACCESS_POINT_AC_PRO = {
             "name": "My5GHzSSID1",
             "radio": "na",
             "radio_name": "wifi1",
-            "wlan_id": "012345678910111213141516",
+            "wlan_id": "wlan_id_1",
+        },
+        {
+            "enabled": False,
+            "radio": "na",
+            "radio_name": "wifi1",
+            "wlan_id": "wlan_id_1",
         },
     ],
     "wlangroup_id_na": "5a32aa4ee4123",
@@ -2656,7 +2662,7 @@ SWITCH_8_PORT = {
 
 WLANS = [
     {
-        "_id": "012345678910111213141516",
+        "_id": "wlan_id_1",
         "bc_filter_enabled": False,
         "bc_filter_list": [],
         "dtim_mode": "default",
@@ -2687,7 +2693,7 @@ WLANS = [
         "wlangroup_id": "012345678910111213141519",
         "wpa_enc": "ccmp",
         "wpa_mode": "wpa2",
-        "x_iapp_key": "01234567891011121314151617181920",
+        "x_iapp_key": "wlan_id_117181920",
         "x_passphrase": "password in clear text",
     },
     {

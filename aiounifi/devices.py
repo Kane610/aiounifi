@@ -3,6 +3,7 @@
 Access points, Gateways, Switches.
 """
 
+from dataclasses import dataclass, field
 import logging
 
 from .api import APIItem, APIItems
@@ -140,7 +141,9 @@ class Device(APIItem):
     @property
     def wlan_overrides(self) -> list:
         """Wlan configuration override."""
-        return self.raw.get("wlan_overrides", [])
+        return [
+            Wlan_override(**override) for override in self.raw.get("wlan_overrides", [])
+        ]
 
     async def async_set_port_poe_mode(self, port_idx, mode) -> None:
         """Set port poe mode.
@@ -277,3 +280,14 @@ class Port:
     def __repr__(self):
         """Return the representation."""
         return f"<{self.name}: Poe {self.poe_enable}>"
+
+
+@dataclass
+class Wlan_override:
+    """Describes access point specific wlan overrides."""
+
+    enabled: bool = True
+    name: str = ""
+    radio: str = field(repr=False, default="")
+    radio_name: str = ""
+    wlan_id: str = field(repr=False, default="")

@@ -6,7 +6,7 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 from asyncio import Future
 from asynctest import MagicMock
 
-from aiounifi.devices import Devices
+from aiounifi.devices import Devices, Wlan_override
 
 from fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
 
@@ -62,12 +62,22 @@ async def test_device_access_point():
     assert access_point.uplink_depth is None
     assert access_point.user_num_sta == 12
     assert access_point.wlan_overrides == [
-        {
-            "name": "My5GHzSSID1",
-            "radio": "na",
-            "radio_name": "wifi1",
-            "wlan_id": "012345678910111213141516",
-        },
+        Wlan_override(
+            **{
+                "name": "My5GHzSSID1",
+                "radio": "na",
+                "radio_name": "wifi1",
+                "wlan_id": "wlan_id_1",
+            }
+        ),
+        Wlan_override(
+            **{
+                "enabled": False,
+                "radio": "na",
+                "radio_name": "wifi1",
+                "wlan_id": "wlan_id_1",
+            }
+        ),
     ]
     assert (
         access_point.__repr__() == f"<Device {access_point.name}: {access_point.mac}>"

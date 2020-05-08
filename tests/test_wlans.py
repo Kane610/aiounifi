@@ -31,7 +31,7 @@ async def test_ports():
     assert len(wlans.values()) == 2
 
     wlan = wlans["SSID 1"]
-    assert wlan.id == "012345678910111213141516"
+    assert wlan.id == "wlan_id_1"
     assert wlan.bc_filter_enabled == False
     assert wlan.bc_filter_list == []
     assert wlan.dtim_mode == "default"
@@ -66,15 +66,15 @@ async def test_ports():
     assert wlan.wlangroup_id == "012345678910111213141519"
     assert wlan.wpa_enc == "ccmp"
     assert wlan.wpa_mode == "wpa2"
-    assert wlan.x_iapp_key == "01234567891011121314151617181920"
+    assert wlan.x_iapp_key == "wlan_id_117181920"
     assert wlan.x_passphrase == "password in clear text"
 
     await wlans.async_enable(wlan)
     mock_requests.assert_called_with(
-        "put", "/rest/wlanconf/012345678910111213141516", json={"enabled": True}
+        "put", "/rest/wlanconf/wlan_id_1", json={"enabled": True}
     )
 
     await wlans.async_disable(wlan)
     mock_requests.assert_called_with(
-        "put", "/rest/wlanconf/012345678910111213141516", json={"enabled": False}
+        "put", "/rest/wlanconf/wlan_id_1", json={"enabled": False}
     )
