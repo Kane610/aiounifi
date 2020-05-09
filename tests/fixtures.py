@@ -2952,3 +2952,22 @@ EVENT_SWITCH_16_LOST_CONTACT = {
         }
     ],
 }
+
+EVENT_SWITCH_16_UPGRADED = {
+    "meta": {"rc": "ok", "message": "events"},
+    "data": [
+        {
+            "_id": "5eae7fe02ab79c00f9d38960",
+            "datetime": "2020-05-09T20:06:37Z",
+            "key": "EVT_SW_Upgraded",
+            "msg": f'Switch[{SWITCH_16_PORT_POE["mac"]}] was upgraded from "4.0.66.10832" to "4.3.13.11253"',
+            "site_id": SWITCH_16_PORT_POE["site_id"],
+            "subsystem": "lan",
+            "sw": SWITCH_16_PORT_POE["mac"],
+            "sw_name": SWITCH_16_PORT_POE["name"],
+            "time": 1589054797635,
+            "version_from": "4.0.66.10832",
+            "version_to": "4.3.13.11253",
+        }
+    ],
+}

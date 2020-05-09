@@ -181,3 +181,11 @@ class event:
     @property
     def ssid(self) -> str:
         return self.raw.get("ssid", "")
+
+    @property
+    def version_from(self) -> str:
+        return self.raw.get("version_from", "")
+
+    @property
+    def version_to(self) -> str:
+        return self.raw.get("version_to", "")

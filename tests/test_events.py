@@ -74,3 +74,5 @@ async def test_device_event():
     assert device.subsystem == "lan"
     assert device.site_id == "5a32aa4ee4b0412345678910"
     assert device.ssid == ""
+    assert device.version_from == ""
+    assert device.version_to == ""
