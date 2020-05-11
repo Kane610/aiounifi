@@ -1,5 +1,6 @@
 """API management class and base class for the different end points."""
 
+from abc import ABC, abstractmethod
 import logging
 
 from pprint import pformat
@@ -87,7 +88,7 @@ class APIItem:
         self._request = request
         self._event = None
         self._source = SOURCE_DATA
-        self._callbacks = []
+        self.listeners = set()
 
     @property
     def raw(self) -> dict:
@@ -117,17 +118,13 @@ class APIItem:
         else:
             return
 
-        for signal_update in self._callbacks:
-            signal_update()
+        for listener in self.listeners:
+            listener.signal_update()
 
-    def register_callback(self, callback) -> None:
-        """Register callback for signalling.
 
-        Callback will be used by update.
-        """
-        self._callbacks.append(callback)
+class APIItemListener(ABC):
+    """To register listeners to an APIItem."""
 
-    def remove_callback(self, callback) -> None:
-        """Remove registered callback."""
-        if callback in self._callbacks:
-            self._callbacks.remove(callback)
+    @abstractmethod
+    def signal_update(self):
+        raise NotImplementedError
