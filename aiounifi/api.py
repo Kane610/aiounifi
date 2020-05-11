@@ -88,7 +88,7 @@ class APIItem:
         self._request = request
         self._event = None
         self._source = SOURCE_DATA
-        self.listeners = set()
+        self.observers = set()
 
     @property
     def raw(self) -> dict:
@@ -118,13 +118,13 @@ class APIItem:
         else:
             return
 
-        for listener in self.listeners:
-            listener.signal_update()
+        for observer in self.observers:
+            observer.update()
 
 
-class APIItemListener(ABC):
-    """To register listeners to an APIItem."""
+class APIItemObserver(ABC):
+    """To register observer to an APIItem."""
 
     @abstractmethod
-    def signal_update(self):
+    def update(self):
         raise NotImplementedError
