@@ -95,6 +95,12 @@ class Controller:
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
+    async def site_description(self):
+        """User description of current site."""
+        description = await self.request("get", "/self")
+        LOGGER.debug(description)
+        return description
+
     async def initialize(self):
         clients = await self.request("get", client_url)
         self.clients = Clients(clients, self.request)
