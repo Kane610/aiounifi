@@ -72,6 +72,7 @@ async def main(host, username, password, port, site, sslcontext=False):
 
     await controller.initialize()
     await controller.sites()
+    await controller.site_description()
     controller.start_websocket()
 
     try:

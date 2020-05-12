@@ -209,6 +209,18 @@ async def test_controller(controller):
         ssl=None,
     )
 
+    mock_request_response(controller, json=SELF_RESPONSE)
+    await controller.site_description()
+    assert controller.session.request.call_count == 8
+    assert controller.session.request.called
+    controller.session.request.assert_called_with(
+        "get",
+        "https://127.0.0.1:8443/api/s/default/self",
+        headers=None,
+        json=None,
+        ssl=None,
+    )
+
     controller.start_websocket()
     assert controller.websocket.url == "wss://127.0.0.1:8443/wss/s/default/events"
 
@@ -303,6 +315,18 @@ async def test_unifios_controller(controller):
     controller.session.request.assert_called_with(
         "get",
         "https://127.0.0.1:8443/proxy/network/api/self/sites",
+        headers={"x-csrf-token": 123},
+        json=None,
+        ssl=None,
+    )
+
+    mock_request_response(controller, json=SELF_RESPONSE)
+    await controller.site_description()
+    assert controller.session.request.call_count == 8
+    assert controller.session.request.called
+    controller.session.request.assert_called_with(
+        "get",
+        "https://127.0.0.1:8443/proxy/network/api/s/default/self",
         headers={"x-csrf-token": 123},
         json=None,
         ssl=None,
@@ -607,6 +631,32 @@ SITE_UNIFIOS_RESPONSE = {
             "attr_hidden_id": "default",
             "attr_no_delete": True,
             "role": "admin",
+        }
+    ],
+}
+
+SELF_RESPONSE = {
+    "meta": {"rc": "ok"},
+    "data": [
+        {
+            "name": "hass",
+            "site_id": "5a32aa4ee4b047ede12345678",
+            "site_name": "default",
+            "site_role": "admin",
+            "site_permissions": [],
+            "super_site_permissions": [],
+            "last_site_id": "5a32aa4ee4b047ede12345678",
+            "requires_new_password": False,
+            "is_super": False,
+            "device_id": "8ed4f0ae-4447-43a4-907d-46bb24bce1bd",
+            "admin_id": "5b8c123456b04eb40c39e709",
+            "email_alert_enabled": False,
+            "email_alert_grouping_enabled": False,
+            "email_alert_grouping_delay": 60,
+            "push_alert_enabled": True,
+            "is_professional_installer": False,
+            "html_email_enabled": True,
+            "ui_settings": {},
         }
     ],
 }
