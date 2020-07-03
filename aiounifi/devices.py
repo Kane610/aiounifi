@@ -78,6 +78,10 @@ class Device(APIItem):
         return self.raw.get("name")
 
     @property
+    def led_overerride -> str:
+        return self.raw["led_override"]
+    
+    @property
     def next_heartbeat_at(self) -> int:
         """Next heart beat full UNIX time."""
         return self.raw.get("next_heartbeat_at")
