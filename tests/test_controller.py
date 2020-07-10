@@ -7,7 +7,9 @@ import asyncio
 from asynctest import MagicMock, Mock, patch
 from collections import deque
 import pytest
+import aiohttp
 
+from aiounifi import LoginRequired
 from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.controller import (
     ATTR_MESSAGE,
@@ -28,6 +30,7 @@ from aiounifi.devices import URL as device_url
 from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
 from aiounifi.websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA
 from aiounifi.wlan import URL as wlan_url
+from aioresponses import aioresponses, CallbackResult
 
 from fixtures import (
     EVENT_SWITCH_16_CONNECTED,
@@ -42,6 +45,12 @@ HOST = "127.0.0.1"
 PORT = "80"
 USERNAME = "user"
 PASSWORD = "password"
+
+
+@pytest.fixture
+def mock_aioresponse():
+    with aioresponses() as m:
+        yield m
 
 
 @pytest.fixture
@@ -337,6 +346,167 @@ async def test_unifios_controller(controller):
         controller.websocket.url
         == "wss://127.0.0.1:8443/proxy/network/wss/s/default/events"
     )
+
+
+async def test_no_data(controller, caplog):
+    """Test controller initialize."""
+    assert not controller.session_handler(SIGNAL_DATA)
+    assert not controller.session_handler(SIGNAL_CONNECTION_STATE)
+
+    await mock_initialize(controller)
+
+    assert len(controller.clients._items) == 0
+    assert len(controller.clients_all._items) == 0
+    assert len(controller.devices._items) == 0
+    assert len(controller.wlans._items) == 0
+
+    assert not controller.clients[1]
+    assert "Couldn't find key: 1" in caplog.text
+
+    message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
+    assert controller.message_handler(message) == {}
+
+    assert not controller.stop_websocket()
+
+
+async def test_unifios_controller_relogin_success(mock_aioresponse):
+    """Test controller communicating with a UniFi OS controller with retries."""
+
+    session = aiohttp.ClientSession()
+    controller = Controller(
+        HOST, session, username=USERNAME, password=PASSWORD, callback=Mock()
+    )
+
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443",
+        body="<html>",
+        headers={"x-csrf-token": "123"},
+        content_type="text/html",
+        status=200,
+    )
+
+    await controller.check_unifi_os()
+    assert controller.is_unifi_os
+
+    mock_aioresponse.post(
+        "https://127.0.0.1:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+
+    await controller.login()
+
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/sta",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+    await controller.request("get", client_url)
+
+    # After a login failure we retry once
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443",
+        body="<html>",
+        headers={"x-csrf-token": "123"},
+        content_type="text/html",
+        status=200,
+    )
+    mock_aioresponse.post(
+        "https://127.0.0.1:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/device",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+
+    response = await controller.request("get", device_url)
+    assert response.status == 200
+
+
+async def test_unifios_controller_relogin_fails(mock_aioresponse):
+    """Test controller communicating with a UniFi OS controller with retries."""
+
+    session = aiohttp.ClientSession()
+    controller = Controller(
+        HOST, session, username=USERNAME, password=PASSWORD, callback=Mock()
+    )
+
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443",
+        body="<html>",
+        headers={"x-csrf-token": "123"},
+        content_type="text/html",
+        status=200,
+    )
+
+    await controller.check_unifi_os()
+    assert controller.is_unifi_os
+    assert len(mock_aioresponse.requests) == 1
+
+    mock_aioresponse.post(
+        "https://127.0.0.1:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+
+    await controller.login()
+
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/sta",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+    await controller.request("get", client_url)
+
+    # After a login failure we retry once
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443",
+        body="<html>",
+        headers={"x-csrf-token": "123"},
+        content_type="text/html",
+        status=200,
+    )
+    mock_aioresponse.post(
+        "https://127.0.0.1:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+        status=401,
+    )
+
+    with pytest.raises(LoginRequired):
+        await controller.request("get", device_url)
+
+    # After a login failure and retry, we do
+    # not retry over and over
+    mock_aioresponse.get(
+        "https://127.0.0.1:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
+    with pytest.raises(LoginRequired):
+        await controller.request("get", device_url)
 
 
 async def test_no_data(controller, caplog):

@@ -193,6 +193,8 @@ class Controller:
         try:
             return await self._request(method, path, json, url, **kwargs)
         except LoginRequired:
+            if not self.can_retry_login:
+                raise
             # Session likely expired, try again
             self.can_retry_login = False
             # Make sure we get a new csrf token

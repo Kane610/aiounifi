@@ -1,0 +1,10 @@
+asynctest
+coveralls
+flake8
+mock
+pylint
+pytest
+pytest-asyncio==0.14.0
+pytest-cov
+aioresponses
+tox
