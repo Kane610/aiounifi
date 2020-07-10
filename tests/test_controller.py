@@ -348,27 +348,6 @@ async def test_unifios_controller(controller):
     )
 
 
-async def test_no_data(controller, caplog):
-    """Test controller initialize."""
-    assert not controller.session_handler(SIGNAL_DATA)
-    assert not controller.session_handler(SIGNAL_CONNECTION_STATE)
-
-    await mock_initialize(controller)
-
-    assert len(controller.clients._items) == 0
-    assert len(controller.clients_all._items) == 0
-    assert len(controller.devices._items) == 0
-    assert len(controller.wlans._items) == 0
-
-    assert not controller.clients[1]
-    assert "Couldn't find key: 1" in caplog.text
-
-    message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
-    assert controller.message_handler(message) == {}
-
-    assert not controller.stop_websocket()
-
-
 async def test_unifios_controller_relogin_success(mock_aioresponse):
     """Test controller communicating with a UniFi OS controller with retries."""
 
