@@ -53,6 +53,7 @@ class Controller:
         self.site = site
         self.sslcontext = sslcontext
         self.callback = callback
+        self.can_retry_login = False
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
@@ -66,7 +67,7 @@ class Controller:
         self.wlans = None
 
     async def check_unifi_os(self):
-        response = await self.request("get", url=self.url, allow_redirects=False)
+        response = await self._request("get", url=self.url, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
@@ -83,7 +84,9 @@ class Controller:
             "remember": True,
         }
 
-        await self.request("post", url=url, json=auth)
+        await self._request("post", url=url, json=auth)
+
+        self.can_retry_login = True
 
     async def sites(self):
         if self.is_unifi_os:
@@ -186,6 +189,20 @@ class Controller:
         return changes
 
     async def request(self, method, path=None, json=None, url=None, **kwargs):
+        """Make a request to the API, retry login on failure."""
+        try:
+            return await self._request(method, path, json, url, **kwargs)
+        except LoginRequired:
+            if not self.can_retry_login:
+                raise
+            # Session likely expired, try again
+            self.can_retry_login = False
+            # Make sure we get a new csrf token
+            await self.check_unifi_os()
+            await self.login()
+            return await self._request(method, path, json, url, **kwargs)
+
+    async def _request(self, method, path=None, json=None, url=None, **kwargs):
         """Make a request to the API."""
         if not url:
             if self.is_unifi_os:
