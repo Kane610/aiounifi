@@ -4,7 +4,7 @@ pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
 
 from asyncio import Future
-from asynctest import MagicMock
+from unittest.mock import AsyncMock
 
 from aiounifi.wlan import Wlans
 
@@ -13,7 +13,7 @@ from fixtures import WLANS
 
 async def test_no_ports():
     """Test that no ports also work."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     wlans = Wlans([], mock_requests)
     await wlans.update()
@@ -24,7 +24,7 @@ async def test_no_ports():
 
 async def test_ports():
     """Test that different types of ports work."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     wlans = Wlans(WLANS, mock_requests)
 
