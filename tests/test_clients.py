@@ -4,7 +4,7 @@ pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
 
 from asyncio import Future
-from asynctest import MagicMock
+from unittest.mock import AsyncMock
 
 from aiounifi.clients import Clients
 
@@ -13,7 +13,7 @@ from fixtures import WIRELESS_CLIENT
 
 async def test_no_clients():
     """Test that no clients also work."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     clients = Clients([], mock_requests)
     await clients.update()
@@ -24,7 +24,7 @@ async def test_no_clients():
 
 async def test_clients():
     """Test clients class."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     clients = Clients([WIRELESS_CLIENT], mock_requests)
 

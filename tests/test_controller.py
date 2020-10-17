@@ -4,7 +4,8 @@ pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller
 """
 
 import asyncio
-from asynctest import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
+
 from collections import deque
 import pytest
 import aiohttp
@@ -539,7 +540,7 @@ async def test_clients(controller):
     assert client.update() is None
 
     # Register callback
-    mock_callback = MagicMock()
+    mock_callback = Mock()
     client.register_callback(mock_callback)
     assert len(client._callbacks) == 1
 
@@ -616,7 +617,7 @@ async def test_devices(controller):
     assert device.update() is None
 
     # Register callback
-    mock_callback = MagicMock()
+    mock_callback = Mock()
     device.register_callback(mock_callback)
     assert len(device._callbacks) == 1
 

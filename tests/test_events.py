@@ -1,4 +1,7 @@
-"""Test events."""
+"""Test events.
+
+pytest --cov-report term-missing --cov=aiounifi.events tests/test_events.py
+"""
 
 import pytest
 

@@ -4,7 +4,7 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
 from asyncio import Future
-from asynctest import MagicMock
+from unittest.mock import AsyncMock
 
 from aiounifi.devices import Devices
 
@@ -13,7 +13,7 @@ from fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
 
 async def test_no_devices():
     """Test that no devices also work."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     devices = Devices([], mock_requests)
     await devices.update()
@@ -24,7 +24,7 @@ async def test_no_devices():
 
 async def test_device_access_point():
     """Test device class on an access point."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     devices = Devices([ACCESS_POINT_AC_PRO], mock_requests)
 
@@ -114,7 +114,7 @@ async def test_device_access_point():
 
 async def test_device_security_gateway():
     """Test device class on a security gateway."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     devices = Devices([GATEWAY_USG3], mock_requests)
 
@@ -213,7 +213,7 @@ async def test_device_security_gateway():
 
 async def test_device_switch():
     """Test device class on aswitch."""
-    mock_requests = MagicMock(return_value=Future())
+    mock_requests = AsyncMock(return_value=Future())
     mock_requests.return_value.set_result("")
     devices = Devices([SWITCH_16_PORT_POE], mock_requests)
 
