@@ -8,6 +8,7 @@ from aiohttp import client_exceptions
 
 from .clients import Clients, URL as client_url, ClientsAll, URL_ALL as all_client_url
 from .devices import Devices, URL as device_url
+from .dpi import DPIRestrictionGroups, GROUP_URL as dpi_group_url
 from .errors import raise_error, LoginRequired, ResponseError, RequestError
 from .events import event, CLIENT_EVENTS, DEVICE_EVENTS
 from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA
@@ -64,6 +65,7 @@ class Controller:
         self.clients = None
         self.clients_all = None
         self.devices = None
+        self.dpi_groups = None
         self.wlans = None
 
     async def check_unifi_os(self):
@@ -109,6 +111,8 @@ class Controller:
         self.clients = Clients(clients, self.request)
         devices = await self.request("get", device_url)
         self.devices = Devices(devices, self.request)
+        dpi_groups = await self.request("get", dpi_group_url)
+        self.dpi_groups = DPIRestrictionGroups(dpi_groups, self.request)
         all_clients = await self.request("get", all_client_url)
         self.clients_all = ClientsAll(all_clients, self.request)
         wlans = await self.request("get", wlan_url)
