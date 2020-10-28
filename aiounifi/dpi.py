@@ -3,7 +3,7 @@ from typing import List
 
 from .api import APIItem, APIItems
 
-GROUP_URL = "/rest/dpigroup" # List DPI Group configuration
+GROUP_URL = "/rest/dpigroup"  # List DPI Group configuration
 APP_URL = "/rest/dpiapp"  # List DPI App configuration
 
 
@@ -34,6 +34,10 @@ class DPIRestrictionGroup(APIItem):
     def dpiapp_ids(self) -> List[str]:
         return self.raw.get("dpiapp_ids", [])
 
+    @property
+    def enabled(self) -> bool:
+        return self.raw["enabled"]
+
 
 class DPIRestrictionGroups(APIItems):
     """Represents DPI Group configurations."""
@@ -42,6 +46,20 @@ class DPIRestrictionGroups(APIItems):
 
     def __init__(self, raw: dict, request) -> None:
         super().__init__(raw, request, GROUP_URL, DPIRestrictionGroup)
+
+    async def update(self) -> None:
+        raw_apps = await self._request("get", APP_URL)
+        raw_groups = await self._request("get", GROUP_URL)
+        for item in raw_groups:
+            item["enabled"] = all(
+                [
+                    app["enabled"]
+                    for app in raw_apps
+                    if app["_id"] in item.get("dpiapp_ids", [])
+                ]
+            )
+
+        self.process_raw(raw_groups)
 
     async def async_enable(self, dpi: DPIRestrictionGroup) -> None:
         """Enable DPI Restriction Group Apps."""

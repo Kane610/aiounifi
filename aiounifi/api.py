@@ -131,3 +131,6 @@ class APIItem:
         """Remove registered callback."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
+
+    def get(self, key, default = None):
+        return getattr(self, key, default)
