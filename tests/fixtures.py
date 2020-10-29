@@ -2654,6 +2654,18 @@ SWITCH_8_PORT = {
     "x_has_ssh_hostkey": True,
 }
 
+DPI_APPS = [
+    {
+		"_id": "5f976f62e3c58f018ec7e17d",
+		"apps": [],
+		"blocked": True,
+		"cats": ["4"],
+		"enabled": True,
+		"log": True,
+		"site_id": "5ba29dd4e3c58f026e9d7c38",
+	},
+]
+
 DPI_GROUPS = [
     {
 		"_id": "5ba29dd8e3c58f026e9d7c4a",
