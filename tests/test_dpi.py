@@ -34,7 +34,7 @@ async def test_dpi_groups():
 
     assert len(dpi_groups.values()) == 2
 
-    group: DPIRestrictionGroup = dpi_groups["No Media"]
+    group: DPIRestrictionGroup = dpi_groups["5f976f4ae3c58f018ec7dff6"]
     assert group.id == "5f976f4ae3c58f018ec7dff6"
     assert not group.attr_no_delete
     assert group.attr_hidden_id == ""

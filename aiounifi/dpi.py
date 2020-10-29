@@ -1,4 +1,5 @@
 """DPI Restrictions as part of a UniFi network."""
+import asyncio
 from typing import List
 
 from .api import APIItem, APIItems
@@ -42,7 +43,7 @@ class DPIRestrictionGroup(APIItem):
 class DPIRestrictionGroups(APIItems):
     """Represents DPI Group configurations."""
 
-    KEY = "name"
+    KEY = "_id"
 
     def __init__(self, raw: dict, request) -> None:
         super().__init__(raw, request, GROUP_URL, DPIRestrictionGroup)
