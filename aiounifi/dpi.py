@@ -63,14 +63,18 @@ class DPIRestrictionGroups(APIItems):
 
     async def async_enable(self, dpi: DPIRestrictionGroup) -> None:
         """Enable DPI Restriction Group Apps."""
+        calls = []
         for app_id in dpi.dpiapp_ids:
             app_url = f"{APP_URL}/{app_id}"
             data = {"enabled": True}
-            await self._request("put", app_url, json=data)
+            calls.append(self._request("put", app_url, json=data))
+        await asyncio.gather(*calls)
 
     async def async_disable(self, dpi: DPIRestrictionGroup) -> None:
         """Disable DPI Restriction Group Apps."""
+        calls = []
         for app_id in dpi.dpiapp_ids:
             app_url = f"{APP_URL}/{app_id}"
             data = {"enabled": False}
-            await self._request("put", app_url, json=data)
+            calls.append(self._request("put", app_url, json=data))
+        await asyncio.gather(*calls)
