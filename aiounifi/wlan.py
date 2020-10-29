@@ -8,7 +8,7 @@ URL = "/rest/wlanconf"  # List WLAN configuration
 class Wlans(APIItems):
     """Represents WLAN configurations."""
 
-    KEY = "_id"
+    KEY = "name"
 
     def __init__(self, raw: dict, request) -> None:
         super().__init__(raw, request, URL, Wlan)
