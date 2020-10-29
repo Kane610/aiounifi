@@ -2654,6 +2654,22 @@ SWITCH_8_PORT = {
     "x_has_ssh_hostkey": True,
 }
 
+DPI_GROUPS = [
+    {
+		"_id": "5ba29dd8e3c58f026e9d7c4a",
+		"attr_no_delete": True,
+		"attr_hidden_id": "Default",
+		"name": "Default",
+		"site_id": "5ba29dd4e3c58f026e9d7c38",
+	},
+    {
+		"_id": "5f976f4ae3c58f018ec7dff6",
+		"name": "No Media",
+		"site_id": "5ba29dd4e3c58f026e9d7c38",
+		"dpiapp_ids": ["5f976f62e3c58f018ec7e17d"],
+	},
+]
+
 WLANS = [
     {
         "_id": "012345678910111213141516",
