@@ -8,7 +8,12 @@ from aiohttp import client_exceptions
 
 from .clients import Clients, URL as client_url, ClientsAll, URL_ALL as all_client_url
 from .devices import Devices, URL as device_url
-from .dpi import DPIRestrictionGroups, GROUP_URL as dpi_group_url
+from .dpi import (
+    DPIRestrictionApps,
+    DPIRestrictionGroups,
+    APP_URL as dpi_app_url,
+    GROUP_URL as dpi_group_url,
+)
 from .errors import raise_error, LoginRequired, ResponseError, RequestError
 from .events import event, CLIENT_EVENTS, DEVICE_EVENTS
 from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA
@@ -20,6 +25,8 @@ MESSAGE_CLIENT = "sta:sync"
 MESSAGE_CLIENT_REMOVED = "user:delete"
 MESSAGE_DEVICE = "device:sync"
 MESSAGE_EVENT = "events"
+MESSAGE_DPI_GROUP = "dpigroup"
+MESSAGE_DPI_APP = "dpiapp"
 
 ATTR_MESSAGE = "message"
 ATTR_META = "meta"
@@ -29,6 +36,10 @@ DATA_CLIENT = "client"
 DATA_CLIENT_REMOVED = "client_removed"
 DATA_DEVICE = "device"
 DATA_EVENT = "event"
+DATA_DPI_APP = "dpi_app"
+DATA_DPI_APP_REMOVED = "dpi_app_removed"
+DATA_DPI_GROUP = "dpi_group"
+DATA_DPI_GROUP_REMOVED = "dpi_group_removed"
 
 
 class Controller:
@@ -65,6 +76,7 @@ class Controller:
         self.clients = None
         self.clients_all = None
         self.devices = None
+        self.dpi_apps = None
         self.dpi_groups = None
         self.wlans = None
 
@@ -111,8 +123,10 @@ class Controller:
         self.clients = Clients(clients, self.request)
         devices = await self.request("get", device_url)
         self.devices = Devices(devices, self.request)
-        self.dpi_groups = DPIRestrictionGroups([], self.request)
-        await self.dpi_groups.update()
+        dpi_apps = await self.request("get", dpi_app_url)
+        self.dpi_apps = DPIRestrictionApps(dpi_apps, self.request)
+        dpi_groups = await self.request("get", dpi_group_url)
+        self.dpi_groups = DPIRestrictionGroups(dpi_groups, self.request, self.dpi_apps)
         all_clients = await self.request("get", all_client_url)
         self.clients_all = ClientsAll(all_clients, self.request)
         wlans = await self.request("get", wlan_url)
@@ -140,8 +154,8 @@ class Controller:
     def session_handler(self, signal: str) -> None:
         """Signalling from websocket.
 
-           data - new data available for processing.
-           state - network state has changed.
+        data - new data available for processing.
+        state - network state has changed.
         """
         if not self.websocket:
             return
@@ -186,6 +200,36 @@ class Controller:
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT_REMOVED:
             changes[DATA_CLIENT_REMOVED] = self.clients.remove(message[ATTR_DATA])
+
+        elif MESSAGE_DPI_GROUP in message[ATTR_META][ATTR_MESSAGE]:
+            action = message[ATTR_META][ATTR_MESSAGE].split(":")[1]
+            if action == "delete":
+                changes[DATA_DPI_GROUP_REMOVED] = self.dpi_groups.remove(
+                    message[ATTR_DATA]
+                )
+            else:
+                changes[DATA_DPI_GROUP] = self.dpi_groups.process_raw(
+                    message[ATTR_DATA]
+                )
+
+        elif MESSAGE_DPI_APP in message[ATTR_META][ATTR_MESSAGE]:
+            action = message[ATTR_META][ATTR_MESSAGE].split(":")[1]
+            if action == "delete":
+                changes[DATA_DPI_APP_REMOVED] = self.dpi_apps.remove(message[ATTR_DATA])
+            else:
+                changes[DATA_DPI_APP] = self.dpi_apps.process_raw(message[ATTR_DATA])
+                if action == "sync":
+                    # Manually trigger update for related groups
+                    changes[DATA_DPI_GROUP] = {
+                        key
+                        for key in self.dpi_groups
+                        if set(self.dpi_groups[key].dpiapp_ids).intersection(
+                            changes[DATA_DPI_APP]
+                        )
+                    }
+                    for key in changes[DATA_DPI_GROUP]:
+                        group = self.dpi_groups[key]
+                        group.update(group.raw)
 
         else:
             LOGGER.debug(f"Unsupported message type {message}")
