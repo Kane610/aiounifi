@@ -13,13 +13,14 @@ from fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
 def verify_call(
     aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
 ) -> bool:
-    for req, call in aioresponse.requests.items():
+    for req, call_list in aioresponse.requests.items():
 
         if req != (method, URL(url)):
             continue
 
-        if call[0][1].get("json") == expected_json_payload:
-            return True
+        for call in call_list:
+            if call[1].get("json") == expected_json_payload:
+                return True
 
     return False
 
