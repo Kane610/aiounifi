@@ -11,22 +11,45 @@ from aiounifi.wlan import Wlans
 from fixtures import WLANS
 
 
-async def test_no_ports():
+from yarl import URL
+
+from aiounifi.clients import Clients
+
+from fixtures import WIRELESS_CLIENT
+
+
+def verify_call(
+    aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
+) -> bool:
+    for req, call_list in aioresponse.requests.items():
+
+        if req != (method, URL(url)):
+            continue
+
+        for call in call_list:
+            if call[1].get("json") == expected_json_payload:
+                return True
+
+    return False
+
+
+async def test_no_ports(mock_aioresponse, unifi_controller):
     """Test that no ports also work."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    wlans = Wlans([], mock_requests)
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/rest/wlanconf", payload={},
+    )
+    wlans = Wlans([], unifi_controller.request)
     await wlans.update()
 
-    mock_requests.assert_called_once
+    assert verify_call(
+        mock_aioresponse, "get", "https://host:8443/api/s/default/rest/wlanconf"
+    )
     assert len(wlans.values()) == 0
 
 
-async def test_ports():
+async def test_ports(mock_aioresponse, unifi_controller):
     """Test that different types of ports work."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    wlans = Wlans(WLANS, mock_requests)
+    wlans = Wlans(WLANS, unifi_controller.request)
 
     assert len(wlans.values()) == 2
 
@@ -69,12 +92,24 @@ async def test_ports():
     assert wlan.x_iapp_key == "01234567891011121314151617181920"
     assert wlan.x_passphrase == "password in clear text"
 
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/wlanconf/012345678910111213141516",
+        payload={},
+        repeat=True,
+    )
+
     await wlans.async_enable(wlan)
-    mock_requests.assert_called_with(
-        "put", "/rest/wlanconf/012345678910111213141516", json={"enabled": True}
+    assert verify_call(
+        mock_aioresponse,
+        "put",
+        "https://host:8443/api/s/default/rest/wlanconf/012345678910111213141516",
+        {"enabled": True},
     )
 
     await wlans.async_disable(wlan)
-    mock_requests.assert_called_with(
-        "put", "/rest/wlanconf/012345678910111213141516", json={"enabled": False}
+    assert verify_call(
+        mock_aioresponse,
+        "put",
+        "https://host:8443/api/s/default/rest/wlanconf/012345678910111213141516",
+        {"enabled": False},
     )

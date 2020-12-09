@@ -3,10 +3,8 @@
 pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 """
 
-from asyncio import Future
-from unittest.mock import AsyncMock
-
 import pytest
+from yarl import URL
 
 from aiounifi.dpi import (
     DPIRestrictionApps,
@@ -16,13 +14,6 @@ from aiounifi.dpi import (
 )
 
 from fixtures import DPI_APPS, DPI_GROUPS
-
-
-from yarl import URL
-
-from aiounifi.clients import Clients
-
-from fixtures import WIRELESS_CLIENT
 
 
 def verify_call(
@@ -38,21 +29,6 @@ def verify_call(
                 return True
 
     return False
-
-
-async def test_no_clients(mock_aioresponse, unifi_controller):
-    """Test that no clients also work."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta", payload={},
-    )
-
-    clients = Clients([], unifi_controller.request)
-    await clients.update()
-
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/stat/sta"
-    )
-    assert len(clients.values()) == 0
 
 
 @pytest.mark.asyncio
@@ -114,7 +90,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
         repeat=True,
     )
     await dpi_groups.async_enable(group)
-
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -123,7 +98,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
 
     await dpi_groups.async_disable(group)
-
     assert verify_call(
         mock_aioresponse,
         "put",

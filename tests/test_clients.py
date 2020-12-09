@@ -72,10 +72,9 @@ async def test_clients(mock_aioresponse, unifi_controller):
     )
 
     mock_aioresponse.post(
-        "https://host:8443/api/s/default/cmd/stamgr", payload={},
+        "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
     )
     await clients.async_block(WIRELESS_CLIENT["mac"])
-
     assert verify_call(
         mock_aioresponse,
         "post",
@@ -83,11 +82,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
         {"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"},
     )
 
-    mock_aioresponse.post(
-        "https://host:8443/api/s/default/cmd/stamgr", payload={},
-    )
     await clients.async_unblock(WIRELESS_CLIENT["mac"])
-
     assert verify_call(
         mock_aioresponse,
         "post",

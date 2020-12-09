@@ -287,9 +287,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-
     await switch.async_set_port_poe_mode(1, "off")
-
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -321,7 +319,6 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     await switch.async_set_port_poe_mode(3, "off")
-
     assert verify_call(
         mock_aioresponse,
         "put",
