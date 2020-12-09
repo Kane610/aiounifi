@@ -3,30 +3,45 @@
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
-from asyncio import Future
-from unittest.mock import AsyncMock
+from yarl import URL
 
 from aiounifi.devices import Devices
 
 from fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
 
 
-async def test_no_devices():
+def verify_call(
+    aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
+) -> bool:
+    for req, call in aioresponse.requests.items():
+
+        if req != (method, URL(url)):
+            continue
+
+        if call[0][1].get("json") == expected_json_payload:
+            return True
+
+    return False
+
+
+async def test_no_devices(mock_aioresponse, unifi_controller):
     """Test that no devices also work."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    devices = Devices([], mock_requests)
+    devices = Devices([], unifi_controller.request)
+
+    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
+
     await devices.update()
 
-    mock_requests.assert_called_once
+    assert verify_call(
+        mock_aioresponse, "get", "https://host:8443/api/s/default/stat/device"
+    )
+
     assert len(devices.values()) == 0
 
 
-async def test_device_access_point():
+async def test_device_access_point(unifi_controller):
     """Test device class on an access point."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    devices = Devices([ACCESS_POINT_AC_PRO], mock_requests)
+    devices = Devices([ACCESS_POINT_AC_PRO], unifi_controller.request)
 
     assert len(devices.values()) == 1
 
@@ -112,11 +127,9 @@ async def test_device_access_point():
     )
 
 
-async def test_device_security_gateway():
+async def test_device_security_gateway(unifi_controller):
     """Test device class on a security gateway."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    devices = Devices([GATEWAY_USG3], mock_requests)
+    devices = Devices([GATEWAY_USG3], unifi_controller.request)
 
     assert len(devices.values()) == 1
 
@@ -211,11 +224,9 @@ async def test_device_security_gateway():
     )
 
 
-async def test_device_switch():
+async def test_device_switch(mock_aioresponse, unifi_controller):
     """Test device class on aswitch."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    devices = Devices([SWITCH_16_PORT_POE], mock_requests)
+    devices = Devices([SWITCH_16_PORT_POE], unifi_controller.request)
 
     assert len(devices.values()) == 1
 
@@ -270,11 +281,20 @@ async def test_device_switch():
     assert switch.wlan_overrides == []
     assert switch.__repr__() == f"<Device {switch.name}: {switch.mac}>"
 
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        payload="",
+        content_type="application/json",
+        status=200,
+    )
+
     await switch.async_set_port_poe_mode(1, "off")
-    mock_requests.assert_called_with(
+
+    assert verify_call(
+        mock_aioresponse,
         "put",
-        "/rest/device/235678987654345678",
-        json={
+        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        {
             "port_overrides": [
                 {
                     "poe_mode": "off",
@@ -300,11 +320,20 @@ async def test_device_switch():
         },
     )
 
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        payload="",
+        content_type="application/json",
+        status=200,
+    )
+
     await switch.async_set_port_poe_mode(3, "off")
-    mock_requests.assert_called_with(
+
+    assert verify_call(
+        mock_aioresponse,
         "put",
-        "/rest/device/235678987654345678",
-        json={
+        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        {
             "port_overrides": [
                 {
                     "poe_mode": "off",
@@ -322,9 +351,9 @@ async def test_device_switch():
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
                 },
                 {
-                    "poe_mode": "off",
                     "port_idx": 1,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
+                    "poe_mode": "off",
                 },
             ]
         },
