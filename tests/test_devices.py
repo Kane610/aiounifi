@@ -285,8 +285,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     mock_aioresponse.put(
         "https://host:8443/api/s/default/rest/device/235678987654345678",
         payload="",
-        content_type="application/json",
-        status=200,
+        repeat=True,
     )
 
     await switch.async_set_port_poe_mode(1, "off")
@@ -319,13 +318,6 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
                 },
             ]
         },
-    )
-
-    mock_aioresponse.put(
-        "https://host:8443/api/s/default/rest/device/235678987654345678",
-        payload="",
-        content_type="application/json",
-        status=200,
     )
 
     await switch.async_set_port_poe_mode(3, "off")
