@@ -3,30 +3,32 @@
 pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
 
-from asyncio import Future
-from unittest.mock import AsyncMock
-
 from aiounifi.clients import Clients
 
-from fixtures import WIRELESS_CLIENT
+from .fixtures import WIRELESS_CLIENT
+from .test_controller import verify_call
 
 
-async def test_no_clients():
+async def test_no_clients(mock_aioresponse, unifi_controller):
     """Test that no clients also work."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    clients = Clients([], mock_requests)
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sta",
+        payload={},
+    )
+
+    clients = Clients([], unifi_controller.request)
     await clients.update()
 
-    mock_requests.assert_called_once
+    assert verify_call(
+        mock_aioresponse, "get", "https://host:8443/api/s/default/stat/sta"
+    )
     assert len(clients.values()) == 0
 
 
-async def test_clients():
+async def test_clients(mock_aioresponse, unifi_controller):
     """Test clients class."""
-    mock_requests = AsyncMock(return_value=Future())
-    mock_requests.return_value.set_result("")
-    clients = Clients([WIRELESS_CLIENT], mock_requests)
+
+    clients = Clients([WIRELESS_CLIENT], unifi_controller.request)
 
     assert len(clients.values()) == 1
 
@@ -54,14 +56,21 @@ async def test_clients():
         client.__repr__() == f"<Client Client 1: 00:00:00:00:00:01 {WIRELESS_CLIENT}>"
     )
 
+    mock_aioresponse.post(
+        "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
+    )
     await clients.async_block(WIRELESS_CLIENT["mac"])
-    mock_requests.assert_called_with(
-        "post", "/cmd/stamgr", json={"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"}
+    assert verify_call(
+        mock_aioresponse,
+        "post",
+        "https://host:8443/api/s/default/cmd/stamgr",
+        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"},
     )
 
     await clients.async_unblock(WIRELESS_CLIENT["mac"])
-    mock_requests.assert_called_with(
+    assert verify_call(
+        mock_aioresponse,
         "post",
-        "/cmd/stamgr",
+        "https://host:8443/api/s/default/cmd/stamgr",
         json={"mac": WIRELESS_CLIENT["mac"], "cmd": "unblock-sta"},
     )
