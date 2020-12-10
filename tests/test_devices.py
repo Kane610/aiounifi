@@ -3,26 +3,10 @@
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
-from yarl import URL
-
 from aiounifi.devices import Devices
 
-from fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
-
-
-def verify_call(
-    aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
-) -> bool:
-    for req, call_list in aioresponse.requests.items():
-
-        if req != (method, URL(url)):
-            continue
-
-        for call in call_list:
-            if call[1].get("json") == expected_json_payload:
-                return True
-
-    return False
+from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
+from .test_controller import verify_call
 
 
 async def test_no_devices(mock_aioresponse, unifi_controller):
@@ -292,7 +276,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "put",
         "https://host:8443/api/s/default/rest/device/235678987654345678",
-        {
+        json={
             "port_overrides": [
                 {
                     "poe_mode": "off",
@@ -323,7 +307,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "put",
         "https://host:8443/api/s/default/rest/device/235678987654345678",
-        {
+        json={
             "port_overrides": [
                 {
                     "poe_mode": "off",

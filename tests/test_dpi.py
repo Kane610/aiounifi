@@ -4,7 +4,6 @@ pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 """
 
 import pytest
-from yarl import URL
 
 from aiounifi.dpi import (
     DPIRestrictionApps,
@@ -13,32 +12,20 @@ from aiounifi.dpi import (
     DPIRestrictionGroup,
 )
 
-from fixtures import DPI_APPS, DPI_GROUPS
-
-
-def verify_call(
-    aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
-) -> bool:
-    for req, call_list in aioresponse.requests.items():
-
-        if req != (method, URL(url)):
-            continue
-
-        for call in call_list:
-            if call[1].get("json") == expected_json_payload:
-                return True
-
-    return False
+from .fixtures import DPI_APPS, DPI_GROUPS
+from .test_controller import verify_call
 
 
 @pytest.mark.asyncio
 async def test_no_groups(mock_aioresponse, unifi_controller):
     """Test that no ports also work."""
     mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp", payload={},
+        "https://host:8443/api/s/default/rest/dpiapp",
+        payload={},
     )
     mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup", payload={},
+        "https://host:8443/api/s/default/rest/dpigroup",
+        payload={},
     )
 
     dpi_apps = DPIRestrictionApps([], unifi_controller.request)
@@ -94,7 +81,7 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "put",
         "https://host:8443/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
-        {"enabled": True},
+        json={"enabled": True},
     )
 
     await dpi_groups.async_disable(group)
@@ -102,5 +89,5 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "put",
         "https://host:8443/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
-        {"enabled": False},
+        json={"enabled": False},
     )

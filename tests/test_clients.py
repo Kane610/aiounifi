@@ -3,32 +3,17 @@
 pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
 
-from yarl import URL
-
 from aiounifi.clients import Clients
 
-from fixtures import WIRELESS_CLIENT
-
-
-def verify_call(
-    aioresponse: tuple, method: str, url: str, expected_json_payload: dict = None
-) -> bool:
-    for req, call_list in aioresponse.requests.items():
-
-        if req != (method, URL(url)):
-            continue
-
-        for call in call_list:
-            if call[1].get("json") == expected_json_payload:
-                return True
-
-    return False
+from .fixtures import WIRELESS_CLIENT
+from .test_controller import verify_call
 
 
 async def test_no_clients(mock_aioresponse, unifi_controller):
     """Test that no clients also work."""
     mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta", payload={},
+        "https://host:8443/api/s/default/stat/sta",
+        payload={},
     )
 
     clients = Clients([], unifi_controller.request)
@@ -79,7 +64,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        {"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"},
+        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"},
     )
 
     await clients.async_unblock(WIRELESS_CLIENT["mac"])
@@ -87,5 +72,5 @@ async def test_clients(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        {"mac": WIRELESS_CLIENT["mac"], "cmd": "unblock-sta"},
+        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "unblock-sta"},
     )

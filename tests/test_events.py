@@ -7,7 +7,7 @@ import pytest
 
 from aiounifi.events import event
 
-from fixtures import EVENT_SWITCH_16_CONNECTED, EVENT_WIRELESS_CLIENT_CONNECTED
+from .fixtures import EVENT_SWITCH_16_CONNECTED, EVENT_WIRELESS_CLIENT_CONNECTED
 
 
 async def test_empty_event():
