@@ -14,7 +14,13 @@ from .dpi import (
     APP_URL as dpi_app_url,
     GROUP_URL as dpi_group_url,
 )
-from .errors import raise_error, LoginRequired, ResponseError, RequestError
+from .errors import (
+    raise_error,
+    LoginRequired,
+    ResponseError,
+    RequestError,
+    ServiceUnavailable,
+)
 from .events import event, CLIENT_EVENTS, DEVICE_EVENTS
 from .websocket import WSClient, SIGNAL_CONNECTION_STATE, SIGNAL_DATA
 from .wlan import Wlans, URL as wlan_url
@@ -232,7 +238,7 @@ class Controller:
                         group.update(group.raw)
 
         else:
-            LOGGER.debug(f"Unsupported message type {message}")
+            LOGGER.debug("Unsupported message type %s", message)
 
         return changes
 
@@ -279,6 +285,11 @@ class Controller:
 
                 if res.status == 404:
                     raise ResponseError(f"Call {url} received 404 Not Found")
+
+                if res.status == 503:
+                    raise ServiceUnavailable(
+                        f"Call {url} received 503 service unavailable"
+                    )
 
                 if res.content_type == "application/json":
                     response = await res.json()

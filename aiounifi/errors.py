@@ -7,6 +7,7 @@ class AiounifiException(Exception):
 
 class RequestError(AiounifiException):
     """Unable to fulfill request.
+
     Raised when host or API cannot be reached.
     """
 
@@ -25,6 +26,13 @@ class LoginRequired(AiounifiException):
 
 class NoPermission(AiounifiException):
     """Users permissions are read only."""
+
+
+class ServiceUnavailable(RequestError):
+    """Service is unavailable.
+
+    Common error if controller is restarting and behind a proxy.
+    """
 
 
 class TwoFaTokenRequired(AiounifiException):

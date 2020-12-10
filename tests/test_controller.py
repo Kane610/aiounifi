@@ -14,6 +14,7 @@ from aiounifi import (
     NoPermission,
     RequestError,
     ResponseError,
+    ServiceUnavailable,
     TwoFaTokenRequired,
     Unauthorized,
 )
@@ -718,6 +719,15 @@ async def test_controller_request_raise_response_error(
     """Verify request raise response error on a 404."""
     mock_aioresponse.post("https://host:8443/api/login", status=404)
     with pytest.raises(ResponseError):
+        await unifi_controller.login()
+
+
+async def test_controller_request_raise_service_unavailable(
+    mock_aioresponse, unifi_controller
+):
+    """Verify request raise service unavailable error on a 503."""
+    mock_aioresponse.post("https://host:8443/api/login", status=503)
+    with pytest.raises(ServiceUnavailable):
         await unifi_controller.login()
 
 
