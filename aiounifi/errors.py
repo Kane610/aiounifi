@@ -35,6 +35,10 @@ class ServiceUnavailable(RequestError):
     """
 
 
+class BadGateway(RequestError):
+    """Invalid response from the upstream server."""
+
+
 class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
 
