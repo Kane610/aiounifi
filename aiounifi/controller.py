@@ -16,6 +16,7 @@ from .dpi import (
 )
 from .errors import (
     raise_error,
+    BadGateway,
     LoginRequired,
     ResponseError,
     RequestError,
@@ -285,6 +286,9 @@ class Controller:
 
                 if res.status == 404:
                     raise ResponseError(f"Call {url} received 404 Not Found")
+
+                if res.status == 502:
+                    raise BadGateway(f"Call {url} received 502 bad gateway")
 
                 if res.status == 503:
                     raise ServiceUnavailable(
