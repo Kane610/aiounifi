@@ -27,10 +27,15 @@ class NoPermission(AiounifiException):
     """Users permissions are read only."""
 
 
+class TwoFaTokenRequired(AiounifiException):
+    """2 factor authentication token required."""
+
+
 ERRORS = {
-    'api.err.LoginRequired': LoginRequired,
-    'api.err.Invalid': Unauthorized,
-    'api.err.NoPermission': NoPermission
+    "api.err.LoginRequired": LoginRequired,
+    "api.err.Invalid": Unauthorized,
+    "api.err.NoPermission": NoPermission,
+    "api.err.Ubic2faTokenRequired": TwoFaTokenRequired,
 }
 
 
