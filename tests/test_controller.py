@@ -17,6 +17,7 @@ from aiounifi import (
     Unauthorized,
 )
 from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
+from aiounifi.clients import URL as client_url
 from aiounifi.controller import (
     ATTR_MESSAGE,
     ATTR_META,
