@@ -14,6 +14,7 @@ from aiounifi import (
     NoPermission,
     RequestError,
     ResponseError,
+    TwoFaTokenRequired,
     Unauthorized,
 )
 from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
@@ -764,6 +765,18 @@ async def test_controller_request_raise_error_raise_no_permission(
         payload={"errors": ["api.err.NoPermission"]},
     )
     with pytest.raises(NoPermission):
+        await unifi_controller.login()
+
+
+async def test_controller_request_raise_2fa_token_required(
+    mock_aioresponse, unifi_controller
+):
+    """Verify request raise 2fa token required on a websocket error."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"errors": ["api.err.Ubic2faTokenRequired"]},
+    )
+    with pytest.raises(TwoFaTokenRequired):
         await unifi_controller.login()
 
 
