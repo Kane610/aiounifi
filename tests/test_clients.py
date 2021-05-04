@@ -74,3 +74,11 @@ async def test_clients(mock_aioresponse, unifi_controller):
         "https://host:8443/api/s/default/cmd/stamgr",
         json={"mac": WIRELESS_CLIENT["mac"], "cmd": "unblock-sta"},
     )
+
+    await clients.async_reconnect(WIRELESS_CLIENT["mac"])
+    assert verify_call(
+        mock_aioresponse,
+        "post",
+        "https://host:8443/api/s/default/cmd/stamgr",
+        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "kick-sta"},
+    )

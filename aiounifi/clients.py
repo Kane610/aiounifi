@@ -26,6 +26,11 @@ class Clients(APIItems):
         data = {"mac": mac, "cmd": "unblock-sta"}
         await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
+    async def async_reconnect(self, mac: str) -> None:
+        """Force a wireless client to reconnect to the network."""
+        data = {"mac": mac, "cmd": "kick-sta"}
+        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+
 
 class ClientsAll(APIItems):
     """Represents all client network devices."""
