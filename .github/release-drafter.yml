@@ -1,0 +1,9 @@
+# https://github.com/release-drafter/release-drafter
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+tag-template: "v$NEXT_MAJOR_VERSION"
+version-template: "$MAJOR"
