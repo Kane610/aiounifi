@@ -21,7 +21,14 @@ class WSClient:
     """Websocket transport, session handling, message generation."""
 
     def __init__(
-        self, session, host, port, ssl_context, site, callback, is_unifi_os=False,
+        self,
+        session,
+        host,
+        port,
+        ssl_context,
+        site,
+        callback,
+        is_unifi_os=False,
     ):
         """Create resources for websocket communication."""
         self.session = session
@@ -44,12 +51,12 @@ class WSClient:
 
     @property
     def state(self):
-        """"""
+        """ """
         return self._state
 
     @state.setter
     def state(self, value):
-        """"""
+        """ """
         self._state = value
         LOGGER.debug("Websocket %s", value)
         self.session_handler_callback(SIGNAL_CONNECTION_STATE)
