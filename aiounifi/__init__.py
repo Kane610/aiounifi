@@ -1,2 +1,2 @@
-from .controller import Controller
-from .errors import *
+from .controller import Controller  # noqa
+from .errors import *  # noqa
