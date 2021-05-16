@@ -23,12 +23,15 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
-      - name: Lint with flake8
+      - name: Lint with Flake8
         run: |
           flake8 aiounifi
-      - name: Check formatting with black
+      - name: Check formatting with Black
         run: |
           black aiounifi --check
+      - name: Check import order with isort
+        run: |
+          isort aiounifi --check-only
       - name: Test with pytest
         run: |
           pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=aiounifi --cov-report=xml --cov-report=html
