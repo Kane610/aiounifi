@@ -37,30 +37,37 @@ class DPIRestrictionApp(APIItem):
 
     @property
     def id(self) -> str:
+        """DPI app ID."""
         return self.raw["_id"]
 
     @property
     def apps(self) -> list:
+        """List of apps."""
         return self.raw["apps"]
 
     @property
     def blocked(self) -> bool:
+        """Is blocked."""
         return self.raw["blocked"]
 
     @property
     def cats(self) -> list:
+        """Categories."""
         return self.raw["cats"]
 
     @property
     def enabled(self) -> bool:
+        """Is enabled."""
         return self.raw["enabled"]
 
     @property
     def log(self) -> bool:
+        """Is logging enabled."""
         return self.raw["log"]
 
     @property
     def site_id(self) -> str:
+        """Site ID."""
         return self.raw["site_id"]
 
 
@@ -70,6 +77,7 @@ class DPIRestrictionApps(DPIItems):
     KEY = "_id"
 
     def __init__(self, raw: list, request) -> None:
+        """Initialize DPI restriction apps manager."""
         super().__init__(raw, request, APP_URL, DPIRestrictionApp)
 
     async def async_enable(self, app_id: str) -> None:
@@ -97,30 +105,37 @@ class DPIRestrictionGroup(APIItem):
 
     @property
     def id(self) -> str:
+        """DPI group ID."""
         return self.raw["_id"]
 
     @property
     def attr_no_delete(self) -> bool:
+        """Can be deleted."""
         return self.raw.get("attr_no_delete", False)
 
     @property
     def attr_hidden_id(self) -> str:
+        """Attr hidden ID."""
         return self.raw.get("attr_hidden_id", "")
 
     @property
     def name(self) -> str:
+        """DPI group name."""
         return self.raw["name"]
 
     @property
     def site_id(self) -> str:
+        """Site ID."""
         return self.raw["site_id"]
 
     @property
     def dpiapp_ids(self) -> List[str]:
+        """DPI app IDs belonging to group."""
         return self.raw.get("dpiapp_ids", [])
 
     @property
     def enabled(self) -> bool:
+        """Are all apps in group enabled."""
         return self.apps and all(
             [self.apps[id].enabled for id in self.apps if id in self.dpiapp_ids]
         )
@@ -132,6 +147,7 @@ class DPIRestrictionGroups(DPIItems):
     KEY = "_id"
 
     def __init__(self, raw: list, request, apps: DPIRestrictionApps) -> None:
+        """Initialize DPI restriction group manager."""
         self._apps = apps
         super().__init__(raw, request, GROUP_URL, DPIRestrictionGroup)
 

@@ -1,4 +1,4 @@
-""""""
+"""Use aiounifi as a CLI."""
 
 import argparse
 import asyncio
@@ -13,13 +13,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 def signalling_callback(signal, data):
+    """Receive and print events from websocket."""
     LOGGER.info(f"{signal}, {data}")
 
 
 async def unifi_controller(
     host, username, password, port, site, session, sslcontext, callback
 ):
-    """Setup UniFi controller and verify credentials."""
+    """Set up UniFi controller and verify credentials."""
     controller = aiounifi.Controller(
         host,
         username=username,
@@ -51,7 +52,7 @@ async def unifi_controller(
 
 
 async def main(host, username, password, port, site, sslcontext=False):
-    """Main function."""
+    """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
 
     websession = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True))

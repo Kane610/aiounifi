@@ -52,6 +52,7 @@ ERRORS = {
 
 
 def raise_error(error):
+    """Raise error."""
     type = error
     cls = ERRORS.get(type, AiounifiException)
     raise cls("{}".format(type))

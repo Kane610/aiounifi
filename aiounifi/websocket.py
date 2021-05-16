@@ -47,21 +47,23 @@ class WSClient:
 
     @property
     def data(self):
+        """Return data."""
         return self._data
 
     @property
     def state(self):
-        """ """
+        """State of websocket."""
         return self._state
 
     @state.setter
     def state(self, value):
-        """ """
+        """Set state of websocket."""
         self._state = value
         LOGGER.debug("Websocket %s", value)
         self.session_handler_callback(SIGNAL_CONNECTION_STATE)
 
     def start(self):
+        """Start websocket and update its state."""
         if self.state != STATE_RUNNING:
             self.state = STATE_STARTING
             self._loop.create_task(self.running())

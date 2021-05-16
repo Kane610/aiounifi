@@ -18,6 +18,7 @@ class Devices(APIItems):
     KEY = "mac"
 
     def __init__(self, raw: list, request):
+        """Initialize device manager."""
         super().__init__(raw, request, URL, Device)
 
 
@@ -25,56 +26,69 @@ class Device(APIItem):
     """Represents a network device."""
 
     def __init__(self, raw: dict, request):
+        """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
 
     def update(self, raw: dict = None, event=None) -> None:
+        """Refresh data."""
         if raw:
             self.ports.update(raw.get("port_table", []))
         super().update(raw, event)
 
     @property
     def board_rev(self) -> int:
+        """Board revision of device."""
         return self.raw["board_rev"]
 
     @property
     def considered_lost_at(self) -> int:
+        """When device is considered lost."""
         return self.raw["considered_lost_at"]
 
     @property
     def disabled(self) -> bool:
+        """Is device disabled."""
         return self.raw.get("disabled", False)
 
     @property
     def id(self) -> str:
+        """ID of device."""
         return self.raw["device_id"]
 
     @property
     def ip(self) -> str:
+        """IP of device."""
         return self.raw["ip"]
 
     @property
     def fan_level(self) -> int:
+        """Fan level of device."""
         return self.raw.get("fan_level")
 
     @property
     def has_fan(self) -> bool:
+        """Do device have a fan."""
         return self.raw.get("has_fan", False)
 
     @property
     def last_seen(self) -> int:
+        """When was device last seen."""
         return self.raw.get("last_seen")
 
     @property
     def mac(self) -> str:
+        """MAC address of device."""
         return self.raw["mac"]
 
     @property
     def model(self) -> str:
+        """Model of device."""
         return self.raw["model"]
 
     @property
     def name(self) -> str:
+        """Name of device."""
         return self.raw.get("name")
 
     @property
@@ -89,18 +103,22 @@ class Device(APIItem):
 
     @property
     def overheating(self) -> bool:
+        """Is device overheating."""
         return self.raw.get("overheating", False)
 
     @property
     def port_overrides(self) -> list:
+        """Overridden port configuration."""
         return self.raw.get("port_overrides", [])
 
     @property
     def port_table(self) -> list:
+        """List of ports and data."""
         return self.raw.get("port_table", [])
 
     @property
     def state(self) -> int:
+        """State of device."""
         return self.raw["state"]
 
     @property
@@ -110,6 +128,7 @@ class Device(APIItem):
 
     @property
     def type(self) -> str:
+        """Type of device."""
         return self.raw["type"]
 
     @property
@@ -119,7 +138,7 @@ class Device(APIItem):
 
     @property
     def upgradable(self) -> bool:
-        """New firmware available."""
+        """Is a new firmware available."""
         return self.raw.get("upgradable", False)
 
     @property
@@ -180,6 +199,7 @@ class Ports:
     """Represents ports on a device."""
 
     def __init__(self, raw_list):
+        """Initialize port manager."""
         self.ports = {}
         for raw in raw_list:
             port = Port(raw)
@@ -195,6 +215,7 @@ class Ports:
                 self.ports[index] = port
 
     def update(self, raw_list):
+        """Update ports."""
         for raw in raw_list:
             index = None
 
@@ -208,12 +229,15 @@ class Ports:
                 self.ports[index].raw = raw
 
     def values(self):
+        """Return ports."""
         return self.ports.values()
 
     def __getitem__(self, obj_id):
+        """Get specific port based on key."""
         return self.ports[obj_id]
 
     def __iter__(self):
+        """Iterate over ports."""
         return iter(self.ports)
 
 
@@ -221,57 +245,67 @@ class Port:
     """Represents a network port."""
 
     def __init__(self, raw):
+        """Initialize port."""
         self.raw = raw
 
     @property
     def ifname(self):
-        """Used by USG."""
+        """Port name used by USG."""
         return self.raw.get("ifname")
 
     @property
     def media(self):
+        """Media port is connected to."""
         return self.raw.get("media")
 
     @property
     def name(self):
+        """Port name."""
         return self.raw["name"]
 
     @property
     def port_idx(self):
+        """Port index."""
         return self.raw.get("port_idx")
 
     @property
     def poe_class(self):
+        """Port POE class."""
         return self.raw.get("poe_class")
 
     @property
     def poe_enable(self):
-        """Indicates if Poe is supported/requested by client."""
+        """Is POE supported/requested by client."""
         return self.raw.get("poe_enable")
 
     @property
     def poe_mode(self):
-        """Indicates if Poe is auto, pasv24, passthrough, off or None"""
+        """Is POE auto, pasv24, passthrough, off or None."""
         return self.raw.get("poe_mode")
 
     @property
     def poe_power(self):
+        """POE power usage."""
         return self.raw.get("poe_power")
 
     @property
     def poe_voltage(self):
+        """POE voltage usage."""
         return self.raw.get("poe_voltage")
 
     @property
     def portconf_id(self):
+        """Port configuration ID."""
         return self.raw.get("portconf_id")
 
     @property
     def port_poe(self):
+        """Is POE used."""
         return self.raw.get("port_poe") is True
 
     @property
     def up(self):
+        """Is port up."""
         return self.raw.get("up")
 
     def __repr__(self):

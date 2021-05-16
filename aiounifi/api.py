@@ -15,6 +15,7 @@ class APIItems:
     KEY = None
 
     def __init__(self, raw: list, request, path: str, item_cls) -> None:
+        """Initialize API items."""
         self._request = request
         self._path = path
         self._item_cls = item_cls
@@ -23,10 +24,12 @@ class APIItems:
         LOGGER.debug(pformat(raw))
 
     async def update(self) -> None:
+        """Refresh data."""
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
     def process_raw(self, raw: list) -> set:
+        """Process data."""
         new_items = set()
 
         for raw_item in raw:
@@ -42,6 +45,7 @@ class APIItems:
         return new_items
 
     def process_event(self, events: list) -> set:
+        """Process event."""
         new_items = set()
 
         for event in events:
@@ -54,6 +58,7 @@ class APIItems:
         return new_items
 
     def remove(self, raw: list) -> set:
+        """Remove list of items."""
         removed_items = set()
 
         for raw_item in raw:
@@ -66,15 +71,18 @@ class APIItems:
         return removed_items
 
     def values(self) -> list:
+        """Return item values."""
         return self._items.values()
 
     def __getitem__(self, obj_id):
+        """Get item value based on key."""
         try:
             return self._items[obj_id]
         except KeyError:
             LOGGER.error(f"Couldn't find key: {obj_id}")
 
     def __iter__(self):
+        """Allow iterate over items."""
         return iter(self._items)
 
 
@@ -82,6 +90,7 @@ class APIItem:
     """Base class for all end points using APIItems class."""
 
     def __init__(self, raw: dict, request) -> None:
+        """Initialize API item."""
         self._raw = raw
         self._request = request
         self._event = None

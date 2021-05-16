@@ -14,6 +14,7 @@ class Clients(APIItems):
     KEY = "mac"
 
     def __init__(self, raw: list, request) -> None:
+        """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
 
     async def async_block(self, mac: str) -> None:
@@ -38,6 +39,7 @@ class ClientsAll(APIItems):
     KEY = "mac"
 
     def __init__(self, raw: dict, request) -> None:
+        """Initialize all clients manager."""
         super().__init__(raw, request, URL_ALL, Client)
 
 
@@ -46,50 +48,62 @@ class Client(APIItem):
 
     @property
     def blocked(self) -> bool:
+        """Is client blocked."""
         return self.raw.get("blocked", False)
 
     @property
     def essid(self) -> str:
+        """ESSID client is connected to."""
         return self.raw.get("essid", "")
 
     @property
     def hostname(self) -> str:
+        """Hostname of client."""
         return self.raw.get("hostname", "")
 
     @property
     def ip(self) -> str:
+        """IP of client."""
         return self.raw.get("ip", "")
 
     @property
     def is_guest(self) -> bool:
+        """Is client guest."""
         return self.raw.get("is_guest", False)
 
     @property
     def is_wired(self) -> bool:
+        """Is client wired."""
         return self.raw.get("is_wired")
 
     @property
     def last_seen(self) -> int:
+        """When was client last seen."""
         return self.raw.get("last_seen")
 
     @property
     def mac(self) -> str:
+        """MAC address of client."""
         return self.raw.get("mac", "")
 
     @property
     def name(self) -> str:
+        """Name of client."""
         return self.raw.get("name", "")
 
     @property
     def oui(self) -> str:
+        """Vendor string for client MAC."""
         return self.raw.get("oui", "")
 
     @property
     def site_id(self) -> str:
+        """Site ID client belongs to."""
         return self.raw.get("site_id", "")
 
     @property
     def sw_depth(self) -> int:
+        """How many layers of switches client is in."""
         return self.raw.get("sw_depth")
 
     @property
@@ -114,6 +128,7 @@ class Client(APIItem):
 
     @property
     def uptime(self) -> int:
+        """Uptime of client."""
         return self.raw.get("uptime", 0)
 
     @property

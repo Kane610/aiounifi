@@ -1,4 +1,4 @@
-"""Unifi implementation."""
+"""Python library to interact with UniFi controller."""
 
 import logging
 from pprint import pformat
@@ -63,6 +63,7 @@ class Controller:
         sslcontext=None,
         callback=None,
     ):
+        """Session setup."""
         self.host = host
         self.session = websession
         self.port = port
@@ -87,12 +88,14 @@ class Controller:
         self.wlans = None
 
     async def check_unifi_os(self):
+        """Check if controller is running UniFi OS."""
         response = await self._request("get", url=self.url, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
     async def login(self):
+        """Log in to controller."""
         if self.is_unifi_os:
             url = f"{self.url}/api/auth/login"
         else:
@@ -109,6 +112,7 @@ class Controller:
         self.can_retry_login = True
 
     async def sites(self):
+        """Retrieve what sites are provided by controller."""
         if self.is_unifi_os:
             url = f"{self.url}/proxy/network/api/self/sites"
         else:
@@ -125,6 +129,7 @@ class Controller:
         return description
 
     async def initialize(self):
+        """Load UniFi parameters."""
         clients = await self.request("get", client_url)
         self.clients = Clients(clients, self.request)
         devices = await self.request("get", device_url)
