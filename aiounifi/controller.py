@@ -13,8 +13,14 @@ from .devices import Devices
 from .dpi import APP_URL as dpi_app_url
 from .dpi import GROUP_URL as dpi_group_url
 from .dpi import DPIRestrictionApps, DPIRestrictionGroups
-from .errors import (BadGateway, LoginRequired, RequestError, ResponseError,
-                     ServiceUnavailable, raise_error)
+from .errors import (
+    BadGateway,
+    LoginRequired,
+    RequestError,
+    ResponseError,
+    ServiceUnavailable,
+    raise_error,
+)
 from .events import CLIENT_EVENTS, DEVICE_EVENTS, event
 from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
 from .wlan import URL as wlan_url
