@@ -1,7 +1,6 @@
 """API management class and base class for the different end points."""
 
 import logging
-
 from pprint import pformat
 
 LOGGER = logging.getLogger(__name__)

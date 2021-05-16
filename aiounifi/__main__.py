@@ -1,11 +1,13 @@
 """"""
 
-import aiohttp
-import aiounifi
 import argparse
 import asyncio
-import async_timeout
 import logging
+
+import aiohttp
+import async_timeout
+
+import aiounifi
 
 LOGGER = logging.getLogger(__name__)
 
