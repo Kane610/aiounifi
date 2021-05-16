@@ -5,14 +5,14 @@ from pprint import pformat
 
 from aiohttp import client_exceptions
 
-from .clients import URL as client_url
-from .clients import URL_ALL as all_client_url
-from .clients import Clients, ClientsAll
-from .devices import URL as device_url
-from .devices import Devices
-from .dpi import APP_URL as dpi_app_url
-from .dpi import GROUP_URL as dpi_group_url
-from .dpi import DPIRestrictionApps, DPIRestrictionGroups
+from .clients import URL as client_url, URL_ALL as all_client_url, Clients, ClientsAll
+from .devices import URL as device_url, Devices
+from .dpi import (
+    APP_URL as dpi_app_url,
+    GROUP_URL as dpi_group_url,
+    DPIRestrictionApps,
+    DPIRestrictionGroups,
+)
 from .errors import (
     BadGateway,
     LoginRequired,
@@ -23,8 +23,7 @@ from .errors import (
 )
 from .events import CLIENT_EVENTS, DEVICE_EVENTS, event
 from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
-from .wlan import URL as wlan_url
-from .wlan import Wlans
+from .wlan import URL as wlan_url, Wlans
 
 LOGGER = logging.getLogger(__name__)
 
