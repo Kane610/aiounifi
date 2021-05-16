@@ -1,0 +1,14 @@
+{
+  "editor.formatOnPaste": false,
+  "editor.formatOnSaveMode": "file",
+  "editor.insertSpaces": true,
+  "editor.rulers": [88],
+  "editor.tabSize": 4,
+  "files.defaultLanguage": "python",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "python.formatting.provider": "black",
+  "python.linting.flake8Enabled": true,
+  "python.testing.pytestEnabled": true
+}
