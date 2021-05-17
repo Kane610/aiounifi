@@ -1,35 +1,11 @@
 """DPI Restrictions as part of a UniFi network."""
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .api import APIItem, APIItems
 
 GROUP_URL = "/rest/dpigroup"  # List DPI Group configuration
 APP_URL = "/rest/dpiapp"  # List DPI App configuration
-
-
-class DPIItems(APIItems):
-    """Custom process method for DPI."""
-
-    def process_raw(self, raw: list) -> set:
-        """Set enabled attribute based on app data."""
-        new_items = set()
-
-        for raw_item in raw:
-            key = raw_item[self.KEY]
-            obj = self._items.get(key)
-
-            if obj is not None:
-                obj.update(raw=raw_item)
-            else:
-                new_item = self._item_cls(raw_item, self._request)
-                if self._item_cls == DPIRestrictionGroup:
-                    new_item.apps = self._apps
-                self._items[key] = new_item
-
-            new_items.add(key)
-
-        return new_items
 
 
 class DPIRestrictionApp(APIItem):
@@ -71,7 +47,7 @@ class DPIRestrictionApp(APIItem):
         return self.raw["site_id"]
 
 
-class DPIRestrictionApps(DPIItems):
+class DPIRestrictionApps(APIItems):
     """Represents DPI App configurations."""
 
     KEY = "_id"
@@ -134,14 +110,14 @@ class DPIRestrictionGroup(APIItem):
         return self.raw.get("dpiapp_ids", [])
 
     @property
-    def enabled(self) -> bool:
+    def enabled(self) -> Union[DPIRestrictionApps, None, bool]:
         """Are all apps in group enabled."""
         return self.apps and all(
-            [self.apps[id].enabled for id in self.apps if id in self.dpiapp_ids]
+            [self.apps[id].enabled for id in self.apps if id in self.dpiapp_ids]  # type: ignore
         )
 
 
-class DPIRestrictionGroups(DPIItems):
+class DPIRestrictionGroups(APIItems):
     """Represents DPI Group configurations."""
 
     KEY = "_id"
@@ -162,3 +138,13 @@ class DPIRestrictionGroups(DPIItems):
         await asyncio.gather(
             *[self._apps.async_disable(app_id) for app_id in dpi.dpiapp_ids]
         )
+
+    def process_raw(self, raw: list) -> set:
+        """Set enabled attribute based on app data."""
+        new_items = super().process_raw(raw)
+
+        for item_key in new_items:
+            item = self._items[item_key]
+            item.apps = self._apps
+
+        return new_items
