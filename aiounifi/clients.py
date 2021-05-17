@@ -1,5 +1,7 @@
 """Clients are devices on a UniFi network."""
 
+from typing import Optional
+
 from .api import APIItem, APIItems
 
 URL = "/stat/sta"  # Active clients
@@ -38,7 +40,7 @@ class ClientsAll(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: dict, request) -> None:
+    def __init__(self, raw: list, request) -> None:
         """Initialize all clients manager."""
         super().__init__(raw, request, URL_ALL, Client)
 
@@ -74,10 +76,10 @@ class Client(APIItem):
     @property
     def is_wired(self) -> bool:
         """Is client wired."""
-        return self.raw.get("is_wired")
+        return self.raw.get("is_wired", False)
 
     @property
-    def last_seen(self) -> int:
+    def last_seen(self) -> Optional[int]:
         """When was client last seen."""
         return self.raw.get("last_seen")
 
@@ -102,7 +104,7 @@ class Client(APIItem):
         return self.raw.get("site_id", "")
 
     @property
-    def sw_depth(self) -> int:
+    def sw_depth(self) -> Optional[int]:
         """How many layers of switches client is in."""
         return self.raw.get("sw_depth")
 
@@ -112,7 +114,7 @@ class Client(APIItem):
         return self.raw.get("sw_mac", "")
 
     @property
-    def sw_port(self) -> int:
+    def sw_port(self) -> Optional[int]:
         """Switch port client is connected to."""
         return self.raw.get("sw_port")
 
