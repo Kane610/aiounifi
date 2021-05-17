@@ -4,6 +4,7 @@ Access points, Gateways, Switches.
 """
 
 import logging
+from typing import Optional
 
 from .api import APIItem, APIItems
 
@@ -62,7 +63,7 @@ class Device(APIItem):
         return self.raw["ip"]
 
     @property
-    def fan_level(self) -> int:
+    def fan_level(self) -> Optional[int]:
         """Fan level of device."""
         return self.raw.get("fan_level")
 
@@ -72,7 +73,7 @@ class Device(APIItem):
         return self.raw.get("has_fan", False)
 
     @property
-    def last_seen(self) -> int:
+    def last_seen(self) -> Optional[int]:
         """When was device last seen."""
         return self.raw.get("last_seen")
 
@@ -89,10 +90,10 @@ class Device(APIItem):
     @property
     def name(self) -> str:
         """Name of device."""
-        return self.raw.get("name")
+        return self.raw.get("name", "")
 
     @property
-    def next_heartbeat_at(self) -> int:
+    def next_heartbeat_at(self) -> Optional[int]:
         """Next heart beat full UNIX time."""
         return self.raw.get("next_heartbeat_at")
 
@@ -147,7 +148,7 @@ class Device(APIItem):
         return self.raw.get("upgrade_to_firmware", "")
 
     @property
-    def uplink_depth(self) -> int:
+    def uplink_depth(self) -> Optional[int]:
         """Hops to gateway."""
         return self.raw.get("uplink_depth")
 
