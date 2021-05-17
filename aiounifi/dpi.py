@@ -72,12 +72,10 @@ class DPIRestrictionApps(APIItems):
 class DPIRestrictionGroup(APIItem):
     """Represents a DPI Group configuration."""
 
-    def __init__(
-        self, raw: dict, request, apps: Optional[DPIRestrictionApps] = None
-    ) -> None:
+    def __init__(self, raw: dict, request) -> None:
         """Initialize DPI Group."""
         super().__init__(raw, request)
-        self.apps = apps
+        self.apps: Optional[DPIRestrictionApps] = None
 
     @property
     def id(self) -> str:
