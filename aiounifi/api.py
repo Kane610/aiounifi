@@ -72,7 +72,7 @@ class APIItem:
 class APIItems:
     """Base class for a map of API Items."""
 
-    KEY = None
+    KEY = ""
 
     def __init__(self, raw: list, request, path: str, item_cls: Any) -> None:
         """Initialize API items."""

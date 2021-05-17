@@ -5,28 +5,6 @@ from .api import APIItem, APIItems
 URL = "/rest/wlanconf"  # List WLAN configuration
 
 
-class Wlans(APIItems):
-    """Represents WLAN configurations."""
-
-    KEY = "name"
-
-    def __init__(self, raw: dict, request) -> None:
-        """Initialize WLAN manager."""
-        super().__init__(raw, request, URL, Wlan)
-
-    async def async_enable(self, wlan) -> None:
-        """Block client from controller."""
-        wlan_url = f"{URL}/{wlan.id}"
-        data = {"enabled": True}
-        await self._request("put", wlan_url, json=data)
-
-    async def async_disable(self, wlan) -> None:
-        """Unblock client from controller."""
-        wlan_url = f"{URL}/{wlan.id}"
-        data = {"enabled": False}
-        await self._request("put", wlan_url, json=data)
-
-
 class Wlan(APIItem):
     """Represent a WLAN configuration."""
 
@@ -214,3 +192,25 @@ class Wlan(APIItem):
     def x_passphrase(self) -> str:
         """X passphrase."""
         return self.raw["x_passphrase"]
+
+
+class Wlans(APIItems):
+    """Represents WLAN configurations."""
+
+    KEY = "name"
+
+    def __init__(self, raw: list, request) -> None:
+        """Initialize WLAN manager."""
+        super().__init__(raw, request, URL, Wlan)
+
+    async def async_enable(self, wlan: Wlan) -> None:
+        """Block client from controller."""
+        wlan_url = f"{URL}/{wlan.id}"
+        data = {"enabled": True}
+        await self._request("put", wlan_url, json=data)
+
+    async def async_disable(self, wlan: Wlan) -> None:
+        """Unblock client from controller."""
+        wlan_url = f"{URL}/{wlan.id}"
+        data = {"enabled": False}
+        await self._request("put", wlan_url, json=data)
