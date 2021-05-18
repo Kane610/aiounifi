@@ -51,7 +51,7 @@ ERRORS = {
 }
 
 
-def raise_error(error):
+def raise_error(error) -> None:
     """Raise error."""
     type = error
     cls = ERRORS.get(type, AiounifiException)
