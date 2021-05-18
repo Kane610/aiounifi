@@ -3,6 +3,8 @@
 import asyncio
 import json
 import logging
+from ssl import SSLContext
+from typing import Callable, Optional
 
 import aiohttp
 
@@ -22,13 +24,13 @@ class WSClient:
 
     def __init__(
         self,
-        session,
-        host,
-        port,
-        ssl_context,
-        site,
-        callback,
-        is_unifi_os=False,
+        session: aiohttp.ClientSession,
+        host: str,
+        port: int,
+        ssl_context: Optional[SSLContext],
+        site: str,
+        callback: Callable[[str], None],
+        is_unifi_os: bool = False,
     ):
         """Create resources for websocket communication."""
         self.session = session
@@ -42,37 +44,37 @@ class WSClient:
 
         self._loop = asyncio.get_running_loop()
 
-        self._data = None
-        self._state = None
+        self._data = ""
+        self._state = ""
 
     @property
-    def data(self):
+    def data(self) -> str:
         """Return data."""
         return self._data
 
     @property
-    def state(self):
+    def state(self) -> str:
         """State of websocket."""
         return self._state
 
     @state.setter
-    def state(self, value):
+    def state(self, value: str) -> None:
         """Set state of websocket."""
         self._state = value
         LOGGER.debug("Websocket %s", value)
         self.session_handler_callback(SIGNAL_CONNECTION_STATE)
 
-    def start(self):
+    def start(self) -> None:
         """Start websocket and update its state."""
         if self.state != STATE_RUNNING:
             self.state = STATE_STARTING
             self._loop.create_task(self.running())
 
-    def stop(self):
+    def stop(self) -> None:
         """Close websocket connection."""
         self.state = STATE_STOPPED
 
-    async def running(self):
+    async def running(self) -> None:
         """Start websocket connection."""
         try:
             async with self.session.ws_connect(
