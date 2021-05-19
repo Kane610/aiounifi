@@ -87,14 +87,14 @@ class Controller:
         self.dpi_groups = None
         self.wlans = None
 
-    async def check_unifi_os(self):
+    async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
         response = await self._request("get", url=self.url, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
-    async def login(self):
+    async def login(self) -> None:
         """Log in to controller."""
         if self.is_unifi_os:
             url = f"{self.url}/api/auth/login"
@@ -111,7 +111,7 @@ class Controller:
 
         self.can_retry_login = True
 
-    async def sites(self):
+    async def sites(self) -> dict:
         """Retrieve what sites are provided by controller."""
         if self.is_unifi_os:
             url = f"{self.url}/proxy/network/api/self/sites"
@@ -122,13 +122,13 @@ class Controller:
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
-    async def site_description(self):
+    async def site_description(self) -> dict:
         """User description of current site."""
         description = await self.request("get", "/self")
         LOGGER.debug(description)
         return description
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Load UniFi parameters."""
         clients = await self.request("get", client_url)
         self.clients = Clients(clients, self.request)
@@ -143,7 +143,7 @@ class Controller:
         wlans = await self.request("get", wlan_url)
         self.wlans = Wlans(wlans, self.request)
 
-    def start_websocket(self):
+    def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
         self.websocket = WSClient(
             self.session,
@@ -247,10 +247,16 @@ class Controller:
 
         return changes
 
-    async def request(self, method, path=None, json=None, url=None, **kwargs):
+    async def request(
+        self,
+        method: str,
+        path: str = "",
+        json: dict = None,
+        url: str = "",
+    ):
         """Make a request to the API, retry login on failure."""
         try:
-            return await self._request(method, path, json, url, **kwargs)
+            return await self._request(method, path, json, url)
         except LoginRequired:
             if not self.can_retry_login:
                 raise
@@ -259,9 +265,16 @@ class Controller:
             # Make sure we get a new csrf token
             await self.check_unifi_os()
             await self.login()
-            return await self._request(method, path, json, url, **kwargs)
+            return await self._request(method, path, json, url)
 
-    async def _request(self, method, path=None, json=None, url=None, **kwargs):
+    async def _request(
+        self,
+        method: str,
+        path: str = "",
+        json: dict = None,
+        url: str = "",
+        **kwargs: bool,
+    ):
         """Make a request to the API."""
         if not url:
             if self.is_unifi_os:
@@ -269,8 +282,7 @@ class Controller:
             else:
                 url = f"{self.url}/api/s/{self.site}"
 
-            if path is not None:
-                url += f"{path}"
+            url += f"{path}"
 
         LOGGER.debug("%s", url)
 
@@ -313,10 +325,10 @@ class Controller:
             ) from None
 
 
-def _raise_on_error(data):
+def _raise_on_error(data) -> None:
     """Check response for error message."""
     if not isinstance(data, dict):
-        return
+        return None
 
     if "meta" in data and data["meta"]["rc"] == "error":
         raise_error(data["meta"]["msg"])
