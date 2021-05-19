@@ -4,7 +4,7 @@ Access points, Gateways, Switches.
 """
 
 import logging
-from typing import Optional
+from typing import Dict, Iterator, Optional, Union, ValuesView
 
 from .api import APIItem, APIItems
 
@@ -18,7 +18,7 @@ class Devices(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request):
+    def __init__(self, raw: list, request) -> None:
         """Initialize device manager."""
         super().__init__(raw, request, URL, Device)
 
@@ -26,7 +26,7 @@ class Devices(APIItems):
 class Device(APIItem):
     """Represents a network device."""
 
-    def __init__(self, raw: dict, request):
+    def __init__(self, raw: dict, request) -> None:
         """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
@@ -162,7 +162,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_port_poe_mode(self, port_idx, mode) -> None:
+    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> None:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
@@ -196,26 +196,93 @@ class Device(APIItem):
         return f"<Device {self.name}: {self.mac}>"
 
 
+class Port:
+    """Represents a network port."""
+
+    def __init__(self, raw: dict) -> None:
+        """Initialize port."""
+        self.raw = raw
+
+    @property
+    def ifname(self) -> str:
+        """Port name used by USG."""
+        return self.raw.get("ifname", "")
+
+    @property
+    def media(self) -> str:
+        """Media port is connected to."""
+        return self.raw.get("media", "")
+
+    @property
+    def name(self) -> str:
+        """Port name."""
+        return self.raw["name"]
+
+    @property
+    def port_idx(self) -> Optional[int]:
+        """Port index."""
+        return self.raw.get("port_idx")
+
+    @property
+    def poe_class(self) -> str:
+        """Port POE class."""
+        return self.raw.get("poe_class", "")
+
+    @property
+    def poe_enable(self) -> Optional[bool]:
+        """Is POE supported/requested by client."""
+        return self.raw.get("poe_enable")
+
+    @property
+    def poe_mode(self) -> str:
+        """Is POE auto, pasv24, passthrough, off or None."""
+        return self.raw.get("poe_mode", "")
+
+    @property
+    def poe_power(self) -> str:
+        """POE power usage."""
+        return self.raw.get("poe_power", "")
+
+    @property
+    def poe_voltage(self) -> str:
+        """POE voltage usage."""
+        return self.raw.get("poe_voltage", "")
+
+    @property
+    def portconf_id(self) -> str:
+        """Port configuration ID."""
+        return self.raw.get("portconf_id", "")
+
+    @property
+    def port_poe(self) -> bool:
+        """Is POE used."""
+        return self.raw.get("port_poe") is True
+
+    @property
+    def up(self) -> str:
+        """Is port up."""
+        return self.raw.get("up", "")
+
+    def __repr__(self) -> str:
+        """Return the representation."""
+        return f"<{self.name}: Poe {self.poe_enable}>"
+
+
 class Ports:
     """Represents ports on a device."""
 
-    def __init__(self, raw_list):
+    def __init__(self, raw_list: list) -> None:
         """Initialize port manager."""
-        self.ports = {}
+        self.ports: Dict[Union[int, str], Port] = {}
         for raw in raw_list:
             port = Port(raw)
-            index = None
 
-            if port.port_idx is not None:
-                index = port.port_idx
-
-            elif port.ifname is not None:
-                index = port.ifname
-
-            if index is not None:
+            if (index := port.port_idx) is not None:
                 self.ports[index] = port
+            elif ifname := port.ifname:
+                self.ports[ifname] = port
 
-    def update(self, raw_list):
+    def update(self, raw_list: list) -> None:
         """Update ports."""
         for raw in raw_list:
             index = None
@@ -229,86 +296,14 @@ class Ports:
             if index in self.ports:
                 self.ports[index].raw = raw
 
-    def values(self):
+    def values(self) -> ValuesView[Port]:
         """Return ports."""
         return self.ports.values()
 
-    def __getitem__(self, obj_id):
+    def __getitem__(self, obj_id) -> Port:
         """Get specific port based on key."""
         return self.ports[obj_id]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Union[int, str]]:
         """Iterate over ports."""
         return iter(self.ports)
-
-
-class Port:
-    """Represents a network port."""
-
-    def __init__(self, raw):
-        """Initialize port."""
-        self.raw = raw
-
-    @property
-    def ifname(self):
-        """Port name used by USG."""
-        return self.raw.get("ifname")
-
-    @property
-    def media(self):
-        """Media port is connected to."""
-        return self.raw.get("media")
-
-    @property
-    def name(self):
-        """Port name."""
-        return self.raw["name"]
-
-    @property
-    def port_idx(self):
-        """Port index."""
-        return self.raw.get("port_idx")
-
-    @property
-    def poe_class(self):
-        """Port POE class."""
-        return self.raw.get("poe_class")
-
-    @property
-    def poe_enable(self):
-        """Is POE supported/requested by client."""
-        return self.raw.get("poe_enable")
-
-    @property
-    def poe_mode(self):
-        """Is POE auto, pasv24, passthrough, off or None."""
-        return self.raw.get("poe_mode")
-
-    @property
-    def poe_power(self):
-        """POE power usage."""
-        return self.raw.get("poe_power")
-
-    @property
-    def poe_voltage(self):
-        """POE voltage usage."""
-        return self.raw.get("poe_voltage")
-
-    @property
-    def portconf_id(self):
-        """Port configuration ID."""
-        return self.raw.get("portconf_id")
-
-    @property
-    def port_poe(self):
-        """Is POE used."""
-        return self.raw.get("port_poe") is True
-
-    @property
-    def up(self):
-        """Is port up."""
-        return self.raw.get("up")
-
-    def __repr__(self):
-        """Return the representation."""
-        return f"<{self.name}: Poe {self.poe_enable}>"

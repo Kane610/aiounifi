@@ -2,7 +2,7 @@
 
 import logging
 from pprint import pformat
-from typing import Any, Callable, Iterable, List, Optional, ValuesView
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union, ValuesView
 
 from aiounifi.events import event as unifi_event
 
@@ -79,7 +79,7 @@ class APIItems:
         self._request = request
         self._path = path
         self._item_cls = item_cls
-        self._items: dict = {}
+        self._items: Dict[Union[int, str], Any] = {}
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
@@ -142,6 +142,6 @@ class APIItems:
             LOGGER.error(f"Couldn't find key: {obj_id}")
         return None
 
-    def __iter__(self) -> Iterable[APIItem]:
+    def __iter__(self) -> Iterator[Union[int, str]]:
         """Allow iterate over items."""
         return iter(self._items)

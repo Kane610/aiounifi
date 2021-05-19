@@ -3,7 +3,7 @@
 import logging
 from pprint import pformat
 
-from aiohttp import ClientSession, client_exceptions
+from aiohttp import client_exceptions
 
 from .clients import URL as client_url, URL_ALL as all_client_url, Clients, ClientsAll
 from .devices import URL as device_url, Devices

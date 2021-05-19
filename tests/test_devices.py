@@ -76,15 +76,15 @@ async def test_device_access_point(unifi_controller):
     assert len(access_point.ports.values()) == 2
 
     access_point_port_1 = access_point.ports[1]
-    assert access_point_port_1.ifname is None
+    assert access_point_port_1.ifname == ""
     assert access_point_port_1.media == "GE"
     assert access_point_port_1.name == "Main"
     assert access_point_port_1.port_idx == 1
-    assert access_point_port_1.poe_class is None
+    assert access_point_port_1.poe_class == ""
     assert access_point_port_1.poe_enable is None
-    assert access_point_port_1.poe_mode is None
-    assert access_point_port_1.poe_power is None
-    assert access_point_port_1.poe_voltage is None
+    assert access_point_port_1.poe_mode == ""
+    assert access_point_port_1.poe_power == ""
+    assert access_point_port_1.poe_voltage == ""
     assert access_point_port_1.portconf_id == "5a32aa4"
     assert access_point_port_1.port_poe is False
     assert access_point_port_1.up is True
@@ -94,15 +94,15 @@ async def test_device_access_point(unifi_controller):
     )
 
     access_point_port_2 = access_point.ports[2]
-    assert access_point_port_2.ifname is None
+    assert access_point_port_2.ifname == ""
     assert access_point_port_2.media == "GE"
     assert access_point_port_2.name == "Secondary"
     assert access_point_port_2.port_idx == 2
-    assert access_point_port_2.poe_class is None
+    assert access_point_port_2.poe_class == ""
     assert access_point_port_2.poe_enable is None
-    assert access_point_port_2.poe_mode is None
-    assert access_point_port_2.poe_power is None
-    assert access_point_port_2.poe_voltage is None
+    assert access_point_port_2.poe_mode == ""
+    assert access_point_port_2.poe_power == ""
+    assert access_point_port_2.poe_voltage == ""
     assert access_point_port_2.portconf_id == "5a32aa4"
     assert access_point_port_2.port_poe is False
     assert access_point_port_2.up is False
@@ -156,15 +156,15 @@ async def test_device_security_gateway(unifi_controller):
 
     gateway_port_eth0 = gateway.ports["eth0"]
     assert gateway_port_eth0.ifname == "eth0"
-    assert gateway_port_eth0.media is None
+    assert gateway_port_eth0.media == ""
     assert gateway_port_eth0.name == "wan"
     assert gateway_port_eth0.port_idx is None
-    assert gateway_port_eth0.poe_class is None
+    assert gateway_port_eth0.poe_class == ""
     assert gateway_port_eth0.poe_enable is None
-    assert gateway_port_eth0.poe_mode is None
-    assert gateway_port_eth0.poe_power is None
-    assert gateway_port_eth0.poe_voltage is None
-    assert gateway_port_eth0.portconf_id is None
+    assert gateway_port_eth0.poe_mode == ""
+    assert gateway_port_eth0.poe_power == ""
+    assert gateway_port_eth0.poe_voltage == ""
+    assert gateway_port_eth0.portconf_id == ""
     assert gateway_port_eth0.port_poe is False
     assert gateway_port_eth0.up is True
     assert (
@@ -174,15 +174,15 @@ async def test_device_security_gateway(unifi_controller):
 
     gateway_port_eth1 = gateway.ports["eth1"]
     assert gateway_port_eth1.ifname == "eth1"
-    assert gateway_port_eth1.media is None
+    assert gateway_port_eth1.media == ""
     assert gateway_port_eth1.name == "lan"
     assert gateway_port_eth1.port_idx is None
-    assert gateway_port_eth1.poe_class is None
+    assert gateway_port_eth1.poe_class == ""
     assert gateway_port_eth1.poe_enable is None
-    assert gateway_port_eth1.poe_mode is None
-    assert gateway_port_eth1.poe_power is None
-    assert gateway_port_eth1.poe_voltage is None
-    assert gateway_port_eth1.portconf_id is None
+    assert gateway_port_eth1.poe_mode == ""
+    assert gateway_port_eth1.poe_power == ""
+    assert gateway_port_eth1.poe_voltage == ""
+    assert gateway_port_eth1.portconf_id == ""
     assert gateway_port_eth1.port_poe is False
     assert gateway_port_eth1.up is True
     assert (
@@ -192,15 +192,15 @@ async def test_device_security_gateway(unifi_controller):
 
     gateway_port_eth2 = gateway.ports["eth2"]
     assert gateway_port_eth2.ifname == "eth2"
-    assert gateway_port_eth2.media is None
+    assert gateway_port_eth2.media == ""
     assert gateway_port_eth2.name == "lan2"
     assert gateway_port_eth2.port_idx is None
-    assert gateway_port_eth2.poe_class is None
+    assert gateway_port_eth2.poe_class == ""
     assert gateway_port_eth2.poe_enable is None
-    assert gateway_port_eth2.poe_mode is None
-    assert gateway_port_eth2.poe_power is None
-    assert gateway_port_eth2.poe_voltage is None
-    assert gateway_port_eth2.portconf_id is None
+    assert gateway_port_eth2.poe_mode == ""
+    assert gateway_port_eth2.poe_power == ""
+    assert gateway_port_eth2.poe_voltage == ""
+    assert gateway_port_eth2.portconf_id == ""
     assert gateway_port_eth2.port_poe is False
     assert gateway_port_eth2.up is False
     assert (
@@ -336,7 +336,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     assert len(switch.ports.values()) == 18
 
     switch_port_1 = switch.ports[1]
-    assert switch_port_1.ifname is None
+    assert switch_port_1.ifname == ""
     assert switch_port_1.media == "GE"
     assert switch_port_1.name == "Port 1"
     assert switch_port_1.port_idx == 1
@@ -354,7 +354,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     switch_port_2 = switch.ports[2]
-    assert switch_port_2.ifname is None
+    assert switch_port_2.ifname == ""
     assert switch_port_2.media == "GE"
     assert switch_port_2.name == "Port 2"
     assert switch_port_2.port_idx == 2
@@ -372,7 +372,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     switch_port_3 = switch.ports[3]
-    assert switch_port_3.ifname is None
+    assert switch_port_3.ifname == ""
     assert switch_port_3.media == "GE"
     assert switch_port_3.name == "Port 3"
     assert switch_port_3.port_idx == 3
@@ -390,7 +390,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     switch_port_4 = switch.ports[4]
-    assert switch_port_4.ifname is None
+    assert switch_port_4.ifname == ""
     assert switch_port_4.media == "GE"
     assert switch_port_4.name == "Port 4"
     assert switch_port_4.port_idx == 4
@@ -408,7 +408,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     switch_port_5 = switch.ports[5]
-    assert switch_port_5.ifname is None
+    assert switch_port_5.ifname == ""
     assert switch_port_5.media == "GE"
     assert switch_port_5.name == "Port 5"
     assert switch_port_5.port_idx == 5
@@ -426,7 +426,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     switch_port_6 = switch.ports[6]
-    assert switch_port_6.ifname is None
+    assert switch_port_6.ifname == ""
     assert switch_port_6.media == "GE"
     assert switch_port_6.name == "Port 6"
     assert switch_port_6.port_idx == 6
