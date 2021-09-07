@@ -92,7 +92,9 @@ class Controller:
         response = await self._request("get", url=self.url, allow_redirects=False)
         if response.status == 200:
             self.is_unifi_os = True
-            self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
+            # the header isn't always set, prevent it being set to none, as it would cause a NPE when serializing the headers elsewhere 
+            if response.headers.get("x-csrf-token") is not None:
+                self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
     async def login(self) -> None:
         """Log in to controller."""
