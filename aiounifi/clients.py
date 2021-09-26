@@ -1,6 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Optional
+from typing import List, Optional
 
 from .api import APIItem, APIItems
 
@@ -32,6 +32,11 @@ class Clients(APIItems):
     async def async_reconnect(self, mac: str) -> None:
         """Force a wireless client to reconnect to the network."""
         data = {"mac": mac, "cmd": "kick-sta"}
+        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+
+    async def async_remove(self, macs: List[str]) -> None:
+        """Make controller forget provided clients."""
+        data = {"macs": macs, "cmd": "forget-sta"}
         await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
 
