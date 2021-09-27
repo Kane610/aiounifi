@@ -85,7 +85,7 @@ class Client(APIItem):
 
     @property
     def fixed_ip(self) -> str:
-        """Fixed IP of client."""
+        """List IP if fixed IP is configured."""
         return self.raw.get("fixed_ip", "")
 
     @property
