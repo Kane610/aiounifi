@@ -1,6 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Optional
+from typing import List, Optional
 
 from .api import APIItem, APIItems
 
@@ -34,6 +34,11 @@ class Clients(APIItems):
         data = {"mac": mac, "cmd": "kick-sta"}
         await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
+    async def remove_clients(self, macs: List[str]) -> None:
+        """Make controller forget provided clients."""
+        data = {"macs": macs, "cmd": "forget-sta"}
+        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+
 
 class ClientsAll(APIItems):
     """Represents all client network devices."""
@@ -49,14 +54,39 @@ class Client(APIItem):
     """Represents a client network device."""
 
     @property
+    def access_point_mac(self) -> str:
+        """MAC address of access point."""
+        return self.raw.get("ap_mac", "")
+
+    @property
+    def association_time(self) -> Optional[int]:
+        """When was client associated with controller."""
+        return self.raw.get("assoc_time")
+
+    @property
     def blocked(self) -> bool:
         """Is client blocked."""
         return self.raw.get("blocked", False)
 
     @property
+    def device_name(self) -> str:
+        """Device name of client."""
+        return self.raw.get("device_name", "")
+
+    @property
     def essid(self) -> str:
         """ESSID client is connected to."""
         return self.raw.get("essid", "")
+
+    @property
+    def first_seen(self) -> Optional[int]:
+        """When was client first seen."""
+        return self.raw.get("first_seen")
+
+    @property
+    def fixed_ip(self) -> str:
+        """List IP if fixed IP is configured."""
+        return self.raw.get("fixed_ip", "")
 
     @property
     def hostname(self) -> str:
@@ -82,6 +112,11 @@ class Client(APIItem):
     def last_seen(self) -> Optional[int]:
         """When was client last seen."""
         return self.raw.get("last_seen")
+
+    @property
+    def latest_association_time(self) -> Optional[int]:
+        """When was client last associated with controller."""
+        return self.raw.get("latest_assoc_time")
 
     @property
     def mac(self) -> str:
@@ -124,9 +159,19 @@ class Client(APIItem):
         return self.raw.get("rx_bytes", 0)
 
     @property
+    def rx_bytes_r(self) -> int:
+        """Bytes recently received over wireless connection."""
+        return self.raw.get("rx_bytes-r", 0)
+
+    @property
     def tx_bytes(self) -> int:
         """Bytes transferred over wireless connection."""
         return self.raw.get("tx_bytes", 0)
+
+    @property
+    def tx_bytes_r(self) -> int:
+        """Bytes recently transferred over wireless connection."""
+        return self.raw.get("tx_bytes-r", 0)
 
     @property
     def uptime(self) -> int:
@@ -139,9 +184,19 @@ class Client(APIItem):
         return self.raw.get("wired-rx_bytes", 0)
 
     @property
+    def wired_rx_bytes_r(self) -> int:
+        """Bytes recently received over wired connection."""
+        return self.raw.get("wired-rx_bytes-r", 0)
+
+    @property
     def wired_tx_bytes(self) -> int:
         """Bytes transferred over wired connection."""
         return self.raw.get("wired-tx_bytes", 0)
+
+    @property
+    def wired_tx_bytes_r(self) -> int:
+        """Bytes recently transferred over wired connection."""
+        return self.raw.get("wired-tx_bytes-r", 0)
 
     def __repr__(self) -> str:
         """Return the representation."""

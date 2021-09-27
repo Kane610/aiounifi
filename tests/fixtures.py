@@ -2656,30 +2656,30 @@ SWITCH_8_PORT = {
 
 DPI_APPS = [
     {
-		"_id": "5f976f62e3c58f018ec7e17d",
-		"apps": [],
-		"blocked": True,
-		"cats": ["4"],
-		"enabled": True,
-		"log": True,
-		"site_id": "5ba29dd4e3c58f026e9d7c38",
-	},
+        "_id": "5f976f62e3c58f018ec7e17d",
+        "apps": [],
+        "blocked": True,
+        "cats": ["4"],
+        "enabled": True,
+        "log": True,
+        "site_id": "5ba29dd4e3c58f026e9d7c38",
+    },
 ]
 
 DPI_GROUPS = [
     {
-		"_id": "5ba29dd8e3c58f026e9d7c4a",
-		"attr_no_delete": True,
-		"attr_hidden_id": "Default",
-		"name": "Default",
-		"site_id": "5ba29dd4e3c58f026e9d7c38",
-	},
+        "_id": "5ba29dd8e3c58f026e9d7c4a",
+        "attr_no_delete": True,
+        "attr_hidden_id": "Default",
+        "name": "Default",
+        "site_id": "5ba29dd4e3c58f026e9d7c38",
+    },
     {
-		"_id": "5f976f4ae3c58f018ec7dff6",
-		"name": "No Media",
-		"site_id": "5ba29dd4e3c58f026e9d7c38",
-		"dpiapp_ids": ["5f976f62e3c58f018ec7e17d"],
-	},
+        "_id": "5f976f4ae3c58f018ec7dff6",
+        "name": "No Media",
+        "site_id": "5ba29dd4e3c58f026e9d7c38",
+        "dpiapp_ids": ["5f976f62e3c58f018ec7e17d"],
+    },
 ]
 
 WLANS = [
@@ -2781,6 +2781,7 @@ WIRELESS_CLIENT = {
     "dev_id": 247,
     "dev_id_override": 4,
     "dev_vendor": 11,
+    'device_name': 'Discovery device name',
     "dhcpend_time": 2030,
     "essid": "SSID",
     "fingerprint_override": True,
