@@ -2781,6 +2781,7 @@ WIRELESS_CLIENT = {
     "dev_id": 247,
     "dev_id_override": 4,
     "dev_vendor": 11,
+    'device_name': 'Discovery device name',
     "dhcpend_time": 2030,
     "essid": "SSID",
     "fingerprint_override": True,

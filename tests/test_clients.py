@@ -36,6 +36,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert client.access_point_mac == "80:2a:a8:00:01:02"
     assert client.association_time == 1587753456
     assert client.blocked is False
+    assert client.device_name == "Discovery device name"
     assert client.essid == "SSID"
     assert client.first_seen == 1513271497
     assert client.fixed_ip == "10.0.0.1"
@@ -53,10 +54,14 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert client.sw_mac == "fc:ec:da:11:22:33"
     assert client.sw_port == 1
     assert client.rx_bytes == 12867114
+    assert client.rx_bytes_r == 326
     assert client.tx_bytes == 52852089
+    assert client.tx_bytes_r == 483
     assert client.uptime == 11904
     assert client.wired_rx_bytes == 0
+    assert client.wired_rx_bytes_r == 0
     assert client.wired_tx_bytes == 0
+    assert client.wired_tx_bytes_r == 0
     assert (
         client.__repr__() == f"<Client Client 1: 00:00:00:00:00:01 {WIRELESS_CLIENT}>"
     )

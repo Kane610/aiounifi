@@ -69,6 +69,11 @@ class Client(APIItem):
         return self.raw.get("blocked", False)
 
     @property
+    def device_name(self) -> str:
+        """Device name of client."""
+        return self.raw.get("device_name", "")
+
+    @property
     def essid(self) -> str:
         """ESSID client is connected to."""
         return self.raw.get("essid", "")
@@ -154,9 +159,19 @@ class Client(APIItem):
         return self.raw.get("rx_bytes", 0)
 
     @property
+    def rx_bytes_r(self) -> int:
+        """Bytes recently received over wireless connection."""
+        return self.raw.get("rx_bytes-r", 0)
+
+    @property
     def tx_bytes(self) -> int:
         """Bytes transferred over wireless connection."""
         return self.raw.get("tx_bytes", 0)
+
+    @property
+    def tx_bytes_r(self) -> int:
+        """Bytes recently transferred over wireless connection."""
+        return self.raw.get("tx_bytes-r", 0)
 
     @property
     def uptime(self) -> int:
@@ -169,9 +184,19 @@ class Client(APIItem):
         return self.raw.get("wired-rx_bytes", 0)
 
     @property
+    def wired_rx_bytes_r(self) -> int:
+        """Bytes recently received over wired connection."""
+        return self.raw.get("wired-rx_bytes-r", 0)
+
+    @property
     def wired_tx_bytes(self) -> int:
         """Bytes transferred over wired connection."""
         return self.raw.get("wired-tx_bytes", 0)
+
+    @property
+    def wired_tx_bytes_r(self) -> int:
+        """Bytes recently transferred over wired connection."""
+        return self.raw.get("wired-tx_bytes-r", 0)
 
     def __repr__(self) -> str:
         """Return the representation."""
