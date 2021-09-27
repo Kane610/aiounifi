@@ -34,7 +34,7 @@ class Clients(APIItems):
         data = {"mac": mac, "cmd": "kick-sta"}
         await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_remove(self, macs: List[str]) -> None:
+    async def remove_clients(self, macs: List[str]) -> None:
         """Make controller forget provided clients."""
         data = {"macs": macs, "cmd": "forget-sta"}
         await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
@@ -54,6 +54,16 @@ class Client(APIItem):
     """Represents a client network device."""
 
     @property
+    def access_point_mac(self) -> str:
+        """MAC address of access point."""
+        return self.raw.get("ap_mac", "")
+
+    @property
+    def association_time(self) -> Optional[int]:
+        """When was client associated with controller."""
+        return self.raw.get("assoc_time")
+
+    @property
     def blocked(self) -> bool:
         """Is client blocked."""
         return self.raw.get("blocked", False)
@@ -62,6 +72,16 @@ class Client(APIItem):
     def essid(self) -> str:
         """ESSID client is connected to."""
         return self.raw.get("essid", "")
+
+    @property
+    def first_seen(self) -> Optional[int]:
+        """When was client first seen."""
+        return self.raw.get("first_seen")
+
+    @property
+    def fixed_ip(self) -> str:
+        """Fixed IP of client."""
+        return self.raw.get("fixed_ip", "")
 
     @property
     def hostname(self) -> str:
@@ -87,6 +107,11 @@ class Client(APIItem):
     def last_seen(self) -> Optional[int]:
         """When was client last seen."""
         return self.raw.get("last_seen")
+
+    @property
+    def latest_association_time(self) -> Optional[int]:
+        """When was client last associated with controller."""
+        return self.raw.get("latest_assoc_time")
 
     @property
     def mac(self) -> str:
