@@ -1,5 +1,7 @@
 """WLANs as part of a UniFi network."""
 
+from typing import Awaitable, Callable, List
+
 from .api import APIItem, APIItems
 
 URL = "/rest/wlanconf"  # List WLAN configuration
@@ -199,18 +201,20 @@ class Wlans(APIItems):
 
     KEY = "name"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self, raw: list, request: Callable[..., Awaitable[List[dict]]]
+    ) -> None:
         """Initialize WLAN manager."""
         super().__init__(raw, request, URL, Wlan)
 
-    async def async_enable(self, wlan: Wlan) -> None:
+    async def async_enable(self, wlan: Wlan) -> List[dict]:
         """Block client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": True}
-        await self._request("put", wlan_url, json=data)
+        return await self._request("put", wlan_url, json=data)
 
-    async def async_disable(self, wlan: Wlan) -> None:
+    async def async_disable(self, wlan: Wlan) -> List[dict]:
         """Unblock client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": False}
-        await self._request("put", wlan_url, json=data)
+        return await self._request("put", wlan_url, json=data)

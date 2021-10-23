@@ -331,8 +331,8 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         status=200,
     )
 
-    response = await unifi_controller.request("get", device_url)
-    assert response.status == 200
+    await unifi_controller.request("get", device_url)
+    assert unifi_controller.last_response.status == 200
 
 
 async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controller):

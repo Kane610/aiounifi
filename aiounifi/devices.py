@@ -4,7 +4,16 @@ Access points, Gateways, Switches.
 """
 
 import logging
-from typing import Dict, Iterator, Optional, Union, ValuesView
+from typing import (
+    Awaitable,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+    ValuesView,
+)
 
 from .api import APIItem, APIItems
 
@@ -18,7 +27,9 @@ class Devices(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self, raw: list, request: Callable[..., Awaitable[List[dict]]]
+    ) -> None:
         """Initialize device manager."""
         super().__init__(raw, request, URL, Device)
 
@@ -26,7 +37,9 @@ class Devices(APIItems):
 class Device(APIItem):
     """Represents a network device."""
 
-    def __init__(self, raw: dict, request) -> None:
+    def __init__(
+        self, raw: dict, request: Callable[..., Awaitable[List[dict]]]
+    ) -> None:
         """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
@@ -162,7 +175,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> None:
+    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> List[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
@@ -189,7 +202,7 @@ class Device(APIItem):
         url = f"/rest/device/{self.id}"
         data = {"port_overrides": self.port_overrides}
 
-        await self._request("put", url, json=data)
+        return await self._request("put", url, json=data)
 
     def __repr__(self) -> str:
         """Return the representation."""

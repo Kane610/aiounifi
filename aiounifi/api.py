@@ -2,7 +2,17 @@
 
 import logging
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union, ValuesView
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+    ValuesView,
+)
 
 from aiounifi.events import event as unifi_event
 
@@ -15,7 +25,9 @@ SOURCE_EVENT = "event"
 class APIItem:
     """Base class for all end points using APIItems class."""
 
-    def __init__(self, raw: dict, request) -> None:
+    def __init__(
+        self, raw: dict, request: Callable[..., Awaitable[List[dict]]]
+    ) -> None:
         """Initialize API item."""
         self._raw = raw
         self._request = request
@@ -74,7 +86,13 @@ class APIItems:
 
     KEY = ""
 
-    def __init__(self, raw: list, request, path: str, item_cls: Any) -> None:
+    def __init__(
+        self,
+        raw: list,
+        request: Callable[..., Awaitable[List[dict]]],
+        path: str,
+        item_cls: Any,
+    ) -> None:
         """Initialize API items."""
         self._request = request
         self._path = path

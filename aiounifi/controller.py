@@ -3,7 +3,7 @@
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -75,6 +75,7 @@ class Controller:
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
         self.headers: Dict[str, Any] = {}
+        self.last_response: Optional[aiohttp.ClientResponse] = None
 
         self.websocket: Optional[WSClient] = None
 
@@ -87,8 +88,8 @@ class Controller:
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
-        response = await self._request("get", url=self.url, allow_redirects=False)
-        if response.status == 200:
+        await self._request("get", url=self.url, allow_redirects=False)
+        if (response := self.last_response) is not None and response.status == 200:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
@@ -120,7 +121,7 @@ class Controller:
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
-    async def site_description(self) -> dict:
+    async def site_description(self) -> List[dict]:
         """User description of current site."""
         description = await self.request("get", "/self")
         LOGGER.debug(description)
@@ -245,7 +246,7 @@ class Controller:
         path: str = "",
         json: Optional[Dict[str, Any]] = None,
         url: str = "",
-    ):
+    ) -> List[dict]:
         """Make a request to the API, retry login on failure."""
         try:
             return await self._request(method, path, json, url)
@@ -266,8 +267,10 @@ class Controller:
         json: Optional[Dict[str, Any]] = None,
         url: str = "",
         **kwargs: bool,
-    ):
+    ) -> List[dict]:
         """Make a request to the API."""
+        self.last_response = None
+
         if not url:
             if self.is_unifi_os:
                 url = f"{self.url}/proxy/network/api/s/{self.site}"
@@ -289,6 +292,8 @@ class Controller:
             ) as res:
                 LOGGER.debug("%s %s %s", res.status, res.content_type, res)
 
+                self.last_response = res
+
                 if res.status == 401:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
@@ -309,7 +314,7 @@ class Controller:
                     if "data" in response:
                         return response["data"]
                     return response
-                return res
+                return []
 
         except client_exceptions.ClientError as err:
             raise RequestError(
