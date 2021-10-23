@@ -134,13 +134,21 @@ class APIItems:
         """Return item values."""
         return self._items.values()
 
-    def __getitem__(self, obj_id: str) -> Optional[APIItem]:
+    def get(
+        self, obj_id: Union[int, str], default: Optional[Any] = None
+    ) -> Optional[Any]:
+        """Get item value based on key, return default if no match."""
+        if obj_id in self:
+            return self[obj_id]
+        return default
+
+    def __contains__(self, obj_id: Union[int, str]) -> bool:
+        """Validate membership of item ID."""
+        return obj_id in self._items
+
+    def __getitem__(self, obj_id: Union[int, str]) -> Any:
         """Get item value based on key."""
-        try:
-            return self._items[obj_id]
-        except KeyError:
-            LOGGER.error(f"Couldn't find key: {obj_id}")
-        return None
+        return self._items[obj_id]
 
     def __iter__(self) -> Iterator[Union[int, str]]:
         """Allow iterate over items."""

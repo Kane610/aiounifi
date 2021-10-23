@@ -2,14 +2,15 @@
 
 import logging
 from pprint import pformat
+from ssl import SSLContext
+from typing import Any, Callable, Dict, Optional, Union
 
+import aiohttp
 from aiohttp import client_exceptions
 
-from .clients import URL as client_url, URL_ALL as all_client_url, Clients, ClientsAll
-from .devices import URL as device_url, Devices
+from .clients import Clients, ClientsAll
+from .devices import Devices
 from .dpi import (
-    APP_URL as dpi_app_url,
-    GROUP_URL as dpi_group_url,
     DPIRestrictionApps,
     DPIRestrictionGroups,
 )
@@ -23,7 +24,7 @@ from .errors import (
 )
 from .events import CLIENT_EVENTS, DEVICE_EVENTS, event
 from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
-from .wlan import URL as wlan_url, Wlans
+from .wlan import Wlans
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,15 +54,15 @@ class Controller:
 
     def __init__(
         self,
-        host,
-        websession,
+        host: str,
+        websession: aiohttp.ClientSession,
         *,
-        username,
-        password,
+        username: str,
+        password: str,
         port=8443,
         site="default",
-        sslcontext=None,
-        callback=None,
+        sslcontext: Optional[SSLContext] = None,
+        callback: Optional[Callable[[str, Union[dict, str]], None]] = None,
     ):
         """Session setup."""
         self.host = host
@@ -76,16 +77,16 @@ class Controller:
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
-        self.headers = None
+        self.headers: Dict[str, Any] = {}
 
-        self.websocket = None
+        self.websocket: Optional[WSClient] = None
 
-        self.clients = None
-        self.clients_all = None
-        self.devices = None
-        self.dpi_apps = None
-        self.dpi_groups = None
-        self.wlans = None
+        self.clients = Clients([], self.request)
+        self.devices = Devices([], self.request)
+        self.dpi_apps = DPIRestrictionApps([], self.request)
+        self.dpi_groups = DPIRestrictionGroups([], self.request, self.dpi_apps)
+        self.clients_all = ClientsAll([], self.request)
+        self.wlans = Wlans([], self.request)
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
@@ -130,18 +131,12 @@ class Controller:
 
     async def initialize(self) -> None:
         """Load UniFi parameters."""
-        clients = await self.request("get", client_url)
-        self.clients = Clients(clients, self.request)
-        devices = await self.request("get", device_url)
-        self.devices = Devices(devices, self.request)
-        dpi_apps = await self.request("get", dpi_app_url)
-        self.dpi_apps = DPIRestrictionApps(dpi_apps, self.request)
-        dpi_groups = await self.request("get", dpi_group_url)
-        self.dpi_groups = DPIRestrictionGroups(dpi_groups, self.request, self.dpi_apps)
-        all_clients = await self.request("get", all_client_url)
-        self.clients_all = ClientsAll(all_clients, self.request)
-        wlans = await self.request("get", wlan_url)
-        self.wlans = Wlans(wlans, self.request)
+        await self.clients.update()
+        await self.clients_all.update()
+        await self.devices.update()
+        await self.dpi_apps.update()
+        await self.dpi_groups.update()
+        await self.wlans.update()
 
     def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
@@ -251,7 +246,7 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: dict = None,
+        json: Optional[Dict[str, Any]] = None,
         url: str = "",
     ):
         """Make a request to the API, retry login on failure."""
@@ -271,7 +266,7 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: dict = None,
+        json: Optional[Dict[str, Any]] = None,
         url: str = "",
         **kwargs: bool,
     ):
