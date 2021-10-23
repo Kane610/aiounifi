@@ -10,10 +10,7 @@ from aiohttp import client_exceptions
 
 from .clients import Clients, ClientsAll
 from .devices import Devices
-from .dpi import (
-    DPIRestrictionApps,
-    DPIRestrictionGroups,
-)
+from .dpi import DPIRestrictionApps, DPIRestrictionGroups
 from .errors import (
     BadGateway,
     LoginRequired,
