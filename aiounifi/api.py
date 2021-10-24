@@ -14,7 +14,7 @@ from typing import (
     ValuesView,
 )
 
-from aiounifi.events import event as unifi_event
+from .events import event as unifi_event
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,9 @@ class APIItem:
         return self._source
 
     def update(
-        self, raw: Optional[dict] = None, event: Optional[unifi_event] = None
+        self,
+        raw: Optional[dict] = None,
+        event: Optional[unifi_event] = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:
@@ -153,7 +155,9 @@ class APIItems:
         return self._items.values()
 
     def get(
-        self, obj_id: Union[int, str], default: Optional[Any] = None
+        self,
+        obj_id: Union[int, str],
+        default: Optional[Any] = None,
     ) -> Optional[Any]:
         """Get item value based on key, return default if no match."""
         if obj_id in self:

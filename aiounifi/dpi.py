@@ -53,7 +53,9 @@ class DPIRestrictionApps(APIItems):
     KEY = "_id"
 
     def __init__(
-        self, raw: list, request: Callable[..., Awaitable[List[dict]]]
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
     ) -> None:
         """Initialize DPI restriction apps manager."""
         super().__init__(raw, request, APP_URL, DPIRestrictionApp)
@@ -75,7 +77,9 @@ class DPIRestrictionGroup(APIItem):
     """Represents a DPI Group configuration."""
 
     def __init__(
-        self, raw: dict, request: Callable[..., Awaitable[List[dict]]]
+        self,
+        raw: dict,
+        request: Callable[..., Awaitable[List[dict]]],
     ) -> None:
         """Initialize DPI Group."""
         super().__init__(raw, request)

@@ -16,7 +16,9 @@ class Clients(APIItems):
     KEY = "mac"
 
     def __init__(
-        self, raw: list, request: Callable[..., Awaitable[List[dict]]]
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
     ) -> None:
         """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
@@ -47,7 +49,11 @@ class ClientsAll(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize all clients manager."""
         super().__init__(raw, request, URL_ALL, Client)
 

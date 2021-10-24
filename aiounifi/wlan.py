@@ -202,7 +202,9 @@ class Wlans(APIItems):
     KEY = "name"
 
     def __init__(
-        self, raw: list, request: Callable[..., Awaitable[List[dict]]]
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
     ) -> None:
         """Initialize WLAN manager."""
         super().__init__(raw, request, URL, Wlan)
