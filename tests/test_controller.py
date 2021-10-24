@@ -331,8 +331,8 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         status=200,
     )
 
-    response = await unifi_controller.request("get", device_url)
-    assert response.status == 200
+    await unifi_controller.request("get", device_url)
+    assert unifi_controller.last_response.status == 200
 
 
 async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controller):
@@ -436,8 +436,8 @@ async def test_no_data(mock_aioresponse, unifi_controller, caplog):
     assert len(unifi_controller.devices._items) == 0
     assert len(unifi_controller.wlans._items) == 0
 
-    assert not unifi_controller.clients[1]
-    assert "Couldn't find key: 1" in caplog.text
+    assert 1 not in unifi_controller.clients
+    assert not unifi_controller.clients.get(1)
 
     message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
     assert unifi_controller.message_handler(message) == {}

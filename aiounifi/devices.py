@@ -4,9 +4,19 @@ Access points, Gateways, Switches.
 """
 
 import logging
-from typing import Dict, Iterator, Optional, Union, ValuesView
+from typing import (
+    Awaitable,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+    ValuesView,
+)
 
 from .api import APIItem, APIItems
+from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +28,11 @@ class Devices(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize device manager."""
         super().__init__(raw, request, URL, Device)
 
@@ -26,12 +40,20 @@ class Devices(APIItems):
 class Device(APIItem):
     """Represents a network device."""
 
-    def __init__(self, raw: dict, request) -> None:
+    def __init__(
+        self,
+        raw: dict,
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
 
-    def update(self, raw: dict = None, event=None) -> None:
+    def update(
+        self,
+        raw: Optional[dict] = None,
+        event: Optional[UniFiEvent] = None,
+    ) -> None:
         """Refresh data."""
         if raw:
             self.ports.update(raw.get("port_table", []))
@@ -162,7 +184,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> None:
+    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> List[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
@@ -170,14 +192,14 @@ class Device(APIItem):
         """
         LOGGER.debug("Override port %d with mode %s", port_idx, mode)
 
-        no_existing_config = True
+        existing_override = False
         for port_override in self.port_overrides:
             if port_idx == port_override["port_idx"]:
                 port_override["poe_mode"] = mode
-                no_existing_config = False
+                existing_override = True
                 break
 
-        if no_existing_config:
+        if not existing_override:
             self.port_overrides.append(
                 {
                     "port_idx": port_idx,
@@ -189,7 +211,7 @@ class Device(APIItem):
         url = f"/rest/device/{self.id}"
         data = {"port_overrides": self.port_overrides}
 
-        await self._request("put", url, json=data)
+        return await self._request("put", url, json=data)
 
     def __repr__(self) -> str:
         """Return the representation."""
@@ -271,36 +293,36 @@ class Port:
 class Ports:
     """Represents ports on a device."""
 
-    def __init__(self, raw_list: list) -> None:
+    def __init__(self, raw: List[dict]) -> None:
         """Initialize port manager."""
         self.ports: Dict[Union[int, str], Port] = {}
-        for raw in raw_list:
-            port = Port(raw)
+        for raw_port in raw:
+            port = Port(raw_port)
 
             if (index := port.port_idx) is not None:
                 self.ports[index] = port
             elif ifname := port.ifname:
                 self.ports[ifname] = port
 
-    def update(self, raw_list: list) -> None:
+    def update(self, raw: List[dict]) -> None:
         """Update ports."""
-        for raw in raw_list:
+        for raw_port in raw:
             index = None
 
-            if "port_idx" in raw:
-                index = raw["port_idx"]
+            if "port_idx" in raw_port:
+                index = raw_port["port_idx"]
 
-            elif "ifname" in raw:
-                index = raw["ifname"]
+            elif "ifname" in raw_port:
+                index = raw_port["ifname"]
 
             if index in self.ports:
-                self.ports[index].raw = raw
+                self.ports[index].raw = raw_port
 
     def values(self) -> ValuesView[Port]:
         """Return ports."""
         return self.ports.values()
 
-    def __getitem__(self, obj_id) -> Port:
+    def __getitem__(self, obj_id: int) -> Port:
         """Get specific port based on key."""
         return self.ports[obj_id]
 

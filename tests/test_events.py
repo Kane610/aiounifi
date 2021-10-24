@@ -5,14 +5,14 @@ pytest --cov-report term-missing --cov=aiounifi.events tests/test_events.py
 
 import pytest
 
-from aiounifi.events import event
+from aiounifi.events import Event
 
 from .fixtures import EVENT_SWITCH_16_CONNECTED, EVENT_WIRELESS_CLIENT_CONNECTED
 
 
 async def test_empty_event():
     """Test empty event."""
-    empty = event({})
+    empty = Event({})
 
     with pytest.raises(KeyError):
         assert empty.event
@@ -37,7 +37,7 @@ async def test_empty_event():
 async def test_client_event():
     """Test client event."""
     event_data = EVENT_WIRELESS_CLIENT_CONNECTED["data"][0]
-    client = event(event_data)
+    client = Event(event_data)
 
     assert client.event == "EVT_WU_Connected"
     assert client.datetime == "2020-04-24T18:37:36Z"
@@ -61,7 +61,7 @@ async def test_client_event():
 async def test_device_event():
     """Test device event."""
     event_data = EVENT_SWITCH_16_CONNECTED["data"][0]
-    device = event(event_data)
+    device = Event(event_data)
 
     assert device.event == "EVT_SW_Connected"
     assert device.datetime == "2020-05-03T08:35:35Z"

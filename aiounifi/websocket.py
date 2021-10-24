@@ -44,11 +44,11 @@ class WSClient:
 
         self._loop = asyncio.get_running_loop()
 
-        self._data = ""
+        self._data: dict = {}
         self._state = ""
 
     @property
-    def data(self) -> str:
+    def data(self) -> dict:
         """Return data."""
         return self._data
 

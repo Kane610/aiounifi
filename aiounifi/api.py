@@ -2,9 +2,19 @@
 
 import logging
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union, ValuesView
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+    ValuesView,
+)
 
-from aiounifi.events import event as unifi_event
+from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,11 +25,15 @@ SOURCE_EVENT = "event"
 class APIItem:
     """Base class for all end points using APIItems class."""
 
-    def __init__(self, raw: dict, request) -> None:
+    def __init__(
+        self,
+        raw: dict,
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize API item."""
         self._raw = raw
         self._request = request
-        self._event: Optional[unifi_event] = None
+        self._event: Optional[UniFiEvent] = None
         self._source = SOURCE_DATA
         self._callbacks: List[Callable] = []
 
@@ -29,7 +43,7 @@ class APIItem:
         return self._raw
 
     @property
-    def event(self) -> Optional[unifi_event]:
+    def event(self) -> Optional[UniFiEvent]:
         """Read only event data."""
         return self._event
 
@@ -39,7 +53,9 @@ class APIItem:
         return self._source
 
     def update(
-        self, raw: Optional[dict] = None, event: Optional[unifi_event] = None
+        self,
+        raw: Optional[dict] = None,
+        event: Optional[UniFiEvent] = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:
@@ -74,7 +90,13 @@ class APIItems:
 
     KEY = ""
 
-    def __init__(self, raw: list, request, path: str, item_cls: Any) -> None:
+    def __init__(
+        self,
+        raw: list,
+        request: Callable[..., Awaitable[List[dict]]],
+        path: str,
+        item_cls: Any,
+    ) -> None:
         """Initialize API items."""
         self._request = request
         self._path = path
@@ -88,7 +110,7 @@ class APIItems:
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
-    def process_raw(self, raw: list) -> set:
+    def process_raw(self, raw: List[dict]) -> set:
         """Process data."""
         new_items = set()
 
@@ -104,7 +126,7 @@ class APIItems:
 
         return new_items
 
-    def process_event(self, events: list) -> set:
+    def process_event(self, events: List[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()
 
@@ -134,13 +156,23 @@ class APIItems:
         """Return item values."""
         return self._items.values()
 
-    def __getitem__(self, obj_id: str) -> Optional[APIItem]:
+    def get(
+        self,
+        obj_id: Union[int, str],
+        default: Optional[Any] = None,
+    ) -> Optional[Any]:
+        """Get item value based on key, return default if no match."""
+        if obj_id in self:
+            return self[obj_id]
+        return default
+
+    def __contains__(self, obj_id: Union[int, str]) -> bool:
+        """Validate membership of item ID."""
+        return obj_id in self._items
+
+    def __getitem__(self, obj_id: Union[int, str]) -> Any:
         """Get item value based on key."""
-        try:
-            return self._items[obj_id]
-        except KeyError:
-            LOGGER.error(f"Couldn't find key: {obj_id}")
-        return None
+        return self._items[obj_id]
 
     def __iter__(self) -> Iterator[Union[int, str]]:
         """Allow iterate over items."""

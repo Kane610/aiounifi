@@ -96,7 +96,7 @@ DEVICE_EVENTS = (
 )
 
 
-class event:
+class Event:
     """UniFi event."""
 
     def __init__(self, raw: dict) -> None:

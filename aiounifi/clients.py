@@ -1,6 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import List, Optional
+from typing import Awaitable, Callable, List, Optional
 
 from .api import APIItem, APIItems
 
@@ -15,29 +15,33 @@ class Clients(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
 
-    async def async_block(self, mac: str) -> None:
+    async def async_block(self, mac: str) -> List[dict]:
         """Block client from controller."""
         data = {"mac": mac, "cmd": "block-sta"}
-        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+        return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_unblock(self, mac: str) -> None:
+    async def async_unblock(self, mac: str) -> List[dict]:
         """Unblock client from controller."""
         data = {"mac": mac, "cmd": "unblock-sta"}
-        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+        return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_reconnect(self, mac: str) -> None:
+    async def async_reconnect(self, mac: str) -> List[dict]:
         """Force a wireless client to reconnect to the network."""
         data = {"mac": mac, "cmd": "kick-sta"}
-        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+        return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def remove_clients(self, macs: List[str]) -> None:
+    async def remove_clients(self, macs: List[str]) -> List[dict]:
         """Make controller forget provided clients."""
         data = {"macs": macs, "cmd": "forget-sta"}
-        await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
+        return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
 
 class ClientsAll(APIItems):
@@ -45,7 +49,11 @@ class ClientsAll(APIItems):
 
     KEY = "mac"
 
-    def __init__(self, raw: list, request) -> None:
+    def __init__(
+        self,
+        raw: List[dict],
+        request: Callable[..., Awaitable[List[dict]]],
+    ) -> None:
         """Initialize all clients manager."""
         super().__init__(raw, request, URL_ALL, Client)
 

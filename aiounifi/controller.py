@@ -1,18 +1,17 @@
 """Python library to interact with UniFi controller."""
 
+from http import HTTPStatus
 import logging
 from pprint import pformat
+from ssl import SSLContext
+from typing import Any, Callable, Dict, List, Optional, Union
 
+import aiohttp
 from aiohttp import client_exceptions
 
-from .clients import URL as client_url, URL_ALL as all_client_url, Clients, ClientsAll
-from .devices import URL as device_url, Devices
-from .dpi import (
-    APP_URL as dpi_app_url,
-    GROUP_URL as dpi_group_url,
-    DPIRestrictionApps,
-    DPIRestrictionGroups,
-)
+from .clients import Clients, ClientsAll
+from .devices import Devices
+from .dpi import DPIRestrictionApps, DPIRestrictionGroups
 from .errors import (
     BadGateway,
     LoginRequired,
@@ -21,9 +20,9 @@ from .errors import (
     ServiceUnavailable,
     raise_error,
 )
-from .events import CLIENT_EVENTS, DEVICE_EVENTS, event
+from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
 from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
-from .wlan import URL as wlan_url, Wlans
+from .wlan import Wlans
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,15 +52,15 @@ class Controller:
 
     def __init__(
         self,
-        host,
-        websession,
+        host: str,
+        websession: aiohttp.ClientSession,
         *,
-        username,
-        password,
+        username: str,
+        password: str,
         port=8443,
         site="default",
-        sslcontext=None,
-        callback=None,
+        sslcontext: Optional[SSLContext] = None,
+        callback: Optional[Callable[[str, Union[dict, str]], None]] = None,
     ):
         """Session setup."""
         self.host = host
@@ -76,21 +75,24 @@ class Controller:
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
-        self.headers = None
+        self.headers: Dict[str, Any] = {}
+        self.last_response: Optional[aiohttp.ClientResponse] = None
 
-        self.websocket = None
+        self.websocket: Optional[WSClient] = None
 
-        self.clients = None
-        self.clients_all = None
-        self.devices = None
-        self.dpi_apps = None
-        self.dpi_groups = None
-        self.wlans = None
+        self.clients = Clients([], self.request)
+        self.devices = Devices([], self.request)
+        self.dpi_apps = DPIRestrictionApps([], self.request)
+        self.dpi_groups = DPIRestrictionGroups([], self.request, self.dpi_apps)
+        self.clients_all = ClientsAll([], self.request)
+        self.wlans = Wlans([], self.request)
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
-        response = await self._request("get", url=self.url, allow_redirects=False)
-        if response.status == 200:
+        await self._request("get", url=self.url, allow_redirects=False)
+        if (
+            response := self.last_response
+        ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
@@ -122,7 +124,7 @@ class Controller:
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
-    async def site_description(self) -> dict:
+    async def site_description(self) -> List[dict]:
         """User description of current site."""
         description = await self.request("get", "/self")
         LOGGER.debug(description)
@@ -130,18 +132,12 @@ class Controller:
 
     async def initialize(self) -> None:
         """Load UniFi parameters."""
-        clients = await self.request("get", client_url)
-        self.clients = Clients(clients, self.request)
-        devices = await self.request("get", device_url)
-        self.devices = Devices(devices, self.request)
-        dpi_apps = await self.request("get", dpi_app_url)
-        self.dpi_apps = DPIRestrictionApps(dpi_apps, self.request)
-        dpi_groups = await self.request("get", dpi_group_url)
-        self.dpi_groups = DPIRestrictionGroups(dpi_groups, self.request, self.dpi_apps)
-        all_clients = await self.request("get", all_client_url)
-        self.clients_all = ClientsAll(all_clients, self.request)
-        wlans = await self.request("get", wlan_url)
-        self.wlans = Wlans(wlans, self.request)
+        await self.clients.update()
+        await self.clients_all.update()
+        await self.devices.update()
+        await self.dpi_apps.update()
+        await self.dpi_groups.update()
+        await self.wlans.update()
 
     def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
@@ -190,9 +186,7 @@ class Controller:
             changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            events = []
-            for item in message[ATTR_DATA]:
-                events.append(event(item))
+            events = [Event(raw_event) for raw_event in message[ATTR_DATA]]
             self.clients.process_event(
                 [
                     client_event
@@ -251,9 +245,9 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: dict = None,
+        json: Optional[Dict[str, Any]] = None,
         url: str = "",
-    ):
+    ) -> List[dict]:
         """Make a request to the API, retry login on failure."""
         try:
             return await self._request(method, path, json, url)
@@ -271,11 +265,13 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: dict = None,
+        json: Optional[Dict[str, Any]] = None,
         url: str = "",
         **kwargs: bool,
-    ):
+    ) -> List[dict]:
         """Make a request to the API."""
+        self.last_response = None
+
         if not url:
             if self.is_unifi_os:
                 url = f"{self.url}/proxy/network/api/s/{self.site}"
@@ -297,16 +293,18 @@ class Controller:
             ) as res:
                 LOGGER.debug("%s %s %s", res.status, res.content_type, res)
 
-                if res.status == 401:
+                self.last_response = res
+
+                if res.status == HTTPStatus.UNAUTHORIZED:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
-                if res.status == 404:
+                if res.status == HTTPStatus.NOT_FOUND:
                     raise ResponseError(f"Call {url} received 404 Not Found")
 
-                if res.status == 502:
+                if res.status == HTTPStatus.BAD_GATEWAY:
                     raise BadGateway(f"Call {url} received 502 bad gateway")
 
-                if res.status == 503:
+                if res.status == HTTPStatus.SERVICE_UNAVAILABLE:
                     raise ServiceUnavailable(
                         f"Call {url} received 503 service unavailable"
                     )
@@ -317,7 +315,7 @@ class Controller:
                     if "data" in response:
                         return response["data"]
                     return response
-                return res
+                return []
 
         except client_exceptions.ClientError as err:
             raise RequestError(
