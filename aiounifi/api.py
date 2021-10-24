@@ -14,7 +14,7 @@ from typing import (
     ValuesView,
 )
 
-from .events import event as unifi_event
+from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class APIItem:
         """Initialize API item."""
         self._raw = raw
         self._request = request
-        self._event: Optional[unifi_event] = None
+        self._event: Optional[UniFiEvent] = None
         self._source = SOURCE_DATA
         self._callbacks: List[Callable] = []
 
@@ -41,7 +41,7 @@ class APIItem:
         return self._raw
 
     @property
-    def event(self) -> Optional[unifi_event]:
+    def event(self) -> Optional[UniFiEvent]:
         """Read only event data."""
         return self._event
 
@@ -53,7 +53,7 @@ class APIItem:
     def update(
         self,
         raw: Optional[dict] = None,
-        event: Optional[unifi_event] = None,
+        event: Optional[UniFiEvent] = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:

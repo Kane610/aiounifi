@@ -20,7 +20,7 @@ from .errors import (
     ServiceUnavailable,
     raise_error,
 )
-from .events import CLIENT_EVENTS, DEVICE_EVENTS, event
+from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
 from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
 from .wlan import Wlans
 
@@ -188,7 +188,7 @@ class Controller:
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
             events = []
             for item in message[ATTR_DATA]:
-                events.append(event(item))
+                events.append(Event(item))
             self.clients.process_event(
                 [
                     client_event

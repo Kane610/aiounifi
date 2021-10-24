@@ -16,7 +16,7 @@ from typing import (
 )
 
 from .api import APIItem, APIItems
-from .events import event as unifi_event
+from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class Device(APIItem):
     def update(
         self,
         raw: Optional[dict] = None,
-        event: Optional[unifi_event] = None,
+        event: Optional[UniFiEvent] = None,
     ) -> None:
         """Refresh data."""
         if raw:
