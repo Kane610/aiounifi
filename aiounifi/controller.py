@@ -186,9 +186,7 @@ class Controller:
             changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            events = []
-            for item in message[ATTR_DATA]:
-                events.append(Event(item))
+            events = [Event(raw_event) for raw_event in message[ATTR_DATA]]
             self.clients.process_event(
                 [
                     client_event
