@@ -1,5 +1,6 @@
 """Python library to interact with UniFi controller."""
 
+from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
@@ -89,7 +90,9 @@ class Controller:
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
         await self._request("get", url=self.url, allow_redirects=False)
-        if (response := self.last_response) is not None and response.status == 200:
+        if (
+            response := self.last_response
+        ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
             self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
 
@@ -294,16 +297,16 @@ class Controller:
 
                 self.last_response = res
 
-                if res.status == 401:
+                if res.status == HTTPStatus.UNAUTHORIZED:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
-                if res.status == 404:
+                if res.status == HTTPStatus.NOT_FOUND:
                     raise ResponseError(f"Call {url} received 404 Not Found")
 
-                if res.status == 502:
+                if res.status == HTTPStatus.BAD_GATEWAY:
                     raise BadGateway(f"Call {url} received 502 bad gateway")
 
-                if res.status == 503:
+                if res.status == HTTPStatus.SERVICE_UNAVAILABLE:
                     raise ServiceUnavailable(
                         f"Call {url} received 503 service unavailable"
                     )
