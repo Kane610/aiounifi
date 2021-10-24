@@ -192,14 +192,14 @@ class Device(APIItem):
         """
         LOGGER.debug("Override port %d with mode %s", port_idx, mode)
 
-        no_existing_config = True
+        existing_override = False
         for port_override in self.port_overrides:
             if port_idx == port_override["port_idx"]:
                 port_override["poe_mode"] = mode
-                no_existing_config = False
+                existing_override = True
                 break
 
-        if no_existing_config:
+        if not existing_override:
             self.port_overrides.append(
                 {
                     "port_idx": port_idx,

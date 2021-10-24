@@ -26,7 +26,9 @@ class APIItem:
     """Base class for all end points using APIItems class."""
 
     def __init__(
-        self, raw: dict, request: Callable[..., Awaitable[List[dict]]]
+        self,
+        raw: dict,
+        request: Callable[..., Awaitable[List[dict]]],
     ) -> None:
         """Initialize API item."""
         self._raw = raw
@@ -108,7 +110,7 @@ class APIItems:
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
-    def process_raw(self, raw: list) -> set:
+    def process_raw(self, raw: List[dict]) -> set:
         """Process data."""
         new_items = set()
 
@@ -124,7 +126,7 @@ class APIItems:
 
         return new_items
 
-    def process_event(self, events: list) -> set:
+    def process_event(self, events: List[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()
 
