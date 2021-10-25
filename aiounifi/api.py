@@ -116,10 +116,10 @@ class APIItems:
 
         for raw_item in raw:
             key = raw_item[self.KEY]
-            obj = self._items.get(key)
 
-            if obj is not None:
+            if (obj := self._items.get(key)) is not None:
                 obj.update(raw=raw_item)
+
             else:
                 self._items[key] = self._item_cls(raw_item, self._request)
                 new_items.add(key)
@@ -131,9 +131,8 @@ class APIItems:
         new_items = set()
 
         for event in events:
-            obj = self._items.get(event.mac)
 
-            if obj is not None:
+            if (obj := self._items.get(event.mac)) is not None:
                 obj.update(event=event)
                 new_items.add(event.mac)
 
@@ -162,9 +161,7 @@ class APIItems:
         default: Optional[Any] = None,
     ) -> Optional[Any]:
         """Get item value based on key, return default if no match."""
-        if obj_id in self:
-            return self[obj_id]
-        return default
+        return self._items.get(obj_id, default)
 
     def __contains__(self, obj_id: Union[int, str]) -> bool:
         """Validate membership of item ID."""

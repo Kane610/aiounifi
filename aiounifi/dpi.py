@@ -1,6 +1,6 @@
 """DPI Restrictions as part of a UniFi network."""
 import asyncio
-from typing import Awaitable, Callable, List, Optional, Union
+from typing import Awaitable, Callable, List, Optional
 
 from .api import APIItem, APIItems
 
@@ -116,10 +116,14 @@ class DPIRestrictionGroup(APIItem):
         return self.raw.get("dpiapp_ids", [])
 
     @property
-    def enabled(self) -> Union[DPIRestrictionApps, None, bool]:
+    def enabled(self) -> bool:
         """Are all apps in group enabled."""
         return self.apps and all(
-            [self.apps[id].enabled for id in self.apps if id in self.dpiapp_ids]  # type: ignore
+            [
+                self.apps[app_id].enabled
+                for app_id in self.apps
+                if app_id in self.dpiapp_ids
+            ]  # type: ignore
         )
 
 
@@ -138,24 +142,24 @@ class DPIRestrictionGroups(APIItems):
         self._apps = apps
         super().__init__(raw, request, GROUP_URL, DPIRestrictionGroup)
 
-    async def async_enable(self, dpi: DPIRestrictionGroup) -> List[dict]:
+    async def async_enable(self, group: DPIRestrictionGroup) -> List[dict]:
         """Enable DPI Restriction Group Apps."""
         return await asyncio.gather(
-            *[self._apps.async_enable(app_id) for app_id in dpi.dpiapp_ids]
+            *[self._apps.async_enable(app_id) for app_id in group.dpiapp_ids]
         )
 
-    async def async_disable(self, dpi: DPIRestrictionGroup) -> List[dict]:
+    async def async_disable(self, group: DPIRestrictionGroup) -> List[dict]:
         """Disable DPI Restriction Group Apps."""
         return await asyncio.gather(
-            *[self._apps.async_disable(app_id) for app_id in dpi.dpiapp_ids]
+            *[self._apps.async_disable(app_id) for app_id in group.dpiapp_ids]
         )
 
     def process_raw(self, raw: list) -> set:
         """Set enabled attribute based on app data."""
         new_items = super().process_raw(raw)
 
-        for item_key in new_items:
-            item = self._items[item_key]
-            item.apps = self._apps
+        for group_id in new_items:
+            group = self._items[group_id]
+            group.apps = self._apps
 
         return new_items
