@@ -70,6 +70,7 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     assert group.name == "No Media"
     assert group.site_id == "5ba29dd4e3c58f026e9d7c38"
     assert group.dpiapp_ids == ["5f976f62e3c58f018ec7e17d"]
+    assert group.enabled
 
     mock_aioresponse.put(
         "https://host:8443/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",

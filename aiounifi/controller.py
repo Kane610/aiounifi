@@ -47,6 +47,9 @@ DATA_DPI_GROUP = "dpi_group"
 DATA_DPI_GROUP_REMOVED = "dpi_group_removed"
 
 
+IGNORE_MESSAGES = ("device:update",)
+
+
 class Controller:
     """Control a UniFi controller."""
 
@@ -235,6 +238,9 @@ class Controller:
                     for key in changes[DATA_DPI_GROUP]:
                         group = self.dpi_groups[key]
                         group.update(group.raw)
+
+        elif message[ATTR_META][ATTR_MESSAGE] in IGNORE_MESSAGES:
+            pass
 
         else:
             LOGGER.debug("Unsupported message type %s", message)
