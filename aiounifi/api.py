@@ -7,6 +7,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    ItemsView,
     Iterator,
     List,
     Optional,
@@ -151,7 +152,11 @@ class APIItems:
 
         return removed_items
 
-    def values(self) -> ValuesView[APIItem]:
+    def items(self) -> ItemsView[Union[int, str], Any]:
+        """Return item values."""
+        return self._items.items()
+
+    def values(self) -> ValuesView[Any]:
         """Return item values."""
         return self._items.values()
 

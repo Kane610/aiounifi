@@ -72,6 +72,12 @@ class DPIRestrictionApps(APIItems):
         data = {"enabled": False}
         return await self._request("put", app_url, json=data)
 
+    def process_raw(self, raw: list) -> set:
+        """Set enabled attribute based on app data."""
+        super().process_raw(raw)
+
+        return {raw_item[self.KEY] for raw_item in raw}
+
 
 class DPIRestrictionGroup(APIItem):
     """Represents a DPI Group configuration."""
@@ -118,12 +124,12 @@ class DPIRestrictionGroup(APIItem):
     @property
     def enabled(self) -> bool:
         """Are all apps in group enabled."""
-        return self.apps and all(
+        return isinstance(self.apps, DPIRestrictionApps) and all(
             [
-                self.apps[app_id].enabled
-                for app_id in self.apps
+                app.enabled
+                for app_id, app in self.apps.items()
                 if app_id in self.dpiapp_ids
-            ]  # type: ignore
+            ]
         )
 
 
