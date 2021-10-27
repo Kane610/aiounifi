@@ -88,10 +88,10 @@ class Controller:
         self.websocket: Optional[WSClient] = None
 
         self.clients = Clients([], self.request)
+        self.clients_all = ClientsAll([], self.request)
         self.devices = Devices([], self.request)
         self.dpi_apps = DPIRestrictionApps([], self.request)
-        self.dpi_groups = DPIRestrictionGroups([], self.request, self.dpi_apps)
-        self.clients_all = ClientsAll([], self.request)
+        self.dpi_groups = DPIRestrictionGroups([], self.request)
         self.wlans = Wlans([], self.request)
 
     async def check_unifi_os(self) -> None:
@@ -184,7 +184,7 @@ class Controller:
 
     def message_handler(self, message: dict) -> dict:
         """Receive event from websocket and identifies where the event belong."""
-        changes = {}
+        changes: Dict[str, set] = {}
 
         if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
             events = [Event(raw_event) for raw_event in message[ATTR_DATA]]
@@ -217,6 +217,17 @@ class Controller:
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
             changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
 
+        # DPI App
+
+        elif message[ATTR_META][ATTR_MESSAGE] in (
+            MESSAGE_DPI_APP_ADDED,
+            MESSAGE_DPI_APP_UPDATED,
+        ):
+            changes[DATA_DPI_APP] = self.dpi_apps.process_raw(message[ATTR_DATA])
+
+        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_APP_REMOVED:
+            changes[DATA_DPI_APP_REMOVED] = self.dpi_apps.remove(message[ATTR_DATA])
+
         # DPI Group
 
         elif message[ATTR_META][ATTR_MESSAGE] in (
@@ -227,30 +238,6 @@ class Controller:
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_GROUP_REMOVED:
             changes[DATA_DPI_GROUP_REMOVED] = self.dpi_groups.remove(message[ATTR_DATA])
-
-        # DPI App
-
-        elif message[ATTR_META][ATTR_MESSAGE] in (
-            MESSAGE_DPI_APP_ADDED,
-            MESSAGE_DPI_APP_UPDATED,
-        ):
-            changes[DATA_DPI_APP] = self.dpi_apps.process_raw(message[ATTR_DATA])
-
-            if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_APP_UPDATED:
-                # Manually trigger update for related groups
-                changes[DATA_DPI_GROUP] = {
-                    key
-                    for key in self.dpi_groups
-                    if set(self.dpi_groups[key].dpiapp_ids).intersection(
-                        changes[DATA_DPI_APP]
-                    )
-                }
-                for key in changes[DATA_DPI_GROUP]:
-                    group = self.dpi_groups[key]
-                    group.update(group.raw)
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_APP_REMOVED:
-            changes[DATA_DPI_APP_REMOVED] = self.dpi_apps.remove(message[ATTR_DATA])
 
         # Unsupported
 

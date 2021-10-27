@@ -18,7 +18,6 @@ from aiounifi import (
     ServiceUnavailable,
     TwoFaTokenRequired,
     Unauthorized,
-    dpi,
 )
 from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.clients import URL as client_url
@@ -28,6 +27,10 @@ from aiounifi.controller import (
     DATA_CLIENT,
     DATA_CLIENT_REMOVED,
     DATA_DEVICE,
+    DATA_DPI_APP,
+    DATA_DPI_APP_REMOVED,
+    DATA_DPI_GROUP,
+    DATA_DPI_GROUP_REMOVED,
     DATA_EVENT,
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
@@ -706,7 +709,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     assert len(device._callbacks) == 0
 
 
-async def test_dpi(mock_aioresponse, unifi_controller):
+async def test_dpi_apps(mock_aioresponse, unifi_controller):
     """Test controller managing devices."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -730,7 +733,117 @@ async def test_dpi(mock_aioresponse, unifi_controller):
         payload={},
     )
     await unifi_controller.initialize()
+
     assert len(unifi_controller.dpi_apps.values()) == 0
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    mock_app_callback = Mock()
+
+    # Add DPI app from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:add"},
+        "data": [
+            {
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": False,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "_id": "61783e89c1773a18c0c61f00",
+            }
+        ],
+    }
+    unifi_controller.session_handler(SIGNAL_DATA)
+    assert len(unifi_controller.dpi_apps.values()) == 1
+    assert "61783e89c1773a18c0c61f00" in unifi_controller.dpi_apps
+    dpi_app = unifi_controller.dpi_apps["61783e89c1773a18c0c61f00"]
+    dpi_app.register_callback(mock_app_callback)
+
+    mock_app_callback.assert_not_called()
+    mock_app_callback.reset_mock()
+
+    unifi_controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_DPI_APP: {"61783e89c1773a18c0c61f00"}}
+    )
+    unifi_controller.callback.reset_mock()
+
+    # DPI group is enabled with app from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:sync"},
+        "data": [
+            {
+                "_id": "61783e89c1773a18c0c61f00",
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": True,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+            }
+        ],
+    }
+    unifi_controller.session_handler(SIGNAL_DATA)
+    assert dpi_app.enabled
+
+    mock_app_callback.assert_called()
+    mock_app_callback.reset_mock()
+
+    unifi_controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DPI_APP: set()})
+    unifi_controller.callback.reset_mock()
+
+    # Signal removal of app from apps
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:delete"},
+        "data": [
+            {
+                "_id": "61783e89c1773a18c0c61f00",
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": True,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+            }
+        ],
+    }
+    unifi_controller.session_handler(SIGNAL_DATA)
+    assert len(unifi_controller.dpi_apps.values()) == 0
+    assert "61783e89c1773a18c0c61f00" not in unifi_controller.dpi_apps
+    mock_app_callback.assert_not_called()
+
+    unifi_controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_DPI_APP_REMOVED: {"61783e89c1773a18c0c61f00"}}
+    )
+
+
+async def test_dpi_groups(mock_aioresponse, unifi_controller):
+    """Test controller managing devices."""
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sta",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/rest/user",
+        payload={},
+    )
+    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/rest/dpiapp",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/rest/dpigroup",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/rest/wlanconf",
+        payload={},
+    )
+    await unifi_controller.initialize()
+
     assert len(unifi_controller.dpi_groups.values()) == 0
 
     with patch("aiounifi.websocket.WSClient.running"):
@@ -755,26 +868,10 @@ async def test_dpi(mock_aioresponse, unifi_controller):
     dpi_group = unifi_controller.dpi_groups["61783dbdc1773a18c0c61ef6"]
     dpi_group.register_callback(mock_group_callback)
 
-    # Add DPI app from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:add"},
-        "data": [
-            {
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": False,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "_id": "61783e89c1773a18c0c61f00",
-            }
-        ],
-    }
-    unifi_controller.session_handler(SIGNAL_DATA)
-    assert len(unifi_controller.dpi_apps.values()) == 1
-    assert "61783e89c1773a18c0c61f00" in unifi_controller.dpi_apps
-    assert dpi_group.enabled
-    mock_group_callback.assert_not_called()
+    unifi_controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_DPI_GROUP: {"61783dbdc1773a18c0c61ef6"}}
+    )
+    unifi_controller.callback.reset_mock()
 
     # Update DPI group with app from websocket
     unifi_controller.websocket._data = {
@@ -790,35 +887,14 @@ async def test_dpi(mock_aioresponse, unifi_controller):
     }
     unifi_controller.session_handler(SIGNAL_DATA)
     assert "61783e89c1773a18c0c61f00" in dpi_group.dpiapp_ids
-    mock_group_callback.assert_called()
-    assert not dpi_group.enabled
 
+    mock_group_callback.assert_called()
     mock_group_callback.reset_mock()
 
-    # DPI group is enabled with app from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:sync"},
-        "data": [
-            {
-                "_id": "61783e89c1773a18c0c61f00",
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": True,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-            }
-        ],
-    }
-    unifi_controller.session_handler(SIGNAL_DATA)
-    mock_group_callback.assert_called()
-    assert dpi_group.enabled
+    unifi_controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DPI_GROUP: set()})
+    unifi_controller.callback.reset_mock()
 
-    mock_group_callback.reset_mock()
-
-    # Remove App from UniFI controller app from websocket
-
-    # # Signal for group first to not contain app
+    # Signal for group to remove app
     unifi_controller.websocket._data = {
         "meta": {"rc": "ok", "message": "dpigroup:sync"},
         "data": [
@@ -831,33 +907,12 @@ async def test_dpi(mock_aioresponse, unifi_controller):
         ],
     }
     unifi_controller.session_handler(SIGNAL_DATA)
+
     mock_group_callback.assert_called()
-    assert dpi_group.enabled
-
     mock_group_callback.reset_mock()
 
-    # # Signal removal of app from apps
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:delete"},
-        "data": [
-            {
-                "_id": "61783e89c1773a18c0c61f00",
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": True,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-            }
-        ],
-    }
-    unifi_controller.session_handler(SIGNAL_DATA)
-    mock_group_callback.assert_not_called()
-    assert len(unifi_controller.dpi_apps.values()) == 0
-    assert "61783e89c1773a18c0c61f00" not in unifi_controller.dpi_apps
-    assert dpi_group.enabled
-
-    mock_group_callback.reset_mock()
+    unifi_controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DPI_GROUP: set()})
+    unifi_controller.callback.reset_mock()
 
     # Remove group from UniFI controller group from websocket
     unifi_controller.websocket._data = {
@@ -875,6 +930,10 @@ async def test_dpi(mock_aioresponse, unifi_controller):
     mock_group_callback.assert_not_called()
     assert len(unifi_controller.dpi_groups.values()) == 0
     assert "61783dbdc1773a18c0c61ef6" not in unifi_controller.dpi_groups
+
+    unifi_controller.callback.assert_called_with(
+        SIGNAL_DATA, {DATA_DPI_GROUP_REMOVED: {"61783dbdc1773a18c0c61ef6"}}
+    )
 
 
 async def test_controller_request_raise_login_required(
