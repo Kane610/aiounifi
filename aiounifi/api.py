@@ -85,6 +85,10 @@ class APIItem:
         if callback in self._callbacks:
             self._callbacks.remove(callback)
 
+    def clear_callbacks(self) -> None:
+        """Clear all registered callbacks."""
+        self._callbacks.clear()
+
 
 class APIItems:
     """Base class for a map of API Items."""
@@ -147,7 +151,8 @@ class APIItems:
             key = raw_item[self.KEY]
 
             if key in self._items:
-                self._items.pop(key)
+                item = self._items.pop(key)
+                item.clear_callbacks()
                 removed_items.add(key)
 
         return removed_items
