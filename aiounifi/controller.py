@@ -24,9 +24,9 @@ from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
 from .websocket import (
     SIGNAL_CONNECTION_STATE,
     SIGNAL_DATA,
-    WSClient,
     SignalLiteral as WSSignalLiteral,
     StateLiteral as WSStateLiteral,
+    WSClient,
 )
 from .wlan import Wlans
 
