@@ -7,6 +7,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    Final,
     ItemsView,
     Iterator,
     List,
@@ -19,8 +20,8 @@ from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
-SOURCE_DATA = "data"
-SOURCE_EVENT = "event"
+SOURCE_DATA: Final = "data"
+SOURCE_EVENT: Final = "event"
 
 
 class APIItem:

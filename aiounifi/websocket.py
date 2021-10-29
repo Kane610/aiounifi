@@ -4,19 +4,19 @@ import asyncio
 import json
 import logging
 from ssl import SSLContext
-from typing import Callable, Optional
+from typing import Callable, Final, Optional
 
 import aiohttp
 
 LOGGER = logging.getLogger(__name__)
 
-SIGNAL_DATA = "data"
-SIGNAL_CONNECTION_STATE = "state"
+SIGNAL_DATA: Final = "data"
+SIGNAL_CONNECTION_STATE: Final = "state"
 
-STATE_DISCONNECTED = "disconnected"
-STATE_RUNNING = "running"
-STATE_STARTING = "starting"
-STATE_STOPPED = "stopped"
+STATE_DISCONNECTED: Final = "disconnected"
+STATE_RUNNING: Final = "running"
+STATE_STARTING: Final = "starting"
+STATE_STOPPED: Final = "stopped"
 
 
 class WSClient:

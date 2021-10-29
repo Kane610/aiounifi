@@ -1,10 +1,10 @@
 """WLANs as part of a UniFi network."""
 
-from typing import Awaitable, Callable, List
+from typing import Awaitable, Callable, Final, List
 
 from .api import APIItem, APIItems
 
-URL = "/rest/wlanconf"  # List WLAN configuration
+URL: Final = "/rest/wlanconf"  # List WLAN configuration
 
 
 class Wlan(APIItem):

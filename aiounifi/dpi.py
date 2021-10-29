@@ -1,11 +1,11 @@
 """DPI Restrictions as part of a UniFi network."""
 
-from typing import Awaitable, Callable, List
+from typing import Awaitable, Callable, Final, List
 
 from .api import APIItem, APIItems
 
-GROUP_URL = "/rest/dpigroup"  # List DPI Group configuration
-APP_URL = "/rest/dpiapp"  # List DPI App configuration
+GROUP_URL: Final = "/rest/dpigroup"  # List DPI Group configuration
+APP_URL: Final = "/rest/dpiapp"  # List DPI App configuration
 
 
 class DPIRestrictionApp(APIItem):
