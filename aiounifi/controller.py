@@ -4,7 +4,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Callable, Dict, Final, List, Optional, Union
+from typing import Any, Callable, Dict, Final, List, Literal, Optional, Union
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -21,7 +21,13 @@ from .errors import (
     raise_error,
 )
 from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
-from .websocket import SIGNAL_CONNECTION_STATE, SIGNAL_DATA, WSClient
+from .websocket import (
+    SIGNAL_CONNECTION_STATE,
+    SIGNAL_DATA,
+    WSClient,
+    SignalLiteral as WSSignalLiteral,
+    StateLiteral as WSStateLiteral,
+)
 from .wlan import Wlans
 
 LOGGER = logging.getLogger(__name__)
@@ -67,7 +73,9 @@ class Controller:
         port=8443,
         site="default",
         sslcontext: Optional[SSLContext] = None,
-        callback: Optional[Callable[[str, Union[dict, str]], None]] = None,
+        callback: Optional[
+            Callable[[Literal[WSSignalLiteral, WSStateLiteral], Union[dict, str]], None]
+        ] = None,
     ):
         """Session setup."""
         self.host = host
@@ -165,14 +173,13 @@ class Controller:
         if self.websocket:
             self.websocket.stop()
 
-    def session_handler(self, signal: str) -> None:
+    def session_handler(self, signal: WSSignalLiteral) -> None:
         """Signalling from websocket.
 
         data - new data available for processing.
         state - network state has changed.
         """
-        if not self.websocket:
-            return
+        assert self.websocket
 
         if signal == SIGNAL_DATA:
             new_items = self.message_handler(self.websocket.data)
