@@ -8,6 +8,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    Final,
     Iterator,
     List,
     Optional,
@@ -20,7 +21,7 @@ from .events import Event as UniFiEvent
 
 LOGGER = logging.getLogger(__name__)
 
-URL = "/stat/device"
+URL: Final = "/stat/device"
 
 
 class Devices(APIItems):

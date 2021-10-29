@@ -4,7 +4,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Final, List, Optional, Union
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -26,32 +26,32 @@ from .wlan import Wlans
 
 LOGGER = logging.getLogger(__name__)
 
-MESSAGE_CLIENT = "sta:sync"
-MESSAGE_CLIENT_REMOVED = "user:delete"
-MESSAGE_DEVICE = "device:sync"
-MESSAGE_EVENT = "events"
-MESSAGE_DPI_APP_ADDED = "dpiapp:add"
-MESSAGE_DPI_APP_REMOVED = "dpiapp:delete"
-MESSAGE_DPI_APP_UPDATED = "dpiapp:sync"
-MESSAGE_DPI_GROUP_ADDED = "dpigroup:add"
-MESSAGE_DPI_GROUP_REMOVED = "dpigroup:delete"
-MESSAGE_DPI_GROUP_UPDATED = "dpigroup:sync"
+MESSAGE_CLIENT: Final = "sta:sync"
+MESSAGE_CLIENT_REMOVED: Final = "user:delete"
+MESSAGE_DEVICE: Final = "device:sync"
+MESSAGE_EVENT: Final = "events"
+MESSAGE_DPI_APP_ADDED: Final = "dpiapp:add"
+MESSAGE_DPI_APP_REMOVED: Final = "dpiapp:delete"
+MESSAGE_DPI_APP_UPDATED: Final = "dpiapp:sync"
+MESSAGE_DPI_GROUP_ADDED: Final = "dpigroup:add"
+MESSAGE_DPI_GROUP_REMOVED: Final = "dpigroup:delete"
+MESSAGE_DPI_GROUP_UPDATED: Final = "dpigroup:sync"
 
-ATTR_MESSAGE = "message"
-ATTR_META = "meta"
-ATTR_DATA = "data"
+ATTR_MESSAGE: Final = "message"
+ATTR_META: Final = "meta"
+ATTR_DATA: Final = "data"
 
-DATA_CLIENT = "client"
-DATA_CLIENT_REMOVED = "client_removed"
-DATA_DEVICE = "device"
-DATA_EVENT = "event"
-DATA_DPI_APP = "dpi_app"
-DATA_DPI_APP_REMOVED = "dpi_app_removed"
-DATA_DPI_GROUP = "dpi_group"
-DATA_DPI_GROUP_REMOVED = "dpi_group_removed"
+DATA_CLIENT: Final = "client"
+DATA_CLIENT_REMOVED: Final = "client_removed"
+DATA_DEVICE: Final = "device"
+DATA_EVENT: Final = "event"
+DATA_DPI_APP: Final = "dpi_app"
+DATA_DPI_APP_REMOVED: Final = "dpi_app_removed"
+DATA_DPI_GROUP: Final = "dpi_group"
+DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
 
 
-IGNORE_MESSAGES = ("device:update",)
+IGNORE_MESSAGES: Final = ("device:update",)
 
 
 class Controller:
