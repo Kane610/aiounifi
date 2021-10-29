@@ -170,6 +170,11 @@ class Device(APIItem):
         return self.raw.get("upgrade_to_firmware", "")
 
     @property
+    def uplink(self) -> Dict[str, Union[bool, int, List[str], str]]:
+        """Information about uplink."""
+        return self.raw["uplink"]
+
+    @property
     def uplink_depth(self) -> Optional[int]:
         """Hops to gateway."""
         return self.raw.get("uplink_depth")

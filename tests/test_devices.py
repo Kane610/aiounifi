@@ -59,6 +59,7 @@ async def test_device_access_point(unifi_controller):
     assert access_point.version == "4.0.69.10871"
     assert access_point.upgradable is True
     assert access_point.upgrade_to_firmware == "4.0.80.10875"
+    assert access_point.uplink == ACCESS_POINT_AC_PRO["uplink"]
     assert access_point.uplink_depth is None
     assert access_point.user_num_sta == 12
     assert access_point.wlan_overrides == [
@@ -147,6 +148,7 @@ async def test_device_security_gateway(unifi_controller):
     assert gateway.version == "4.4.44.5213844"
     assert gateway.upgradable is True
     assert gateway.upgrade_to_firmware == "4.4.50.5272448"
+    assert gateway.uplink == GATEWAY_USG3["uplink"]
     assert gateway.uplink_depth is None
     assert gateway.user_num_sta == 20
     assert gateway.wlan_overrides == []
@@ -261,6 +263,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     assert switch.version == "4.0.66.10832"
     assert switch.upgradable is True
     assert switch.upgrade_to_firmware == "4.0.80.10875"
+    assert switch.uplink == SWITCH_16_PORT_POE["uplink"]
     assert switch.uplink_depth == 2
     assert switch.user_num_sta == 4
     assert switch.wlan_overrides == []
