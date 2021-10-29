@@ -2,7 +2,7 @@
 
 #  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
 
-from typing import Final
+from typing import Final, final
 
 CONTROLLER_UPDATE_AVAILABLE: Final = "EVT_AD_Update_Available"
 
@@ -98,6 +98,7 @@ DEVICE_EVENTS: Final = (
 )
 
 
+@final
 class Event:
     """UniFi event."""
 

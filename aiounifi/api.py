@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Union,
     ValuesView,
+    final,
 )
 
 from .events import Event as UniFiEvent
@@ -39,16 +40,19 @@ class APIItem:
         self._source = SOURCE_DATA
         self._callbacks: List[Callable] = []
 
+    @final
     @property
     def raw(self) -> dict:
         """Read only raw data."""
         return self._raw
 
+    @final
     @property
     def event(self) -> Optional[UniFiEvent]:
         """Read only event data."""
         return self._event
 
+    @final
     @property
     def last_updated(self) -> str:
         """Which source, data or event last called update."""
@@ -74,6 +78,7 @@ class APIItem:
         for signal_update in self._callbacks:
             signal_update()
 
+    @final
     def register_callback(self, callback: Callable) -> None:
         """Register callback for signalling.
 
@@ -81,11 +86,13 @@ class APIItem:
         """
         self._callbacks.append(callback)
 
+    @final
     def remove_callback(self, callback: Callable) -> None:
         """Remove registered callback."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
 
+    @final
     def clear_callbacks(self) -> None:
         """Clear all registered callbacks."""
         self._callbacks.clear()
@@ -111,11 +118,13 @@ class APIItems:
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
+    @final
     async def update(self) -> None:
         """Refresh data."""
         raw = await self._request("get", self._path)
         self.process_raw(raw)
 
+    @final
     def process_raw(self, raw: List[dict]) -> set:
         """Process data."""
         new_items = set()
@@ -132,6 +141,7 @@ class APIItems:
 
         return new_items
 
+    @final
     def process_event(self, events: List[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()
@@ -144,6 +154,7 @@ class APIItems:
 
         return new_items
 
+    @final
     def remove(self, raw: list) -> set:
         """Remove list of items."""
         removed_items = set()
@@ -158,14 +169,17 @@ class APIItems:
 
         return removed_items
 
+    @final
     def items(self) -> ItemsView[Union[int, str], Any]:
         """Return item values."""
         return self._items.items()
 
+    @final
     def values(self) -> ValuesView[Any]:
         """Return item values."""
         return self._items.values()
 
+    @final
     def get(
         self,
         obj_id: Union[int, str],
@@ -174,14 +188,17 @@ class APIItems:
         """Get item value based on key, return default if no match."""
         return self._items.get(obj_id, default)
 
+    @final
     def __contains__(self, obj_id: Union[int, str]) -> bool:
         """Validate membership of item ID."""
         return obj_id in self._items
 
+    @final
     def __getitem__(self, obj_id: Union[int, str]) -> Any:
         """Get item value based on key."""
         return self._items[obj_id]
 
+    @final
     def __iter__(self) -> Iterator[Union[int, str]]:
         """Allow iterate over items."""
         return iter(self._items)
