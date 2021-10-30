@@ -76,6 +76,11 @@ class Device(APIItem):
         return self.raw.get("disabled", False)
 
     @property
+    def downlink_table(self) -> List[dict]:
+        """All devices with device as uplink."""
+        return self.raw.get("downlink_table", [])
+
+    @property
     def id(self) -> str:
         """ID of device."""
         return self.raw["device_id"]
@@ -99,6 +104,11 @@ class Device(APIItem):
     def last_seen(self) -> Optional[int]:
         """When was device last seen."""
         return self.raw.get("last_seen")
+
+    @property
+    def lldp_table(self) -> List[dict]:
+        """All clients and devices directly attached to device."""
+        return self.raw.get("lldp_table", [])
 
     @property
     def mac(self) -> str:
