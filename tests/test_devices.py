@@ -36,9 +36,11 @@ async def test_device_access_point(unifi_controller):
     assert access_point.disabled is False
     assert access_point.id == "235678987654345678"
     assert access_point.ip == "192.168.0.4"
+    assert access_point.downlink_table == []
     assert access_point.fan_level is None
     assert access_point.has_fan is False
     assert access_point.last_seen == 1588175726
+    assert access_point.lldp_table == []
     assert access_point.mac == "80:2a:a8:00:01:02"
     assert access_point.model == "U7PG2"
     assert access_point.name == "ACCESS POINT AC PRO"
@@ -125,9 +127,11 @@ async def test_device_security_gateway(unifi_controller):
     assert gateway.disabled is False
     assert gateway.id == "235678987654345678"
     assert gateway.ip == "1.2.3.4"
+    assert gateway.downlink_table == []
     assert gateway.fan_level is None
     assert gateway.has_fan is False
     assert gateway.last_seen == 1588175740
+    assert gateway.lldp_table == []
     assert gateway.mac == "78:8a:20:33:44:55"
     assert gateway.model == "UGW3"
     assert gateway.name == "USG"
@@ -223,9 +227,11 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     assert switch.disabled is False
     assert switch.id == "235678987654345678"
     assert switch.ip == "192.168.0.57"
+    assert switch.downlink_table == []
     assert switch.fan_level == 0
     assert switch.has_fan is True
     assert switch.last_seen == 1588175722
+    assert switch.lldp_table == []
     assert switch.mac == "fc:ec:da:11:22:33"
     assert switch.model == "US16P150"
     assert switch.name == "Switch 16"
