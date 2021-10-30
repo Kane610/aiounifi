@@ -194,22 +194,20 @@ class Controller:
         changes: Dict[str, set] = {}
 
         if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            events = [Event(raw_event) for raw_event in message[ATTR_DATA]]
-            self.clients.process_event(
-                [
-                    client_event
-                    for client_event in events
-                    if client_event.event in CLIENT_EVENTS
-                ]
-            )
-            self.devices.process_event(
-                [
-                    device_event
-                    for device_event in events
-                    if device_event.event in DEVICE_EVENTS
-                ]
-            )
-            changes[DATA_EVENT] = set(events)
+            changes[DATA_EVENT] = set()
+            client_events = []
+            device_events = []
+
+            for raw in message[ATTR_DATA]:
+                changes[DATA_EVENT].add(event := Event(raw))
+
+                if event.event in CLIENT_EVENTS:
+                    client_events.append(event)
+                elif event.event in DEVICE_EVENTS:
+                    device_events.append(event)
+
+            self.clients.process_event(client_events)
+            self.devices.process_event(device_events)
 
         # Client
 
