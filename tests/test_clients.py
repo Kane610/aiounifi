@@ -39,9 +39,9 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert client.device_name == "Discovery device name"
     assert client.essid == "SSID"
     assert client.first_seen == 1513271497
-    assert client.fixed_ip == "10.0.0.1"
+    assert client.fixed_ip == "192.168.0.1"
     assert client.hostname == "client"
-    assert client.ip == "10.0.0.1"
+    assert client.ip == "192.168.0.1"
     assert client.is_guest is False
     assert client.is_wired is False
     assert client.last_seen == 1587765360
