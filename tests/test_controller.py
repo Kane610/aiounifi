@@ -406,10 +406,12 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
         await unifi_controller.request("get", device_url)
 
 
-async def test_no_data(mock_aioresponse, unifi_controller, caplog):
+async def test_no_data(mock_aioresponse, unifi_controller):
     """Test controller initialize."""
-    assert not unifi_controller.session_handler(SIGNAL_DATA)
-    assert not unifi_controller.session_handler(SIGNAL_CONNECTION_STATE)
+    with pytest.raises(AssertionError):
+        unifi_controller.session_handler(SIGNAL_DATA)
+    with pytest.raises(AssertionError):
+        unifi_controller.session_handler(SIGNAL_CONNECTION_STATE)
 
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",

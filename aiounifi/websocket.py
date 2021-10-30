@@ -4,15 +4,17 @@ import asyncio
 import json
 import logging
 from ssl import SSLContext
-from typing import Callable, Final, Optional
+from typing import Callable, Final, Literal, Optional
 
 import aiohttp
 
 LOGGER = logging.getLogger(__name__)
 
+SignalLiteral = Literal["data", "state"]
 SIGNAL_DATA: Final = "data"
 SIGNAL_CONNECTION_STATE: Final = "state"
 
+StateLiteral = Literal["disconnected", "running", "starting", "stopped"]
 STATE_DISCONNECTED: Final = "disconnected"
 STATE_RUNNING: Final = "running"
 STATE_STARTING: Final = "starting"
@@ -29,7 +31,7 @@ class WSClient:
         port: int,
         ssl_context: Optional[SSLContext],
         site: str,
-        callback: Callable[[str], None],
+        callback: Callable[[SignalLiteral], None],
         is_unifi_os: bool = False,
     ):
         """Create resources for websocket communication."""
@@ -45,7 +47,7 @@ class WSClient:
         self._loop = asyncio.get_running_loop()
 
         self._data: dict = {}
-        self._state = ""
+        self._state: StateLiteral = STATE_STOPPED
 
     @property
     def data(self) -> dict:
@@ -53,12 +55,12 @@ class WSClient:
         return self._data
 
     @property
-    def state(self) -> str:
+    def state(self) -> StateLiteral:
         """State of websocket."""
         return self._state
 
     @state.setter
-    def state(self, value: str) -> None:
+    def state(self, value: StateLiteral) -> None:
         """Set state of websocket."""
         self._state = value
         LOGGER.debug("Websocket %s", value)
