@@ -42,6 +42,7 @@ MESSAGE_DPI_APP_UPDATED: Final = "dpiapp:sync"
 MESSAGE_DPI_GROUP_ADDED: Final = "dpigroup:add"
 MESSAGE_DPI_GROUP_REMOVED: Final = "dpigroup:delete"
 MESSAGE_DPI_GROUP_UPDATED: Final = "dpigroup:sync"
+MESSAGE_WLANCONF_SYNC: Final = "wlanconf:sync"
 
 ATTR_MESSAGE: Final = "message"
 ATTR_META: Final = "meta"
@@ -55,7 +56,7 @@ DATA_DPI_APP: Final = "dpi_app"
 DATA_DPI_APP_REMOVED: Final = "dpi_app_removed"
 DATA_DPI_GROUP: Final = "dpi_group"
 DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
-
+DATA_WLANCONF: Final = "wlanconf"
 
 IGNORE_MESSAGES: Final = ("device:update",)
 
@@ -243,6 +244,10 @@ class Controller:
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_GROUP_REMOVED:
             changes[DATA_DPI_GROUP_REMOVED] = self.dpi_groups.remove(message[ATTR_DATA])
+
+        # WLAN
+        elif MESSAGE_WLANCONF_SYNC in message[ATTR_META][ATTR_MESSAGE]:
+            changes[DATA_WLANCONF] = self.wlans.process_raw(message[ATTR_DATA])
 
         # Unsupported
 
