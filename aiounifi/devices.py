@@ -141,6 +141,11 @@ class Device(APIItem):
         return self.raw.get("overheating", False)
 
     @property
+    def outlet_overrides(self) -> list:
+        """Overridden outlet configuration"""
+        return self.raw.get("outlet_overrides", [])
+
+    @property
     def port_overrides(self) -> list:
         """Overridden port configuration."""
         return self.raw.get("port_overrides", [])
@@ -199,6 +204,34 @@ class Device(APIItem):
     def wlan_overrides(self) -> list:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    async def async_set_outlet_relay_state(self, outlet_idx: int, state: bool) -> List[dict]:
+        """Set outlet relay state.
+
+        true:  outlet power output on
+        false: outlet power output off
+        """
+        LOGGER.debug("Override outlet %d with state %s", outlet_idx, str(state))
+
+        existing_override = False
+        for outlet_override in self.outlet_overrides:
+            if outlet_idx == outlet_override["index"]:
+                outlet_override["relay_state"] = state
+                existing_override = True
+                break
+        
+        if not existing_override:
+            self.outlet_overrides.append(
+                {
+                    "index": outlet_idx,
+                    "name": "Outlet {}".format(outlet_idx),
+                    "relay_state": state
+                }
+            )
+        url = f"/rest/device/{self.id}"
+        data = {"outlet_overrides": self.outlet_overrides}
+
+        return await self._request("put", url, json=data)
 
     async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> List[dict]:
         """Set port poe mode.
