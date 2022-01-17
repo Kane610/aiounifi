@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 
 from aiounifi.devices import Devices
 
-from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE
+from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE, PLUG_UP1
 from .test_controller import verify_call
 
 
@@ -213,6 +213,43 @@ async def test_device_security_gateway(unifi_controller):
         gateway_port_eth2.__repr__()
         == f"<{gateway_port_eth2.name}: Poe {gateway_port_eth2.poe_enable}>"
     )
+
+
+async def test_device_plug(mock_aioresponse, unifi_controller):
+    """Test device class on a plug."""
+    devices = Devices([PLUG_UP1], unifi_controller.request)
+
+    assert len(devices.values()) == 1
+
+    plug = devices[PLUG_UP1["mac"]]
+    assert plug.board_rev == 2
+    assert plug.downlink_table == []
+    assert plug.id == "600c8356942a6ade50707b56"
+    assert plug.ip == "192.168.0.189"
+    assert plug.has_fan is False
+    assert plug.last_seen == 1642055273
+    assert plug.lldp_table == []
+    assert plug.mac == "fc:ec:da:76:4f:5f"
+    assert plug.model == "UP1"
+    assert plug.name == "Plug"
+    assert plug.next_interval == 40
+    assert plug.outlet_overrides == [
+        {
+            "index": 1,
+            "relay_state": True,
+            "name": "Outlet 1"
+        }
+    ]
+    assert plug.port_table == []
+    assert plug.state == 1
+    assert plug.sys_stats == {
+        "mem_total": 98304,
+        "mem_used": 87736
+    }
+    assert plug.type == "uap"
+    assert plug.version == "2.2.1.511"
+    assert plug.upgradable == False
+    assert plug.uplink == PLUG_UP1["uplink"]
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller):
