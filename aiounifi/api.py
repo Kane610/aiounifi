@@ -1,21 +1,9 @@
 """API management class and base class for the different end points."""
 
+from collections.abc import Awaitable, Callable, ItemsView, Iterator, ValuesView
 import logging
 from pprint import pformat
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Final,
-    ItemsView,
-    Iterator,
-    List,
-    Optional,
-    Union,
-    ValuesView,
-    final,
-)
+from typing import Any, Final, Optional, Union, final
 
 from .events import Event as UniFiEvent
 
@@ -31,14 +19,14 @@ class APIItem:
     def __init__(
         self,
         raw: dict,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize API item."""
         self._raw = raw
         self._request = request
         self._event: Optional[UniFiEvent] = None
         self._source = SOURCE_DATA
-        self._callbacks: List[Callable] = []
+        self._callbacks: list[Callable] = []
 
     @final
     @property
@@ -106,7 +94,7 @@ class APIItems:
     def __init__(
         self,
         raw: list,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
         path: str,
         item_cls: Any,
     ) -> None:
@@ -114,7 +102,7 @@ class APIItems:
         self._request = request
         self._path = path
         self._item_cls = item_cls
-        self._items: Dict[Union[int, str], Any] = {}
+        self._items: dict[Union[int, str], Any] = {}
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
@@ -125,7 +113,7 @@ class APIItems:
         self.process_raw(raw)
 
     @final
-    def process_raw(self, raw: List[dict]) -> set:
+    def process_raw(self, raw: list[dict]) -> set:
         """Process data."""
         new_items = set()
 
@@ -142,7 +130,7 @@ class APIItems:
         return new_items
 
     @final
-    def process_event(self, events: List[UniFiEvent]) -> set:
+    def process_event(self, events: list[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()
 

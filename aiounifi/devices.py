@@ -3,18 +3,9 @@
 Access points, Gateways, Switches.
 """
 
+from collections.abc import Awaitable, Callable, Iterator, ValuesView
 import logging
-from typing import (
-    Awaitable,
-    Callable,
-    Dict,
-    Final,
-    Iterator,
-    List,
-    Optional,
-    Union,
-    ValuesView,
-)
+from typing import Final, Optional, Union
 
 from .api import APIItem, APIItems
 from .events import Event as UniFiEvent
@@ -31,8 +22,8 @@ class Devices(APIItems):
 
     def __init__(
         self,
-        raw: List[dict],
-        request: Callable[..., Awaitable[List[dict]]],
+        raw: list[dict],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize device manager."""
         super().__init__(raw, request, URL, Device)
@@ -44,7 +35,7 @@ class Device(APIItem):
     def __init__(
         self,
         raw: dict,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize device."""
         super().__init__(raw, request)
@@ -76,7 +67,7 @@ class Device(APIItem):
         return self.raw.get("disabled", False)
 
     @property
-    def downlink_table(self) -> List[dict]:
+    def downlink_table(self) -> list[dict]:
         """All devices with device as uplink."""
         return self.raw.get("downlink_table", [])
 
@@ -106,7 +97,7 @@ class Device(APIItem):
         return self.raw.get("last_seen")
 
     @property
-    def lldp_table(self) -> List[dict]:
+    def lldp_table(self) -> list[dict]:
         """All clients and devices directly attached to device."""
         return self.raw.get("lldp_table", [])
 
@@ -181,7 +172,7 @@ class Device(APIItem):
         return self.raw.get("upgrade_to_firmware", "")
 
     @property
-    def uplink(self) -> Dict[str, Union[bool, int, List[str], str]]:
+    def uplink(self) -> dict[str, Union[bool, int, list[str], str]]:
         """Information about uplink."""
         return self.raw["uplink"]
 
@@ -200,7 +191,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> List[dict]:
+    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
@@ -309,9 +300,9 @@ class Port:
 class Ports:
     """Represents ports on a device."""
 
-    def __init__(self, raw: List[dict]) -> None:
+    def __init__(self, raw: list[dict]) -> None:
         """Initialize port manager."""
-        self.ports: Dict[Union[int, str], Port] = {}
+        self.ports: dict[Union[int, str], Port] = {}
         for raw_port in raw:
             port = Port(raw_port)
 
@@ -320,7 +311,7 @@ class Ports:
             elif ifname := port.ifname:
                 self.ports[ifname] = port
 
-    def update(self, raw: List[dict]) -> None:
+    def update(self, raw: list[dict]) -> None:
         """Update ports."""
         for raw_port in raw:
             index = None

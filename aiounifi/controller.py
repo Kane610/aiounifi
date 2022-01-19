@@ -1,10 +1,11 @@
 """Python library to interact with UniFi controller."""
 
+from collections.abc import Callable
 from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Callable, Dict, Final, List, Literal, Optional, Union
+from typing import Any, Final, Literal, Optional, Union
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -90,7 +91,7 @@ class Controller:
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
-        self.headers: Dict[str, Any] = {}
+        self.headers: dict[str, Any] = {}
         self.last_response: Optional[aiohttp.ClientResponse] = None
 
         self.websocket: Optional[WSClient] = None
@@ -139,7 +140,7 @@ class Controller:
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
-    async def site_description(self) -> List[dict]:
+    async def site_description(self) -> list[dict]:
         """User description of current site."""
         description = await self.request("get", "/self")
         LOGGER.debug(description)
@@ -191,7 +192,7 @@ class Controller:
 
     def message_handler(self, message: dict) -> dict:
         """Receive event from websocket and identifies where the event belong."""
-        changes: Dict[str, set] = {}
+        changes: dict[str, set] = {}
 
         if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
             changes[DATA_EVENT] = set()
@@ -258,9 +259,9 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: Optional[Dict[str, Any]] = None,
+        json: Optional[dict[str, Any]] = None,
         url: str = "",
-    ) -> List[dict]:
+    ) -> list[dict]:
         """Make a request to the API, retry login on failure."""
         try:
             return await self._request(method, path, json, url)
@@ -278,10 +279,10 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: Optional[Dict[str, Any]] = None,
+        json: Optional[dict[str, Any]] = None,
         url: str = "",
         **kwargs: bool,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """Make a request to the API."""
         self.last_response = None
 

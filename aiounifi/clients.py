@@ -1,6 +1,7 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Awaitable, Callable, Final, List, Optional
+from collections.abc import Awaitable, Callable
+from typing import Final, Optional
 
 from .api import APIItem, APIItems
 
@@ -17,28 +18,28 @@ class Clients(APIItems):
 
     def __init__(
         self,
-        raw: List[dict],
-        request: Callable[..., Awaitable[List[dict]]],
+        raw: list[dict],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
 
-    async def async_block(self, mac: str) -> List[dict]:
+    async def async_block(self, mac: str) -> list[dict]:
         """Block client from controller."""
         data = {"mac": mac, "cmd": "block-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_unblock(self, mac: str) -> List[dict]:
+    async def async_unblock(self, mac: str) -> list[dict]:
         """Unblock client from controller."""
         data = {"mac": mac, "cmd": "unblock-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_reconnect(self, mac: str) -> List[dict]:
+    async def async_reconnect(self, mac: str) -> list[dict]:
         """Force a wireless client to reconnect to the network."""
         data = {"mac": mac, "cmd": "kick-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def remove_clients(self, macs: List[str]) -> List[dict]:
+    async def remove_clients(self, macs: list[str]) -> list[dict]:
         """Make controller forget provided clients."""
         data = {"macs": macs, "cmd": "forget-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
@@ -51,8 +52,8 @@ class ClientsAll(APIItems):
 
     def __init__(
         self,
-        raw: List[dict],
-        request: Callable[..., Awaitable[List[dict]]],
+        raw: list[dict],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize all clients manager."""
         super().__init__(raw, request, URL_ALL, Client)

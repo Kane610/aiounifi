@@ -1,10 +1,11 @@
 """Python library to connect UniFi and Home Assistant to work together."""
 
 import asyncio
+from collections.abc import Callable
 import json
 import logging
 from ssl import SSLContext
-from typing import Callable, Final, Literal, Optional
+from typing import Final, Literal, Optional
 
 import aiohttp
 
