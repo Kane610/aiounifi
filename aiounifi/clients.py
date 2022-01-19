@@ -67,9 +67,9 @@ class Client(APIItem):
         return self.raw.get("ap_mac", "")
 
     @property
-    def association_time(self) -> Optional[int]:
+    def association_time(self) -> int:
         """When was client associated with controller."""
-        return self.raw.get("assoc_time")
+        return self.raw.get("assoc_time", 0)
 
     @property
     def blocked(self) -> bool:
@@ -169,7 +169,7 @@ class Client(APIItem):
     @property
     def powersave_enabled(self) -> bool:
         """Powersave functionality enabled for wireless client."""
-        return self.raw.get("powersave_enabled", "")
+        return self.raw.get("powersave_enabled")
 
     @property
     def site_id(self) -> str:
@@ -255,8 +255,3 @@ class Client(APIItem):
     def wired_tx_bytes_r(self) -> int:
         """Bytes recently transferred over wired connection."""
         return self.raw.get("wired-tx_bytes-r", 0)
-
-    def __repr__(self) -> str:
-        """Return the representation."""
-        name = self.name or self.hostname
-        return f"<Client {name}: {self.mac} {self.raw}>"
