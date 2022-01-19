@@ -73,7 +73,7 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
         payload={},
         repeat=True,
     )
-    await dpi_apps.async_enable("5f976f62e3c58f018ec7e17d")
+    await dpi_apps.enable("5f976f62e3c58f018ec7e17d")
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -81,7 +81,7 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
         json={"enabled": True},
     )
 
-    await dpi_apps.async_disable("5f976f62e3c58f018ec7e17d")
+    await dpi_apps.disable("5f976f62e3c58f018ec7e17d")
     assert verify_call(
         mock_aioresponse,
         "put",

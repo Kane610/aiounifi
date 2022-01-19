@@ -61,13 +61,13 @@ class DPIRestrictionApps(APIItems):
         """Initialize DPI restriction apps manager."""
         super().__init__(raw, request, APP_URL, DPIRestrictionApp)
 
-    async def async_enable(self, app_id: str) -> list[dict]:
+    async def enable(self, app_id: str) -> list[dict]:
         """Enable DPI Restriction Group Apps."""
         app_url = f"{APP_URL}/{app_id}"
         data = {"enabled": True}
         return await self._request("put", app_url, json=data)
 
-    async def async_disable(self, app_id: str) -> list[dict]:
+    async def disable(self, app_id: str) -> list[dict]:
         """Disable DPI Restriction Group Apps."""
         app_url = f"{APP_URL}/{app_id}"
         data = {"enabled": False}
