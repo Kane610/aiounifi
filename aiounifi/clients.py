@@ -180,17 +180,17 @@ class Client(APIItem):
         return self.raw.get("site_id", "")
 
     @property
-    def sw_depth(self) -> int | None:
+    def switch_depth(self) -> int | None:
         """How many layers of switches client is in."""
         return self.raw.get("sw_depth")
 
     @property
-    def sw_mac(self) -> str:
+    def switch_mac(self) -> str:
         """MAC for switch client is connected to."""
         return self.raw.get("sw_mac", "")
 
     @property
-    def sw_port(self) -> int | None:
+    def switch_port(self) -> int | None:
         """Switch port client is connected to."""
         return self.raw.get("sw_port")
 
