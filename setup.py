@@ -16,4 +16,5 @@ setup(
     tests_require=["pytest-asyncio", "pytest-aiohttp", "pytest", "aioresponses"],
     keywords=["unifi", "homeassistant"],
     classifiers=["Natural Language :: English", "Programming Language :: Python :: 3"],
+    python_requires=">=3.9.0",
 )

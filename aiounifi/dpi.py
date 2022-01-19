@@ -1,6 +1,7 @@
 """DPI Restrictions as part of a UniFi network."""
 
-from typing import Awaitable, Callable, Final, List
+from collections.abc import Awaitable, Callable
+from typing import Final
 
 from .api import APIItem, APIItems
 
@@ -54,19 +55,19 @@ class DPIRestrictionApps(APIItems):
 
     def __init__(
         self,
-        raw: List[dict],
-        request: Callable[..., Awaitable[List[dict]]],
+        raw: list[dict],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize DPI restriction apps manager."""
         super().__init__(raw, request, APP_URL, DPIRestrictionApp)
 
-    async def async_enable(self, app_id: str) -> List[dict]:
+    async def async_enable(self, app_id: str) -> list[dict]:
         """Enable DPI Restriction Group Apps."""
         app_url = f"{APP_URL}/{app_id}"
         data = {"enabled": True}
         return await self._request("put", app_url, json=data)
 
-    async def async_disable(self, app_id: str) -> List[dict]:
+    async def async_disable(self, app_id: str) -> list[dict]:
         """Disable DPI Restriction Group Apps."""
         app_url = f"{APP_URL}/{app_id}"
         data = {"enabled": False}
@@ -102,7 +103,7 @@ class DPIRestrictionGroup(APIItem):
         return self.raw["site_id"]
 
     @property
-    def dpiapp_ids(self) -> List[str]:
+    def dpiapp_ids(self) -> list[str]:
         """DPI app IDs belonging to group."""
         return self.raw.get("dpiapp_ids", [])
 
@@ -115,7 +116,7 @@ class DPIRestrictionGroups(APIItems):
     def __init__(
         self,
         raw: list,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize DPI restriction group manager."""
         super().__init__(raw, request, GROUP_URL, DPIRestrictionGroup)
