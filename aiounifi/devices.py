@@ -56,7 +56,7 @@ class Device(APIItem):
         super().update(raw, event)
 
     @property
-    def board_rev(self) -> int:
+    def board_revision(self) -> int:
         """Board revision of device."""
         return self.raw["board_rev"]
 
