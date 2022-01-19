@@ -26,17 +26,17 @@ class Clients(APIItems):
         """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
 
-    async def async_block(self, mac: str) -> list[dict]:
+    async def block(self, mac: str) -> list[dict]:
         """Block client from controller."""
         data = {"mac": mac, "cmd": "block-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_unblock(self, mac: str) -> list[dict]:
+    async def unblock(self, mac: str) -> list[dict]:
         """Unblock client from controller."""
         data = {"mac": mac, "cmd": "unblock-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_reconnect(self, mac: str) -> list[dict]:
+    async def reconnect(self, mac: str) -> list[dict]:
         """Force a wireless client to reconnect to the network."""
         data = {"mac": mac, "cmd": "kick-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)

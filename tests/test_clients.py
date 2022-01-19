@@ -178,7 +178,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
     )
-    await clients.async_block(mac=client.mac)
+    await clients.block(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
@@ -186,7 +186,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
         json={"mac": client.mac, "cmd": "block-sta"},
     )
 
-    await clients.async_unblock(mac=client.mac)
+    await clients.unblock(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
@@ -194,7 +194,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
         json={"mac": client.mac, "cmd": "unblock-sta"},
     )
 
-    await clients.async_reconnect(mac=client.mac)
+    await clients.reconnect(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
