@@ -3,9 +3,11 @@
 Access points, Gateways, Switches.
 """
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable, Iterator, ValuesView
 import logging
-from typing import Final, Optional, Union
+from typing import Final
 
 from .api import APIItem, APIItems
 from .events import Event as UniFiEvent
@@ -43,8 +45,8 @@ class Device(APIItem):
 
     def update(
         self,
-        raw: Optional[dict] = None,
-        event: Optional[UniFiEvent] = None,
+        raw: dict | None = None,
+        event: UniFiEvent | None = None,
     ) -> None:
         """Refresh data."""
         if raw:
@@ -82,7 +84,7 @@ class Device(APIItem):
         return self.raw["ip"]
 
     @property
-    def fan_level(self) -> Optional[int]:
+    def fan_level(self) -> int | None:
         """Fan level of device."""
         return self.raw.get("fan_level")
 
@@ -92,7 +94,7 @@ class Device(APIItem):
         return self.raw.get("has_fan", False)
 
     @property
-    def last_seen(self) -> Optional[int]:
+    def last_seen(self) -> int | None:
         """When was device last seen."""
         return self.raw.get("last_seen")
 
@@ -117,7 +119,7 @@ class Device(APIItem):
         return self.raw.get("name", "")
 
     @property
-    def next_heartbeat_at(self) -> Optional[int]:
+    def next_heartbeat_at(self) -> int | None:
         """Next heart beat full UNIX time."""
         return self.raw.get("next_heartbeat_at")
 
@@ -172,12 +174,12 @@ class Device(APIItem):
         return self.raw.get("upgrade_to_firmware", "")
 
     @property
-    def uplink(self) -> dict[str, Union[bool, int, list[str], str]]:
+    def uplink(self) -> dict[str, bool | int | list[str] | str]:
         """Information about uplink."""
         return self.raw["uplink"]
 
     @property
-    def uplink_depth(self) -> Optional[int]:
+    def uplink_depth(self) -> int | None:
         """Hops to gateway."""
         return self.raw.get("uplink_depth")
 
@@ -248,7 +250,7 @@ class Port:
         return self.raw["name"]
 
     @property
-    def port_idx(self) -> Optional[int]:
+    def port_idx(self) -> int | None:
         """Port index."""
         return self.raw.get("port_idx")
 
@@ -258,7 +260,7 @@ class Port:
         return self.raw.get("poe_class", "")
 
     @property
-    def poe_enable(self) -> Optional[bool]:
+    def poe_enable(self) -> bool | None:
         """Is POE supported/requested by client."""
         return self.raw.get("poe_enable")
 
@@ -302,7 +304,7 @@ class Ports:
 
     def __init__(self, raw: list[dict]) -> None:
         """Initialize port manager."""
-        self.ports: dict[Union[int, str], Port] = {}
+        self.ports: dict[int | str, Port] = {}
         for raw_port in raw:
             port = Port(raw_port)
 
@@ -333,6 +335,6 @@ class Ports:
         """Get specific port based on key."""
         return self.ports[obj_id]
 
-    def __iter__(self) -> Iterator[Union[int, str]]:
+    def __iter__(self) -> Iterator[int | str]:
         """Iterate over ports."""
         return iter(self.ports)

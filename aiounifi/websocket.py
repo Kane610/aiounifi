@@ -1,11 +1,13 @@
 """Python library to connect UniFi and Home Assistant to work together."""
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable
 import json
 import logging
 from ssl import SSLContext
-from typing import Final, Literal, Optional
+from typing import Final, Literal
 
 import aiohttp
 
@@ -30,7 +32,7 @@ class WSClient:
         session: aiohttp.ClientSession,
         host: str,
         port: int,
-        ssl_context: Optional[SSLContext],
+        ssl_context: SSLContext | None,
         site: str,
         callback: Callable[[SignalLiteral], None],
         is_unifi_os: bool = False,

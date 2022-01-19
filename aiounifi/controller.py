@@ -1,11 +1,13 @@
 """Python library to interact with UniFi controller."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Final, Literal, Optional, Union
+from typing import Any, Final, Literal
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -73,10 +75,9 @@ class Controller:
         password: str,
         port=8443,
         site="default",
-        sslcontext: Optional[SSLContext] = None,
-        callback: Optional[
-            Callable[[Literal[WSSignalLiteral, WSStateLiteral], Union[dict, str]], None]
-        ] = None,
+        sslcontext: SSLContext | None = None,
+        callback: Callable[[Literal[WSSignalLiteral, WSStateLiteral], dict | str], None]
+        | None = None,
     ):
         """Session setup."""
         self.host = host
@@ -92,9 +93,9 @@ class Controller:
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
         self.headers: dict[str, Any] = {}
-        self.last_response: Optional[aiohttp.ClientResponse] = None
+        self.last_response: aiohttp.ClientResponse | None = None
 
-        self.websocket: Optional[WSClient] = None
+        self.websocket: WSClient | None = None
 
         self.clients = Clients([], self.request)
         self.clients_all = ClientsAll([], self.request)
@@ -259,7 +260,7 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: Optional[dict[str, Any]] = None,
+        json: dict[str, Any] | None = None,
         url: str = "",
     ) -> list[dict]:
         """Make a request to the API, retry login on failure."""
@@ -279,7 +280,7 @@ class Controller:
         self,
         method: str,
         path: str = "",
-        json: Optional[dict[str, Any]] = None,
+        json: dict[str, Any] | None = None,
         url: str = "",
         **kwargs: bool,
     ) -> list[dict]:

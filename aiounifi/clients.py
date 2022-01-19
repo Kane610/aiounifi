@@ -1,7 +1,9 @@
 """Clients are devices on a UniFi network."""
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable
-from typing import Final, Optional
+from typing import Final
 
 from .api import APIItem, APIItems
 
@@ -168,7 +170,7 @@ class Client(APIItem):
         return self.raw.get("oui", "")
 
     @property
-    def powersave_enabled(self) -> Optional[bool]:
+    def powersave_enabled(self) -> bool | None:
         """Powersave functionality enabled for wireless client."""
         return self.raw.get("powersave_enabled")
 
@@ -178,7 +180,7 @@ class Client(APIItem):
         return self.raw.get("site_id", "")
 
     @property
-    def sw_depth(self) -> Optional[int]:
+    def sw_depth(self) -> int | None:
         """How many layers of switches client is in."""
         return self.raw.get("sw_depth")
 
@@ -188,7 +190,7 @@ class Client(APIItem):
         return self.raw.get("sw_mac", "")
 
     @property
-    def sw_port(self) -> Optional[int]:
+    def sw_port(self) -> int | None:
         """Switch port client is connected to."""
         return self.raw.get("sw_port")
 
