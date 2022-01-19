@@ -938,97 +938,53 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
 
 
-async def test_controller_request_raise_login_required(
-    mock_aioresponse, unifi_controller
+test_data = [
+    ({"status": 401}, LoginRequired),
+    ({"status": 404}, ResponseError),
+    ({"status": 502}, BadGateway),
+    ({"status": 503}, ServiceUnavailable),
+    ({"exception": client_exceptions.ClientError}, RequestError),
+    (
+        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
+        LoginRequired,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
+        Unauthorized,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
+        NoPermission,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
+        TwoFaTokenRequired,
+    ),
+]
+
+
+@pytest.mark.parametrize("unwanted_behavior, expected_exception", test_data)
+async def test_controller_raise_expected_exception(
+    mock_aioresponse, unifi_controller, unwanted_behavior, expected_exception
 ):
     """Verify request raise login required on a 401."""
-    mock_aioresponse.post("https://host:8443/api/login", status=401)
-    with pytest.raises(LoginRequired):
+    mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
+    with pytest.raises(expected_exception):
         await unifi_controller.login()
 
 
-async def test_controller_request_raise_response_error(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise response error on a 404."""
-    mock_aioresponse.post("https://host:8443/api/login", status=404)
-    with pytest.raises(ResponseError):
-        await unifi_controller.login()
+@pytest.mark.parametrize("unsupported_message", ["device:update", "unsupported"])
+async def test_handle_unsupported_events(unifi_controller, unsupported_message):
+    """Test controller properly ignores unsupported events."""
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
 
+    unifi_controller.callback.reset_mock()
+    unifi_controller.websocket._data = {"meta": {"message": unsupported_message}}
+    unifi_controller.session_handler(SIGNAL_DATA)
+    unifi_controller.callback.assert_not_called()
 
-async def test_controller_request_raise_bad_gateway(mock_aioresponse, unifi_controller):
-    """Verify request raise bad gateway error on a 502."""
-    mock_aioresponse.post("https://host:8443/api/login", status=502)
-    with pytest.raises(BadGateway):
-        await unifi_controller.login()
-
-
-async def test_controller_request_raise_service_unavailable(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise service unavailable error on a 503."""
-    mock_aioresponse.post("https://host:8443/api/login", status=503)
-    with pytest.raises(ServiceUnavailable):
-        await unifi_controller.login()
-
-
-async def test_controller_request_client_error_raise_request_error(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise request error on a client exception."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login", exception=client_exceptions.ClientError
-    )
-    with pytest.raises(RequestError):
-        await unifi_controller.login()
-
-
-async def test_controller_request_raise_error_raise_login_required(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise login required on a websocket error."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"msg": "api.err.LoginRequired", "rc": "error"}},
-    )
-    with pytest.raises(LoginRequired):
-        await unifi_controller.login()
-
-
-async def test_controller_request_raise_error_raise_unauthorized(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise unauthorized on a websocket error."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"msg": "api.err.Invalid", "rc": "error"}},
-    )
-    with pytest.raises(Unauthorized):
-        await unifi_controller.login()
-
-
-async def test_controller_request_raise_error_raise_no_permission(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise unauthorized on a websocket error."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"errors": ["api.err.NoPermission"]},
-    )
-    with pytest.raises(NoPermission):
-        await unifi_controller.login()
-
-
-async def test_controller_request_raise_2fa_token_required(
-    mock_aioresponse, unifi_controller
-):
-    """Verify request raise 2fa token required on a websocket error."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"errors": ["api.err.Ubic2faTokenRequired"]},
-    )
-    with pytest.raises(TwoFaTokenRequired):
-        await unifi_controller.login()
+    assert len(unifi_controller.clients._items) == 0
 
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
