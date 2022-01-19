@@ -167,7 +167,7 @@ class Client(APIItem):
         return self.raw.get("oui", "")
 
     @property
-    def powersave_enabled(self) -> bool:
+    def powersave_enabled(self) -> Optional[bool]:
         """Powersave functionality enabled for wireless client."""
         return self.raw.get("powersave_enabled")
 
