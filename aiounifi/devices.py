@@ -235,7 +235,7 @@ class Device(APIItem):
 
         return await self._request("put", url, json=data)
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
+    async def set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
