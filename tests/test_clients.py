@@ -38,17 +38,23 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert client.blocked is False
     assert client.device_name == "Discovery device name"
     assert client.essid == "SSID"
+    assert client.firmware_version == ""
     assert client.first_seen == 1513271497
     assert client.fixed_ip == "192.168.0.1"
     assert client.hostname == "client"
+    assert client.idle_time == 1
     assert client.ip == "192.168.0.1"
     assert client.is_guest is False
     assert client.is_wired is False
     assert client.last_seen == 1587765360
+    assert client.last_seen_by_access_point == 1587765360
+    assert client.last_seen_by_gateway == 1587765372
+    assert client.last_seen_by_switch == 1587763868
     assert client.latest_association_time == 1587765354
     assert client.mac == WIRELESS_CLIENT["mac"]
     assert client.name == "Client 1"
     assert client.oui == "Apple"
+    assert client.powersave_enabled is False
     assert client.site_id == "5a32aa4ee4b0412345678910"
     assert client.sw_depth == -1
     assert client.sw_mac == "fc:ec:da:11:22:33"
@@ -58,6 +64,11 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert client.tx_bytes == 52852089
     assert client.tx_bytes_r == 483
     assert client.uptime == 11904
+    assert client.uptime_by_access_point == 11904
+    assert client.uptime_by_gateway == 18
+    assert client.uptime_by_switch == 318
+    assert client.latest_association_time == 1587765354
+    assert client.wired_rate_mbps == 0
     assert client.wired_rx_bytes == 0
     assert client.wired_rx_bytes_r == 0
     assert client.wired_tx_bytes == 0
@@ -69,34 +80,34 @@ async def test_clients(mock_aioresponse, unifi_controller):
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
     )
-    await clients.async_block(mac=WIRELESS_CLIENT["mac"])
+    await clients.async_block(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "block-sta"},
+        json={"mac": client.mac, "cmd": "block-sta"},
     )
 
-    await clients.async_unblock(mac=WIRELESS_CLIENT["mac"])
+    await clients.async_unblock(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "unblock-sta"},
+        json={"mac": client.mac, "cmd": "unblock-sta"},
     )
 
-    await clients.async_reconnect(mac=WIRELESS_CLIENT["mac"])
+    await clients.async_reconnect(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        json={"mac": WIRELESS_CLIENT["mac"], "cmd": "kick-sta"},
+        json={"mac": client.mac, "cmd": "kick-sta"},
     )
 
-    await clients.remove_clients(macs=[WIRELESS_CLIENT["mac"]])
+    await clients.remove_clients(macs=[client.mac])
     assert verify_call(
         mock_aioresponse,
         "post",
         "https://host:8443/api/s/default/cmd/stamgr",
-        json={"macs": [WIRELESS_CLIENT["mac"]], "cmd": "forget-sta"},
+        json={"macs": [client.mac], "cmd": "forget-sta"},
     )
