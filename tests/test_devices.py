@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 
 from aiounifi.devices import Devices
 
-from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE, PLUG_UP1
+from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE, PLUG_UP1, STRIP_UP6
 from .test_controller import verify_call
 
 
@@ -265,9 +265,9 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
         json={
             "outlet_overrides": [
                 {
-                    "relay_state": False,
                     "index": 1,
-                    "Name": "Outlet 1",
+                    "relay_state": False,
+                    "name": "Outlet 1",
                 },
             ]
         },
@@ -281,6 +281,190 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
+
+
+async def test_device_strip(mock_aioresponse, unifi_controller):
+    """Test device class on a usp-strip-us."""
+    devices = Devices([STRIP_UP6], unifi_controller.request)
+
+    assert len(devices.values()) == 1
+
+    strip = devices[STRIP_UP6["mac"]]
+    assert strip.board_rev == 5
+    assert strip.downlink_table == []
+    assert strip.id == "61eb1a75942a6a859b45d2bc"
+    assert strip.ip == "192.168.0.138"
+    assert strip.has_fan is False
+    assert strip.last_seen == 1642800247
+    assert strip.lldp_table == []
+    assert strip.mac == "78:45:58:fc:16:7d"
+    assert strip.model == "UP6"
+    assert strip.name == ""
+    assert strip.next_interval == 41
+    assert len(strip.outlets.values()) == 7
+    assert strip.outlet_overrides == [
+        {
+            "index": 1,
+            "name": "Outlet 1",
+            "cycle_enabled": False,
+            "relay_state": False
+        },
+        {
+            "index": 2,
+            "name": "Outlet 2",
+            "cycle_enabled": False,
+            "relay_state": False
+        },
+        {
+            "index": 3,
+            "name": "Outlet 3",
+            "cycle_enabled": False,
+            "relay_state": True
+        },
+        {
+            "index": 4,
+            "name": "Outlet 4",
+            "cycle_enabled": False,
+            "relay_state": False
+        },
+        {
+            "index": 5,
+            "name": "Outlet 5",
+            "cycle_enabled": False,
+            "relay_state": False
+        },
+        {
+            "index": 6,
+            "name": "Outlet 6",
+            "cycle_enabled": False,
+            "relay_state": False
+        },
+        {
+            "index": 7,
+            "name": "USB Outlets",
+            "cycle_enabled": False,
+            "relay_state": False
+        }
+    ]
+    assert strip.port_table == []
+    assert strip.state == 1
+    assert strip.sys_stats == {
+        "mem_total": 98304,
+        "mem_used": 88056
+    }
+    assert strip.type == "uap"
+    assert strip.version == "2.2.1.511"
+    assert strip.upgradable == False
+    assert strip.uplink == STRIP_UP6["uplink"]
+
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
+        payload="",
+        repeat=True,
+    )
+    await strip.async_set_outlet_relay_state(4, True)
+    assert verify_call(
+        mock_aioresponse,
+        "put",
+        "https://host:8443/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
+        json={
+            "outlet_overrides": [
+                {
+                    "index": 1,
+                    "name": "Outlet 1",
+                    "cycle_enabled": False,
+                    "relay_state": False
+                },
+                {
+                    "index": 2,
+                    "name": "Outlet 2",
+                    "cycle_enabled": False,
+                    "relay_state": False
+                },
+                {
+                    "index": 3,
+                    "name": "Outlet 3",
+                    "cycle_enabled": False,
+                    "relay_state": True
+                },
+                {
+                    "index": 4,
+                    "name": "Outlet 4",
+                    "cycle_enabled": False,
+                    "relay_state": True
+                },
+                {
+                    "index": 5,
+                    "name": "Outlet 5",
+                    "cycle_enabled": False,
+                    "relay_state": False
+                },
+                {
+                    "index": 6,
+                    "name": "Outlet 6",
+                    "cycle_enabled": False,
+                    "relay_state": False
+                },
+                {
+                    "index": 7,
+                    "name": "USB Outlets",
+                    "cycle_enabled": False,
+                    "relay_state": False
+                }
+            ]
+        },
+    )
+
+    assert len(strip.outlets.values()) == 7
+
+    outlet_1 = strip.outlets[1]
+    assert outlet_1.name == "Outlet 1"
+    assert outlet_1.index == 1
+    assert outlet_1.has_relay is True
+    assert outlet_1.has_metering is False
+    assert outlet_1.relay_state is False
+
+    outlet_2 = strip.outlets[2]
+    assert outlet_2.name == "Outlet 2"
+    assert outlet_2.index == 2
+    assert outlet_2.has_relay is True
+    assert outlet_2.has_metering is False
+    assert outlet_2.relay_state is False
+
+    outlet_3 = strip.outlets[3]
+    assert outlet_3.name == "Outlet 3"
+    assert outlet_3.index == 3
+    assert outlet_3.has_relay is True
+    assert outlet_3.has_metering is False
+    assert outlet_3.relay_state is True
+
+    outlet_4 = strip.outlets[4]
+    assert outlet_4.name == "Outlet 4"
+    assert outlet_4.index == 4
+    assert outlet_4.has_relay is True
+    assert outlet_4.has_metering is False
+    assert outlet_4.relay_state is False
+
+    outlet_5 = strip.outlets[5]
+    assert outlet_5.name == "Outlet 5"
+    assert outlet_5.index == 5
+    assert outlet_5.has_relay is True
+    assert outlet_5.has_metering is False
+    assert outlet_5.relay_state is False
+
+    outlet_6 = strip.outlets[6]
+    assert outlet_6.name == "Outlet 6"
+    assert outlet_6.index == 6
+    assert outlet_6.has_relay is True
+    assert outlet_6.has_metering is False
+    assert outlet_6.relay_state is False
+
+    outlet_7 = strip.outlets[7]
+    assert outlet_7.name == "USB Outlets"
+    assert outlet_7.index == 7
+    assert outlet_7.has_relay is True
+    assert outlet_7.has_metering is False
+    assert outlet_7.relay_state is False
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller):
