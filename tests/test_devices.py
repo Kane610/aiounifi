@@ -233,6 +233,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert plug.model == "UP1"
     assert plug.name == "Plug"
     assert plug.next_interval == 40
+    assert len(plug.outlets.values()) == 1
     assert plug.outlet_overrides == [
         {
             "index": 1,
@@ -250,6 +251,36 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert plug.version == "2.2.1.511"
     assert plug.upgradable == False
     assert plug.uplink == PLUG_UP1["uplink"]
+
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
+        payload="",
+        repeat=True,
+    )
+    await plug.async_set_outlet_relay_state(1, False)
+    assert verify_call(
+        mock_aioresponse,
+        "put",
+        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
+        json={
+            "outlet_overrides": [
+                {
+                    "relay_state": False,
+                    "index": 1,
+                    "Name": "Outlet 1",
+                },
+            ]
+        },
+    )
+
+    assert len(plug.outlets.values()) == 1
+
+    outlet_1 = plug.outlets[1]
+    assert outlet_1.name == "Outlet 1"
+    assert outlet_1.index == 1
+    assert outlet_1.has_relay is True
+    assert outlet_1.has_metering is False
+    assert outlet_1.relay_state is False
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller):

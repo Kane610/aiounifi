@@ -49,6 +49,7 @@ class Device(APIItem):
         """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
+        self.outlets = Outlets(raw.get("outlet_table", []))
 
     def update(
         self,
@@ -144,6 +145,11 @@ class Device(APIItem):
     def outlet_overrides(self) -> list:
         """Overridden outlet configuration"""
         return self.raw.get("outlet_overrides", [])
+
+    @property
+    def outlet_table(self) -> list:
+        """List of outlets"""
+        return self.raw.get("outlet_table", [])
 
     @property
     def port_overrides(self) -> list:
@@ -378,3 +384,77 @@ class Ports:
     def __iter__(self) -> Iterator[Union[int, str]]:
         """Iterate over ports."""
         return iter(self.ports)
+
+
+class Outlet:
+    """Represents an outlet."""
+
+    def __init__(self, raw: dict) -> None:
+        """Initialize outlet."""
+        self.raw = raw
+
+    @property
+    def name(self) -> str:
+        """Name of outlet"""
+        return self.raw.get("name", "")
+
+    @property
+    def index(self) -> int:
+        """Outlet index."""
+        return self.raw.get("index")
+
+    @property
+    def has_relay(self) -> bool:
+        """Is the outlet controllable"""
+        return self.raw.get("has_relay", False)
+
+    @property
+    def has_metering(self) -> Optional[bool]:
+        """Is metering supported."""
+        return self.raw.get("has_metering")
+
+    @property
+    def relay_state(self) -> Optional[bool]:
+        """Is outlet power on."""
+        return self.raw.get("relay_state")
+
+
+class Outlets:
+    """Represents outlets on a device."""
+
+    def __init__(self, raw: List[dict]) -> None:
+        """Initialize port manager."""
+        self.outlets: Dict[Union[int, str], Port] = {}
+        for raw_outlet in raw:
+            outlet = Outlet(raw_outlet)
+
+            if (index := outlet.index) is not None:
+                self.outlets[index] = outlet
+            elif ifname := outlet.ifname:
+                self.outlets[ifname] = outlet
+
+    def update(self, raw: List[dict]) -> None:
+        """Update outlets."""
+        for raw_outlet in raw:
+            index = None
+
+            if "index" in raw_outlet:
+                index = raw_outlet["index"]
+
+            elif "ifname" in raw_outlet:
+                index = raw_outlet["ifname"]
+
+            if index in self.outlets:
+                self.outlets[index].raw = raw_outlet
+
+    def values(self) -> ValuesView[Outlet]:
+        """Return outlets."""
+        return self.outlets.values()
+
+    def __getitem__(self, obj_id: int) -> Outlet:
+        """Get specific port based on key."""
+        return self.outlets[obj_id]
+
+    def __iter__(self) -> Iterator[Union[int, str]]:
+        """Iterate over outlets."""
+        return iter(self.outlets)
