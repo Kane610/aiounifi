@@ -5,7 +5,13 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 
 from aiounifi.devices import Devices
 
-from .fixtures import ACCESS_POINT_AC_PRO, GATEWAY_USG3, SWITCH_16_PORT_POE, PLUG_UP1, STRIP_UP6
+from .fixtures import (
+    ACCESS_POINT_AC_PRO,
+    GATEWAY_USG3,
+    SWITCH_16_PORT_POE,
+    PLUG_UP1,
+    STRIP_UP6,
+)
 from .test_controller import verify_call
 
 
@@ -234,22 +240,24 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert plug.name == "Plug"
     assert plug.next_interval == 40
     assert len(plug.outlets.values()) == 1
-    assert plug.outlet_overrides == [
+    assert plug.outlet_table == [
         {
             "index": 1,
-            "relay_state": True,
-            "name": "Outlet 1"
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
+            "name": "Outlet 1",
         }
+    ]
+    assert plug.outlet_overrides == [
+        {"index": 1, "relay_state": True, "name": "Outlet 1"}
     ]
     assert plug.port_table == []
     assert plug.state == 1
-    assert plug.sys_stats == {
-        "mem_total": 98304,
-        "mem_used": 87736
-    }
+    assert plug.sys_stats == {"mem_total": 98304, "mem_used": 87736}
     assert plug.type == "uap"
     assert plug.version == "2.2.1.511"
-    assert plug.upgradable == False
+    assert plug.upgradable is False
     assert plug.uplink == PLUG_UP1["uplink"]
 
     mock_aioresponse.put(
@@ -303,59 +311,84 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert strip.name == ""
     assert strip.next_interval == 41
     assert len(strip.outlets.values()) == 7
-    assert strip.outlet_overrides == [
+    assert strip.outlet_table == [
         {
             "index": 1,
-            "name": "Outlet 1",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
             "cycle_enabled": False,
-            "relay_state": False
+            "name": "Outlet 1",
         },
         {
             "index": 2,
-            "name": "Outlet 2",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
             "cycle_enabled": False,
-            "relay_state": False
+            "name": "Outlet 2",
         },
         {
             "index": 3,
-            "name": "Outlet 3",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": True,
             "cycle_enabled": False,
-            "relay_state": True
+            "name": "Outlet 3",
         },
         {
             "index": 4,
-            "name": "Outlet 4",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": True,
             "cycle_enabled": True,
-            "relay_state": True
+            "name": "Outlet 4",
         },
         {
             "index": 5,
-            "name": "Outlet 5",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
             "cycle_enabled": False,
-            "relay_state": False
+            "name": "Outlet 5",
         },
         {
             "index": 6,
-            "name": "Outlet 6",
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
             "cycle_enabled": False,
-            "relay_state": False
+            "name": "Outlet 6",
         },
+        {
+            "index": 7,
+            "has_relay": True,
+            "has_metering": False,
+            "relay_state": False,
+            "cycle_enabled": False,
+            "name": "USB Outlets",
+        },
+    ]
+    assert strip.outlet_overrides == [
+        {"index": 1, "name": "Outlet 1", "cycle_enabled": False, "relay_state": False},
+        {"index": 2, "name": "Outlet 2", "cycle_enabled": False, "relay_state": False},
+        {"index": 3, "name": "Outlet 3", "cycle_enabled": False, "relay_state": True},
+        {"index": 4, "name": "Outlet 4", "cycle_enabled": True, "relay_state": True},
+        {"index": 5, "name": "Outlet 5", "cycle_enabled": False, "relay_state": False},
+        {"index": 6, "name": "Outlet 6", "cycle_enabled": False, "relay_state": False},
         {
             "index": 7,
             "name": "USB Outlets",
             "cycle_enabled": False,
-            "relay_state": False
-        }
+            "relay_state": False,
+        },
     ]
     assert strip.port_table == []
     assert strip.state == 1
-    assert strip.sys_stats == {
-        "mem_total": 98304,
-        "mem_used": 88056
-    }
+    assert strip.sys_stats == {"mem_total": 98304, "mem_used": 88056}
     assert strip.type == "uap"
     assert strip.version == "2.2.1.511"
-    assert strip.upgradable == False
+    assert strip.upgradable is False
     assert strip.uplink == STRIP_UP6["uplink"]
 
     mock_aioresponse.put(
@@ -374,44 +407,44 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
                     "index": 1,
                     "name": "Outlet 1",
                     "cycle_enabled": False,
-                    "relay_state": False
+                    "relay_state": False,
                 },
                 {
                     "index": 2,
                     "name": "Outlet 2",
                     "cycle_enabled": False,
-                    "relay_state": False
+                    "relay_state": False,
                 },
                 {
                     "index": 3,
                     "name": "Outlet 3",
                     "cycle_enabled": False,
-                    "relay_state": True
+                    "relay_state": True,
                 },
                 {
                     "index": 4,
                     "name": "Outlet 4",
                     "cycle_enabled": True,
-                    "relay_state": True
+                    "relay_state": True,
                 },
                 {
                     "index": 5,
                     "name": "Outlet 5",
                     "cycle_enabled": False,
-                    "relay_state": True
+                    "relay_state": True,
                 },
                 {
                     "index": 6,
                     "name": "Outlet 6",
                     "cycle_enabled": False,
-                    "relay_state": False
+                    "relay_state": False,
                 },
                 {
                     "index": 7,
                     "name": "USB Outlets",
                     "cycle_enabled": False,
-                    "relay_state": False
-                }
+                    "relay_state": False,
+                },
             ]
         },
     )

@@ -226,7 +226,7 @@ class Device(APIItem):
             self.outlet_overrides.append(
                 {
                     "index": outlet_idx,
-                    "name": "Outlet {}".format(outlet_idx),
+                    "name": self.outlets[outlet_idx].name,
                     "relay_state": state,
                 }
             )
