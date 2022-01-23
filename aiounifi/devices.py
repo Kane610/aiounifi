@@ -59,6 +59,7 @@ class Device(APIItem):
         """Refresh data."""
         if raw:
             self.ports.update(raw.get("port_table", []))
+            self.outlets.update(raw.get("outlet_table", []))
         super().update(raw, event)
 
     @property
