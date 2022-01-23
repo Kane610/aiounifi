@@ -281,7 +281,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
-    assert outlet_1.cycle_enabled is None
+    assert outlet_1.cycle_enabled is False
 
 
 async def test_device_strip(mock_aioresponse, unifi_controller):

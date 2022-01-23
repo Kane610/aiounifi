@@ -413,9 +413,9 @@ class Outlet:
         return self.raw["relay_state"]
 
     @property
-    def cycle_enabled(self) -> bool | None:
+    def cycle_enabled(self) -> bool:
         """Modem Power Cycle"""
-        return self.raw.get("cycle_enabled")
+        return self.raw.get("cycle_enabled", False)
 
 
 class Outlets:
