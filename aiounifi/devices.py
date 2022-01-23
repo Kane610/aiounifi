@@ -408,12 +408,12 @@ class Outlet:
         return self.raw["has_metering"]
 
     @property
-    def relay_state(self) -> [bool]:
+    def relay_state(self) -> bool:
         """Is outlet power on."""
         return self.raw["relay_state"]
 
     @property
-    def cycle_enabled(self) -> Optional[bool]:
+    def cycle_enabled(self) -> bool | None:
         """Modem Power Cycle"""
         return self.raw.get("cycle_enabled")
 
@@ -421,15 +421,14 @@ class Outlet:
 class Outlets:
     """Represents outlets on a device."""
 
-    def __init__(self, raw: List[dict]) -> None:
+    def __init__(self, raw: list[dict]) -> None:
         """Initialize outlet manager."""
-        self.outlets: Dict[int, Outlet] = {}
+        self.outlets: dict[int, Outlet] = {}
         for raw_outlet in raw:
             outlet = Outlet(raw_outlet)
             self.outlets[outlet.index] = outlet
 
-
-    def update(self, raw: List[dict]) -> None:
+    def update(self, raw: list[dict]) -> None:
         """Update outlets."""
         for raw_outlet in raw:
             index = raw_outlet["index"]
