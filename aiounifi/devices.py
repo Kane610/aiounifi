@@ -439,13 +439,8 @@ class Outlets:
     def update(self, raw: List[dict]) -> None:
         """Update outlets."""
         for raw_outlet in raw:
-            index = None
-
-            if "index" in raw_outlet:
-                index = raw_outlet["index"]
-
-            if index in self.outlets:
-                self.outlets[index].raw = raw_outlet
+            index = raw_outlet["index"]
+            self.outlets[index].raw = raw_outlet
 
     def values(self) -> ValuesView[Outlet]:
         """Return outlets."""
