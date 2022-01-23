@@ -396,22 +396,22 @@ class Outlet:
     @property
     def name(self) -> str:
         """Name of outlet"""
-        return self.raw.get("name", "")
+        return self.raw["name"]
 
     @property
     def index(self) -> int:
         """Outlet index."""
-        return self.raw.get("index")
+        return self.raw["index"]
 
     @property
     def has_relay(self) -> bool:
         """Is the outlet controllable"""
-        return self.raw.get("has_relay", False)
+        return self.raw["has_relay"]
 
     @property
-    def has_metering(self) -> Optional[bool]:
+    def has_metering(self) -> bool:
         """Is metering supported."""
-        return self.raw.get("has_metering")
+        return self.raw["has_metering"]
 
     @property
     def relay_state(self) -> Optional[bool]:
