@@ -418,6 +418,11 @@ class Outlet:
         """Is outlet power on."""
         return self.raw.get("relay_state")
 
+    @property
+    def cycle_enabled(self) -> Optional[bool]:
+        """Modem Power Cycle"""
+        return self.raw.get("cycle_enabled")
+
 
 class Outlets:
     """Represents outlets on a device."""

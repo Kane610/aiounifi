@@ -3263,8 +3263,8 @@ STRIP_UP6 = {
         {
             "index": 4,
             "name": "Outlet 4",
-            "cycle_enabled": False,
-            "relay_state": False
+            "cycle_enabled": True,
+            "relay_state": True
         },
         {
             "index": 5,
@@ -3338,8 +3338,8 @@ STRIP_UP6 = {
             "index": 4,
             "has_relay": True,
             "has_metering": False,
-            "relay_state": False,
-            "cycle_enabled": False,
+            "relay_state": True,
+            "cycle_enabled": True,
             "name": "Outlet 4"
         },
         {

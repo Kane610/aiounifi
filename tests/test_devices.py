@@ -281,6 +281,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
+    assert outlet_1.cycle_enabled is None
 
 
 async def test_device_strip(mock_aioresponse, unifi_controller):
@@ -324,8 +325,8 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
         {
             "index": 4,
             "name": "Outlet 4",
-            "cycle_enabled": False,
-            "relay_state": False
+            "cycle_enabled": True,
+            "relay_state": True
         },
         {
             "index": 5,
@@ -362,7 +363,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await strip.async_set_outlet_relay_state(4, True)
+    await strip.async_set_outlet_relay_state(5, True)
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -390,14 +391,14 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
                 {
                     "index": 4,
                     "name": "Outlet 4",
-                    "cycle_enabled": False,
+                    "cycle_enabled": True,
                     "relay_state": True
                 },
                 {
                     "index": 5,
                     "name": "Outlet 5",
                     "cycle_enabled": False,
-                    "relay_state": False
+                    "relay_state": True
                 },
                 {
                     "index": 6,
@@ -423,6 +424,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
+    assert outlet_1.cycle_enabled is False
 
     outlet_2 = strip.outlets[2]
     assert outlet_2.name == "Outlet 2"
@@ -430,6 +432,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_2.has_relay is True
     assert outlet_2.has_metering is False
     assert outlet_2.relay_state is False
+    assert outlet_2.cycle_enabled is False
 
     outlet_3 = strip.outlets[3]
     assert outlet_3.name == "Outlet 3"
@@ -437,13 +440,15 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_3.has_relay is True
     assert outlet_3.has_metering is False
     assert outlet_3.relay_state is True
+    assert outlet_3.cycle_enabled is False
 
     outlet_4 = strip.outlets[4]
     assert outlet_4.name == "Outlet 4"
     assert outlet_4.index == 4
     assert outlet_4.has_relay is True
     assert outlet_4.has_metering is False
-    assert outlet_4.relay_state is False
+    assert outlet_4.relay_state is True
+    assert outlet_4.cycle_enabled is True
 
     outlet_5 = strip.outlets[5]
     assert outlet_5.name == "Outlet 5"
@@ -451,6 +456,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_5.has_relay is True
     assert outlet_5.has_metering is False
     assert outlet_5.relay_state is False
+    assert outlet_5.cycle_enabled is False
 
     outlet_6 = strip.outlets[6]
     assert outlet_6.name == "Outlet 6"
@@ -458,6 +464,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_6.has_relay is True
     assert outlet_6.has_metering is False
     assert outlet_6.relay_state is False
+    assert outlet_6.cycle_enabled is False
 
     outlet_7 = strip.outlets[7]
     assert outlet_7.name == "USB Outlets"
@@ -465,6 +472,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert outlet_7.has_relay is True
     assert outlet_7.has_metering is False
     assert outlet_7.relay_state is False
+    assert outlet_7.cycle_enabled is False
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller):
