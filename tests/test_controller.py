@@ -65,7 +65,7 @@ def verify_call(aioresponse: tuple, method: str, url: str, **kwargs: dict) -> bo
             successful_match = True
 
             for key in kwargs:
-                if key not in call[1] or call[1][key] != kwargs[key]:
+                if key not in call[1] and call[1][key] != kwargs[key]:
                     successful_match = False
 
             if successful_match:
