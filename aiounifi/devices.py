@@ -415,9 +415,9 @@ class Outlet:
         return self.raw["has_metering"]
 
     @property
-    def relay_state(self) -> Optional[bool]:
+    def relay_state(self) -> [bool]:
         """Is outlet power on."""
-        return self.raw.get("relay_state")
+        return self.raw["relay_state"]
 
     @property
     def cycle_enabled(self) -> Optional[bool]:
