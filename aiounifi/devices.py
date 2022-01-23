@@ -137,12 +137,12 @@ class Device(APIItem):
 
     @property
     def outlet_overrides(self) -> list:
-        """Overridden outlet configuration"""
+        """Overridden outlet configuration."""
         return self.raw.get("outlet_overrides", [])
 
     @property
     def outlet_table(self) -> list:
-        """List of outlets"""
+        """List of outlets."""
         return self.raw.get("outlet_table", [])
 
     @property
@@ -205,7 +205,9 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
+    async def async_set_outlet_relay_state(
+        self, outlet_idx: int, state: bool
+    ) -> list[dict]:
         """Set outlet relay state.
 
         True:  outlet power output on.
@@ -219,13 +221,13 @@ class Device(APIItem):
                 outlet_override["relay_state"] = state
                 existing_override = True
                 break
-        
+
         if not existing_override:
             self.outlet_overrides.append(
                 {
                     "index": outlet_idx,
                     "name": "Outlet {}".format(outlet_idx),
-                    "relay_state": state
+                    "relay_state": state,
                 }
             )
         url = f"/rest/device/{self.id}"
@@ -389,7 +391,7 @@ class Outlet:
 
     @property
     def name(self) -> str:
-        """Name of outlet"""
+        """Name of outlet."""
         return self.raw["name"]
 
     @property
@@ -399,7 +401,7 @@ class Outlet:
 
     @property
     def has_relay(self) -> bool:
-        """Is the outlet controllable"""
+        """Is the outlet controllable."""
         return self.raw["has_relay"]
 
     @property
@@ -414,7 +416,7 @@ class Outlet:
 
     @property
     def cycle_enabled(self) -> bool:
-        """Modem Power Cycle"""
+        """Modem Power Cycle."""
         return self.raw.get("cycle_enabled", False)
 
 
