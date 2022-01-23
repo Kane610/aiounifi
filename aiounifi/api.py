@@ -1,21 +1,11 @@
 """API management class and base class for the different end points."""
 
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable, ItemsView, Iterator, ValuesView
 import logging
 from pprint import pformat
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Final,
-    ItemsView,
-    Iterator,
-    List,
-    Optional,
-    Union,
-    ValuesView,
-    final,
-)
+from typing import Any, Final, final
 
 from .events import Event as UniFiEvent
 
@@ -31,14 +21,14 @@ class APIItem:
     def __init__(
         self,
         raw: dict,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize API item."""
         self._raw = raw
         self._request = request
-        self._event: Optional[UniFiEvent] = None
+        self._event: UniFiEvent | None = None
         self._source = SOURCE_DATA
-        self._callbacks: List[Callable] = []
+        self._callbacks: list[Callable] = []
 
     @final
     @property
@@ -48,7 +38,7 @@ class APIItem:
 
     @final
     @property
-    def event(self) -> Optional[UniFiEvent]:
+    def event(self) -> UniFiEvent | None:
         """Read only event data."""
         return self._event
 
@@ -60,8 +50,8 @@ class APIItem:
 
     def update(
         self,
-        raw: Optional[dict] = None,
-        event: Optional[UniFiEvent] = None,
+        raw: dict | None = None,
+        event: UniFiEvent | None = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:
@@ -106,7 +96,7 @@ class APIItems:
     def __init__(
         self,
         raw: list,
-        request: Callable[..., Awaitable[List[dict]]],
+        request: Callable[..., Awaitable[list[dict]]],
         path: str,
         item_cls: Any,
     ) -> None:
@@ -114,7 +104,7 @@ class APIItems:
         self._request = request
         self._path = path
         self._item_cls = item_cls
-        self._items: Dict[Union[int, str], Any] = {}
+        self._items: dict[int | str, Any] = {}
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
@@ -125,7 +115,7 @@ class APIItems:
         self.process_raw(raw)
 
     @final
-    def process_raw(self, raw: List[dict]) -> set:
+    def process_raw(self, raw: list[dict]) -> set:
         """Process data."""
         new_items = set()
 
@@ -142,7 +132,7 @@ class APIItems:
         return new_items
 
     @final
-    def process_event(self, events: List[UniFiEvent]) -> set:
+    def process_event(self, events: list[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()
 
@@ -170,7 +160,7 @@ class APIItems:
         return removed_items
 
     @final
-    def items(self) -> ItemsView[Union[int, str], Any]:
+    def items(self) -> ItemsView[int | str, Any]:
         """Return item values."""
         return self._items.items()
 
@@ -182,23 +172,23 @@ class APIItems:
     @final
     def get(
         self,
-        obj_id: Union[int, str],
-        default: Optional[Any] = None,
-    ) -> Optional[Any]:
+        obj_id: int | str,
+        default: Any | None = None,
+    ) -> Any | None:
         """Get item value based on key, return default if no match."""
         return self._items.get(obj_id, default)
 
     @final
-    def __contains__(self, obj_id: Union[int, str]) -> bool:
+    def __contains__(self, obj_id: int | str) -> bool:
         """Validate membership of item ID."""
         return obj_id in self._items
 
     @final
-    def __getitem__(self, obj_id: Union[int, str]) -> Any:
+    def __getitem__(self, obj_id: int | str) -> Any:
         """Get item value based on key."""
         return self._items[obj_id]
 
     @final
-    def __iter__(self) -> Iterator[Union[int, str]]:
+    def __iter__(self) -> Iterator[int | str]:
         """Allow iterate over items."""
         return iter(self._items)

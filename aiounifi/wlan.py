@@ -1,6 +1,7 @@
 """WLANs as part of a UniFi network."""
 
-from typing import Awaitable, Callable, Final, List
+from collections.abc import Awaitable, Callable
+from typing import Final
 
 from .api import APIItem, APIItems
 
@@ -203,19 +204,19 @@ class Wlans(APIItems):
 
     def __init__(
         self,
-        raw: List[dict],
-        request: Callable[..., Awaitable[List[dict]]],
+        raw: list[dict],
+        request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize WLAN manager."""
         super().__init__(raw, request, URL, Wlan)
 
-    async def async_enable(self, wlan: Wlan) -> List[dict]:
+    async def async_enable(self, wlan: Wlan) -> list[dict]:
         """Block client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": True}
         return await self._request("put", wlan_url, json=data)
 
-    async def async_disable(self, wlan: Wlan) -> List[dict]:
+    async def async_disable(self, wlan: Wlan) -> list[dict]:
         """Unblock client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": False}
