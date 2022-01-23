@@ -212,7 +212,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_outlet_relay_state(self, outlet_idx: int, state: bool) -> List[dict]:
+    async def async_set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
         """Set outlet relay state.
 
         true:  outlet power output on
@@ -240,7 +240,7 @@ class Device(APIItem):
 
         return await self._request("put", url, json=data)
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> List[dict]:
+    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.
