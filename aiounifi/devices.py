@@ -429,8 +429,8 @@ class Outlets:
     """Represents outlets on a device."""
 
     def __init__(self, raw: List[dict]) -> None:
-        """Initialize port manager."""
-        self.outlets: Dict[Union[int, str], Port] = {}
+        """Initialize outlet manager."""
+        self.outlets: Dict[int, Outlet] = {}
         for raw_outlet in raw:
             outlet = Outlet(raw_outlet)
             self.outlets[outlet.index] = outlet
