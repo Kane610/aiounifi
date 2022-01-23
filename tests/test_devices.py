@@ -249,9 +249,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
             "name": "Outlet 1",
         }
     ]
-    assert plug.outlet_overrides == [
-        {"index": 1, "relay_state": True, "name": "Outlet 1"}
-    ]
+    assert plug.outlet_overrides == []
     assert plug.port_table == []
     assert plug.state == 1
     assert plug.sys_stats == {"mem_total": 98304, "mem_used": 87736}
@@ -289,6 +287,25 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
+    assert outlet_1.cycle_enabled is False
+
+    plug.outlets.update(
+        [
+            {
+                "index": 1,
+                "has_relay": False,
+                "has_metering": True,
+                "relay_state": True,
+                "name": "Outlet-1",
+            }
+        ]
+    )
+    outlet_1 = plug.outlets[1]
+    assert outlet_1.name == "Outlet-1"
+    assert outlet_1.index == 1
+    assert outlet_1.has_relay is False
+    assert outlet_1.has_metering is True
+    assert outlet_1.relay_state is True
     assert outlet_1.cycle_enabled is False
 
 
@@ -451,61 +468,24 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
 
     assert len(strip.outlets.values()) == 7
 
-    outlet_1 = strip.outlets[1]
-    assert outlet_1.name == "Outlet 1"
-    assert outlet_1.index == 1
-    assert outlet_1.has_relay is True
-    assert outlet_1.has_metering is False
-    assert outlet_1.relay_state is False
-    assert outlet_1.cycle_enabled is False
+    for name, index, has_relay, has_metering, relay_state, cycle_enabled in [
+        ("Outlet 1", 1, True, False, False, False),
+        ("Outlet 2", 2, True, False, False, False),
+        ("Outlet 3", 3, True, False, True, False),
+        ("Outlet 4", 4, True, False, True, True),
+        ("Outlet 5", 5, True, False, False, False),
+        ("Outlet 6", 6, True, False, False, False),
+        ("USB Outlets", 7, True, False, False, False),
+    ]:
+        outlet = strip.outlets[index]
+        assert outlet.name == name
+        assert outlet.index == index
+        assert outlet.has_relay is has_relay
+        assert outlet.has_metering is has_metering
+        assert outlet.relay_state is relay_state
+        assert outlet.cycle_enabled is cycle_enabled
 
-    outlet_2 = strip.outlets[2]
-    assert outlet_2.name == "Outlet 2"
-    assert outlet_2.index == 2
-    assert outlet_2.has_relay is True
-    assert outlet_2.has_metering is False
-    assert outlet_2.relay_state is False
-    assert outlet_2.cycle_enabled is False
-
-    outlet_3 = strip.outlets[3]
-    assert outlet_3.name == "Outlet 3"
-    assert outlet_3.index == 3
-    assert outlet_3.has_relay is True
-    assert outlet_3.has_metering is False
-    assert outlet_3.relay_state is True
-    assert outlet_3.cycle_enabled is False
-
-    outlet_4 = strip.outlets[4]
-    assert outlet_4.name == "Outlet 4"
-    assert outlet_4.index == 4
-    assert outlet_4.has_relay is True
-    assert outlet_4.has_metering is False
-    assert outlet_4.relay_state is True
-    assert outlet_4.cycle_enabled is True
-
-    outlet_5 = strip.outlets[5]
-    assert outlet_5.name == "Outlet 5"
-    assert outlet_5.index == 5
-    assert outlet_5.has_relay is True
-    assert outlet_5.has_metering is False
-    assert outlet_5.relay_state is False
-    assert outlet_5.cycle_enabled is False
-
-    outlet_6 = strip.outlets[6]
-    assert outlet_6.name == "Outlet 6"
-    assert outlet_6.index == 6
-    assert outlet_6.has_relay is True
-    assert outlet_6.has_metering is False
-    assert outlet_6.relay_state is False
-    assert outlet_6.cycle_enabled is False
-
-    outlet_7 = strip.outlets[7]
-    assert outlet_7.name == "USB Outlets"
-    assert outlet_7.index == 7
-    assert outlet_7.has_relay is True
-    assert outlet_7.has_metering is False
-    assert outlet_7.relay_state is False
-    assert outlet_7.cycle_enabled is False
+    assert next(iter(strip.outlets)) == 1
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller):

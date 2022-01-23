@@ -3016,20 +3016,12 @@ PLUG_UP1 = {
     "x_authkey": "345678976545678",
     "cfgversion": "4c62f1e663783447",
     "syslog_key": "41c4bcefcbc842d6eefb05b8fd9b78faa1841d10a09cebb170ce3e2f474b43b3",
-    "config_network": {
-        "type": "dhcp"
-    },
+    "config_network": {"type": "dhcp"},
     "setup_id": "a8730d36-8fdd-44f9-8678-1e89676f36c1",
     "x_vwirekey": "2dabb7e23b048c88b60123456789",
     "vwire_table": [],
     "dot1x_portctrl_enabled": False,
-    "outlet_overrides": [
-        {
-            "index": 1,
-            "relay_state": True,
-            "name": "Outlet 1"
-        }
-    ],
+    "outlet_overrides": [],
     "outlet_enabled": True,
     "license_state": "registered",
     "x_aes_gcm": True,
@@ -3061,7 +3053,7 @@ PLUG_UP1 = {
             "has_relay": True,
             "has_metering": False,
             "relay_state": False,
-            "name": "Outlet 1"
+            "name": "Outlet 1",
         }
     ],
     "element_ap_serial": "44:d9:e7:90:f4:24",
@@ -3084,7 +3076,7 @@ PLUG_UP1 = {
     "last_uplink": {
         "uplink_mac": "78:45:58:87:93:16",
         "uplink_device_name": "U6-Pro",
-        "type": "wireless"
+        "type": "wireless",
     },
     "device_id": "600c8356942a6ade50707b56",
     "uplink": {
@@ -3109,7 +3101,7 @@ PLUG_UP1 = {
         "rx_bytes": 24423980,
         "tx_bytes-r": 0,
         "rx_bytes-r": 45,
-        "uplink_source": "legacy"
+        "uplink_source": "legacy",
     },
     "state": 1,
     "start_disconnected_millis": 1641679166349,
@@ -3125,10 +3117,7 @@ PLUG_UP1 = {
     "locating": False,
     "connect_request_ip": "192.168.0.189",
     "connect_request_port": "49155",
-    "sys_stats": {
-        "mem_total": 98304,
-        "mem_used": 87736
-    },
+    "sys_stats": {"mem_total": 98304, "mem_used": 87736},
     "system-stats": {},
     "lldp_table": [],
     "displayable_version": "2.2.1",
@@ -3204,7 +3193,7 @@ PLUG_UP1 = {
             "guest-wifi_tx_dropped": 0.0,
             "wifi_tx_dropped": 0.0,
             "bytes": 0.0,
-            "duration": 376663000.0
+            "duration": 376663000.0,
         }
     },
     "tx_bytes": 0,
@@ -3217,7 +3206,7 @@ PLUG_UP1 = {
     "user-wlan-num_sta": 0,
     "guest-num_sta": 0,
     "guest-wlan-num_sta": 0,
-    "x_has_ssh_hostkey": False
+    "x_has_ssh_hostkey": False,
 }
 
 STRIP_UP6 = {
@@ -3234,56 +3223,24 @@ STRIP_UP6 = {
     "x_authkey": "345678976545678345678976545678",
     "cfgversion": "eb5b492ed3d18e55",
     "syslog_key": "5cb5af74e36fb2a68e973d5ca5d3893afea1f974808eb35da27506da6ef8d9d1",
-    "config_network": {
-        "type": "dhcp"
-    },
+    "config_network": {"type": "dhcp"},
     "setup_id": "8d43a13f-5277-47da-9a05-1aabddac8bfa",
     "x_vwirekey": "2dabb7e23b048c88b60123456789234",
     "vwire_table": [],
     "dot1x_portctrl_enabled": False,
     "outlet_overrides": [
-        {
-            "index": 1,
-            "name": "Outlet 1",
-            "cycle_enabled": False,
-            "relay_state": False
-        },
-        {
-            "index": 2,
-            "name": "Outlet 2",
-            "cycle_enabled": False,
-            "relay_state": False
-        },
-        {
-            "index": 3,
-            "name": "Outlet 3",
-            "cycle_enabled": False,
-            "relay_state": True
-        },
-        {
-            "index": 4,
-            "name": "Outlet 4",
-            "cycle_enabled": True,
-            "relay_state": True
-        },
-        {
-            "index": 5,
-            "name": "Outlet 5",
-            "cycle_enabled": False,
-            "relay_state": False
-        },
-        {
-            "index": 6,
-            "name": "Outlet 6",
-            "cycle_enabled": False,
-            "relay_state": False
-        },
+        {"index": 1, "name": "Outlet 1", "cycle_enabled": False, "relay_state": False},
+        {"index": 2, "name": "Outlet 2", "cycle_enabled": False, "relay_state": False},
+        {"index": 3, "name": "Outlet 3", "cycle_enabled": False, "relay_state": True},
+        {"index": 4, "name": "Outlet 4", "cycle_enabled": True, "relay_state": True},
+        {"index": 5, "name": "Outlet 5", "cycle_enabled": False, "relay_state": False},
+        {"index": 6, "name": "Outlet 6", "cycle_enabled": False, "relay_state": False},
         {
             "index": 7,
             "name": "USB Outlets",
             "cycle_enabled": False,
-            "relay_state": False
-        }
+            "relay_state": False,
+        },
     ],
     "outlet_enabled": True,
     "license_state": "registered",
@@ -3316,7 +3273,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": False,
             "cycle_enabled": False,
-            "name": "Outlet 1"
+            "name": "Outlet 1",
         },
         {
             "index": 2,
@@ -3324,7 +3281,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": False,
             "cycle_enabled": False,
-            "name": "Outlet 2"
+            "name": "Outlet 2",
         },
         {
             "index": 3,
@@ -3332,7 +3289,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": True,
             "cycle_enabled": False,
-            "name": "Outlet 3"
+            "name": "Outlet 3",
         },
         {
             "index": 4,
@@ -3340,7 +3297,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": True,
             "cycle_enabled": True,
-            "name": "Outlet 4"
+            "name": "Outlet 4",
         },
         {
             "index": 5,
@@ -3348,7 +3305,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": False,
             "cycle_enabled": False,
-            "name": "Outlet 5"
+            "name": "Outlet 5",
         },
         {
             "index": 6,
@@ -3356,7 +3313,7 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": False,
             "cycle_enabled": False,
-            "name": "Outlet 6"
+            "name": "Outlet 6",
         },
         {
             "index": 7,
@@ -3364,8 +3321,8 @@ STRIP_UP6 = {
             "has_metering": False,
             "relay_state": False,
             "cycle_enabled": False,
-            "name": "USB Outlets"
-        }
+            "name": "USB Outlets",
+        },
     ],
     "element_ap_serial": "24:5a:4c:6b:f7:b3",
     "supports_fingerprint_ml": False,
@@ -3374,7 +3331,7 @@ STRIP_UP6 = {
     "last_uplink": {
         "uplink_mac": "78:45:58:87:93:16",
         "uplink_device_name": "U6-Pro",
-        "type": "wireless"
+        "type": "wireless",
     },
     "device_id": "61eb1a75942a6a859b45d2bc",
     "uplink": {
@@ -3399,7 +3356,7 @@ STRIP_UP6 = {
         "rx_bytes": 357084,
         "tx_bytes-r": 1,
         "rx_bytes-r": 75,
-        "uplink_source": "legacy"
+        "uplink_source": "legacy",
     },
     "state": 1,
     "start_disconnected_millis": 1642797908442,
@@ -3420,10 +3377,7 @@ STRIP_UP6 = {
     "locating": False,
     "connect_request_ip": "192.168.0.138",
     "connect_request_port": "49155",
-    "sys_stats": {
-        "mem_total": 98304,
-        "mem_used": 88056
-    },
+    "sys_stats": {"mem_total": 98304, "mem_used": 88056},
     "system-stats": {},
     "lldp_table": [],
     "displayable_version": "2.2.1",
@@ -3499,7 +3453,7 @@ STRIP_UP6 = {
             "guest-wifi_tx_dropped": 0.0,
             "wifi_tx_dropped": 0.0,
             "bytes": 0.0,
-            "duration": 2525000.0
+            "duration": 2525000.0,
         }
     },
     "tx_bytes": 0,
@@ -3512,7 +3466,7 @@ STRIP_UP6 = {
     "user-wlan-num_sta": 0,
     "guest-num_sta": 0,
     "guest-wlan-num_sta": 0,
-    "x_has_ssh_hostkey": False
+    "x_has_ssh_hostkey": False,
 }
 
 DPI_APPS = [
