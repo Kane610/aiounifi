@@ -42,6 +42,7 @@ class Device(APIItem):
         """Initialize device."""
         super().__init__(raw, request)
         self.ports = Ports(raw.get("port_table", []))
+        self.outlets = Outlets(raw.get("outlet_table", []))
 
     def update(
         self,
@@ -51,6 +52,7 @@ class Device(APIItem):
         """Refresh data."""
         if raw:
             self.ports.update(raw.get("port_table", []))
+            self.outlets.update(raw.get("outlet_table", []))
         super().update(raw, event)
 
     @property
@@ -134,6 +136,16 @@ class Device(APIItem):
         return self.raw.get("overheating", False)
 
     @property
+    def outlet_overrides(self) -> list:
+        """Overridden outlet configuration."""
+        return self.raw.get("outlet_overrides", [])
+
+    @property
+    def outlet_table(self) -> list:
+        """List of outlets."""
+        return self.raw.get("outlet_table", [])
+
+    @property
     def port_overrides(self) -> list:
         """Overridden port configuration."""
         return self.raw.get("port_overrides", [])
@@ -192,6 +204,36 @@ class Device(APIItem):
     def wlan_overrides(self) -> list:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    async def async_set_outlet_relay_state(
+        self, outlet_idx: int, state: bool
+    ) -> list[dict]:
+        """Set outlet relay state.
+
+        True:  outlet power output on.
+        False: outlet power output off.
+        """
+        LOGGER.debug("Override outlet %d with state %s", outlet_idx, str(state))
+
+        existing_override = False
+        for outlet_override in self.outlet_overrides:
+            if outlet_idx == outlet_override["index"]:
+                outlet_override["relay_state"] = state
+                existing_override = True
+                break
+
+        if not existing_override:
+            self.outlet_overrides.append(
+                {
+                    "index": outlet_idx,
+                    "name": self.outlets[outlet_idx].name,
+                    "relay_state": state,
+                }
+            )
+        url = f"/rest/device/{self.id}"
+        data = {"outlet_overrides": self.outlet_overrides}
+
+        return await self._request("put", url, json=data)
 
     async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode.
@@ -338,3 +380,70 @@ class Ports:
     def __iter__(self) -> Iterator[int | str]:
         """Iterate over ports."""
         return iter(self.ports)
+
+
+class Outlet:
+    """Represents an outlet."""
+
+    def __init__(self, raw: dict) -> None:
+        """Initialize outlet."""
+        self.raw = raw
+
+    @property
+    def name(self) -> str:
+        """Name of outlet."""
+        return self.raw["name"]
+
+    @property
+    def index(self) -> int:
+        """Outlet index."""
+        return self.raw["index"]
+
+    @property
+    def has_relay(self) -> bool:
+        """Is the outlet controllable."""
+        return self.raw["has_relay"]
+
+    @property
+    def has_metering(self) -> bool:
+        """Is metering supported."""
+        return self.raw["has_metering"]
+
+    @property
+    def relay_state(self) -> bool:
+        """Is outlet power on."""
+        return self.raw["relay_state"]
+
+    @property
+    def cycle_enabled(self) -> bool:
+        """Modem Power Cycle."""
+        return self.raw.get("cycle_enabled", False)
+
+
+class Outlets:
+    """Represents outlets on a device."""
+
+    def __init__(self, raw: list[dict]) -> None:
+        """Initialize outlet manager."""
+        self.outlets: dict[int, Outlet] = {}
+        for raw_outlet in raw:
+            outlet = Outlet(raw_outlet)
+            self.outlets[outlet.index] = outlet
+
+    def update(self, raw: list[dict]) -> None:
+        """Update outlets."""
+        for raw_outlet in raw:
+            index = raw_outlet["index"]
+            self.outlets[index].raw = raw_outlet
+
+    def values(self) -> ValuesView[Outlet]:
+        """Return outlets."""
+        return self.outlets.values()
+
+    def __getitem__(self, obj_id: int) -> Outlet:
+        """Get specific outlet based on key."""
+        return self.outlets[obj_id]
+
+    def __iter__(self) -> Iterator[int]:
+        """Iterate over outlets."""
+        return iter(self.outlets)
