@@ -215,8 +215,8 @@ class Device(APIItem):
     async def async_set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
         """Set outlet relay state.
 
-        true:  outlet power output on
-        false: outlet power output off
+        True:  outlet power output on.
+        False: outlet power output off.
         """
         LOGGER.debug("Override outlet %d with state %s", outlet_idx, str(state))
 
