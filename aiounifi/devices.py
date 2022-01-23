@@ -205,9 +205,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_outlet_relay_state(
-        self, outlet_idx: int, state: bool
-    ) -> list[dict]:
+    async def set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
         """Set outlet relay state.
 
         True:  outlet power output on.

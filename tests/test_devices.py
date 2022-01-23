@@ -228,7 +228,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert len(devices.values()) == 1
 
     plug = devices[PLUG_UP1["mac"]]
-    assert plug.board_rev == 2
+    assert plug.board_revision == 2
     assert plug.downlink_table == []
     assert plug.id == "600c8356942a6ade50707b56"
     assert plug.ip == "192.168.0.189"
@@ -263,7 +263,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await plug.async_set_outlet_relay_state(1, False)
+    await plug.set_outlet_relay_state(1, False)
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -316,7 +316,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert len(devices.values()) == 1
 
     strip = devices[STRIP_UP6["mac"]]
-    assert strip.board_rev == 5
+    assert strip.board_revision == 5
     assert strip.downlink_table == []
     assert strip.id == "61eb1a75942a6a859b45d2bc"
     assert strip.ip == "192.168.0.138"
@@ -413,7 +413,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await strip.async_set_outlet_relay_state(5, True)
+    await strip.set_outlet_relay_state(5, True)
     assert verify_call(
         mock_aioresponse,
         "put",
