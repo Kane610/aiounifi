@@ -452,9 +452,9 @@ class Outlets:
         return self.outlets.values()
 
     def __getitem__(self, obj_id: int) -> Outlet:
-        """Get specific port based on key."""
+        """Get specific outlet based on key."""
         return self.outlets[obj_id]
 
-    def __iter__(self) -> Iterator[Union[int, str]]:
+    def __iter__(self) -> Iterator[int]:
         """Iterate over outlets."""
         return iter(self.outlets)
