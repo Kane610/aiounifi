@@ -1,6 +1,6 @@
 pytest
-pytest-aiohttp
-pytest-asyncio==0.16.0
+pytest-aiohttp==1.0.3
+pytest-asyncio==0.17.1
 pytest-cov
 coveralls
 aioresponses

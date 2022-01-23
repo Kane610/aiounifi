@@ -427,11 +427,8 @@ class Outlets:
         self.outlets: Dict[Union[int, str], Port] = {}
         for raw_outlet in raw:
             outlet = Outlet(raw_outlet)
+            self.outlets[outlet.index] = outlet
 
-            if (index := outlet.index) is not None:
-                self.outlets[index] = outlet
-            elif ifname := outlet.ifname:
-                self.outlets[ifname] = outlet
 
     def update(self, raw: List[dict]) -> None:
         """Update outlets."""
@@ -440,9 +437,6 @@ class Outlets:
 
             if "index" in raw_outlet:
                 index = raw_outlet["index"]
-
-            elif "ifname" in raw_outlet:
-                index = raw_outlet["ifname"]
 
             if index in self.outlets:
                 self.outlets[index].raw = raw_outlet
