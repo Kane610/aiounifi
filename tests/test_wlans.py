@@ -75,7 +75,7 @@ async def test_ports(mock_aioresponse, unifi_controller):
         repeat=True,
     )
 
-    await wlans.async_enable(wlan)
+    await wlans.enable(wlan)
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -83,7 +83,7 @@ async def test_ports(mock_aioresponse, unifi_controller):
         json={"enabled": True},
     )
 
-    await wlans.async_disable(wlan)
+    await wlans.disable(wlan)
     assert verify_call(
         mock_aioresponse,
         "put",

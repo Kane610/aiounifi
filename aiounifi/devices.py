@@ -56,7 +56,7 @@ class Device(APIItem):
         super().update(raw, event)
 
     @property
-    def board_rev(self) -> int:
+    def board_revision(self) -> int:
         """Board revision of device."""
         return self.raw["board_rev"]
 
@@ -205,9 +205,7 @@ class Device(APIItem):
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
 
-    async def async_set_outlet_relay_state(
-        self, outlet_idx: int, state: bool
-    ) -> list[dict]:
+    async def set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
         """Set outlet relay state.
 
         True:  outlet power output on.
@@ -235,7 +233,7 @@ class Device(APIItem):
 
         return await self._request("put", url, json=data)
 
-    async def async_set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
+    async def set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode.
 
         Auto, 24v, passthrough, off.

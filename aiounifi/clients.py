@@ -26,17 +26,17 @@ class Clients(APIItems):
         """Initialize active clients manager."""
         super().__init__(raw, request, URL, Client)
 
-    async def async_block(self, mac: str) -> list[dict]:
+    async def block(self, mac: str) -> list[dict]:
         """Block client from controller."""
         data = {"mac": mac, "cmd": "block-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_unblock(self, mac: str) -> list[dict]:
+    async def unblock(self, mac: str) -> list[dict]:
         """Unblock client from controller."""
         data = {"mac": mac, "cmd": "unblock-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
 
-    async def async_reconnect(self, mac: str) -> list[dict]:
+    async def reconnect(self, mac: str) -> list[dict]:
         """Force a wireless client to reconnect to the network."""
         data = {"mac": mac, "cmd": "kick-sta"}
         return await self._request("post", URL_CLIENT_STATE_MANAGER, json=data)
@@ -180,17 +180,17 @@ class Client(APIItem):
         return self.raw.get("site_id", "")
 
     @property
-    def sw_depth(self) -> int | None:
+    def switch_depth(self) -> int | None:
         """How many layers of switches client is in."""
         return self.raw.get("sw_depth")
 
     @property
-    def sw_mac(self) -> str:
+    def switch_mac(self) -> str:
         """MAC for switch client is connected to."""
         return self.raw.get("sw_mac", "")
 
     @property
-    def sw_port(self) -> int | None:
+    def switch_port(self) -> int | None:
         """Switch port client is connected to."""
         return self.raw.get("sw_port")
 

@@ -54,9 +54,9 @@ test_data = [
             "oui": "",
             "powersave_enabled": None,
             "site_id": "",
-            "sw_depth": None,
-            "sw_mac": "",
-            "sw_port": None,
+            "switch_depth": None,
+            "switch_mac": "",
+            "switch_port": None,
             "rx_bytes": 0,
             "rx_bytes_r": 0,
             "tx_bytes": 0,
@@ -98,9 +98,9 @@ test_data = [
             "oui": "Apple",
             "powersave_enabled": False,
             "site_id": "5a32aa4ee4b0412345678910",
-            "sw_depth": -1,
-            "sw_mac": "fc:ec:da:11:22:33",
-            "sw_port": 1,
+            "switch_depth": -1,
+            "switch_mac": "fc:ec:da:11:22:33",
+            "switch_port": 1,
             "rx_bytes": 12867114,
             "rx_bytes_r": 326,
             "tx_bytes": 52852089,
@@ -142,9 +142,9 @@ test_data = [
             "oui": "Manu",
             "powersave_enabled": None,
             "site_id": "5a32aa4ee4b0412345678910",
-            "sw_depth": 0,
-            "sw_mac": "fc:ec:da:11:22:33",
-            "sw_port": 3,
+            "switch_depth": 0,
+            "switch_mac": "fc:ec:da:11:22:33",
+            "switch_port": 3,
             "rx_bytes": 0,
             "rx_bytes_r": 0,
             "tx_bytes": 0,
@@ -178,7 +178,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
     )
-    await clients.async_block(mac=client.mac)
+    await clients.block(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
@@ -186,7 +186,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
         json={"mac": client.mac, "cmd": "block-sta"},
     )
 
-    await clients.async_unblock(mac=client.mac)
+    await clients.unblock(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",
@@ -194,7 +194,7 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
         json={"mac": client.mac, "cmd": "unblock-sta"},
     )
 
-    await clients.async_reconnect(mac=client.mac)
+    await clients.reconnect(mac=client.mac)
     assert verify_call(
         mock_aioresponse,
         "post",

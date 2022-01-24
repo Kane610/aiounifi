@@ -37,7 +37,7 @@ async def test_device_access_point(unifi_controller):
     assert len(devices.values()) == 1
 
     access_point = devices[ACCESS_POINT_AC_PRO["mac"]]
-    assert access_point.board_rev == 21
+    assert access_point.board_revision == 21
     assert access_point.considered_lost_at == 1588175837
     assert access_point.disabled is False
     assert access_point.id == "235678987654345678"
@@ -128,7 +128,7 @@ async def test_device_security_gateway(unifi_controller):
     assert len(devices.values()) == 1
 
     gateway = devices[GATEWAY_USG3["mac"]]
-    assert gateway.board_rev == 16
+    assert gateway.board_revision == 16
     assert gateway.considered_lost_at == 1588175842
     assert gateway.disabled is False
     assert gateway.id == "235678987654345678"
@@ -228,7 +228,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert len(devices.values()) == 1
 
     plug = devices[PLUG_UP1["mac"]]
-    assert plug.board_rev == 2
+    assert plug.board_revision == 2
     assert plug.downlink_table == []
     assert plug.id == "600c8356942a6ade50707b56"
     assert plug.ip == "192.168.0.189"
@@ -263,7 +263,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await plug.async_set_outlet_relay_state(1, False)
+    await plug.set_outlet_relay_state(1, False)
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -316,7 +316,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert len(devices.values()) == 1
 
     strip = devices[STRIP_UP6["mac"]]
-    assert strip.board_rev == 5
+    assert strip.board_revision == 5
     assert strip.downlink_table == []
     assert strip.id == "61eb1a75942a6a859b45d2bc"
     assert strip.ip == "192.168.0.138"
@@ -413,7 +413,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await strip.async_set_outlet_relay_state(5, True)
+    await strip.set_outlet_relay_state(5, True)
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -495,7 +495,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     assert len(devices.values()) == 1
 
     switch = devices[SWITCH_16_PORT_POE["mac"]]
-    assert switch.board_rev == 9
+    assert switch.board_revision == 9
     assert switch.considered_lost_at == 1588175821
     assert switch.disabled is False
     assert switch.id == "235678987654345678"
@@ -553,7 +553,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         payload="",
         repeat=True,
     )
-    await switch.async_set_port_poe_mode(1, "off")
+    await switch.set_port_poe_mode(1, "off")
     assert verify_call(
         mock_aioresponse,
         "put",
@@ -584,7 +584,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         },
     )
 
-    await switch.async_set_port_poe_mode(3, "off")
+    await switch.set_port_poe_mode(3, "off")
     assert verify_call(
         mock_aioresponse,
         "put",

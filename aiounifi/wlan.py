@@ -210,13 +210,13 @@ class Wlans(APIItems):
         """Initialize WLAN manager."""
         super().__init__(raw, request, URL, Wlan)
 
-    async def async_enable(self, wlan: Wlan) -> list[dict]:
+    async def enable(self, wlan: Wlan) -> list[dict]:
         """Block client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": True}
         return await self._request("put", wlan_url, json=data)
 
-    async def async_disable(self, wlan: Wlan) -> list[dict]:
+    async def disable(self, wlan: Wlan) -> list[dict]:
         """Unblock client from controller."""
         wlan_url = f"{URL}/{wlan.id}"
         data = {"enabled": False}
