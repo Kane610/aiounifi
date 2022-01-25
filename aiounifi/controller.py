@@ -252,7 +252,11 @@ class Controller:
             pass
 
         else:
-            LOGGER.debug("Unsupported message type %s", message)
+            LOGGER.debug(
+                "Unsupported message type (%s) %s",
+                message[ATTR_META][ATTR_MESSAGE],
+                message,
+            )
 
         return changes
 
