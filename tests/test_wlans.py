@@ -3,10 +3,49 @@
 pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
 
+import pytest
+
 from .fixtures import WLANS
 
+from aiounifi.models.wlan import WlanChangePasswordRequest, WlanEnableRequest
 
-async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
+
+async def test_wlan_password_change(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """Test changing Wlan password."""
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/wlanconf/123", payload={}
+    )
+
+    await unifi_controller.request(WlanChangePasswordRequest.create("123", "456"))
+
+    assert unifi_called_with(
+        "put",
+        "/api/s/default/rest/wlanconf/123",
+        json={"x_passphrase": "456"},
+    )
+
+
+@pytest.mark.parametrize("enable", [True, False])
+async def test_wlan_enable(
+    mock_aioresponse, unifi_controller, unifi_called_with, enable
+):
+    """Test that wlan can be enabled and disabled."""
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/wlanconf/123", payload={}
+    )
+
+    await unifi_controller.request(WlanEnableRequest.create("123", enable))
+
+    assert unifi_called_with(
+        "put",
+        "/api/s/default/rest/wlanconf/123",
+        json={"enabled": enable},
+    )
+
+
+async def test_no_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no ports also work."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
@@ -20,7 +59,7 @@ async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
     assert len(wlans.values()) == 0
 
 
-async def test_ports(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
     wlans.process_raw(WLANS)

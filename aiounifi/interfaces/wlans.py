@@ -18,11 +18,11 @@ class Wlans(APIHandler):
     async def enable(self, wlan: Wlan) -> list[dict]:
         """Block client from controller."""
         return await self.controller.request(
-            WlanEnableRequest.create(wlan, enable=True)
+            WlanEnableRequest.create(wlan.id, enable=True)
         )
 
     async def disable(self, wlan: Wlan) -> list[dict]:
         """Unblock client from controller."""
         return await self.controller.request(
-            WlanEnableRequest.create(wlan, enable=False)
+            WlanEnableRequest.create(wlan.id, enable=False)
         )
