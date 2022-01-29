@@ -400,7 +400,7 @@ class Outlet:
     @property
     def has_relay(self) -> bool:
         """Is the outlet controllable."""
-        return self.raw["has_relay"]
+        return self.raw.get("has_relay", False)
 
     @property
     def has_metering(self) -> bool:
