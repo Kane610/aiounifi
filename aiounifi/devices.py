@@ -233,7 +233,9 @@ class Device(APIItem):
 
         return await self._request("put", url, json=data)
 
-    async def set_outlet_cycle_enabled(self, outlet_idx: int, state: bool) -> list[dict]:
+    async def set_outlet_cycle_enabled(
+        self, outlet_idx: int, state: bool
+    ) -> list[dict]:
         """Set outlet cycle_enabled flag.
 
         True:  UniFi Network will power cycle this outlet if the internet goes down.
