@@ -522,11 +522,6 @@ class Outlet:
         return self.raw.get("has_relay", False)
 
     @property
-    def has_metering(self) -> bool:
-        """Is metering supported."""
-        return self.raw["has_metering"]
-
-    @property
     def relay_state(self) -> bool:
         """Is outlet power on."""
         return self.raw["relay_state"]
@@ -535,6 +530,42 @@ class Outlet:
     def cycle_enabled(self) -> bool:
         """Modem Power Cycle."""
         return self.raw.get("cycle_enabled", False)
+
+    # Metering capabilities of outlet
+
+    @property
+    def has_metering(self) -> bool:
+        """Is metering supported.
+
+        Reported false by UP1 and UP6 which does not have power metering.
+        Not reported by UPD Pro which does report power metering.
+        """
+        return self.raw.get("has_metering", False)
+
+    @property
+    def caps(self) -> int:
+        """Unknown."""
+        return self.raw["outlet_caps"]
+
+    @property
+    def voltage(self) -> str:
+        """Voltage draw of outlet."""
+        return self.raw.get("outlet_voltage", "")
+
+    @property
+    def current(self) -> str:
+        """Usage of outlet."""
+        return self.raw.get("outlet_current", "")
+
+    @property
+    def power(self) -> str:
+        """Power consumption of the outlet."""
+        return self.raw.get("outlet_power", "")
+
+    @property
+    def power_factor(self) -> str:
+        """Power factor."""
+        return self.raw.get("outlet_power_factor", "")
 
 
 class Outlets:

@@ -8,6 +8,7 @@ import pytest
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
     GATEWAY_USG3,
+    PDU_PRO,
     PLUG_UP1,
     STRIP_UP6,
     SWITCH_16_PORT_POE,
@@ -49,7 +50,9 @@ async def test_device_restart(
     )
 
 
-async def test_device_upgrade(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_device_upgrade_request(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
     """Test device upgrade request work."""
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
 
@@ -547,6 +550,624 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
         assert outlet.cycle_enabled is cycle_enabled
 
     assert next(iter(strip.outlets)) == 1
+
+
+async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test device class on a PDU Pro 20 port power dispersion unit."""
+    devices = unifi_controller.devices
+    devices.process_raw([PDU_PRO])
+
+    print({k: PDU_PRO[k] for k in sorted(PDU_PRO)})
+    assert len(devices.values()) == 1
+
+    pdupro = devices[PDU_PRO["mac"]]
+    assert pdupro.board_revision == 1
+    assert pdupro.downlink_table == []
+    assert pdupro.id == "61e4a1e60bbb2d53aeb430ea"
+    assert pdupro.ip == "192.168.1.66"
+    assert pdupro.has_fan is False
+    assert pdupro.last_seen == 1643721168
+    assert pdupro.lldp_table == [
+        {
+            "chassis_id": "00:00:00:00:00:83",
+            "chassis_id_subtype": "mac",
+            "is_wired": True,
+            "local_port_idx": 1,
+            "local_port_name": "eth0",
+            "port_id": "local Port 1",
+        }
+    ]
+    assert pdupro.mac == "00:00:00:00:00:84"
+    assert pdupro.model == "USPPDUP"
+    assert pdupro.name == "Main Server Cabinet PDU"
+    assert pdupro.next_interval == 56
+    assert len(pdupro.outlets.values()) == 20
+    assert pdupro.outlet_table == [
+        {
+            "index": 1,
+            "relay_state": True,
+            "cycle_enabled": False,
+            "name": "USB Outlet 1",
+            "outlet_caps": 1,
+        },
+        {
+            "index": 2,
+            "relay_state": False,
+            "cycle_enabled": False,
+            "name": "USB Outlet 2",
+            "outlet_caps": 1,
+        },
+        {
+            "index": 3,
+            "relay_state": True,
+            "cycle_enabled": False,
+            "name": "USB Outlet 3",
+            "outlet_caps": 1,
+        },
+        {
+            "index": 4,
+            "relay_state": False,
+            "cycle_enabled": False,
+            "name": "USB Outlet 4",
+            "outlet_caps": 1,
+        },
+        {
+            "index": 5,
+            "relay_state": True,
+            "name": "Console",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.061",
+            "outlet_power": "3.815",
+            "outlet_power_factor": "0.527",
+        },
+        {
+            "index": 6,
+            "relay_state": True,
+            "name": "UDM Pro",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.248",
+            "outlet_power": "14.351",
+            "outlet_power_factor": "0.488",
+        },
+        {
+            "index": 7,
+            "relay_state": True,
+            "name": "Unraid",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "1.454",
+            "outlet_power": "169.900",
+            "outlet_power_factor": "0.985",
+        },
+        {
+            "index": 8,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 8",
+        },
+        {
+            "index": 9,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 9",
+        },
+        {
+            "index": 10,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 10",
+        },
+        {
+            "index": 11,
+            "relay_state": False,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 11",
+        },
+        {
+            "index": 12,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 12",
+        },
+        {
+            "index": 13,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 13",
+        },
+        {
+            "index": 14,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 14",
+        },
+        {
+            "index": 15,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.127",
+            "outlet_power": "9.394",
+            "outlet_power_factor": "0.623",
+            "name": "Outlet 15",
+        },
+        {
+            "index": 16,
+            "relay_state": True,
+            "name": "UNVR Pro",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.278",
+            "outlet_power": "31.992",
+            "outlet_power_factor": "0.970",
+        },
+        {
+            "index": 17,
+            "relay_state": True,
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+            "name": "Outlet 17",
+        },
+        {
+            "index": 18,
+            "relay_state": True,
+            "name": "Home Assistant",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.328",
+            "outlet_power": "21.529",
+            "outlet_power_factor": "0.553",
+        },
+        {
+            "index": 19,
+            "relay_state": True,
+            "name": "Server Cabinet Switch",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.495",
+            "outlet_power": "56.760",
+            "outlet_power_factor": "0.967",
+        },
+        {
+            "index": 20,
+            "relay_state": True,
+            "name": "Rear Cabinet Lights",
+            "outlet_caps": 3,
+            "outlet_voltage": "118.566",
+            "outlet_current": "0.000",
+            "outlet_power": "0.000",
+            "outlet_power_factor": "0.000",
+        },
+    ]
+    assert pdupro.outlet_overrides == [
+        {
+            "index": 1,
+            "name": "USB Outlet 1",
+            "cycle_enabled": False,
+            "relay_state": False,
+        },
+        {
+            "index": 2,
+            "name": "USB Outlet 2",
+            "cycle_enabled": False,
+            "relay_state": False,
+        },
+        {
+            "index": 3,
+            "name": "USB Outlet 3",
+            "cycle_enabled": False,
+            "relay_state": False,
+        },
+        {
+            "index": 4,
+            "name": "USB Outlet 4",
+            "cycle_enabled": False,
+            "relay_state": False,
+        },
+        {"index": 5, "name": "Console", "relay_state": True},
+        {"index": 6, "name": "UDM Pro", "relay_state": True},
+        {"index": 7, "name": "Unraid", "relay_state": True},
+        {"index": 8, "relay_state": True},
+        {"index": 9, "relay_state": True},
+        {"index": 10, "relay_state": True},
+        {"index": 11, "relay_state": True},
+        {"index": 12, "relay_state": True},
+        {"index": 13, "relay_state": True},
+        {"index": 14, "relay_state": True},
+        {"index": 15, "relay_state": True},
+        {"index": 16, "name": "UNVR Pro", "relay_state": True},
+        {"index": 17, "relay_state": True},
+        {"index": 18, "name": "Home Assistant", "relay_state": True},
+        {"index": 19, "name": "Server Cabinet Switch", "relay_state": True},
+        {"index": 20, "name": "Rear Cabinet Lights", "relay_state": True},
+    ]
+    assert pdupro.port_table == [
+        {
+            "port_idx": 1,
+            "media": "FE",
+            "port_poe": False,
+            "poe_caps": 0,
+            "speed_caps": 1048591,
+            "op_mode": "switch",
+            "portconf_id": "5fc7fb23c3da2e039ebeea97",
+            "autoneg": False,
+            "enable": True,
+            "flowctrl_rx": False,
+            "flowctrl_tx": False,
+            "full_duplex": True,
+            "is_uplink": True,
+            "jumbo": False,
+            "mac_table": [],
+            "rx_broadcast": 0,
+            "rx_bytes": 538000102,
+            "rx_dropped": 2,
+            "rx_errors": 0,
+            "rx_multicast": 0,
+            "rx_packets": 3943979,
+            "satisfaction": 90,
+            "satisfaction_reason": 1,
+            "speed": 100,
+            "stp_pathcost": 0,
+            "stp_state": "disabled",
+            "tx_broadcast": 0,
+            "tx_bytes": 114523726,
+            "tx_dropped": 0,
+            "tx_errors": 0,
+            "tx_multicast": 0,
+            "tx_packets": 670312,
+            "up": True,
+            "tx_bytes-r": 82,
+            "rx_bytes-r": 1510,
+            "bytes-r": 1592,
+            "name": "Port 1",
+            "masked": False,
+            "aggregated_by": False,
+        }
+    ]
+    assert pdupro.state == 1
+    assert pdupro.sys_stats == {
+        "loadavg_1": "0.08",
+        "loadavg_15": "0.01",
+        "loadavg_5": "0.02",
+        "mem_buffer": 0,
+        "mem_total": 61792256,
+        "mem_used": 18235392,
+    }
+    assert pdupro.type == "usw"
+    assert pdupro.version == "5.76.7.13442"
+    assert pdupro.upgradable is False
+    assert pdupro.uplink == PDU_PRO["uplink"]
+
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/device/61e4a1e60bbb2d53aeb430ea",
+        payload="",
+        repeat=True,
+    )
+    await pdupro.set_outlet_relay_state(5, True)
+    assert unifi_called_with(
+        "put",
+        "/api/s/default/rest/device/61e4a1e60bbb2d53aeb430ea",
+        json={
+            "outlet_overrides": [
+                {
+                    "index": 1,
+                    "name": "USB Outlet 1",
+                    "cycle_enabled": False,
+                    "relay_state": False,
+                },
+                {
+                    "index": 2,
+                    "name": "USB Outlet 2",
+                    "cycle_enabled": False,
+                    "relay_state": False,
+                },
+                {
+                    "index": 3,
+                    "name": "USB Outlet 3",
+                    "cycle_enabled": False,
+                    "relay_state": False,
+                },
+                {
+                    "index": 4,
+                    "name": "USB Outlet 4",
+                    "cycle_enabled": False,
+                    "relay_state": False,
+                },
+                {"index": 5, "name": "Console", "relay_state": True},
+                {"index": 6, "name": "UDM Pro", "relay_state": True},
+                {"index": 7, "name": "Unraid", "relay_state": True},
+                {"index": 8, "relay_state": True},
+                {"index": 9, "relay_state": True},
+                {"index": 10, "relay_state": True},
+                {"index": 11, "relay_state": True},
+                {"index": 12, "relay_state": True},
+                {"index": 13, "relay_state": True},
+                {"index": 14, "relay_state": True},
+                {"index": 15, "relay_state": True},
+                {"index": 16, "name": "UNVR Pro", "relay_state": True},
+                {"index": 17, "relay_state": True},
+                {"index": 18, "name": "Home Assistant", "relay_state": True},
+                {"index": 19, "name": "Server Cabinet Switch", "relay_state": True},
+                {"index": 20, "name": "Rear Cabinet Lights", "relay_state": True},
+            ]
+        },
+    )
+
+    assert len(pdupro.outlets.values()) == 20
+
+    for (
+        name,
+        index,
+        has_relay,
+        relay_state,
+        cycle_enabled,
+        has_metering,
+        caps,
+        voltage,
+        current,
+        power,
+        power_factor,
+    ) in [
+        ("USB Outlet 1", 1, False, True, False, False, 1, "", "", "", ""),
+        ("USB Outlet 2", 2, False, False, False, False, 1, "", "", "", ""),
+        ("USB Outlet 3", 3, False, True, False, False, 1, "", "", "", ""),
+        ("USB Outlet 4", 4, False, False, False, False, 1, "", "", "", ""),
+        (
+            "Console",
+            5,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.061",
+            "3.815",
+            "0.527",
+        ),
+        (
+            "UDM Pro",
+            6,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.248",
+            "14.351",
+            "0.488",
+        ),
+        (
+            "Unraid",
+            7,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "1.454",
+            "169.900",
+            "0.985",
+        ),
+        (
+            "Outlet 8",
+            8,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 9",
+            9,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 10",
+            10,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 11",
+            11,
+            False,
+            False,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 12",
+            12,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 13",
+            13,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 14",
+            14,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Outlet 15",
+            15,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.127",
+            "9.394",
+            "0.623",
+        ),
+        (
+            "UNVR Pro",
+            16,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.278",
+            "31.992",
+            "0.970",
+        ),
+        (
+            "Outlet 17",
+            17,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+        (
+            "Home Assistant",
+            18,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.328",
+            "21.529",
+            "0.553",
+        ),
+        (
+            "Server Cabinet Switch",
+            19,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.495",
+            "56.760",
+            "0.967",
+        ),
+        (
+            "Rear Cabinet Lights",
+            20,
+            False,
+            True,
+            False,
+            False,
+            3,
+            "118.566",
+            "0.000",
+            "0.000",
+            "0.000",
+        ),
+    ]:
+        outlet = pdupro.outlets[index]
+        assert outlet.name == name
+        assert outlet.index == index
+        assert outlet.has_relay is has_relay
+        assert outlet.relay_state is relay_state
+        assert outlet.cycle_enabled is cycle_enabled
+        assert outlet.has_metering is has_metering
+        assert outlet.caps == caps
+        assert outlet.voltage == voltage
+        assert outlet.current == current
+        assert outlet.power == power
+        assert outlet.power_factor == power_factor
+
+    assert next(iter(pdupro.outlets)) == 1
 
 
 async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
