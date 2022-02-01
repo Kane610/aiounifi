@@ -289,6 +289,23 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.relay_state is False
     assert outlet_1.cycle_enabled is False
 
+    await plug.set_outlet_cycle_enabled(1, True)
+    assert verify_call(
+        mock_aioresponse,
+        "put",
+        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
+        json={
+            "outlet_overrides": [
+                {
+                    "index": 1,
+                    "name": "Outlet 1",
+                    "relay_state": False,
+                    "cycle_enabled": True,
+                },
+            ]
+        },
+    )
+
     plug.outlets.update(
         [
             {

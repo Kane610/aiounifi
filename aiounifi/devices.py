@@ -211,7 +211,7 @@ class Device(APIItem):
         True:  outlet power output on.
         False: outlet power output off.
         """
-        LOGGER.debug("Override outlet %d with state %s", outlet_idx, str(state))
+        LOGGER.debug("Override outlet %d with relay_state %s", outlet_idx, str(state))
 
         existing_override = False
         for outlet_override in self.outlet_overrides:
@@ -226,6 +226,36 @@ class Device(APIItem):
                     "index": outlet_idx,
                     "name": self.outlets[outlet_idx].name,
                     "relay_state": state,
+                }
+            )
+        url = f"/rest/device/{self.id}"
+        data = {"outlet_overrides": self.outlet_overrides}
+
+        return await self._request("put", url, json=data)
+
+    async def set_outlet_cycle_enabled(
+        self, outlet_idx: int, state: bool
+    ) -> list[dict]:
+        """Set outlet cycle_enabled flag.
+
+        True:  UniFi Network will power cycle this outlet if the internet goes down.
+        False: UniFi Network will not power cycle this outlet if the internet goes down.
+        """
+        LOGGER.debug("Override outlet %d with cycle_enabled %s", outlet_idx, str(state))
+
+        existing_override = False
+        for outlet_override in self.outlet_overrides:
+            if outlet_idx == outlet_override["index"]:
+                outlet_override["cycle_enabled"] = state
+                existing_override = True
+                break
+
+        if not existing_override:
+            self.outlet_overrides.append(
+                {
+                    "index": outlet_idx,
+                    "name": self.outlets[outlet_idx].name,
+                    "cycle_enabled": state,
                 }
             )
         url = f"/rest/device/{self.id}"
