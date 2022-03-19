@@ -111,7 +111,8 @@ class Controller:
             response := self.last_response
         ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
-            self.headers = {"x-csrf-token": response.headers.get("x-csrf-token")}
+            if (csrf_token := response.headers.get("x-csrf-token")) is not None:
+                self.headers = {"x-csrf-token": csrf_token}
 
     async def login(self) -> None:
         """Log in to controller."""
