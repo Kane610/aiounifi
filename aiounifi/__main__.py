@@ -33,7 +33,7 @@ async def unifi_controller(
     )
 
     try:
-        with async_timeout.timeout(10):
+        async with async_timeout.timeout(10):
             await controller.check_unifi_os()
             await controller.login()
         return controller
