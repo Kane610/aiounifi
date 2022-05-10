@@ -65,7 +65,10 @@ def verify_call(aioresponse: tuple, method: str, url: str, **kwargs: dict) -> bo
             successful_match = True
 
             for key in kwargs:
-                if key not in call[1] and call[1][key] != kwargs[key]:
+                if key not in call[1] or call[1][key] != kwargs[key]:
+                    successful_match = False
+            for key, value in call[1].items():
+                if value and key not in kwargs:
                     successful_match = False
 
             if successful_match:
@@ -94,7 +97,7 @@ async def test_controller(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "post",
         "https://host:8443/api/login",
-        json={"username": "user", "password": "password", "remember": True},
+        json={"username": "user", "password": "pass", "remember": True},
     )
 
     mock_aioresponse.get(
@@ -187,7 +190,6 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         "get",
         "https://host:8443",
         allow_redirects=False,
-        headers={"x-csrf-token": "123"},
     )
 
     mock_aioresponse.post(
@@ -200,7 +202,8 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "post",
         "https://host:8443/api/auth/login",
-        json={"username": "user", "password": "password", "remember": True},
+        json={"username": "user", "password": "pass", "remember": True},
+        headers={"x-csrf-token": "123"},
     )
 
     mock_aioresponse.get(
@@ -233,21 +236,25 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "get",
         "https://host:8443/proxy/network/api/s/default/stat/sta",
+        headers={"x-csrf-token": "123"},
     )
     assert verify_call(
         mock_aioresponse,
         "get",
         "https://host:8443/proxy/network/api/s/default/stat/device",
+        headers={"x-csrf-token": "123"},
     )
     assert verify_call(
         mock_aioresponse,
         "get",
         "https://host:8443/proxy/network/api/s/default/rest/user",
+        headers={"x-csrf-token": "123"},
     )
     assert verify_call(
         mock_aioresponse,
         "get",
         "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
+        headers={"x-csrf-token": "123"},
     )
 
     mock_aioresponse.get(
@@ -259,6 +266,7 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         mock_aioresponse,
         "get",
         "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
+        headers={"x-csrf-token": "123"},
     )
 
     mock_aioresponse.get(
@@ -267,7 +275,10 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
     )
     await unifi_controller.site_description()
     assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/proxy/network/api/s/default/self"
+        mock_aioresponse,
+        "get",
+        "https://host:8443/proxy/network/api/s/default/self",
+        headers={"x-csrf-token": "123"},
     )
 
     with patch("aiounifi.websocket.WSClient.running"):
@@ -935,6 +946,35 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
 
     unifi_controller.callback.assert_called_with(
         SIGNAL_DATA, {DATA_DPI_GROUP_REMOVED: {"61783dbdc1773a18c0c61ef6"}}
+    )
+
+
+async def test_unifios_controller_no_csrf_token(mock_aioresponse, unifi_controller):
+    """Test controller communicating with a UniFi OS controller without csrf token."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        content_type="text/html",
+    )
+    await unifi_controller.check_unifi_os()
+    assert unifi_controller.is_unifi_os
+    assert verify_call(
+        mock_aioresponse,
+        "get",
+        "https://host:8443",
+        allow_redirects=False,
+    )
+
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+    )
+    await unifi_controller.login()
+    assert verify_call(
+        mock_aioresponse,
+        "post",
+        "https://host:8443/api/auth/login",
+        json={"username": "user", "password": "pass", "remember": True},
     )
 
 
