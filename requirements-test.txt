@@ -12,4 +12,4 @@ isort==5.10.1
 pydocstyle==6.1.1
 mypy==0.950
 pylint==2.12.2
-tox==3.24.5
+tox==3.25.0
