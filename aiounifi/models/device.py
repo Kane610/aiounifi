@@ -9,8 +9,8 @@ from collections.abc import Awaitable, Callable, Iterator, ValuesView
 import logging
 from typing import Final
 
-from .api import APIItem
 from ..events import Event as UniFiEvent
+from .api import APIItem
 
 LOGGER = logging.getLogger(__name__)
 
