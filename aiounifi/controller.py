@@ -12,11 +12,6 @@ from typing import Any, Final, Literal
 import aiohttp
 from aiohttp import client_exceptions
 
-from .interfaces.clients import Clients
-from .interfaces.clients_all import ClientsAll
-from .interfaces.devices import Devices
-from .interfaces.dpi_restriction_apps import DPIRestrictionApps
-from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .errors import (
     BadGateway,
     LoginRequired,
@@ -26,6 +21,12 @@ from .errors import (
     raise_error,
 )
 from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
+from .interfaces.clients import Clients
+from .interfaces.clients_all import ClientsAll
+from .interfaces.devices import Devices
+from .interfaces.dpi_restriction_apps import DPIRestrictionApps
+from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
+from .interfaces.wlans import Wlans
 from .websocket import (
     SIGNAL_CONNECTION_STATE,
     SIGNAL_DATA,
@@ -33,7 +34,6 @@ from .websocket import (
     StateLiteral as WSStateLiteral,
     WSClient,
 )
-from .interfaces.wlans import Wlans
 
 LOGGER = logging.getLogger(__name__)
 
