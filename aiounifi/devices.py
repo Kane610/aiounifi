@@ -1,31 +1,3 @@
-"""UniFi devices are network infrastructure.
+"""UniFi devices are network infrastructure."""
 
-Access points, Gateways, Switches.
-"""
-
-from __future__ import annotations
-
-from collections.abc import Awaitable, Callable
-import logging
-from typing import Final
-
-from .api import APIItems
-from .models.device import Device
-
-LOGGER = logging.getLogger(__name__)
-
-URL: Final = "/stat/device"
-
-
-class Devices(APIItems):
-    """Represents network devices."""
-
-    KEY = "mac"
-
-    def __init__(
-        self,
-        raw: list[dict],
-        request: Callable[..., Awaitable[list[dict]]],
-    ) -> None:
-        """Initialize device manager."""
-        super().__init__(raw, request, URL, Device)
+from .interfaces.devices import *  # noqa: F401, F403
