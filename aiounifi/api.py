@@ -8,7 +8,6 @@ from pprint import pformat
 from typing import Any, Final, final
 
 from .events import Event as UniFiEvent
-from .models.api import APIItem
 
 LOGGER = logging.getLogger(__name__)
 
