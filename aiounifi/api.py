@@ -24,17 +24,11 @@ class APIItem:
         request: Callable[..., Awaitable[list[dict]]],
     ) -> None:
         """Initialize API item."""
-        self._raw = raw
+        self.raw = raw
         self._request = request
         self._event: UniFiEvent | None = None
         self._source = SOURCE_DATA
         self._callbacks: list[Callable] = []
-
-    @final
-    @property
-    def raw(self) -> dict:
-        """Read only raw data."""
-        return self._raw
 
     @final
     @property
@@ -55,7 +49,7 @@ class APIItem:
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:
-            self._raw = raw
+            self.raw = raw
             self._source = SOURCE_DATA
 
         elif event:
