@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Final
 
-from .api import APIItems
 from ..models.client import Client
+from .api import APIItems
 
 URL: Final = "/stat/sta"  # Active clients
 

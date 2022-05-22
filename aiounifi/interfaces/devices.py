@@ -9,8 +9,8 @@ from collections.abc import Awaitable, Callable
 import logging
 from typing import Final
 
-from .api import APIItems
 from ..models.device import Device
+from .api import APIItems
 
 LOGGER = logging.getLogger(__name__)
 

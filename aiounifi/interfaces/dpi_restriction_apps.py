@@ -3,8 +3,8 @@
 from collections.abc import Awaitable, Callable
 from typing import Final
 
-from .api import APIItems
 from ..models.dpi_restriction_app import DPIRestrictionApp
+from .api import APIItems
 
 APP_URL: Final = "/rest/dpiapp"  # List DPI App configuration
 

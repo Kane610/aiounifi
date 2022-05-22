@@ -3,8 +3,8 @@
 from collections.abc import Awaitable, Callable
 from typing import Final
 
-from .api import APIItems
 from ..models.dpi_restriction_group import DPIRestrictionGroup
+from .api import APIItems
 
 GROUP_URL: Final = "/rest/dpigroup"  # List DPI Group configuration
 
