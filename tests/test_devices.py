@@ -3,7 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
-from aiounifi.devices import Devices
+from aiounifi.interfaces.devices import Devices
 
 from .fixtures import (
     ACCESS_POINT_AC_PRO,

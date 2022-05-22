@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 
 import pytest
 
-from aiounifi.clients import Clients
+from aiounifi.interfaces.clients import Clients
 
 from .fixtures import WIRED_CLIENT, WIRELESS_CLIENT
 from .test_controller import verify_call

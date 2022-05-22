@@ -3,7 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
 
-from aiounifi.wlan import Wlans
+from aiounifi.interfaces.wlans import Wlans
 
 from .fixtures import WLANS
 from .test_controller import verify_call

@@ -12,9 +12,11 @@ from typing import Any, Final, Literal
 import aiohttp
 from aiohttp import client_exceptions
 
-from .clients import Clients, ClientsAll
-from .devices import Devices
-from .dpi import DPIRestrictionApps, DPIRestrictionGroups
+from .interfaces.clients import Clients
+from .interfaces.clients_all import ClientsAll
+from .interfaces.devices import Devices
+from .interfaces.dpi_restriction_apps import DPIRestrictionApps
+from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .errors import (
     BadGateway,
     LoginRequired,
@@ -31,7 +33,7 @@ from .websocket import (
     StateLiteral as WSStateLiteral,
     WSClient,
 )
-from .wlan import Wlans
+from .interfaces.wlans import Wlans
 
 LOGGER = logging.getLogger(__name__)
 
