@@ -9,6 +9,8 @@ from typing import Any, Final, final
 
 from ..events import Event as UniFiEvent
 
+SubscriptionType = Callable[[str, str], None]
+
 LOGGER = logging.getLogger(__name__)
 
 SOURCE_DATA: Final = "data"
@@ -32,6 +34,7 @@ class APIItems:
         self._path = path
         self._item_cls = item_cls
         self._items: dict[int | str, Any] = {}
+        self._subscribers: list[SubscriptionType] = []
         self.process_raw(raw)
         LOGGER.debug(pformat(raw))
 
@@ -51,10 +54,13 @@ class APIItems:
 
             if (obj := self._items.get(key)) is not None:
                 obj.update(raw=raw_item)
+                continue
 
-            else:
-                self._items[key] = self._item_cls(raw_item, self._request)
-                new_items.add(key)
+            self._items[key] = self._item_cls(raw_item, self._request)
+            new_items.add(key)
+
+            for callback in self._subscribers:
+                callback("added", key)
 
         return new_items
 
@@ -85,6 +91,19 @@ class APIItems:
                 removed_items.add(key)
 
         return removed_items
+
+    def subscribe(self, callback: SubscriptionType) -> Callable:
+        """Subscribe to added events.
+
+        "callback" - callback function to call when an event emits.
+        Return function to unsubscribe.
+        """
+        self._subscribers.append(callback)
+
+        def unsubscribe():
+            self._subscribers.remove(callback)
+
+        return unsubscribe
 
     @final
     def items(self) -> ItemsView[int | str, Any]:
