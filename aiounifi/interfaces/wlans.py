@@ -3,8 +3,8 @@
 from collections.abc import Awaitable, Callable
 from typing import Final
 
+from ..models.wlan import Wlan
 from .api import APIItems
-from .models.wlan import Wlan
 
 URL: Final = "/rest/wlanconf"  # List WLAN configuration
 

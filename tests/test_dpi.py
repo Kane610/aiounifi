@@ -5,12 +5,10 @@ pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 
 import pytest
 
-from aiounifi.dpi import (
-    DPIRestrictionApps,
-    DPIRestrictionApp,
-    DPIRestrictionGroups,
-    DPIRestrictionGroup,
-)
+from aiounifi.interfaces.dpi_restriction_apps import DPIRestrictionApps
+from aiounifi.interfaces.dpi_restriction_groups import DPIRestrictionGroups
+from aiounifi.models.dpi_restriction_app import DPIRestrictionApp
+from aiounifi.models.dpi_restriction_group import DPIRestrictionGroup
 
 from .fixtures import DPI_APPS, DPI_GROUPS
 from .test_controller import verify_call

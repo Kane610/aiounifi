@@ -19,8 +19,8 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.api import SOURCE_DATA, SOURCE_EVENT
-from aiounifi.clients import URL as client_url
+from aiounifi.interfaces.api import SOURCE_DATA, SOURCE_EVENT
+from aiounifi.interfaces.clients import URL as client_url
 from aiounifi.controller import (
     ATTR_MESSAGE,
     ATTR_META,
@@ -35,7 +35,7 @@ from aiounifi.controller import (
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
 )
-from aiounifi.devices import URL as device_url
+from aiounifi.interfaces.devices import URL as device_url
 from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
 from aiounifi.websocket import (
     SIGNAL_CONNECTION_STATE,
