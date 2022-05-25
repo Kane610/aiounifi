@@ -99,12 +99,12 @@ class Controller:
 
         self.websocket: WSClient | None = None
 
-        self.clients = Clients([], self.request)
-        self.clients_all = ClientsAll([], self.request)
-        self.devices = Devices([], self.request)
-        self.dpi_apps = DPIRestrictionApps([], self.request)
-        self.dpi_groups = DPIRestrictionGroups([], self.request)
-        self.wlans = Wlans([], self.request)
+        self.clients = Clients(self)
+        self.clients_all = ClientsAll(self)
+        self.devices = Devices(self)
+        self.dpi_apps = DPIRestrictionApps(self)
+        self.dpi_groups = DPIRestrictionGroups(self)
+        self.wlans = Wlans(self)
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""

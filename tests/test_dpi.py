@@ -5,8 +5,6 @@ pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 
 import pytest
 
-from aiounifi.interfaces.dpi_restriction_apps import DPIRestrictionApps
-from aiounifi.interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from aiounifi.models.dpi_restriction_app import DPIRestrictionApp
 from aiounifi.models.dpi_restriction_group import DPIRestrictionGroup
 
@@ -21,11 +19,10 @@ async def test_no_apps(mock_aioresponse, unifi_controller, unifi_called_with):
         payload={},
     )
 
-    dpi_apps = DPIRestrictionApps([], unifi_controller.request)
+    dpi_apps = unifi_controller.dpi_apps
     await dpi_apps.update()
 
     assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
-
     assert len(dpi_apps.values()) == 0
 
 
@@ -37,18 +34,18 @@ async def test_no_groups(mock_aioresponse, unifi_controller, unifi_called_with):
         payload={},
     )
 
-    dpi_groups = DPIRestrictionGroups([], unifi_controller.request)
+    dpi_groups = unifi_controller.dpi_groups
     await dpi_groups.update()
 
     assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
-
     assert len(dpi_groups.values()) == 0
 
 
 @pytest.mark.asyncio
 async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that dpi_apps can create an app."""
-    dpi_apps = DPIRestrictionApps(DPI_APPS, unifi_controller.request)
+    dpi_apps = unifi_controller.dpi_apps
+    dpi_apps.process_raw(DPI_APPS)
 
     assert len(dpi_apps.values()) == 1
 
@@ -84,7 +81,8 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
 @pytest.mark.asyncio
 async def test_dpi_groups(mock_aioresponse, unifi_controller):
     """Test that dpi_groups can create a group."""
-    dpi_groups = DPIRestrictionGroups(DPI_GROUPS, unifi_controller.request)
+    dpi_groups = unifi_controller.dpi_groups
+    dpi_groups.process_raw(DPI_GROUPS)
 
     assert len(dpi_groups.values()) == 2
 
