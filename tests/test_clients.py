@@ -5,19 +5,14 @@ pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 
 import pytest
 
-from aiounifi.interfaces.clients import Clients
-
 from .fixtures import WIRED_CLIENT, WIRELESS_CLIENT
 
 
 async def test_no_clients(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no clients also work."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
+    mock_aioresponse.get("https://host:8443/api/s/default/stat/sta", payload={})
 
-    clients = Clients([], unifi_controller.request)
+    clients = unifi_controller.clients
     await clients.update()
 
     assert unifi_called_with("get", "/api/s/default/stat/sta")
@@ -166,7 +161,8 @@ async def test_clients(
 ):
     """Test clients class."""
 
-    clients = Clients([raw_data], unifi_controller.request)
+    clients = unifi_controller.clients
+    clients.process_raw([raw_data])
 
     assert len(clients.items()) == 1
 

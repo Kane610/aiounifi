@@ -3,8 +3,6 @@
 pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
 
-from aiounifi.interfaces.wlans import Wlans
-
 from .fixtures import WLANS
 
 
@@ -14,7 +12,8 @@ async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
-    wlans = Wlans([], unifi_controller.request)
+
+    wlans = unifi_controller.wlans
     await wlans.update()
 
     assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
@@ -23,7 +22,8 @@ async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
 
 async def test_ports(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that different types of ports work."""
-    wlans = Wlans(WLANS, unifi_controller.request)
+    wlans = unifi_controller.wlans
+    wlans.process_raw(WLANS)
 
     assert len(wlans.values()) == 2
 

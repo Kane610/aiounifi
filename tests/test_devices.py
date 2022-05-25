@@ -3,8 +3,6 @@
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
-from aiounifi.interfaces.devices import Devices
-
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
     GATEWAY_USG3,
@@ -16,20 +14,19 @@ from .fixtures import (
 
 async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no devices also work."""
-    devices = Devices([], unifi_controller.request)
-
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
 
+    devices = unifi_controller.devices
     await devices.update()
 
     assert unifi_called_with("get", "/api/s/default/stat/device")
-
     assert len(devices.values()) == 0
 
 
 async def test_device_access_point(unifi_controller):
     """Test device class on an access point."""
-    devices = Devices([ACCESS_POINT_AC_PRO], unifi_controller.request)
+    devices = unifi_controller.devices
+    devices.process_raw([ACCESS_POINT_AC_PRO])
 
     assert len(devices.values()) == 1
 
@@ -120,7 +117,8 @@ async def test_device_access_point(unifi_controller):
 
 async def test_device_security_gateway(unifi_controller):
     """Test device class on a security gateway."""
-    devices = Devices([GATEWAY_USG3], unifi_controller.request)
+    devices = unifi_controller.devices
+    devices.process_raw([GATEWAY_USG3])
 
     assert len(devices.values()) == 1
 
@@ -220,7 +218,8 @@ async def test_device_security_gateway(unifi_controller):
 
 async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a plug."""
-    devices = Devices([PLUG_UP1], unifi_controller.request)
+    devices = unifi_controller.devices
+    devices.process_raw([PLUG_UP1])
 
     assert len(devices.values()) == 1
 
@@ -323,7 +322,8 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
 
 async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a usp-strip-us."""
-    devices = Devices([STRIP_UP6], unifi_controller.request)
+    devices = unifi_controller.devices
+    devices.process_raw([STRIP_UP6])
 
     assert len(devices.values()) == 1
 
@@ -501,7 +501,8 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
 
 async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on aswitch."""
-    devices = Devices([SWITCH_16_PORT_POE], unifi_controller.request)
+    devices = unifi_controller.devices
+    devices.process_raw([SWITCH_16_PORT_POE])
 
     assert len(devices.values()) == 1
 

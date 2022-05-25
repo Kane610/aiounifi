@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, ItemsView, Iterator, ValuesView
+from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
-from pprint import pformat
 from typing import Any, Final, final
 
 from ..events import Event as UniFiEvent
@@ -21,27 +20,19 @@ class APIItems:
     """Base class for a map of API Items."""
 
     KEY = ""
+    path = ""
+    item_cls: Any
 
-    def __init__(
-        self,
-        raw: list,
-        request: Callable[..., Awaitable[list[dict]]],
-        path: str,
-        item_cls: Any,
-    ) -> None:
+    def __init__(self, controller) -> None:
         """Initialize API items."""
-        self._request = request
-        self._path = path
-        self._item_cls = item_cls
+        self.controller = controller
         self._items: dict[int | str, Any] = {}
         self._subscribers: list[SubscriptionType] = []
-        self.process_raw(raw)
-        LOGGER.debug(pformat(raw))
 
     @final
     async def update(self) -> None:
         """Refresh data."""
-        raw = await self._request("get", self._path)
+        raw = await self.controller.request("get", self.path)
         self.process_raw(raw)
 
     @final
@@ -56,7 +47,7 @@ class APIItems:
                 obj.update(raw=raw_item)
                 continue
 
-            self._items[key] = self._item_cls(raw_item, self._request)
+            self._items[key] = self.item_cls(raw_item, self.controller.request)
             new_items.add(key)
 
             for callback in self._subscribers:

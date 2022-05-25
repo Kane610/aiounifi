@@ -49,7 +49,7 @@ def unifi_called_with(mock_aioresponse):
 
 @pytest.fixture
 async def unifi_controller() -> Controller:
-    """Returns the UniFi controller.
+    """Return UniFi controller.
 
     Clean up sessions automatically at the end of each test.
     """
