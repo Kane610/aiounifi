@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 
 from aiohttp import client_exceptions
 import pytest
-from yarl import URL
 
 from aiounifi import (
     BadGateway,
@@ -54,30 +53,7 @@ from .fixtures import (
 )
 
 
-def verify_call(aioresponse: tuple, method: str, url: str, **kwargs: dict) -> bool:
-    """Verify expected data was provided with a request to aioresponse."""
-    for req, call_list in aioresponse.requests.items():
-
-        if req != (method, URL(url)):
-            continue
-
-        for call in call_list:
-            successful_match = True
-
-            for key in kwargs:
-                if key not in call[1] or call[1][key] != kwargs[key]:
-                    successful_match = False
-            for key, value in call[1].items():
-                if value and key not in kwargs:
-                    successful_match = False
-
-            if successful_match:
-                return True
-
-    return False
-
-
-async def test_controller(mock_aioresponse, unifi_controller):
+async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test controller communicating with a non UniFiOS UniFi controller."""
 
     mock_aioresponse.get(
@@ -87,16 +63,13 @@ async def test_controller(mock_aioresponse, unifi_controller):
     )
     await unifi_controller.check_unifi_os()
     assert not unifi_controller.is_unifi_os
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443", allow_redirects=False
-    )
+    assert unifi_called_with("get", "", allow_redirects=False)
 
     mock_aioresponse.post("https://host:8443/api/login", payload="")
     await unifi_controller.login()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/login",
+        "/api/login",
         json={"username": "user", "password": "pass", "remember": True},
     )
 
@@ -125,25 +98,21 @@ async def test_controller(mock_aioresponse, unifi_controller):
     )
     await unifi_controller.initialize()
 
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/api/s/default/stat/sta",
+        "/api/s/default/stat/sta",
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/api/s/default/stat/device",
+        "/api/s/default/stat/device",
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/api/s/default/rest/user",
+        "/api/s/default/rest/user",
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/api/s/default/rest/wlanconf",
+        "/api/s/default/rest/wlanconf",
     )
 
     mock_aioresponse.get(
@@ -151,10 +120,9 @@ async def test_controller(mock_aioresponse, unifi_controller):
         payload=SITE_UNIFIOS_RESPONSE,
     )
     await unifi_controller.sites()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/api/s/default/rest/wlanconf",
+        "/api/s/default/rest/wlanconf",
     )
 
     mock_aioresponse.get(
@@ -162,7 +130,7 @@ async def test_controller(mock_aioresponse, unifi_controller):
         payload=SELF_RESPONSE,
     )
     await unifi_controller.site_description()
-    assert verify_call(mock_aioresponse, "get", "https://host:8443/api/s/default/self")
+    assert unifi_called_with("get", "/api/s/default/self")
 
     assert not unifi_controller.websocket
 
@@ -176,7 +144,9 @@ async def test_controller(mock_aioresponse, unifi_controller):
     assert unifi_controller.websocket.state == STATE_STOPPED
 
 
-async def test_unifios_controller(mock_aioresponse, unifi_controller):
+async def test_unifios_controller(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
     """Test controller communicating with a UniFi OS controller."""
     mock_aioresponse.get(
         "https://host:8443",
@@ -185,10 +155,9 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
     )
     await unifi_controller.check_unifi_os()
     assert unifi_controller.is_unifi_os
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443",
+        "",
         allow_redirects=False,
     )
 
@@ -198,10 +167,9 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         content_type="text/json",
     )
     await unifi_controller.login()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/auth/login",
+        "/api/auth/login",
         json={"username": "user", "password": "pass", "remember": True},
         headers={"x-csrf-token": "123"},
     )
@@ -232,28 +200,24 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
     )
     await unifi_controller.initialize()
 
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/stat/sta",
+        "/proxy/network/api/s/default/stat/sta",
         headers={"x-csrf-token": "123"},
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/stat/device",
+        "/proxy/network/api/s/default/stat/device",
         headers={"x-csrf-token": "123"},
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/rest/user",
+        "/proxy/network/api/s/default/rest/user",
         headers={"x-csrf-token": "123"},
     )
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
+        "/proxy/network/api/s/default/rest/wlanconf",
         headers={"x-csrf-token": "123"},
     )
 
@@ -262,10 +226,9 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         payload=SITE_UNIFIOS_RESPONSE,
     )
     await unifi_controller.sites()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
+        "/proxy/network/api/s/default/rest/wlanconf",
         headers={"x-csrf-token": "123"},
     )
 
@@ -274,10 +237,9 @@ async def test_unifios_controller(mock_aioresponse, unifi_controller):
         payload=SELF_RESPONSE,
     )
     await unifi_controller.site_description()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443/proxy/network/api/s/default/self",
+        "/proxy/network/api/s/default/self",
         headers={"x-csrf-token": "123"},
     )
 
@@ -949,7 +911,9 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
 
 
-async def test_unifios_controller_no_csrf_token(mock_aioresponse, unifi_controller):
+async def test_unifios_controller_no_csrf_token(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
     """Test controller communicating with a UniFi OS controller without csrf token."""
     mock_aioresponse.get(
         "https://host:8443",
@@ -957,10 +921,9 @@ async def test_unifios_controller_no_csrf_token(mock_aioresponse, unifi_controll
     )
     await unifi_controller.check_unifi_os()
     assert unifi_controller.is_unifi_os
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "get",
-        "https://host:8443",
+        "",
         allow_redirects=False,
     )
 
@@ -970,10 +933,9 @@ async def test_unifios_controller_no_csrf_token(mock_aioresponse, unifi_controll
         content_type="text/json",
     )
     await unifi_controller.login()
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/auth/login",
+        "/api/auth/login",
         json={"username": "user", "password": "pass", "remember": True},
     )
 

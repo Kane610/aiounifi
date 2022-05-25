@@ -11,11 +11,10 @@ from aiounifi.models.dpi_restriction_app import DPIRestrictionApp
 from aiounifi.models.dpi_restriction_group import DPIRestrictionGroup
 
 from .fixtures import DPI_APPS, DPI_GROUPS
-from .test_controller import verify_call
 
 
 @pytest.mark.asyncio
-async def test_no_apps(mock_aioresponse, unifi_controller):
+async def test_no_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that dpi_apps work without data."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/dpiapp",
@@ -25,15 +24,13 @@ async def test_no_apps(mock_aioresponse, unifi_controller):
     dpi_apps = DPIRestrictionApps([], unifi_controller.request)
     await dpi_apps.update()
 
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/rest/dpiapp"
-    )
+    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
 
     assert len(dpi_apps.values()) == 0
 
 
 @pytest.mark.asyncio
-async def test_no_groups(mock_aioresponse, unifi_controller):
+async def test_no_groups(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that dpi_groups work without data."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/dpigroup",
@@ -43,15 +40,13 @@ async def test_no_groups(mock_aioresponse, unifi_controller):
     dpi_groups = DPIRestrictionGroups([], unifi_controller.request)
     await dpi_groups.update()
 
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/rest/dpigroup"
-    )
+    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
 
     assert len(dpi_groups.values()) == 0
 
 
 @pytest.mark.asyncio
-async def test_dpi_apps(mock_aioresponse, unifi_controller):
+async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that dpi_apps can create an app."""
     dpi_apps = DPIRestrictionApps(DPI_APPS, unifi_controller.request)
 
@@ -72,18 +67,16 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
         repeat=True,
     )
     await dpi_apps.enable("5f976f62e3c58f018ec7e17d")
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
+        "/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
         json={"enabled": True},
     )
 
     await dpi_apps.disable("5f976f62e3c58f018ec7e17d")
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
+        "/api/s/default/rest/dpiapp/5f976f62e3c58f018ec7e17d",
         json={"enabled": False},
     )
 
