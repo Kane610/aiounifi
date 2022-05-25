@@ -6,10 +6,9 @@ pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 from aiounifi.interfaces.wlans import Wlans
 
 from .fixtures import WLANS
-from .test_controller import verify_call
 
 
-async def test_no_ports(mock_aioresponse, unifi_controller):
+async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no ports also work."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
@@ -18,13 +17,11 @@ async def test_no_ports(mock_aioresponse, unifi_controller):
     wlans = Wlans([], unifi_controller.request)
     await wlans.update()
 
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/rest/wlanconf"
-    )
+    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
     assert len(wlans.values()) == 0
 
 
-async def test_ports(mock_aioresponse, unifi_controller):
+async def test_ports(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that different types of ports work."""
     wlans = Wlans(WLANS, unifi_controller.request)
 
@@ -76,17 +73,15 @@ async def test_ports(mock_aioresponse, unifi_controller):
     )
 
     await wlans.enable(wlan)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/wlanconf/012345678910111213141516",
+        "/api/s/default/rest/wlanconf/012345678910111213141516",
         json={"enabled": True},
     )
 
     await wlans.disable(wlan)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/wlanconf/012345678910111213141516",
+        "/api/s/default/rest/wlanconf/012345678910111213141516",
         json={"enabled": False},
     )

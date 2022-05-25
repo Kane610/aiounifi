@@ -8,10 +8,9 @@ import pytest
 from aiounifi.interfaces.clients import Clients
 
 from .fixtures import WIRED_CLIENT, WIRELESS_CLIENT
-from .test_controller import verify_call
 
 
-async def test_no_clients(mock_aioresponse, unifi_controller):
+async def test_no_clients(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no clients also work."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -21,9 +20,7 @@ async def test_no_clients(mock_aioresponse, unifi_controller):
     clients = Clients([], unifi_controller.request)
     await clients.update()
 
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/stat/sta"
-    )
+    assert unifi_called_with("get", "/api/s/default/stat/sta")
     assert len(clients.values()) == 0
 
 
@@ -164,7 +161,9 @@ test_data = [
 
 
 @pytest.mark.parametrize("raw_data, reference_data", test_data)
-async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_data):
+async def test_clients(
+    mock_aioresponse, unifi_controller, unifi_called_with, raw_data, reference_data
+):
     """Test clients class."""
 
     clients = Clients([raw_data], unifi_controller.request)
@@ -179,33 +178,29 @@ async def test_clients(mock_aioresponse, unifi_controller, raw_data, reference_d
         "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
     )
     await clients.block(mac=client.mac)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/s/default/cmd/stamgr",
+        "/api/s/default/cmd/stamgr",
         json={"mac": client.mac, "cmd": "block-sta"},
     )
 
     await clients.unblock(mac=client.mac)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/s/default/cmd/stamgr",
+        "/api/s/default/cmd/stamgr",
         json={"mac": client.mac, "cmd": "unblock-sta"},
     )
 
     await clients.reconnect(mac=client.mac)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/s/default/cmd/stamgr",
+        "/api/s/default/cmd/stamgr",
         json={"mac": client.mac, "cmd": "kick-sta"},
     )
 
     await clients.remove_clients(macs=[client.mac])
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "post",
-        "https://host:8443/api/s/default/cmd/stamgr",
+        "/api/s/default/cmd/stamgr",
         json={"macs": [client.mac], "cmd": "forget-sta"},
     )

@@ -12,10 +12,9 @@ from .fixtures import (
     PLUG_UP1,
     STRIP_UP6,
 )
-from .test_controller import verify_call
 
 
-async def test_no_devices(mock_aioresponse, unifi_controller):
+async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that no devices also work."""
     devices = Devices([], unifi_controller.request)
 
@@ -23,9 +22,7 @@ async def test_no_devices(mock_aioresponse, unifi_controller):
 
     await devices.update()
 
-    assert verify_call(
-        mock_aioresponse, "get", "https://host:8443/api/s/default/stat/device"
-    )
+    assert unifi_called_with("get", "/api/s/default/stat/device")
 
     assert len(devices.values()) == 0
 
@@ -221,7 +218,7 @@ async def test_device_security_gateway(unifi_controller):
     )
 
 
-async def test_device_plug(mock_aioresponse, unifi_controller):
+async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a plug."""
     devices = Devices([PLUG_UP1], unifi_controller.request)
 
@@ -264,10 +261,9 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
         repeat=True,
     )
     await plug.set_outlet_relay_state(1, False)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
+        "/api/s/default/rest/device/600c8356942a6ade50707b56",
         json={
             "outlet_overrides": [
                 {
@@ -290,10 +286,9 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.cycle_enabled is False
 
     await plug.set_outlet_cycle_enabled(1, True)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
+        "/api/s/default/rest/device/600c8356942a6ade50707b56",
         json={
             "outlet_overrides": [
                 {
@@ -326,7 +321,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller):
     assert outlet_1.cycle_enabled is False
 
 
-async def test_device_strip(mock_aioresponse, unifi_controller):
+async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a usp-strip-us."""
     devices = Devices([STRIP_UP6], unifi_controller.request)
 
@@ -431,10 +426,9 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
         repeat=True,
     )
     await strip.set_outlet_relay_state(5, True)
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
+        "/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
         json={
             "outlet_overrides": [
                 {
@@ -505,7 +499,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller):
     assert next(iter(strip.outlets)) == 1
 
 
-async def test_device_switch(mock_aioresponse, unifi_controller):
+async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on aswitch."""
     devices = Devices([SWITCH_16_PORT_POE], unifi_controller.request)
 
@@ -571,10 +565,9 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
         repeat=True,
     )
     await switch.set_port_poe_mode(1, "off")
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        "/api/s/default/rest/device/235678987654345678",
         json={
             "port_overrides": [
                 {
@@ -602,10 +595,9 @@ async def test_device_switch(mock_aioresponse, unifi_controller):
     )
 
     await switch.set_port_poe_mode(3, "off")
-    assert verify_call(
-        mock_aioresponse,
+    assert unifi_called_with(
         "put",
-        "https://host:8443/api/s/default/rest/device/235678987654345678",
+        "/api/s/default/rest/device/235678987654345678",
         json={
             "port_overrides": [
                 {
