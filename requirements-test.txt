@@ -10,6 +10,6 @@ flake8-docstrings==1.6.0
 flake8-noqa==1.2.2
 isort==5.10.1
 pydocstyle==6.1.1
-mypy==0.950
+mypy==0.960
 pylint==2.13.9
 tox==3.25.0
