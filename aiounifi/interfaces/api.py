@@ -6,6 +6,8 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
 from typing import Any, Final, final
 
+from aiounifi.models.event import MessageKey
+
 from ..events import Event as UniFiEvent
 
 SubscriptionType = Callable[[str, str], None]
@@ -22,12 +24,24 @@ class APIItems:
     obj_id_key: str
     path: str
     item_cls: Any
+    events: tuple = ()
+    messages: tuple = ()
+    removes: tuple = ()
 
     def __init__(self, controller) -> None:
         """Initialize API items."""
         self.controller = controller
         self._items: dict[int | str, Any] = {}
         self._subscribers: list[SubscriptionType] = []
+
+        if self.events:
+            controller.events.subscribe(
+                self.process_event, MessageKey.EVENT, event_filter=self.events
+            )
+        if self.messages:
+            controller.events.subscribe(self.process_raw, self.messages)
+        if self.removes:
+            controller.events.subscribe(self.remove, self.removes)
 
     @final
     async def update(self) -> None:
@@ -36,7 +50,7 @@ class APIItems:
         self.process_raw(raw)
 
     @final
-    def process_raw(self, raw: list[dict]) -> set:
+    def process_raw(self, raw: list[dict[str, Any]]) -> set:
         """Process data."""
         new_items = set()
 
@@ -56,20 +70,16 @@ class APIItems:
         return new_items
 
     @final
-    def process_event(self, events: list[UniFiEvent]) -> set:
+    def process_event(self, event: UniFiEvent) -> set:
         """Process event."""
-        new_items = set()
-
-        for event in events:
-
-            if (obj := self._items.get(event.mac)) is not None:
-                obj.update(event=event)
-                new_items.add(event.mac)
-
-        return new_items
+        new_item = set()
+        if (obj := self._items.get(event.mac)) is not None:
+            obj.update(event=event)
+            new_item.add(event.mac)
+        return new_item
 
     @final
-    def remove(self, raw: list) -> set:
+    def remove(self, raw: list[dict[str, Any]]) -> set:
         """Remove list of items."""
         removed_items = set()
 

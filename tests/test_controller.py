@@ -413,7 +413,7 @@ async def test_no_data(mock_aioresponse, unifi_controller):
     assert not unifi_controller.clients.get(1)
 
     message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
-    assert unifi_controller.message_handler(message) == {}
+    assert unifi_controller.events.handler(message) == {}
 
     assert not unifi_controller.stop_websocket()
 
@@ -519,7 +519,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     unifi_controller.callback.assert_called_with(
         WebsocketSignal.DATA, {DATA_EVENT: {client.event}}
     )
-    assert client.event.event == WIRELESS_CLIENT_CONNECTED
+    assert client.event.key == WIRELESS_CLIENT_CONNECTED
     assert client.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 2
 
@@ -673,7 +673,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     unifi_controller.callback.assert_called_with(
         WebsocketSignal.DATA, {DATA_EVENT: {device.event}}
     )
-    assert device.event.event == SWITCH_CONNECTED
+    assert device.event.key == SWITCH_CONNECTED
     assert device.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 2
 
