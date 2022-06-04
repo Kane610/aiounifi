@@ -218,6 +218,14 @@ class Event:
         return self.raw["key"]
 
     @property
+    def event(self) -> str:
+        """Event key e.g. 'EVT_WU_Disconnected'.
+
+        To be removed.
+        """
+        return self.key
+
+    @property
     def msg(self) -> str:
         """Message 'User[00:00:00:00:00:01] disconnected from "Access point" (1h 27m connected, 58.97M bytes, last AP[00:11:22:33:44:55])'."""
         return self.raw["msg"]
