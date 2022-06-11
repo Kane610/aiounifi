@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 """
+from copy import deepcopy
 
 import pytest
 
@@ -45,7 +46,7 @@ async def test_no_groups(mock_aioresponse, unifi_controller, unifi_called_with):
 async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that dpi_apps can create an app."""
     dpi_apps = unifi_controller.dpi_apps
-    dpi_apps.process_raw(DPI_APPS)
+    dpi_apps.process_raw(deepcopy(DPI_APPS))
 
     assert len(dpi_apps.values()) == 1
 
@@ -82,7 +83,7 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
 async def test_dpi_groups(mock_aioresponse, unifi_controller):
     """Test that dpi_groups can create a group."""
     dpi_groups = unifi_controller.dpi_groups
-    dpi_groups.process_raw(DPI_GROUPS)
+    dpi_groups.process_raw(deepcopy(DPI_GROUPS))
 
     assert len(dpi_groups.values()) == 2
 

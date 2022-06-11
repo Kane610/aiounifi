@@ -2,7 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
-
+from copy import deepcopy
 from unittest.mock import Mock, patch
 
 from aiohttp import client_exceptions
@@ -484,7 +484,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     # Add client from websocket
     unifi_controller.websocket._data = {
         "meta": {"message": MESSAGE_CLIENT},
-        "data": [WIRELESS_CLIENT],
+        "data": [deepcopy(WIRELESS_CLIENT)],
     }
     unifi_controller.session_handler(SIGNAL_DATA)
     assert len(unifi_controller.clients._items) == 1
@@ -509,7 +509,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     # Retrieve websocket data
     unifi_controller.websocket._data = {
         "meta": {"message": MESSAGE_CLIENT},
-        "data": [WIRELESS_CLIENT],
+        "data": [deepcopy(WIRELESS_CLIENT)],
     }
     unifi_controller.session_handler(SIGNAL_DATA)
 
@@ -518,7 +518,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert mock_callback.call_count == 1
 
     # Retrieve websocket event
-    unifi_controller.websocket._data = EVENT_WIRELESS_CLIENT_CONNECTED
+    unifi_controller.websocket._data = deepcopy(EVENT_WIRELESS_CLIENT_CONNECTED)
     unifi_controller.session_handler(SIGNAL_DATA)
 
     unifi_controller.callback.assert_called_with(
@@ -562,7 +562,7 @@ async def test_message_client_removed(mock_aioresponse, unifi_controller):
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
 
-    unifi_controller.websocket._data = MESSAGE_WIRELESS_CLIENT_REMOVED
+    unifi_controller.websocket._data = deepcopy(MESSAGE_WIRELESS_CLIENT_REMOVED)
     unifi_controller.session_handler(SIGNAL_DATA)
     unifi_controller.callback.assert_called_with(
         SIGNAL_DATA, {DATA_CLIENT_REMOVED: {WIRELESS_CLIENT["mac"]}}
@@ -632,7 +632,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     # Add client from websocket
     unifi_controller.websocket._data = {
         "meta": {"message": MESSAGE_DEVICE},
-        "data": [SWITCH_16_PORT_POE],
+        "data": [deepcopy(SWITCH_16_PORT_POE)],
     }
     unifi_controller.session_handler(SIGNAL_DATA)
     assert len(unifi_controller.devices._items) == 1
@@ -661,7 +661,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     # Retrieve websocket data
     unifi_controller.websocket._data = {
         "meta": {"message": MESSAGE_DEVICE},
-        "data": [SWITCH_16_PORT_POE],
+        "data": [deepcopy(SWITCH_16_PORT_POE)],
     }
     unifi_controller.session_handler(SIGNAL_DATA)
 
@@ -670,7 +670,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     assert mock_callback.call_count == 1
 
     # Retrieve websocket event
-    unifi_controller.websocket._data = EVENT_SWITCH_16_CONNECTED
+    unifi_controller.websocket._data = deepcopy(EVENT_SWITCH_16_CONNECTED)
     unifi_controller.session_handler(SIGNAL_DATA)
 
     unifi_controller.callback.assert_called_with(

@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
+from copy import deepcopy
 
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
@@ -26,7 +27,7 @@ async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with)
 async def test_device_access_point(unifi_controller):
     """Test device class on an access point."""
     devices = unifi_controller.devices
-    devices.process_raw([ACCESS_POINT_AC_PRO])
+    devices.process_raw([deepcopy(ACCESS_POINT_AC_PRO)])
 
     assert len(devices.values()) == 1
 
@@ -118,7 +119,7 @@ async def test_device_access_point(unifi_controller):
 async def test_device_security_gateway(unifi_controller):
     """Test device class on a security gateway."""
     devices = unifi_controller.devices
-    devices.process_raw([GATEWAY_USG3])
+    devices.process_raw([deepcopy(GATEWAY_USG3)])
 
     assert len(devices.values()) == 1
 
@@ -219,7 +220,7 @@ async def test_device_security_gateway(unifi_controller):
 async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a plug."""
     devices = unifi_controller.devices
-    devices.process_raw([PLUG_UP1])
+    devices.process_raw([deepcopy(PLUG_UP1)])
 
     assert len(devices.values()) == 1
 
@@ -323,7 +324,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
 async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a usp-strip-us."""
     devices = unifi_controller.devices
-    devices.process_raw([STRIP_UP6])
+    devices.process_raw([deepcopy(STRIP_UP6)])
 
     assert len(devices.values()) == 1
 
@@ -502,7 +503,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
 async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on aswitch."""
     devices = unifi_controller.devices
-    devices.process_raw([SWITCH_16_PORT_POE])
+    devices.process_raw([deepcopy(SWITCH_16_PORT_POE)])
 
     assert len(devices.values()) == 1
 

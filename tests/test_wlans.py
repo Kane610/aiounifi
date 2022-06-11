@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
+from copy import deepcopy
 
 from .fixtures import WLANS
 
@@ -23,7 +24,7 @@ async def test_no_ports(mock_aioresponse, unifi_controller, unifi_called_with):
 async def test_ports(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
-    wlans.process_raw(WLANS)
+    wlans.process_raw(deepcopy(WLANS))
 
     assert len(wlans.values()) == 2
 

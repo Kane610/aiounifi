@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
+from copy import deepcopy
 
 import pytest
 
@@ -162,7 +163,7 @@ async def test_clients(
     """Test clients class."""
 
     clients = unifi_controller.clients
-    clients.process_raw([raw_data])
+    clients.process_raw([deepcopy(raw_data)])
 
     assert len(clients.items()) == 1
 
