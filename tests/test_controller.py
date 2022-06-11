@@ -33,6 +33,7 @@ from aiounifi.controller import (
     DATA_EVENT,
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
+    MESSAGE_DEVICE_UPDATE,
 )
 from aiounifi.interfaces.devices import URL as device_url
 from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
@@ -679,6 +680,29 @@ async def test_devices(mock_aioresponse, unifi_controller):
     assert device.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 2
 
+    # Retrieve websocket update
+    unifi_controller.websocket._data = {
+        "meta": {"message": MESSAGE_DEVICE_UPDATE, "mac": SWITCH_16_PORT_POE["mac"]},
+        "data": [{"state": 0}],
+    }
+    unifi_controller.session_handler(SIGNAL_DATA)
+
+    unifi_controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DEVICE: set()})
+    assert device.last_updated == SOURCE_DATA
+    assert device_mac == device.mac
+    assert device.state == 0
+    assert mock_callback.call_count == 3
+
+    # Retrieve invalid websocket update
+    unifi_controller.websocket._data = {
+        "meta": {"message": MESSAGE_DEVICE_UPDATE, "mac": "00:00:00:ff:ff:ff"},
+        "data": [{"state": 0}],
+    }
+    unifi_controller.session_handler(SIGNAL_DATA)
+
+    unifi_controller.callback.assert_called_with(SIGNAL_DATA, {DATA_DEVICE: set()})
+    assert mock_callback.call_count == 3  # Callback should not be called
+
     # Remove callback
     device.remove_callback(mock_callback)
     assert len(device._callbacks) == 0
@@ -975,7 +999,7 @@ async def test_controller_raise_expected_exception(
         await unifi_controller.login()
 
 
-@pytest.mark.parametrize("unsupported_message", ["device:update", "unsupported"])
+@pytest.mark.parametrize("unsupported_message", ["unsupported"])
 async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     """Test controller properly ignores unsupported events."""
     with patch("aiounifi.websocket.WSClient.running"):

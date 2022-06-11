@@ -56,6 +56,16 @@ class APIItems:
         return new_items
 
     @final
+    def process_incremental_update(self, key: int | str, updates: list[dict]) -> None:
+        """Process incremental update data."""
+        if key not in self._items:
+            # Ignore updates for unknown objects
+            return
+
+        for update in updates:
+            self._items[key].incremental_update(update=update)
+
+    @final
     def process_event(self, events: list[UniFiEvent]) -> set:
         """Process event."""
         new_items = set()

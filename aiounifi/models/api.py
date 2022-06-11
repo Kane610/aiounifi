@@ -64,6 +64,15 @@ class APIItem:
         for signal_update in self._callbacks + self._subscribers:
             signal_update()
 
+    def incremental_update(self, update: dict) -> None:
+        """Incremental update raw data and signal new data is available."""
+        self.raw.update(update)
+
+        self._source = SOURCE_DATA
+
+        for signal_update in self._callbacks + self._subscribers:
+            signal_update()
+
     def subscribe(self, callback: SubscriptionType) -> Callable:
         """Subscribe to events.
 

@@ -41,6 +41,14 @@ class Device(APIItem):
             self.outlets.update(raw.get("outlet_table", []))
         super().update(raw, event)
 
+    def incremental_update(self, update: dict) -> None:
+        """Incremental update raw data and signal new data is available."""
+        if "port_table" in update:
+            self.ports.update(update["port_table"])
+        if "outlet_table" in update:
+            self.outlets.update(update["outlet_table"])
+        super().incremental_update(update)
+
     @property
     def board_revision(self) -> int:
         """Board revision of device."""

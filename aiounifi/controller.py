@@ -40,6 +40,7 @@ LOGGER = logging.getLogger(__name__)
 MESSAGE_CLIENT: Final = "sta:sync"
 MESSAGE_CLIENT_REMOVED: Final = "user:delete"
 MESSAGE_DEVICE: Final = "device:sync"
+MESSAGE_DEVICE_UPDATE: Final = "device:update"
 MESSAGE_EVENT: Final = "events"
 MESSAGE_DPI_APP_ADDED: Final = "dpiapp:add"
 MESSAGE_DPI_APP_REMOVED: Final = "dpiapp:delete"
@@ -62,7 +63,7 @@ DATA_DPI_GROUP: Final = "dpi_group"
 DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
 
 
-IGNORE_MESSAGES: Final = ("device:update",)
+IGNORE_MESSAGES: Final = ()
 
 
 class Controller:
@@ -226,6 +227,12 @@ class Controller:
 
         elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
             changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
+
+        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE_UPDATE:
+            self.devices.process_incremental_update(
+                message[ATTR_META][Devices.KEY], message[ATTR_DATA]
+            )
+            changes[DATA_DEVICE] = set()
 
         # DPI App
 
