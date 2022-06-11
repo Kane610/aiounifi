@@ -62,7 +62,7 @@ DATA_DPI_GROUP: Final = "dpi_group"
 DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
 
 
-IGNORE_MESSAGES: Final = ("device:update",)
+IGNORE_MESSAGES: Final = ("device:update", "unifi-device:sync")
 
 
 class Controller:
