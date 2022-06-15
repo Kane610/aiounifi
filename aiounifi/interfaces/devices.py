@@ -52,6 +52,7 @@ class Devices(APIItems):
         EventKey.SWITCH_UPGRADED,
     )
     messages = (MessageKey.DEVICE,)
+    process_messages = (MessageKey.DEVICE,)
 
     async def upgrade(self, mac: str) -> list[dict]:
         """Upgrade network device."""

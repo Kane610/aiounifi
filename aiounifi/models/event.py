@@ -2,6 +2,7 @@
 
 #  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
 
+from dataclasses import dataclass
 import enum
 import logging
 from typing import Any, Final, final
@@ -223,7 +224,7 @@ class Event:
 
         To be removed.
         """
-        return self.key
+        return self.raw["key"]
 
     @property
     def msg(self) -> str:
@@ -313,3 +314,39 @@ class Event:
     def version_to(self) -> str:
         """Version to."""
         return self.raw.get("version_to", "")
+
+
+@dataclass
+class Meta:
+    """Meta description of UniFi websocket data."""
+
+    rc: str
+    message: MessageKey
+    data: dict[str, Any]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Meta":
+        """Create meta instance from dict."""
+        return cls(
+            rc=data.get("rc", ""),
+            message=MessageKey(data.get("message", "")),
+            data=data,
+        )
+
+
+@dataclass
+class WebsocketData:
+    """Websocket package representation."""
+
+    meta: Meta
+    event: Event
+    data: dict[str, Any]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "WebsocketData":
+        """Create data container instance from dict."""
+        return cls(
+            meta=Meta.from_dict(data.get("meta", "")),
+            event=Event(data["data"]),
+            data=data,
+        )

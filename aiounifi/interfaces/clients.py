@@ -9,25 +9,7 @@ from ..models.event import EventKey, MessageKey
 from .api import APIItems
 
 URL: Final = "/stat/sta"
-
 URL_CLIENT_STATE_MANAGER: Final = "/cmd/stamgr"
-
-EVENTS = (
-    EventKey.WIRED_CLIENT_CONNECTED,
-    EventKey.WIRED_CLIENT_DISCONNECTED,
-    EventKey.WIRED_CLIENT_BLOCKED,
-    EventKey.WIRED_CLIENT_UNBLOCKED,
-    EventKey.WIRELESS_CLIENT_CONNECTED,
-    EventKey.WIRELESS_CLIENT_DISCONNECTED,
-    EventKey.WIRELESS_CLIENT_BLOCKED,
-    EventKey.WIRELESS_CLIENT_UNBLOCKED,
-    EventKey.WIRELESS_CLIENT_ROAM,
-    EventKey.WIRELESS_CLIENT_ROAMRADIO,
-    EventKey.WIRELESS_GUEST_CONNECTED,
-    EventKey.WIRELESS_GUEST_DISCONNECTED,
-    EventKey.WIRELESS_GUEST_ROAM,
-    EventKey.WIRELESS_GUEST_ROAMRADIO,
-)
 
 
 class Clients(APIItems):
@@ -36,9 +18,24 @@ class Clients(APIItems):
     obj_id_key = "mac"
     path = URL
     item_cls = Client
-    events = EVENTS
-    messages: tuple = (MessageKey.CLIENT,)
-    removes: tuple = (MessageKey.CLIENT_REMOVED,)
+    events = (
+        EventKey.WIRED_CLIENT_CONNECTED,
+        EventKey.WIRED_CLIENT_DISCONNECTED,
+        EventKey.WIRED_CLIENT_BLOCKED,
+        EventKey.WIRED_CLIENT_UNBLOCKED,
+        EventKey.WIRELESS_CLIENT_CONNECTED,
+        EventKey.WIRELESS_CLIENT_DISCONNECTED,
+        EventKey.WIRELESS_CLIENT_BLOCKED,
+        EventKey.WIRELESS_CLIENT_UNBLOCKED,
+        EventKey.WIRELESS_CLIENT_ROAM,
+        EventKey.WIRELESS_CLIENT_ROAMRADIO,
+        EventKey.WIRELESS_GUEST_CONNECTED,
+        EventKey.WIRELESS_GUEST_DISCONNECTED,
+        EventKey.WIRELESS_GUEST_ROAM,
+        EventKey.WIRELESS_GUEST_ROAMRADIO,
+    )
+    process_messages = (MessageKey.CLIENT,)
+    remove_messages = (MessageKey.CLIENT_REMOVED,)
 
     async def block(self, mac: str) -> list[dict]:
         """Block client from controller."""

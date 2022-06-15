@@ -15,8 +15,8 @@ class DPIRestrictionApps(APIItems):
     obj_id_key = "_id"
     path = APP_URL
     item_cls = DPIRestrictionApp
-    messages = (MessageKey.DPI_APP_ADDED, MessageKey.DPI_APP_UPDATED)
-    removes = (MessageKey.DPI_APP_REMOVED,)
+    process_messages = (MessageKey.DPI_APP_ADDED, MessageKey.DPI_APP_UPDATED)
+    remove_messages = (MessageKey.DPI_APP_REMOVED,)
 
     async def enable(self, app_id: str) -> list[dict]:
         """Enable DPI Restriction Group Apps."""

@@ -15,5 +15,5 @@ class DPIRestrictionGroups(APIItems):
     obj_id_key = "_id"
     path = GROUP_URL
     item_cls = DPIRestrictionGroup
-    messages = (MessageKey.DPI_GROUP_ADDED, MessageKey.DPI_GROUP_UPDATED)
-    removes = (MessageKey.DPI_GROUP_REMOVED,)
+    process_messages = (MessageKey.DPI_GROUP_ADDED, MessageKey.DPI_GROUP_UPDATED)
+    remove_messages = (MessageKey.DPI_GROUP_REMOVED,)

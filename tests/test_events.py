@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.events tests/test_events.py
 
 import pytest
 
-from aiounifi.events import Event, EventKey
+from aiounifi.models.event import Event, EventKey
 
 from .fixtures import EVENT_SWITCH_16_CONNECTED, EVENT_WIRELESS_CLIENT_CONNECTED
 
