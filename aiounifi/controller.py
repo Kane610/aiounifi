@@ -113,8 +113,6 @@ class Controller:
             response := self.last_response
         ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
-            if (csrf_token := response.headers.get("x-csrf-token")) is not None:
-                self.headers = {"x-csrf-token": csrf_token}
 
     async def login(self) -> None:
         """Log in to controller."""
@@ -130,8 +128,12 @@ class Controller:
         }
 
         await self._request("post", url=url, json=auth)
-
-        self.can_retry_login = True
+        if (
+            (response := self.last_response) is not None
+            and response.status == HTTPStatus.OK
+            and (csrf_token := response.headers.get("x-csrf-token")) is not None
+        ):
+            self.headers = {"x-csrf-token": csrf_token}
 
     async def sites(self) -> dict:
         """Retrieve what sites are provided by controller."""

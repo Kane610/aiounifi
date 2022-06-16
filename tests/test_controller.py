@@ -151,7 +151,7 @@ async def test_unifios_controller(
     mock_aioresponse.get(
         "https://host:8443",
         content_type="text/html",
-        headers={"x-csrf-token": "123"},
+        headers={"x-csrf-token": "012"},
     )
     await unifi_controller.check_unifi_os()
     assert unifi_controller.is_unifi_os
@@ -164,6 +164,7 @@ async def test_unifios_controller(
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
         content_type="text/json",
     )
     await unifi_controller.login()
@@ -171,7 +172,6 @@ async def test_unifios_controller(
         "post",
         "/api/auth/login",
         json={"username": "user", "password": "pass", "remember": True},
-        headers={"x-csrf-token": "123"},
     )
 
     mock_aioresponse.get(
@@ -256,7 +256,7 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
     mock_aioresponse.get(
         "https://host:8443",
         body="<html>",
-        headers={"x-csrf-token": "123"},
+        headers={"x-csrf-token": "012"},
         content_type="text/html",
         status=200,
     )
@@ -268,6 +268,7 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
         content_type="text/json",
+        headers={"x-csrf-token": "123"},
         status=200,
     )
 
@@ -288,16 +289,20 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         content_type="text/html",
         status=401,
     )
+    with pytest.raises(LoginRequired):
+        await unifi_controller.request("get", device_url)
+
     mock_aioresponse.get(
         "https://host:8443",
         body="<html>",
-        headers={"x-csrf-token": "123"},
+        headers={"x-csrf-token": "012"},
         content_type="text/html",
         status=200,
     )
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "563"},
         content_type="text/json",
         status=200,
     )
@@ -317,7 +322,7 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
     mock_aioresponse.get(
         "https://host:8443",
         body="<html>",
-        headers={"x-csrf-token": "123"},
+        headers={"x-csrf-token": "012"},
         content_type="text/html",
         status=200,
     )
@@ -329,6 +334,7 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
         content_type="text/json",
         status=200,
     )
@@ -353,13 +359,14 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
     mock_aioresponse.get(
         "https://host:8443",
         body="<html>",
-        headers={"x-csrf-token": "123"},
+        headers={"x-csrf-token": "012"},
         content_type="text/html",
         status=200,
     )
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "456"},
         content_type="text/json",
         status=401,
     )
