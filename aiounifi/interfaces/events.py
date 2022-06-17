@@ -84,6 +84,7 @@ class EventHandler:
 
     def handler(self, raw: dict[str, Any]) -> dict[str, set]:
         """Receive event from websocket and identifies where the event belong."""
+        message_key: str
         changes = set()
 
         if "meta" not in raw or "data" not in raw:
@@ -99,6 +100,7 @@ class EventHandler:
             if data.meta.message not in MESSAGE_TO_CHANGE:
                 break
 
+            message_key = MESSAGE_TO_CHANGE[data.meta.message]
             is_event = data.meta.message == MessageKey.EVENT
 
             for callback, message_filter, event_filter in self._subscribers:
@@ -117,5 +119,6 @@ class EventHandler:
                 if data.meta.message in MESSAGE_TO_CHANGE and change:
                     changes.add(change)
 
-        message_key = MESSAGE_TO_CHANGE[data.meta.message]
-        return {message_key: changes}
+        if message_key:
+            return {message_key: changes}
+        return {}
