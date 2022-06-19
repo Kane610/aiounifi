@@ -734,3 +734,22 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
         switch_port_6.__repr__()
         == f"<{switch_port_6.name}: Poe {switch_port_6.poe_enable}>"
     )
+
+
+async def test_device_upgrade(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test device upgrade command."""
+
+    devices = unifi_controller.devices
+    devices.process_raw([ACCESS_POINT_AC_PRO])
+
+    assert len(devices.values()) == 1
+
+    mock_aioresponse.post(
+        "https://host:8443/api/s/default/cmd/devmgr", payload={}, repeat=True
+    )
+    await devices.upgrade(mac="80:2a:a8:00:01:02")
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/devmgr",
+        json={"mac": ACCESS_POINT_AC_PRO["mac"], "cmd": "upgrade"},
+    )
