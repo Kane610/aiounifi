@@ -11,5 +11,5 @@ flake8-noqa==1.2.2
 isort==5.10.1
 pydocstyle==6.1.1
 mypy==0.961
-pylint==2.14.1
+pylint==2.14.3
 tox==3.25.0
