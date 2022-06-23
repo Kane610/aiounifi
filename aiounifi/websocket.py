@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-import json
 import logging
 from ssl import SSLContext
 from typing import Final, Literal
 
 import aiohttp
+import orjson
 
 LOGGER = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class WSClient:
                         break
 
                     if msg.type == aiohttp.WSMsgType.TEXT:
-                        self._data = json.loads(msg.data)
+                        self._data = orjson.loads(msg.data)
                         self.session_handler_callback(SIGNAL_DATA)
                         LOGGER.debug(msg.data)
 

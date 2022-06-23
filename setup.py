@@ -17,7 +17,7 @@ setup(
     url="https://github.com/Kane610/aiounifi",
     download_url=f"https://github.com/Kane610/aiounifi/archive/v{VERSION}.tar.gz",
     install_requires=["aiohttp", "async_timeout"],
-    tests_require=["pytest-asyncio", "pytest-aiohttp", "pytest", "aioresponses"],
+    tests_require=["pytest-asyncio", "pytest-aiohttp", "pytest", "aioresponses", "orjson"],
     keywords=["unifi", "homeassistant"],
     classifiers=["Natural Language :: English", "Programming Language :: Python :: 3"],
     python_requires=f">={MIN_PY_VERSION}",
