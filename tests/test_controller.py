@@ -289,8 +289,6 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         content_type="text/html",
         status=401,
     )
-    with pytest.raises(LoginRequired):
-        await unifi_controller.request("get", device_url)
 
     mock_aioresponse.get(
         "https://host:8443",
