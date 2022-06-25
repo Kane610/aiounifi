@@ -90,7 +90,7 @@ class Controller:
         self.site = site
         self.sslcontext = sslcontext
         self.callback = callback
-        self.can_retry_login = False
+        self.can_retry_login = True
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
