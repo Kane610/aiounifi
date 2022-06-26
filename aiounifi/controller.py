@@ -281,10 +281,11 @@ class Controller:
                 url = f"{self.url}/proxy/network/api/s/{self.site}"
             else:
                 url = f"{self.url}/api/s/{self.site}"
-
             url += f"{path}"
+
         try:
             return await self._request(method, url, json)
+
         except LoginRequired:
             if not self.can_retry_login:
                 raise
@@ -296,7 +297,7 @@ class Controller:
     async def _request(
         self,
         method: str,
-        url: str = "",
+        url: str,
         json: dict[str, Any] | None = None,
         **kwargs: bool,
     ) -> list[dict]:
