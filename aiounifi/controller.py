@@ -90,7 +90,7 @@ class Controller:
         self.site = site
         self.sslcontext = sslcontext
         self.callback = callback
-        self.can_retry_login = True
+        self.can_retry_login = False
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
@@ -128,6 +128,7 @@ class Controller:
         }
 
         await self._request("post", url=url, json=auth)
+        self.can_retry_login = True
         if (
             (response := self.last_response) is not None
             and response.status == HTTPStatus.OK
