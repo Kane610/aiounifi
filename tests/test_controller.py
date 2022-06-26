@@ -354,13 +354,6 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
         content_type="text/html",
         status=401,
     )
-    mock_aioresponse.get(
-        "https://host:8443",
-        body="<html>",
-        headers={"x-csrf-token": "012"},
-        content_type="text/html",
-        status=200,
-    )
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,

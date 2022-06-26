@@ -128,13 +128,15 @@ class Controller:
         }
 
         await self._request("post", url=url, json=auth)
-        self.can_retry_login = True
+
         if (
             (response := self.last_response) is not None
             and response.status == HTTPStatus.OK
             and (csrf_token := response.headers.get("x-csrf-token")) is not None
         ):
             self.headers = {"x-csrf-token": csrf_token}
+
+        self.can_retry_login = True
 
     async def sites(self) -> dict:
         """Retrieve what sites are provided by controller."""
@@ -274,36 +276,33 @@ class Controller:
         url: str = "",
     ) -> list[dict]:
         """Make a request to the API, retry login on failure."""
-        try:
-            return await self._request(method, path, json, url)
-        except LoginRequired:
-            if not self.can_retry_login:
-                raise
-            # Session likely expired, try again
-            self.can_retry_login = False
-            # Make sure we get a new csrf token
-            await self.check_unifi_os()
-            await self.login()
-            return await self._request(method, path, json, url)
-
-    async def _request(
-        self,
-        method: str,
-        path: str = "",
-        json: dict[str, Any] | None = None,
-        url: str = "",
-        **kwargs: bool,
-    ) -> list[dict]:
-        """Make a request to the API."""
-        self.last_response = None
-
         if not url:
             if self.is_unifi_os:
                 url = f"{self.url}/proxy/network/api/s/{self.site}"
             else:
                 url = f"{self.url}/api/s/{self.site}"
-
             url += f"{path}"
+
+        try:
+            return await self._request(method, url, json)
+
+        except LoginRequired:
+            if not self.can_retry_login:
+                raise
+            # Session likely expired, try again
+            self.can_retry_login = False
+            await self.login()
+            return await self._request(method, url, json)
+
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        json: dict[str, Any] | None = None,
+        **kwargs: bool,
+    ) -> list[dict]:
+        """Make a request to the API."""
+        self.last_response = None
 
         LOGGER.debug("%s", url)
 
