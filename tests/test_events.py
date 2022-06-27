@@ -15,7 +15,7 @@ async def test_empty_event():
     empty = Event({})
 
     with pytest.raises(KeyError):
-        assert empty.key
+        assert empty.event
     with pytest.raises(KeyError):
         assert empty.key
     with pytest.raises(KeyError):

@@ -33,7 +33,6 @@ from aiounifi.controller import (
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
 )
-from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
 from aiounifi.interfaces.api import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.interfaces.clients import URL as client_url
 from aiounifi.interfaces.devices import URL as device_url

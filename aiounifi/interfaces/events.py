@@ -84,7 +84,7 @@ class EventHandler:
 
     def handler(self, raw: dict[str, Any]) -> dict[str, set]:
         """Receive event from websocket and identifies where the event belong."""
-        message_key: str
+        message_key = ""
         changes = set()
 
         if "meta" not in raw or "data" not in raw:

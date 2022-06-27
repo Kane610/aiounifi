@@ -6,9 +6,7 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
 from typing import Any, Final, final
 
-from aiounifi.models.event import MessageKey, WebsocketData
-
-from ..events import Event
+from ..models.event import Event, MessageKey, WebsocketData
 
 SubscriptionType = Callable[[str, str], None]
 
@@ -54,8 +52,7 @@ class APIItems:
         """Process full raw response."""
         new_items = set()
         for raw_item in raw:
-            obj_id = self.process_item(raw_item)
-            if obj_id:
+            if obj_id := self.process_item(raw_item):
                 new_items.add(obj_id)
         return new_items
 
