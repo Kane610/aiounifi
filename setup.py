@@ -16,7 +16,7 @@ setup(
     license="MIT",
     url="https://github.com/Kane610/aiounifi",
     download_url=f"https://github.com/Kane610/aiounifi/archive/v{VERSION}.tar.gz",
-    install_requires=["aiohttp", "async_timeout"],
+    install_requires=["aiohttp", "async_timeout", "orjson"],
     tests_require=["pytest-asyncio", "pytest-aiohttp", "pytest", "aioresponses"],
     keywords=["unifi", "homeassistant"],
     classifiers=["Natural Language :: English", "Programming Language :: Python :: 3"],
