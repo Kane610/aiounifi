@@ -52,6 +52,24 @@ class Device(APIItem):
         return self.raw["considered_lost_at"]
 
     @property
+    def cpu_temperature(self) -> float | None:
+        """CPU temperature of device."""
+        return next(
+            (
+                temperature["value"]
+                for temperature in self.raw.get("temperatures", [])
+                if temperature["name"] == "CPU"
+            ),
+            None,
+        )
+
+    @property
+    def cpu_utilization(self) -> float | None:
+        """CPU utilization of device."""
+        cpu = self.raw.get("system-stats", {}).get("cpu")
+        return float(cpu) if cpu is not None else None
+
+    @property
     def disabled(self) -> bool:
         """Is device disabled."""
         return self.raw.get("disabled", False)
@@ -77,9 +95,19 @@ class Device(APIItem):
         return self.raw.get("fan_level")
 
     @property
+    def general_temperature(self) -> int | None:
+        """General temperature of device."""
+        return self.raw.get("general_temperature")
+
+    @property
     def has_fan(self) -> bool:
         """Do device have a fan."""
         return self.raw.get("has_fan", False)
+
+    @property
+    def has_temperature(self) -> bool:
+        """Do the device have a general temperature."""
+        return self.raw.get("has_temperature", False)
 
     @property
     def last_seen(self) -> int | None:
@@ -92,9 +120,27 @@ class Device(APIItem):
         return self.raw.get("lldp_table", [])
 
     @property
+    def local_temperature(self) -> float | None:
+        """Local temperature of device."""
+        return next(
+            (
+                temperature["value"]
+                for temperature in self.raw.get("temperatures", [])
+                if temperature["name"] == "Local"
+            ),
+            None,
+        )
+
+    @property
     def mac(self) -> str:
         """MAC address of device."""
         return self.raw["mac"]
+
+    @property
+    def memory_utilization(self) -> float | None:
+        """Memory utilization of device."""
+        memory = self.raw.get("system-stats", {}).get("mem")
+        return float(memory) if memory is not None else None
 
     @property
     def model(self) -> str:
@@ -132,6 +178,18 @@ class Device(APIItem):
         return self.raw.get("outlet_table", [])
 
     @property
+    def phy_temperature(self) -> float | None:
+        """PHY temperature of device."""
+        return next(
+            (
+                temperature["value"]
+                for temperature in self.raw.get("temperatures", [])
+                if temperature["name"] == "PHY"
+            ),
+            None,
+        )
+
+    @property
     def port_overrides(self) -> list:
         """Overridden port configuration."""
         return self.raw.get("port_overrides", [])
@@ -155,6 +213,11 @@ class Device(APIItem):
     def type(self) -> str:
         """Type of device."""
         return self.raw["type"]
+
+    @property
+    def uptime(self) -> int:
+        """Uptime of device."""
+        return self.raw.get("uptime", 0)
 
     @property
     def version(self) -> str:

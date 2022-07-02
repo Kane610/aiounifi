@@ -33,19 +33,26 @@ async def test_device_access_point(unifi_controller):
     access_point = devices[ACCESS_POINT_AC_PRO["mac"]]
     assert access_point.board_revision == 21
     assert access_point.considered_lost_at == 1588175837
+    assert access_point.cpu_temperature is None
+    assert access_point.cpu_utilization == 3.1
     assert access_point.disabled is False
     assert access_point.id == "235678987654345678"
     assert access_point.ip == "192.168.0.4"
     assert access_point.downlink_table == []
     assert access_point.fan_level is None
+    assert access_point.general_temperature is None
     assert access_point.has_fan is False
+    assert access_point.has_temperature is False
     assert access_point.last_seen == 1588175726
     assert access_point.lldp_table == []
+    assert access_point.local_temperature is None
     assert access_point.mac == "80:2a:a8:00:01:02"
+    assert access_point.memory_utilization == 27.4
     assert access_point.model == "U7PG2"
     assert access_point.name == "ACCESS POINT AC PRO"
     assert access_point.next_heartbeat_at == 1588175763
     assert access_point.overheating is False
+    assert access_point.phy_temperature is None
     assert access_point.port_overrides == []
     assert access_point.port_table == ACCESS_POINT_AC_PRO["port_table"]
     assert access_point.state == 1
@@ -63,6 +70,7 @@ async def test_device_access_point(unifi_controller):
     assert access_point.upgrade_to_firmware == "4.0.80.10875"
     assert access_point.uplink == ACCESS_POINT_AC_PRO["uplink"]
     assert access_point.uplink_depth is None
+    assert access_point.uptime == 3971849
     assert access_point.user_num_sta == 12
     assert access_point.wlan_overrides == [
         {
@@ -125,19 +133,26 @@ async def test_device_security_gateway(unifi_controller):
     gateway = devices[GATEWAY_USG3["mac"]]
     assert gateway.board_revision == 16
     assert gateway.considered_lost_at == 1588175842
+    assert gateway.cpu_temperature is None
+    assert gateway.cpu_utilization == 0
     assert gateway.disabled is False
     assert gateway.id == "235678987654345678"
     assert gateway.ip == "1.2.3.4"
     assert gateway.downlink_table == []
     assert gateway.fan_level is None
+    assert gateway.general_temperature is None
     assert gateway.has_fan is False
+    assert gateway.has_temperature is False
     assert gateway.last_seen == 1588175740
     assert gateway.lldp_table == []
+    assert gateway.local_temperature is None
     assert gateway.mac == "78:8a:20:33:44:55"
+    assert gateway.memory_utilization == 25
     assert gateway.model == "UGW3"
     assert gateway.name == "USG"
     assert gateway.next_heartbeat_at == 1588175774
     assert gateway.overheating is False
+    assert gateway.phy_temperature is None
     assert gateway.port_overrides == []
     assert gateway.port_table == GATEWAY_USG3["port_table"]
     assert gateway.state == 1
@@ -155,6 +170,7 @@ async def test_device_security_gateway(unifi_controller):
     assert gateway.upgrade_to_firmware == "4.4.50.5272448"
     assert gateway.uplink == GATEWAY_USG3["uplink"]
     assert gateway.uplink_depth is None
+    assert gateway.uptime == 3971869
     assert gateway.user_num_sta == 20
     assert gateway.wlan_overrides == []
     assert gateway.__repr__() == f"<Device {gateway.name}: {gateway.mac}>"
@@ -225,13 +241,19 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
 
     plug = devices[PLUG_UP1["mac"]]
     assert plug.board_revision == 2
+    assert plug.cpu_temperature is None
+    assert plug.cpu_utilization is None
     assert plug.downlink_table == []
     assert plug.id == "600c8356942a6ade50707b56"
     assert plug.ip == "192.168.0.189"
+    assert plug.general_temperature is None
     assert plug.has_fan is False
+    assert plug.has_temperature is False
     assert plug.last_seen == 1642055273
     assert plug.lldp_table == []
+    assert plug.local_temperature is None
     assert plug.mac == "fc:ec:da:76:4f:5f"
+    assert plug.memory_utilization is None
     assert plug.model == "UP1"
     assert plug.name == "Plug"
     assert plug.next_interval == 40
@@ -246,10 +268,12 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
         }
     ]
     assert plug.outlet_overrides == []
+    assert plug.phy_temperature is None
     assert plug.port_table == []
     assert plug.state == 1
     assert plug.sys_stats == {"mem_total": 98304, "mem_used": 87736}
     assert plug.type == "uap"
+    assert plug.uptime == 376083
     assert plug.version == "2.2.1.511"
     assert plug.upgradable is False
     assert plug.uplink == PLUG_UP1["uplink"]
@@ -329,13 +353,19 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
 
     strip = devices[STRIP_UP6["mac"]]
     assert strip.board_revision == 5
+    assert strip.cpu_temperature is None
+    assert strip.cpu_utilization is None
     assert strip.downlink_table == []
+    assert strip.general_temperature is None
     assert strip.id == "61eb1a75942a6a859b45d2bc"
     assert strip.ip == "192.168.0.138"
     assert strip.has_fan is False
+    assert strip.has_temperature is False
     assert strip.last_seen == 1642800247
     assert strip.lldp_table == []
+    assert strip.local_temperature is None
     assert strip.mac == "78:45:58:fc:16:7d"
+    assert strip.memory_utilization is None
     assert strip.model == "UP6"
     assert strip.name == ""
     assert strip.next_interval == 41
@@ -412,6 +442,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
             "relay_state": False,
         },
     ]
+    assert strip.phy_temperature is None
     assert strip.port_table == []
     assert strip.state == 1
     assert strip.sys_stats == {"mem_total": 98304, "mem_used": 88056}
@@ -419,6 +450,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
     assert strip.version == "2.2.1.511"
     assert strip.upgradable is False
     assert strip.uplink == STRIP_UP6["uplink"]
+    assert strip.uptime == 2370
 
     mock_aioresponse.put(
         "https://host:8443/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
