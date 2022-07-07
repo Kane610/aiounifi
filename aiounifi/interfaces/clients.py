@@ -7,7 +7,7 @@ from typing import Final
 from ..models.client import Client
 from .api import APIItems
 
-URL: Final = "/stat/sta"  # Active clients
+URL: Final = "/stat/sta"
 
 URL_CLIENT_STATE_MANAGER: Final = "/cmd/stamgr"
 

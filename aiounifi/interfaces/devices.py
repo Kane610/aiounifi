@@ -1,6 +1,6 @@
 """UniFi devices are network infrastructure.
 
-Access points, Gateways, Switches.
+Access points, gateways, power plugs, switches.
 """
 
 from __future__ import annotations

@@ -98,12 +98,12 @@ class APIItems:
 
     @final
     def items(self) -> ItemsView[int | str, Any]:
-        """Return item values."""
+        """Return item dictionary."""
         return self._items.items()
 
     @final
     def values(self) -> ValuesView[Any]:
-        """Return item values."""
+        """Return items."""
         return self._items.values()
 
     @final
