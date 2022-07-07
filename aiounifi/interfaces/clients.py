@@ -15,7 +15,7 @@ URL_CLIENT_STATE_MANAGER: Final = "/cmd/stamgr"
 class Clients(APIItems):
     """Represents client network devices."""
 
-    KEY = "mac"
+    obj_id_key = "mac"
     path = URL
     item_cls = Client
 

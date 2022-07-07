@@ -11,6 +11,6 @@ GROUP_URL: Final = "/rest/dpigroup"  # List DPI Group configuration
 class DPIRestrictionGroups(APIItems):
     """Represents DPI Group configurations."""
 
-    KEY = "_id"
+    obj_id_key = "_id"
     path = GROUP_URL
     item_cls = DPIRestrictionGroup

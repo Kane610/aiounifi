@@ -19,8 +19,8 @@ SOURCE_EVENT: Final = "event"
 class APIItems:
     """Base class for a map of API Items."""
 
-    KEY = ""
-    path = ""
+    obj_id_key: str
+    path: str
     item_cls: Any
 
     def __init__(self, controller) -> None:
@@ -41,7 +41,7 @@ class APIItems:
         new_items = set()
 
         for raw_item in raw:
-            key = raw_item[self.KEY]
+            key = raw_item[self.obj_id_key]
 
             if (obj := self._items.get(key)) is not None:
                 obj.update(raw=raw_item)
@@ -74,7 +74,7 @@ class APIItems:
         removed_items = set()
 
         for raw_item in raw:
-            key = raw_item[self.KEY]
+            key = raw_item[self.obj_id_key]
 
             if key in self._items:
                 item = self._items.pop(key)

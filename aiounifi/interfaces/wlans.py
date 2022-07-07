@@ -11,7 +11,7 @@ URL: Final = "/rest/wlanconf"  # List WLAN configuration
 class Wlans(APIItems):
     """Represents WLAN configurations."""
 
-    KEY = "name"
+    obj_id_key = "name"
     path = URL
     item_cls = Wlan
 

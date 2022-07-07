@@ -11,7 +11,7 @@ APP_URL: Final = "/rest/dpiapp"  # List DPI App configuration
 class DPIRestrictionApps(APIItems):
     """Represents DPI App configurations."""
 
-    KEY = "_id"
+    obj_id_key = "_id"
     path = APP_URL
     item_cls = DPIRestrictionApp
 

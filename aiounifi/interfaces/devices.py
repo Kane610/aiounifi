@@ -18,7 +18,7 @@ URL_DEVICE_MANAGER: Final = "/cmd/devmgr"
 class Devices(APIItems):
     """Represents network devices."""
 
-    KEY = "mac"
+    obj_id_key = "mac"
     path = URL
     item_cls = Device
 
