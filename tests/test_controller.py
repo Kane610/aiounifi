@@ -980,7 +980,7 @@ async def test_controller_raise_expected_exception(
         await unifi_controller.login()
 
 
-@pytest.mark.parametrize("unsupported_message", ["device:update", "unsupported"])
+@pytest.mark.parametrize("unsupported_message", ["device:update", "unifi-device:sync", "unsupported"])
 async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     """Test controller properly ignores unsupported events."""
     with patch("aiounifi.websocket.WSClient.running"):
