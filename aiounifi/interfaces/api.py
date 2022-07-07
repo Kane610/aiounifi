@@ -20,7 +20,7 @@ class APIItems:
     """Base class for a map of API Items."""
 
     obj_id_key: str
-    path = ""
+    path: str
     item_cls: Any
 
     def __init__(self, controller) -> None:
