@@ -31,6 +31,10 @@ from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 LOGGER = logging.getLogger(__name__)
 
+# Legacy
+SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
+SIGNAL_DATA: Final = WebsocketSignal.DATA
+
 MESSAGE_CLIENT: Final = "sta:sync"
 MESSAGE_CLIENT_REMOVED: Final = "user:delete"
 MESSAGE_DEVICE: Final = "device:sync"
@@ -57,10 +61,6 @@ DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
 
 
 IGNORE_MESSAGES: Final = ("device:update",)
-
-# Legacy
-SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
-SIGNAL_DATA: Final = WebsocketSignal.DATA
 
 
 class Controller:

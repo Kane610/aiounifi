@@ -5,7 +5,7 @@ from typing import Final
 from ..models.dpi_restriction_group import DPIRestrictionGroup
 from .api import APIItems
 
-GROUP_URL: Final = "/rest/dpigroup"  # List DPI Group configuration
+GROUP_URL: Final = "/rest/dpigroup"
 
 
 class DPIRestrictionGroups(APIItems):

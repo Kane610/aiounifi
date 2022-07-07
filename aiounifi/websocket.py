@@ -108,7 +108,7 @@ class WSClient:
 
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         self._data = orjson.loads(msg.data)
-                        self.session_handler_callback(SIGNAL_DATA)
+                        self.session_handler_callback(WebsocketSignal.DATA)
                         LOGGER.debug(msg.data)
 
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
@@ -122,13 +122,13 @@ class WSClient:
         except aiohttp.ClientConnectorError:
             if self.state != WebsocketState.STOPPED:
                 LOGGER.error("Client connection error")
-                self.state = STATE_DISCONNECTED
+                self.state = WebsocketState.DISCONNECTED
 
         except Exception as err:
             if self.state != WebsocketState.STOPPED:
                 LOGGER.error("Unexpected error %s", err)
-                self.state = STATE_DISCONNECTED
+                self.state = WebsocketState.DISCONNECTED
 
         else:
             if self.state != WebsocketState.STOPPED:
-                self.state = STATE_DISCONNECTED
+                self.state = WebsocketState.DISCONNECTED

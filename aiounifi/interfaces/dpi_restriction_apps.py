@@ -5,7 +5,7 @@ from typing import Final
 from ..models.dpi_restriction_app import DPIRestrictionApp
 from .api import APIItems
 
-APP_URL: Final = "/rest/dpiapp"  # List DPI App configuration
+APP_URL: Final = "/rest/dpiapp"
 
 
 class DPIRestrictionApps(APIItems):

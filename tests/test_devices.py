@@ -6,9 +6,9 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
     GATEWAY_USG3,
-    SWITCH_16_PORT_POE,
     PLUG_UP1,
     STRIP_UP6,
+    SWITCH_16_PORT_POE,
 )
 
 
