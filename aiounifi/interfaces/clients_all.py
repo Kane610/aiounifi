@@ -13,6 +13,6 @@ URL_ALL: Final = "/rest/user"  # All known and configured clients
 class ClientsAll(APIItems):
     """Represents all client network devices."""
 
-    KEY = "mac"
+    obj_id_key = "mac"
     path = URL_ALL
     item_cls = Client
