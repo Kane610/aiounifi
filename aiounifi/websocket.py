@@ -4,24 +4,38 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+import enum
 import logging
 from ssl import SSLContext
-from typing import Final, Literal
+from typing import Final
 
 import aiohttp
 import orjson
 
 LOGGER = logging.getLogger(__name__)
 
-SignalLiteral = Literal["data", "state"]
-SIGNAL_DATA: Final = "data"
-SIGNAL_CONNECTION_STATE: Final = "state"
 
-StateLiteral = Literal["disconnected", "running", "starting", "stopped"]
-STATE_DISCONNECTED: Final = "disconnected"
-STATE_RUNNING: Final = "running"
-STATE_STARTING: Final = "starting"
-STATE_STOPPED: Final = "stopped"
+class WebsocketSignal(enum.Enum):
+    """Websocket signal."""
+
+    CONNECTION_STATE = "state"
+    DATA = "data"
+
+
+class WebsocketState(enum.Enum):
+    """Websocket state."""
+
+    DISCONNECTED = "disconnected"
+    RUNNING = "running"
+    STARTING = "starting"
+    STOPPED = "stopped"
+
+
+# Legacy
+SIGNAL_DATA: Final = WebsocketSignal.DATA
+SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
+STATE_DISCONNECTED: Final = WebsocketState.DISCONNECTED
+STATE_RUNNING: Final = WebsocketState.RUNNING
 
 
 class WSClient:
@@ -34,7 +48,7 @@ class WSClient:
         port: int,
         ssl_context: SSLContext | None,
         site: str,
-        callback: Callable[[SignalLiteral], None],
+        callback: Callable[[WebsocketSignal], None],
         is_unifi_os: bool = False,
     ):
         """Create resources for websocket communication."""
@@ -50,7 +64,7 @@ class WSClient:
         self._loop = asyncio.get_running_loop()
 
         self._data: dict = {}
-        self._state: StateLiteral = STATE_STOPPED
+        self._state = WebsocketState.STOPPED
 
     @property
     def data(self) -> dict:
@@ -58,26 +72,26 @@ class WSClient:
         return self._data
 
     @property
-    def state(self) -> StateLiteral:
+    def state(self) -> WebsocketState:
         """State of websocket."""
         return self._state
 
     @state.setter
-    def state(self, value: StateLiteral) -> None:
+    def state(self, value: WebsocketState) -> None:
         """Set state of websocket."""
         self._state = value
         LOGGER.debug("Websocket %s", value)
-        self.session_handler_callback(SIGNAL_CONNECTION_STATE)
+        self.session_handler_callback(WebsocketSignal.CONNECTION_STATE)
 
     def start(self) -> None:
         """Start websocket and update its state."""
-        if self.state != STATE_RUNNING:
-            self.state = STATE_STARTING
+        if self.state != WebsocketState.RUNNING:
+            self.state = WebsocketState.STARTING
             self._loop.create_task(self.running())
 
     def stop(self) -> None:
         """Close websocket connection."""
-        self.state = STATE_STOPPED
+        self.state = WebsocketState.STOPPED
 
     async def running(self) -> None:
         """Start websocket connection."""
@@ -85,11 +99,11 @@ class WSClient:
             async with self.session.ws_connect(
                 self.url, ssl=self.ssl_context, heartbeat=15
             ) as ws:
-                self.state = STATE_RUNNING
+                self.state = WebsocketState.RUNNING
 
                 async for msg in ws:
 
-                    if self.state == STATE_STOPPED:
+                    if self.state == WebsocketState.STOPPED:
                         break
 
                     if msg.type == aiohttp.WSMsgType.TEXT:
@@ -106,15 +120,15 @@ class WSClient:
                         break
 
         except aiohttp.ClientConnectorError:
-            if self.state != STATE_STOPPED:
+            if self.state != WebsocketState.STOPPED:
                 LOGGER.error("Client connection error")
                 self.state = STATE_DISCONNECTED
 
         except Exception as err:
-            if self.state != STATE_STOPPED:
+            if self.state != WebsocketState.STOPPED:
                 LOGGER.error("Unexpected error %s", err)
                 self.state = STATE_DISCONNECTED
 
         else:
-            if self.state != STATE_STOPPED:
+            if self.state != WebsocketState.STOPPED:
                 self.state = STATE_DISCONNECTED
