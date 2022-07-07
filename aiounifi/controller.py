@@ -14,6 +14,7 @@ from aiohttp import client_exceptions
 
 from .errors import (
     BadGateway,
+    Forbidden,
     LoginRequired,
     RequestError,
     ResponseError,
@@ -111,6 +112,7 @@ class Controller:
             response := self.last_response
         ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
+        LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
     async def login(self) -> None:
         """Log in to controller."""
@@ -319,6 +321,9 @@ class Controller:
 
                 if res.status == HTTPStatus.UNAUTHORIZED:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
+
+                if res.status == HTTPStatus.FORBIDDEN:
+                    raise Forbidden(f"Call {url} received 403 Forbidden")
 
                 if res.status == HTTPStatus.NOT_FOUND:
                     raise ResponseError(f"Call {url} received 404 Not Found")

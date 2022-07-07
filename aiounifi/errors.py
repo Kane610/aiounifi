@@ -24,6 +24,10 @@ class LoginRequired(AiounifiException):
     """User is logged out."""
 
 
+class Forbidden(AiounifiException):
+    """Forbidden request."""
+
+
 class NoPermission(AiounifiException):
     """Users permissions are read only."""
 

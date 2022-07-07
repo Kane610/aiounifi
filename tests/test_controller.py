@@ -10,6 +10,7 @@ import pytest
 
 from aiounifi import (
     BadGateway,
+    Forbidden,
     LoginRequired,
     NoPermission,
     RequestError,
@@ -945,6 +946,7 @@ async def test_unifios_controller_no_csrf_token(
 
 test_data = [
     ({"status": 401}, LoginRequired),
+    ({"status": 403}, Forbidden),
     ({"status": 404}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
