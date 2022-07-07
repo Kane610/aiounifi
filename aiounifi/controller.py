@@ -20,7 +20,7 @@ from .errors import (
     ServiceUnavailable,
     raise_error,
 )
-from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event
+from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event, MessageKey
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
 from .interfaces.devices import Devices
@@ -35,16 +35,16 @@ LOGGER = logging.getLogger(__name__)
 SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
 SIGNAL_DATA: Final = WebsocketSignal.DATA
 
-MESSAGE_CLIENT: Final = "sta:sync"
-MESSAGE_CLIENT_REMOVED: Final = "user:delete"
-MESSAGE_DEVICE: Final = "device:sync"
-MESSAGE_EVENT: Final = "events"
-MESSAGE_DPI_APP_ADDED: Final = "dpiapp:add"
-MESSAGE_DPI_APP_REMOVED: Final = "dpiapp:delete"
-MESSAGE_DPI_APP_UPDATED: Final = "dpiapp:sync"
-MESSAGE_DPI_GROUP_ADDED: Final = "dpigroup:add"
-MESSAGE_DPI_GROUP_REMOVED: Final = "dpigroup:delete"
-MESSAGE_DPI_GROUP_UPDATED: Final = "dpigroup:sync"
+MESSAGE_CLIENT: Final = MessageKey.CLIENT.value
+MESSAGE_CLIENT_REMOVED: Final = MessageKey.CLIENT_REMOVED.value
+MESSAGE_DEVICE: Final = MessageKey.DEVICE.value
+MESSAGE_EVENT: Final = MessageKey.EVENT.value
+MESSAGE_DPI_APP_ADDED: Final = MessageKey.DPI_APP_ADDED.value
+MESSAGE_DPI_APP_REMOVED: Final = MessageKey.DPI_APP_REMOVED.value
+MESSAGE_DPI_APP_UPDATED: Final = MessageKey.DPI_APP_UPDATED.value
+MESSAGE_DPI_GROUP_ADDED: Final = MessageKey.DPI_GROUP_ADDED.value
+MESSAGE_DPI_GROUP_REMOVED: Final = MessageKey.DPI_GROUP_REMOVED.value
+MESSAGE_DPI_GROUP_UPDATED: Final = MessageKey.DPI_GROUP_UPDATED.value
 
 ATTR_MESSAGE: Final = "message"
 ATTR_META: Final = "meta"
