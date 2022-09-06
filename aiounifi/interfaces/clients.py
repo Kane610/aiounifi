@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Final
 
 from ..models.client import Client
-from ..models.event import EventKey, MessageKey
+from ..models.event import EventKey
+from ..models.message import MessageKey
 from .api import APIItems
 
 URL: Final = "/stat/sta"

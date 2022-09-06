@@ -6,9 +6,11 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
 from typing import Any, Final, final
 
-from ..models.event import Event, MessageKey, WebsocketData
+from ..models.event import Event
+from ..models.message import Message
 
 SubscriptionType = Callable[[str, str], None]
+UnsubscribeType = Callable[[], None]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,15 +34,11 @@ class APIItems:
         self._items: dict[int | str, Any] = {}
         self._subscribers: list[SubscriptionType] = []
 
-        message_filter = self.process_messages + self.remove_messages
-        if self.events:
-            message_filter += (MessageKey.EVENT,)
+        if message_filter := self.process_messages + self.remove_messages:
+            controller.messages.subscribe(self.process_message, message_filter)
 
-        controller.events.subscribe(
-            self.process_websocket_data,
-            message_filter,
-            event_filter=self.events or None,
-        )
+        if self.events:
+            controller.events.subscribe(self.process_event, self.events)
 
     @final
     async def update(self) -> None:
@@ -56,26 +54,21 @@ class APIItems:
                 new_items.add(obj_id)
         return new_items
 
-    def process_websocket_data(self, data: WebsocketData) -> Event | str:
+    def process_message(self, message: Message) -> str:
         """Process and forward websocket data."""
-        if data.meta.message == MessageKey.EVENT:
-            return self.process_event(data.event)
+        if message.meta.message in self.process_messages:
+            return self.process_item(message.data)
 
-        if data.meta.message in self.process_messages:
-            return self.process_item(data.data["data"])
-
-        if data.meta.message in self.remove_messages:
-            return self.remove_item(data.data["data"])
+        if message.meta.message in self.remove_messages:
+            return self.remove_item(message.data)
 
         return ""
 
     @final
-    def process_event(self, event: Event) -> Event | str:
+    def process_event(self, event: Event) -> None:
         """Process event."""
         if (obj := self._items.get(event.mac)) is not None:
             obj.update(event=event)
-            return event
-        return ""
 
     @final
     def process_item(self, raw: dict[str, Any]) -> str:
@@ -101,7 +94,7 @@ class APIItems:
             return obj_id
         return ""
 
-    def subscribe(self, callback: SubscriptionType) -> Callable:
+    def subscribe(self, callback: SubscriptionType) -> UnsubscribeType:
         """Subscribe to added events.
 
         "callback" - callback function to call when an event emits.

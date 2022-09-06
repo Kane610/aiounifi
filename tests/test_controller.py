@@ -413,7 +413,7 @@ async def test_no_data(mock_aioresponse, unifi_controller):
     assert not unifi_controller.clients.get(1)
 
     message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
-    assert unifi_controller.events.handler(message) == {}
+    assert unifi_controller.messages.handler(message) == {}
 
     assert not unifi_controller.stop_websocket()
 
@@ -980,7 +980,9 @@ async def test_controller_raise_expected_exception(
         await unifi_controller.login()
 
 
-@pytest.mark.parametrize("unsupported_message", ["device:update", "unifi-device:sync", "unsupported"])
+@pytest.mark.parametrize(
+    "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
+)
 async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     """Test controller properly ignores unsupported events."""
     with patch("aiounifi.websocket.WSClient.running"):

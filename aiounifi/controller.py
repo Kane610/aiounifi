@@ -27,8 +27,9 @@ from .interfaces.devices import Devices
 from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .interfaces.events import EventHandler
+from .interfaces.messages import MessageHandler
 from .interfaces.wlans import Wlans
-from .models.event import MessageKey
+from .models.message import MessageKey
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 LOGGER = logging.getLogger(__name__)
@@ -99,6 +100,7 @@ class Controller:
 
         self.websocket: WSClient | None = None
 
+        self.messages = MessageHandler(self)
         self.events = EventHandler(self)
 
         self.clients = Clients(self)
@@ -195,7 +197,7 @@ class Controller:
         assert self.websocket
 
         if signal == WebsocketSignal.DATA:
-            new_items = self.events.handler(self.websocket.data)
+            new_items = self.messages.handler(self.websocket.data)
             if new_items and self.callback:
                 self.callback(WebsocketSignal.DATA, new_items)
 

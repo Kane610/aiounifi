@@ -8,7 +8,8 @@ from __future__ import annotations
 from typing import Final
 
 from ..models.device import Device
-from ..models.event import EventKey, MessageKey
+from ..models.event import EventKey
+from ..models.message import MessageKey
 from .api import APIItems
 
 URL: Final = "/stat/device"
@@ -51,7 +52,6 @@ class Devices(APIItems):
         EventKey.SWITCH_RESTARTED_UNKNOWN,
         EventKey.SWITCH_UPGRADED,
     )
-    messages = (MessageKey.DEVICE,)
     process_messages = (MessageKey.DEVICE,)
 
     async def upgrade(self, mac: str) -> list[dict]:

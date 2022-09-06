@@ -3,7 +3,7 @@
 from typing import Final
 
 from ..models.dpi_restriction_app import DPIRestrictionApp
-from ..models.event import MessageKey
+from ..models.message import MessageKey
 from .api import APIItems
 
 APP_URL: Final = "/rest/dpiapp"

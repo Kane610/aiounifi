@@ -3,7 +3,7 @@
 from typing import Final
 
 from ..models.dpi_restriction_group import DPIRestrictionGroup
-from ..models.event import MessageKey
+from ..models.message import MessageKey
 from .api import APIItems
 
 GROUP_URL: Final = "/rest/dpigroup"
