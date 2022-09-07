@@ -7,13 +7,13 @@ from typing import Final
 from ..models.client import Client
 from ..models.event import EventKey
 from ..models.message import MessageKey
-from .api import APIItems
+from .api_handlers import APIHandler
 
 URL: Final = "/stat/sta"
 URL_CLIENT_STATE_MANAGER: Final = "/cmd/stamgr"
 
 
-class Clients(APIItems):
+class Clients(APIHandler):
     """Represents client network devices."""
 
     obj_id_key = "mac"

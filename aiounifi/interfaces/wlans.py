@@ -3,12 +3,12 @@
 from typing import Final
 
 from ..models.wlan import Wlan
-from .api import APIItems
+from .api_handlers import APIHandler
 
 URL: Final = "/rest/wlanconf"  # List WLAN configuration
 
 
-class Wlans(APIItems):
+class Wlans(APIHandler):
     """Represents WLAN configurations."""
 
     obj_id_key = "name"

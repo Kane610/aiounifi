@@ -4,12 +4,12 @@ from typing import Final
 
 from ..models.dpi_restriction_group import DPIRestrictionGroup
 from ..models.message import MessageKey
-from .api import APIItems
+from .api_handlers import APIHandler
 
 GROUP_URL: Final = "/rest/dpigroup"
 
 
-class DPIRestrictionGroups(APIItems):
+class DPIRestrictionGroups(APIHandler):
     """Represents DPI Group configurations."""
 
     obj_id_key = "_id"
