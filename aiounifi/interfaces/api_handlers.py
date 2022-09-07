@@ -18,7 +18,7 @@ SOURCE_DATA: Final = "data"
 SOURCE_EVENT: Final = "event"
 
 
-class APIItems:
+class APIHandler:
     """Base class for a map of API Items."""
 
     obj_id_key: str

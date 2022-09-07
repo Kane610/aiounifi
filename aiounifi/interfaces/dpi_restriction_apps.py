@@ -4,12 +4,12 @@ from typing import Final
 
 from ..models.dpi_restriction_app import DPIRestrictionApp
 from ..models.message import MessageKey
-from .api import APIItems
+from .api_handlers import APIHandler
 
 APP_URL: Final = "/rest/dpiapp"
 
 
-class DPIRestrictionApps(APIItems):
+class DPIRestrictionApps(APIHandler):
     """Represents DPI App configurations."""
 
     obj_id_key = "_id"

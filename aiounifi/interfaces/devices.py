@@ -10,14 +10,14 @@ from typing import Final
 from ..models.device import Device
 from ..models.event import EventKey
 from ..models.message import MessageKey
-from .api import APIItems
+from .api_handlers import APIHandler
 
 URL: Final = "/stat/device"
 
 URL_DEVICE_MANAGER: Final = "/cmd/devmgr"
 
 
-class Devices(APIItems):
+class Devices(APIHandler):
     """Represents network devices."""
 
     obj_id_key = "mac"

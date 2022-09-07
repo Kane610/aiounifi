@@ -33,7 +33,7 @@ from aiounifi.controller import (
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
 )
-from aiounifi.interfaces.api import SOURCE_DATA, SOURCE_EVENT
+from aiounifi.interfaces.api_handlers import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.interfaces.clients import URL as client_url
 from aiounifi.interfaces.devices import URL as device_url
 from aiounifi.models.event import EventKey

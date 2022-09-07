@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import Final
 
 from ..models.client import Client
-from .api import APIItems
+from .api_handlers import APIHandler
 
 URL_ALL: Final = "/rest/user"  # All known and configured clients
 
 
-class ClientsAll(APIItems):
+class ClientsAll(APIHandler):
     """Represents all client network devices."""
 
     obj_id_key = "mac"
