@@ -19,6 +19,8 @@ class MessageKey(enum.Enum):
     CLIENT = "sta:sync"
     CLIENT_REMOVED = "user:delete"
     DEVICE = "device:sync"
+    DEVICE_UPDATE = "device:update"
+    UNIFI_DEVICE = "unifi-device:sync"
     EVENT = "events"
     DPI_APP_ADDED = "dpiapp:add"
     DPI_APP_REMOVED = "dpiapp:delete"
