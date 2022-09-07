@@ -1,6 +1,6 @@
 """Setup common test helpers."""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import aiohttp
 from aioresponses import aioresponses
@@ -59,3 +59,10 @@ async def unifi_controller() -> Controller:
     )
     yield controller
     await session.close()
+
+
+@pytest.fixture()
+def mock_wsclient():
+    """No real websocket allowed."""
+    with patch("aiounifi.controller.WSClient") as mock:
+        yield mock

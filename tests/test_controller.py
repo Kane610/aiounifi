@@ -33,10 +33,10 @@ from aiounifi.controller import (
     MESSAGE_CLIENT,
     MESSAGE_DEVICE,
 )
-from aiounifi.events import SWITCH_CONNECTED, WIRELESS_CLIENT_CONNECTED
 from aiounifi.interfaces.api import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.interfaces.clients import URL as client_url
 from aiounifi.interfaces.devices import URL as device_url
+from aiounifi.models.event import EventKey
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
@@ -413,7 +413,7 @@ async def test_no_data(mock_aioresponse, unifi_controller):
     assert not unifi_controller.clients.get(1)
 
     message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
-    assert unifi_controller.message_handler(message) == {}
+    assert unifi_controller.messages.handler(message) == {}
 
     assert not unifi_controller.stop_websocket()
 
@@ -519,7 +519,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
     unifi_controller.callback.assert_called_with(
         WebsocketSignal.DATA, {DATA_EVENT: {client.event}}
     )
-    assert client.event.event == WIRELESS_CLIENT_CONNECTED
+    assert client.event.key == EventKey.WIRELESS_CLIENT_CONNECTED
     assert client.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 2
 
@@ -673,7 +673,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     unifi_controller.callback.assert_called_with(
         WebsocketSignal.DATA, {DATA_EVENT: {device.event}}
     )
-    assert device.event.event == SWITCH_CONNECTED
+    assert device.event.key == EventKey.SWITCH_CONNECTED
     assert device.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 2
 
@@ -980,7 +980,9 @@ async def test_controller_raise_expected_exception(
         await unifi_controller.login()
 
 
-@pytest.mark.parametrize("unsupported_message", ["device:update", "unifi-device:sync", "unsupported"])
+@pytest.mark.parametrize(
+    "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
+)
 async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     """Test controller properly ignores unsupported events."""
     with patch("aiounifi.websocket.WSClient.running"):

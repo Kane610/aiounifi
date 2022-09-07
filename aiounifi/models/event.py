@@ -9,32 +9,6 @@ from typing import Any, Final, final
 LOGGER = logging.getLogger(__name__)
 
 
-class MessageKey(enum.Enum):
-    """Message as part of meta object of event.
-
-    "meta": {"rc": "ok", "message": "device:sync"}.
-    """
-
-    CLIENT = "sta:sync"
-    CLIENT_REMOVED = "user:delete"
-    DEVICE = "device:sync"
-    EVENT = "events"
-    DPI_APP_ADDED = "dpiapp:add"
-    DPI_APP_REMOVED = "dpiapp:delete"
-    DPI_APP_UPDATED = "dpiapp:sync"
-    DPI_GROUP_ADDED = "dpigroup:add"
-    DPI_GROUP_REMOVED = "dpigroup:delete"
-    DPI_GROUP_UPDATED = "dpigroup:sync"
-
-    UNKNOWN = "unknown"
-
-    @classmethod
-    def _missing_(cls, value: object) -> "MessageKey":
-        """Set default enum member if an unknown value is provided."""
-        LOGGER.warning("Unsupported message key %s", value)
-        return MessageKey.UNKNOWN
-
-
 class EventKey(enum.Enum):
     """Key as part of event data object.
 

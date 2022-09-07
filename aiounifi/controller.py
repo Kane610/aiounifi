@@ -21,13 +21,15 @@ from .errors import (
     ServiceUnavailable,
     raise_error,
 )
-from .events import CLIENT_EVENTS, DEVICE_EVENTS, Event, MessageKey
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
 from .interfaces.devices import Devices
 from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
+from .interfaces.events import EventHandler
+from .interfaces.messages import MessageHandler
 from .interfaces.wlans import Wlans
+from .models.message import MessageKey
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 LOGGER = logging.getLogger(__name__)
@@ -97,6 +99,9 @@ class Controller:
         self.last_response: aiohttp.ClientResponse | None = None
 
         self.websocket: WSClient | None = None
+
+        self.messages = MessageHandler(self)
+        self.events = EventHandler(self)
 
         self.clients = Clients(self)
         self.clients_all = ClientsAll(self)
@@ -192,81 +197,12 @@ class Controller:
         assert self.websocket
 
         if signal == WebsocketSignal.DATA:
-            new_items = self.message_handler(self.websocket.data)
+            new_items = self.messages.handler(self.websocket.data)
             if new_items and self.callback:
                 self.callback(WebsocketSignal.DATA, new_items)
 
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
-
-    def message_handler(self, message: dict) -> dict:
-        """Receive event from websocket and identifies where the event belong."""
-        changes: dict[str, set] = {}
-
-        if message[ATTR_META][ATTR_MESSAGE] == MESSAGE_EVENT:
-            changes[DATA_EVENT] = set()
-            client_events = []
-            device_events = []
-
-            for raw in message[ATTR_DATA]:
-                changes[DATA_EVENT].add(event := Event(raw))
-
-                if event.event in CLIENT_EVENTS:
-                    client_events.append(event)
-                elif event.event in DEVICE_EVENTS:
-                    device_events.append(event)
-
-            self.clients.process_event(client_events)
-            self.devices.process_event(device_events)
-
-        # Client
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT:
-            changes[DATA_CLIENT] = self.clients.process_raw(message[ATTR_DATA])
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_CLIENT_REMOVED:
-            changes[DATA_CLIENT_REMOVED] = self.clients.remove(message[ATTR_DATA])
-
-        # Device
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DEVICE:
-            changes[DATA_DEVICE] = self.devices.process_raw(message[ATTR_DATA])
-
-        # DPI App
-
-        elif message[ATTR_META][ATTR_MESSAGE] in (
-            MESSAGE_DPI_APP_ADDED,
-            MESSAGE_DPI_APP_UPDATED,
-        ):
-            changes[DATA_DPI_APP] = self.dpi_apps.process_raw(message[ATTR_DATA])
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_APP_REMOVED:
-            changes[DATA_DPI_APP_REMOVED] = self.dpi_apps.remove(message[ATTR_DATA])
-
-        # DPI Group
-
-        elif message[ATTR_META][ATTR_MESSAGE] in (
-            MESSAGE_DPI_GROUP_ADDED,
-            MESSAGE_DPI_GROUP_UPDATED,
-        ):
-            changes[DATA_DPI_GROUP] = self.dpi_groups.process_raw(message[ATTR_DATA])
-
-        elif message[ATTR_META][ATTR_MESSAGE] == MESSAGE_DPI_GROUP_REMOVED:
-            changes[DATA_DPI_GROUP_REMOVED] = self.dpi_groups.remove(message[ATTR_DATA])
-
-        # Unsupported
-
-        elif message[ATTR_META][ATTR_MESSAGE] in IGNORE_MESSAGES:
-            pass
-
-        else:
-            LOGGER.debug(
-                "Unsupported message type (%s) %s",
-                message[ATTR_META][ATTR_MESSAGE],
-                message,
-            )
-
-        return changes
 
     async def request(
         self,
