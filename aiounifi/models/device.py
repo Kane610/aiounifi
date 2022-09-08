@@ -11,8 +11,8 @@ import logging
 from typing import TYPE_CHECKING
 
 from ..events import Event as UniFiEvent
-from ..models.request_object import RequestObject
 from .api import APIItem
+from .request_object import RequestObject
 
 if TYPE_CHECKING:
     from ..controller import Controller
