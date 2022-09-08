@@ -78,7 +78,8 @@ class APIHandler:
             obj.update(raw=raw)
             return ""
 
-        self._items[obj_id] = self.item_cls(raw, self.controller.request)
+        self._items[obj_id] = self.item_cls(raw, self.controller)
+        # self._items[obj_id] = self.item_cls(raw, self.controller.request)
 
         for callback in self._subscribers:
             callback("added", obj_id)

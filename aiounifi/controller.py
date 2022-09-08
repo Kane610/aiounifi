@@ -7,7 +7,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -31,6 +31,9 @@ from .interfaces.messages import MessageHandler
 from .interfaces.wlans import Wlans
 from .models.message import MessageKey
 from .websocket import WebsocketSignal, WebsocketState, WSClient
+
+if TYPE_CHECKING:
+    from .models.request_object import RequestObject
 
 LOGGER = logging.getLogger(__name__)
 
@@ -203,6 +206,14 @@ class Controller:
 
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
+
+    async def request_object(self, request_object: RequestObject):
+        """Make a request to the API, retry login on failure."""
+        await self.request(
+            method=request_object.method,
+            path=request_object.path,
+            json=request_object.data,
+        )
 
     async def request(
         self,

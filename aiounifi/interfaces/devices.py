@@ -7,14 +7,12 @@ from __future__ import annotations
 
 from typing import Final
 
-from ..models.device import Device
+from ..models.device import Device, DeviceUpgradeRequest
 from ..models.event import EventKey
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
 
 URL: Final = "/stat/device"
-
-URL_DEVICE_MANAGER: Final = "/cmd/devmgr"
 
 
 class Devices(APIHandler):
@@ -56,5 +54,4 @@ class Devices(APIHandler):
 
     async def upgrade(self, mac: str) -> list[dict]:
         """Upgrade network device."""
-        data = {"mac": mac, "cmd": "upgrade"}
-        return await self.controller.request("post", URL_DEVICE_MANAGER, json=data)
+        return await self.controller.request_object(DeviceUpgradeRequest.create(mac))
