@@ -2,7 +2,7 @@
 
 from typing import Final
 
-from ..models.wlan import Wlan
+from ..models.wlan import Wlan, WlanEnableRequest
 from .api_handlers import APIHandler
 
 URL: Final = "/rest/wlanconf"  # List WLAN configuration
@@ -17,12 +17,12 @@ class Wlans(APIHandler):
 
     async def enable(self, wlan: Wlan) -> list[dict]:
         """Block client from controller."""
-        wlan_url = f"{URL}/{wlan.id}"
-        data = {"enabled": True}
-        return await self.controller.request("put", wlan_url, json=data)
+        return await self.controller.request_object(
+            WlanEnableRequest.create(wlan, enable=True)
+        )
 
     async def disable(self, wlan: Wlan) -> list[dict]:
         """Unblock client from controller."""
-        wlan_url = f"{URL}/{wlan.id}"
-        data = {"enabled": False}
-        return await self.controller.request("put", wlan_url, json=data)
+        return await self.controller.request_object(
+            WlanEnableRequest.create(wlan, enable=False)
+        )
