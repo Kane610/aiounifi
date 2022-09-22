@@ -23,12 +23,12 @@ class DPIRestrictionApps(APIHandler):
 
     async def enable(self, app_id: str) -> list[dict]:
         """Enable DPI Restriction Group Apps."""
-        return await self.controller.request_object(
+        return await self.controller.request(
             DPIRestrictionAppEnableRequest.create(app_id, enable=True)
         )
 
     async def disable(self, app_id: str) -> list[dict]:
         """Disable DPI Restriction Group Apps."""
-        return await self.controller.request_object(
+        return await self.controller.request(
             DPIRestrictionAppEnableRequest.create(app_id, enable=False)
         )

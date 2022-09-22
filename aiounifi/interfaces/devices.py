@@ -54,4 +54,4 @@ class Devices(APIHandler):
 
     async def upgrade(self, mac: str) -> list[dict]:
         """Upgrade network device."""
-        return await self.controller.request_object(DeviceUpgradeRequest.create(mac))
+        return await self.controller.request(DeviceUpgradeRequest.create(mac))

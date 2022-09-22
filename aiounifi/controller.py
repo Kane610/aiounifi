@@ -30,6 +30,7 @@ from .interfaces.events import EventHandler
 from .interfaces.messages import MessageHandler
 from .interfaces.wlans import Wlans
 from .models.message import MessageKey
+from .models.site import SiteDescriptionRequest, SiteListRequest
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
@@ -148,18 +149,13 @@ class Controller:
 
     async def sites(self) -> dict:
         """Retrieve what sites are provided by controller."""
-        if self.is_unifi_os:
-            url = f"{self.url}/proxy/network/api/self/sites"
-        else:
-            url = f"{self.url}/api/self/sites"
-
-        sites = await self.request("get", url=url)
+        sites = await self.request(SiteListRequest.create())
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
     async def site_description(self) -> list[dict]:
         """User description of current site."""
-        description = await self.request("get", "/self")
+        description = await self.request(SiteDescriptionRequest.create())
         LOGGER.debug(description)
         return description
 
@@ -207,31 +203,12 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
 
-    async def request_object(self, request_object: RequestObject):
+    async def request(self, request_object: RequestObject) -> list[dict]:
         """Make a request to the API, retry login on failure."""
-        await self.request(
-            method=request_object.method,
-            path=request_object.path,
-            json=request_object.data,
-        )
-
-    async def request(
-        self,
-        method: str,
-        path: str = "",
-        json: dict[str, Any] | None = None,
-        url: str = "",
-    ) -> list[dict]:
-        """Make a request to the API, retry login on failure."""
-        if not url:
-            if self.is_unifi_os:
-                url = f"{self.url}/proxy/network/api/s/{self.site}"
-            else:
-                url = f"{self.url}/api/s/{self.site}"
-            url += f"{path}"
+        url = request_object.generate_url(self.url, self.site, self.is_unifi_os)
 
         try:
-            return await self._request(method, url, json)
+            return await self._request(request_object.method, url, request_object.data)
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -239,7 +216,7 @@ class Controller:
             # Session likely expired, try again
             self.can_retry_login = False
             await self.login()
-            return await self._request(method, url, json)
+            return await self._request(request_object.method, url, request_object.data)
 
     async def _request(
         self,

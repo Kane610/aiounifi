@@ -319,7 +319,7 @@ class Device(APIItem):
     async def set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
         """Set outlet relay state."""
         LOGGER.debug("Override outlet %d with relay_state %s", outlet_idx, str(state))
-        return await self._controller.request_object(
+        return await self._controller.request(
             DeviceSetOutletRelayRequest.create(self, outlet_idx, state)
         )
 
@@ -328,14 +328,14 @@ class Device(APIItem):
     ) -> list[dict]:
         """Set outlet cycle_enabled flag."""
         LOGGER.debug("Override outlet %d with cycle_enabled %s", outlet_idx, str(state))
-        return await self._controller.request_object(
+        return await self._controller.request(
             DeviceSetOutletCycleEnabledRequest.create(self, outlet_idx, state)
         )
 
     async def set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
         """Set port poe mode."""
         LOGGER.debug("Override port %d with mode %s", port_idx, mode)
-        return await self._controller.request_object(
+        return await self._controller.request(
             DeviceSetPoePortModeRequest.create(self, port_idx, mode)
         )
 

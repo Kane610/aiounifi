@@ -37,6 +37,7 @@ from aiounifi.interfaces.api_handlers import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.interfaces.clients import URL as client_url
 from aiounifi.interfaces.devices import URL as device_url
 from aiounifi.models.event import EventKey
+from aiounifi.models.request_object import RequestObject
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
@@ -276,7 +277,7 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         content_type="text/json",
         status=200,
     )
-    await unifi_controller.request("get", client_url)
+    await unifi_controller.request(RequestObject("get", client_url, {}))
 
     # After a login failure we retry once
     mock_aioresponse.get(
@@ -307,7 +308,7 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
         status=200,
     )
 
-    await unifi_controller.request("get", device_url)
+    await unifi_controller.request(RequestObject("get", device_url, {}))
     assert unifi_controller.last_response.status == 200
 
 
@@ -341,7 +342,7 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
         content_type="text/json",
         status=200,
     )
-    await unifi_controller.request("get", client_url)
+    await unifi_controller.request(RequestObject("get", client_url, {}))
 
     # After a login failure we retry once
     mock_aioresponse.get(
@@ -359,7 +360,7 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
     )
 
     with pytest.raises(LoginRequired):
-        await unifi_controller.request("get", device_url)
+        await unifi_controller.request(RequestObject("get", device_url, {}))
 
     # After a login failure and retry, we do
     # not retry over and over
@@ -370,7 +371,7 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
         status=401,
     )
     with pytest.raises(LoginRequired):
-        await unifi_controller.request("get", device_url)
+        await unifi_controller.request(RequestObject("get", device_url, {}))
 
 
 async def test_no_data(mock_aioresponse, unifi_controller):
