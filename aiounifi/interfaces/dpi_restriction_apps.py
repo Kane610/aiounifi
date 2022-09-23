@@ -2,7 +2,10 @@
 
 from typing import Final
 
-from ..models.dpi_restriction_app import DPIRestrictionApp
+from ..models.dpi_restriction_app import (
+    DPIRestrictionApp,
+    DPIRestrictionAppEnableRequest,
+)
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
 
@@ -20,12 +23,12 @@ class DPIRestrictionApps(APIHandler):
 
     async def enable(self, app_id: str) -> list[dict]:
         """Enable DPI Restriction Group Apps."""
-        app_url = f"{APP_URL}/{app_id}"
-        data = {"enabled": True}
-        return await self.controller.request("put", app_url, json=data)
+        return await self.controller.request(
+            DPIRestrictionAppEnableRequest.create(app_id, enable=True)
+        )
 
     async def disable(self, app_id: str) -> list[dict]:
         """Disable DPI Restriction Group Apps."""
-        app_url = f"{APP_URL}/{app_id}"
-        data = {"enabled": False}
-        return await self.controller.request("put", app_url, json=data)
+        return await self.controller.request(
+            DPIRestrictionAppEnableRequest.create(app_id, enable=False)
+        )

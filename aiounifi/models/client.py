@@ -2,7 +2,52 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from .api import APIItem
+from .request_object import RequestObject
+
+
+@dataclass
+class ClientBlockRequest(RequestObject):
+    """Request object for client block."""
+
+    @classmethod
+    def create(cls, mac: str, block: bool) -> "ClientBlockRequest":
+        """Create client block request."""
+        return cls(
+            method="post",
+            path="/cmd/stamgr",
+            data={"mac": mac, "cmd": "block-sta" if block else "unblock-sta"},
+        )
+
+
+@dataclass
+class ClientReconnectRequest(RequestObject):
+    """Request object for client reconnect."""
+
+    @classmethod
+    def create(cls, mac: str) -> "ClientReconnectRequest":
+        """Create client reconnect request."""
+        return cls(
+            method="post",
+            path="/cmd/stamgr",
+            data={"mac": mac, "cmd": "kick-sta"},
+        )
+
+
+@dataclass
+class ClientRemoveRequest(RequestObject):
+    """Request object for client removal."""
+
+    @classmethod
+    def create(cls, macs: list[str]) -> "ClientRemoveRequest":
+        """Create client removal request."""
+        return cls(
+            method="post",
+            path="/cmd/stamgr",
+            data={"macs": macs, "cmd": "forget-sta"},
+        )
 
 
 class Client(APIItem):

@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from typing import Final
 
-from ..models.client import Client
+from ..models.client import (
+    Client,
+    ClientBlockRequest,
+    ClientReconnectRequest,
+    ClientRemoveRequest,
+)
 from ..models.event import EventKey
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
 
 URL: Final = "/stat/sta"
-URL_CLIENT_STATE_MANAGER: Final = "/cmd/stamgr"
 
 
 class Clients(APIHandler):
@@ -40,28 +44,18 @@ class Clients(APIHandler):
 
     async def block(self, mac: str) -> list[dict]:
         """Block client from controller."""
-        data = {"mac": mac, "cmd": "block-sta"}
-        return await self.controller.request(
-            "post", URL_CLIENT_STATE_MANAGER, json=data
-        )
+        return await self.controller.request(ClientBlockRequest.create(mac, block=True))
 
     async def unblock(self, mac: str) -> list[dict]:
         """Unblock client from controller."""
-        data = {"mac": mac, "cmd": "unblock-sta"}
         return await self.controller.request(
-            "post", URL_CLIENT_STATE_MANAGER, json=data
+            ClientBlockRequest.create(mac, block=False)
         )
 
     async def reconnect(self, mac: str) -> list[dict]:
         """Force a wireless client to reconnect to the network."""
-        data = {"mac": mac, "cmd": "kick-sta"}
-        return await self.controller.request(
-            "post", URL_CLIENT_STATE_MANAGER, json=data
-        )
+        return await self.controller.request(ClientReconnectRequest.create(mac))
 
     async def remove_clients(self, macs: list[str]) -> list[dict]:
         """Make controller forget provided clients."""
-        data = {"macs": macs, "cmd": "forget-sta"}
-        return await self.controller.request(
-            "post", URL_CLIENT_STATE_MANAGER, json=data
-        )
+        return await self.controller.request(ClientRemoveRequest.create(macs))

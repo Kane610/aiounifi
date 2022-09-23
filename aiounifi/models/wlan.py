@@ -1,6 +1,25 @@
 """WLANs as part of a UniFi network."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 from .api import APIItem
+from .request_object import RequestObject
+
+
+@dataclass
+class WlanEnableRequest(RequestObject):
+    """Request object for wlan enable."""
+
+    @classmethod
+    def create(cls, wlan: Wlan, enable: bool) -> "WlanEnableRequest":
+        """Create wlan enable request."""
+        return cls(
+            method="put",
+            path=f"/rest/wlanconf/{wlan.id}",
+            data={"enabled": enable},
+        )
 
 
 class Wlan(APIItem):

@@ -5,16 +5,141 @@ Access points, Gateways, Switches.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Iterator, ValuesView
+from collections.abc import Iterator, ValuesView
+from dataclasses import dataclass
 import logging
-from typing import Final
+from typing import TYPE_CHECKING
 
 from ..events import Event as UniFiEvent
 from .api import APIItem
+from .request_object import RequestObject
+
+if TYPE_CHECKING:
+    from ..controller import Controller
 
 LOGGER = logging.getLogger(__name__)
 
-URL: Final = "/stat/device"
+
+@dataclass
+class DeviceUpgradeRequest(RequestObject):
+    """Request object for device upgrade."""
+
+    @classmethod
+    def create(cls, mac: str) -> "DeviceUpgradeRequest":
+        """Create device upgrade request."""
+        return cls(
+            method="post",
+            path="/cmd/devmgr",
+            data={"mac": mac, "cmd": "upgrade"},
+        )
+
+
+@dataclass
+class DeviceSetOutletRelayRequest(RequestObject):
+    """Request object for outlet relay state."""
+
+    @classmethod
+    def create(
+        cls, device: Device, outlet_idx: int, state: bool
+    ) -> "DeviceSetOutletRelayRequest":
+        """Create device outlet relay state request.
+
+        True:  outlet power output on.
+        False: outlet power output off.
+        """
+        existing_override = False
+        for outlet_override in device.outlet_overrides:
+            if outlet_idx == outlet_override["index"]:
+                outlet_override["relay_state"] = state
+                existing_override = True
+                break
+
+        if not existing_override:
+            device.outlet_overrides.append(
+                {
+                    "index": outlet_idx,
+                    "name": device.outlets[outlet_idx].name,
+                    "relay_state": state,
+                }
+            )
+
+        return cls(
+            method="put",
+            path=f"/rest/device/{device.id}",
+            data={"outlet_overrides": device.outlet_overrides},
+        )
+
+
+@dataclass
+class DeviceSetOutletCycleEnabledRequest(RequestObject):
+    """Request object for outlet cycle_enabled flag."""
+
+    @classmethod
+    def create(
+        cls, device: Device, outlet_idx: int, state: bool
+    ) -> "DeviceSetOutletCycleEnabledRequest":
+        """Create device outlet outlet cycle_enabled flag request.
+
+        True:  UniFi Network will power cycle this outlet if the internet goes down.
+        False: UniFi Network will not power cycle this outlet if the internet goes down.
+        """
+        existing_override = False
+        for outlet_override in device.outlet_overrides:
+            if outlet_idx == outlet_override["index"]:
+                outlet_override["cycle_enabled"] = state
+                existing_override = True
+                break
+
+        if not existing_override:
+            device.outlet_overrides.append(
+                {
+                    "index": outlet_idx,
+                    "name": device.outlets[outlet_idx].name,
+                    "cycle_enabled": state,
+                }
+            )
+
+        return cls(
+            method="put",
+            path=f"/rest/device/{device.id}",
+            data={"outlet_overrides": device.outlet_overrides},
+        )
+
+
+@dataclass
+class DeviceSetPoePortModeRequest(RequestObject):
+    """Request object for setting port POE mode."""
+
+    @classmethod
+    def create(
+        cls, device: Device, port_idx: int, mode: str
+    ) -> "DeviceSetPoePortModeRequest":
+        """Create device set port poe mode request.
+
+        Auto, 24v, passthrough, off.
+        Make sure to not overwrite any existing configs.
+        """
+        existing_override = False
+        for port_override in device.port_overrides:
+            if port_idx == port_override["port_idx"]:
+                port_override["poe_mode"] = mode
+                existing_override = True
+                break
+
+        if not existing_override:
+            device.port_overrides.append(
+                {
+                    "port_idx": port_idx,
+                    "portconf_id": device.ports[port_idx].portconf_id,
+                    "poe_mode": mode,
+                }
+            )
+
+        return cls(
+            method="put",
+            path=f"/rest/device/{device.id}",
+            data={"port_overrides": device.port_overrides},
+        )
 
 
 class Device(APIItem):
@@ -23,10 +148,10 @@ class Device(APIItem):
     def __init__(
         self,
         raw: dict,
-        request: Callable[..., Awaitable[list[dict]]],
+        controller: Controller,
     ) -> None:
         """Initialize device."""
-        super().__init__(raw, request)
+        super().__init__(raw, controller)
         self.ports = Ports(raw.get("port_table", []))
         self.outlets = Outlets(raw.get("outlet_table", []))
 
@@ -192,91 +317,27 @@ class Device(APIItem):
         return self.raw.get("wlan_overrides", [])
 
     async def set_outlet_relay_state(self, outlet_idx: int, state: bool) -> list[dict]:
-        """Set outlet relay state.
-
-        True:  outlet power output on.
-        False: outlet power output off.
-        """
+        """Set outlet relay state."""
         LOGGER.debug("Override outlet %d with relay_state %s", outlet_idx, str(state))
-
-        existing_override = False
-        for outlet_override in self.outlet_overrides:
-            if outlet_idx == outlet_override["index"]:
-                outlet_override["relay_state"] = state
-                existing_override = True
-                break
-
-        if not existing_override:
-            self.outlet_overrides.append(
-                {
-                    "index": outlet_idx,
-                    "name": self.outlets[outlet_idx].name,
-                    "relay_state": state,
-                }
-            )
-        url = f"/rest/device/{self.id}"
-        data = {"outlet_overrides": self.outlet_overrides}
-
-        return await self._request("put", url, json=data)
+        return await self._controller.request(
+            DeviceSetOutletRelayRequest.create(self, outlet_idx, state)
+        )
 
     async def set_outlet_cycle_enabled(
         self, outlet_idx: int, state: bool
     ) -> list[dict]:
-        """Set outlet cycle_enabled flag.
-
-        True:  UniFi Network will power cycle this outlet if the internet goes down.
-        False: UniFi Network will not power cycle this outlet if the internet goes down.
-        """
+        """Set outlet cycle_enabled flag."""
         LOGGER.debug("Override outlet %d with cycle_enabled %s", outlet_idx, str(state))
-
-        existing_override = False
-        for outlet_override in self.outlet_overrides:
-            if outlet_idx == outlet_override["index"]:
-                outlet_override["cycle_enabled"] = state
-                existing_override = True
-                break
-
-        if not existing_override:
-            self.outlet_overrides.append(
-                {
-                    "index": outlet_idx,
-                    "name": self.outlets[outlet_idx].name,
-                    "cycle_enabled": state,
-                }
-            )
-        url = f"/rest/device/{self.id}"
-        data = {"outlet_overrides": self.outlet_overrides}
-
-        return await self._request("put", url, json=data)
+        return await self._controller.request(
+            DeviceSetOutletCycleEnabledRequest.create(self, outlet_idx, state)
+        )
 
     async def set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict]:
-        """Set port poe mode.
-
-        Auto, 24v, passthrough, off.
-        Make sure to not overwrite any existing configs.
-        """
+        """Set port poe mode."""
         LOGGER.debug("Override port %d with mode %s", port_idx, mode)
-
-        existing_override = False
-        for port_override in self.port_overrides:
-            if port_idx == port_override["port_idx"]:
-                port_override["poe_mode"] = mode
-                existing_override = True
-                break
-
-        if not existing_override:
-            self.port_overrides.append(
-                {
-                    "port_idx": port_idx,
-                    "portconf_id": self.ports[port_idx].portconf_id,
-                    "poe_mode": mode,
-                }
-            )
-
-        url = f"/rest/device/{self.id}"
-        data = {"port_overrides": self.port_overrides}
-
-        return await self._request("put", url, json=data)
+        return await self._controller.request(
+            DeviceSetPoePortModeRequest.create(self, port_idx, mode)
+        )
 
     def __repr__(self) -> str:
         """Return the representation."""

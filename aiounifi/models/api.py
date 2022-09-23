@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 import logging
-from typing import Final, final
+from typing import TYPE_CHECKING, Final, final
 
 from ..events import Event as UniFiEvent
+
+if TYPE_CHECKING:
+    from ..controller import Controller
 
 SubscriptionType = Callable[..., None]
 
@@ -22,11 +25,12 @@ class APIItem:
     def __init__(
         self,
         raw: dict,
-        request: Callable[..., Awaitable[list[dict]]],
+        controller: Controller,
     ) -> None:
         """Initialize API item."""
         self.raw = raw
-        self._request = request
+        self._controller = controller
+        self._request = controller.request
         self._event: UniFiEvent | None = None
         self._source = SOURCE_DATA
         self._callbacks: list[SubscriptionType] = []

@@ -1,6 +1,25 @@
 """DPI Restrictions as part of a UniFi network."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 from .api import APIItem
+from .request_object import RequestObject
+
+
+@dataclass
+class DPIRestrictionAppEnableRequest(RequestObject):
+    """Request object for enabling DPI Restriction App."""
+
+    @classmethod
+    def create(cls, app_id: str, enable: bool) -> "DPIRestrictionAppEnableRequest":
+        """Create enabling DPI Restriction App request."""
+        return cls(
+            method="put",
+            path=f"/rest/dpiapp/{app_id}",
+            data={"enabled": enable},
+        )
 
 
 class DPIRestrictionApp(APIItem):

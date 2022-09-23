@@ -8,6 +8,7 @@ from typing import Any, Final, final
 
 from ..models.event import Event
 from ..models.message import Message
+from ..models.request_object import RequestObject
 
 SubscriptionType = Callable[[str, str], None]
 UnsubscribeType = Callable[[], None]
@@ -43,7 +44,7 @@ class APIHandler:
     @final
     async def update(self) -> None:
         """Refresh data."""
-        raw = await self.controller.request("get", self.path)
+        raw = await self.controller.request(RequestObject("get", self.path, None))
         self.process_raw(raw)
 
     def process_raw(self, raw: list[dict[str, Any]]) -> set:
@@ -78,7 +79,7 @@ class APIHandler:
             obj.update(raw=raw)
             return ""
 
-        self._items[obj_id] = self.item_cls(raw, self.controller.request)
+        self._items[obj_id] = self.item_cls(raw, self.controller)
 
         for callback in self._subscribers:
             callback("added", obj_id)
