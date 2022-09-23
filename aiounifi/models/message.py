@@ -16,6 +16,7 @@ class MessageKey(enum.Enum):
     "meta": {"rc": "ok", "message": "device:sync"}.
     """
 
+    ALERT = "alert"
     CLIENT = "sta:sync"
     CLIENT_REMOVED = "user:delete"
     DEVICE = "device:sync"
