@@ -74,6 +74,9 @@ class APIHandler:
     @final
     def process_item(self, raw: dict[str, Any]) -> str:
         """Process item data."""
+        if self.obj_id_key not in raw:
+            return ""
+
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items[obj_id]
             obj.update(raw=raw)
