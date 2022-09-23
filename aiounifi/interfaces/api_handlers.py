@@ -44,7 +44,7 @@ class APIHandler:
     @final
     async def update(self) -> None:
         """Refresh data."""
-        raw = await self.controller.request(RequestObject("get", self.path, {}))
+        raw = await self.controller.request(RequestObject("get", self.path, None))
         self.process_raw(raw)
 
     def process_raw(self, raw: list[dict[str, Any]]) -> set:

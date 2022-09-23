@@ -14,11 +14,7 @@ class SiteListRequest(RequestObject):
     @classmethod
     def create(cls) -> "SiteListRequest":
         """Create site list request."""
-        return cls(
-            method="get",
-            path="",
-            data=None,
-        )
+        return cls(method="get", path="", data=None)
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Url to list sites is global for controller."""
@@ -34,8 +30,4 @@ class SiteDescriptionRequest(RequestObject):
     @classmethod
     def create(cls) -> "SiteDescriptionRequest":
         """Create site list request."""
-        return cls(
-            method="get",
-            path="/self",
-            data=None,
-        )
+        return cls(method="get", path="/self", data=None)
