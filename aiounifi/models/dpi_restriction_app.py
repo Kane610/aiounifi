@@ -10,11 +10,11 @@ from .request_object import RequestObject
 
 @dataclass
 class DPIRestrictionAppEnableRequest(RequestObject):
-    """Request object for client block."""
+    """Request object for enabling DPI Restriction App."""
 
     @classmethod
     def create(cls, app_id: str, enable: bool) -> "DPIRestrictionAppEnableRequest":
-        """Create client block request."""
+        """Create enabling DPI Restriction App request."""
         return cls(
             method="put",
             path=f"/rest/dpiapp/{app_id}",

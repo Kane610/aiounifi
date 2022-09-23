@@ -116,7 +116,7 @@ class Controller:
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
-        await self._request("get", url=self.url, allow_redirects=False)
+        await self._request("get", self.url, allow_redirects=False)
         if (
             response := self.last_response
         ) is not None and response.status == HTTPStatus.OK:
@@ -136,7 +136,7 @@ class Controller:
             "remember": True,
         }
 
-        await self._request("post", url=url, json=auth)
+        await self._request("post", url, json=auth)
 
         if (
             (response := self.last_response) is not None
@@ -205,7 +205,7 @@ class Controller:
 
     async def request(self, request_object: RequestObject) -> list[dict]:
         """Make a request to the API, retry login on failure."""
-        url = request_object.generate_url(self.url, self.site, self.is_unifi_os)
+        url = self.url + request_object.full_path(self.site, self.is_unifi_os)
 
         try:
             return await self._request(request_object.method, url, request_object.data)

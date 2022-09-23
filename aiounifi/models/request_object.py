@@ -14,8 +14,8 @@ class RequestObject:
     path: str
     data: dict[str, Any] | None
 
-    def generate_url(self, url: str, site: str, is_unifi_os: bool) -> str:
+    def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""
         if is_unifi_os:
-            url = f"{url}/proxy/network"
-        return f"{url}/api/s/{site}{self.path}"
+            return f"/proxy/network/api/s/{site}{self.path}"
+        return f"/api/s/{site}{self.path}"

@@ -20,11 +20,11 @@ class SiteListRequest(RequestObject):
             data=None,
         )
 
-    def generate_url(self, url: str, site: str, is_unifi_os: bool) -> str:
+    def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Url to list sites is global for controller."""
         if is_unifi_os:
-            url = f"{url}/proxy/network"
-        return f"{url}/api/self/sites"
+            return "/proxy/network/api/self/sites"
+        return "/api/self/sites"
 
 
 @dataclass
