@@ -9,15 +9,29 @@ from .request_object import RequestObject
 
 
 @dataclass
+class WlanChangePasswordRequest(RequestObject):
+    """Request object for wlan password change."""
+
+    @classmethod
+    def create(cls, wlan_id: str, password: str) -> "WlanChangePasswordRequest":
+        """Create wlan password change request."""
+        return cls(
+            method="put",
+            path=f"/rest/wlanconf/{wlan_id}",
+            data={"x_passphrase": password},
+        )
+
+
+@dataclass
 class WlanEnableRequest(RequestObject):
     """Request object for wlan enable."""
 
     @classmethod
-    def create(cls, wlan: Wlan, enable: bool) -> "WlanEnableRequest":
+    def create(cls, wlan_id: str, enable: bool) -> "WlanEnableRequest":
         """Create wlan enable request."""
         return cls(
             method="put",
-            path=f"/rest/wlanconf/{wlan.id}",
+            path=f"/rest/wlanconf/{wlan_id}",
             data={"enabled": enable},
         )
 
