@@ -21,6 +21,45 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class DevicePowerCyclePortRequest(RequestObject):
+    """Request object for power cycle PoE port."""
+
+    @classmethod
+    def create(cls, mac: str, port_idx: int) -> "DevicePowerCyclePortRequest":
+        """Create power cycle of PoE request."""
+        return cls(
+            method="post",
+            path="/cmd/devmgr",
+            data={
+                "cmd": "power-cycle",
+                "mac": mac,
+                "port_idx": port_idx,
+            },
+        )
+
+
+@dataclass
+class DeviceRestartRequest(RequestObject):
+    """Request object for device restart."""
+
+    @classmethod
+    def create(cls, mac: str, soft=True) -> "DeviceRestartRequest":
+        """Create device restart request.
+
+        Hard is specifically for PoE switches and will additionally cycle PoE ports.
+        """
+        return cls(
+            method="post",
+            path="/cmd/devmgr",
+            data={
+                "cmd": "restart",
+                "mac": mac,
+                "reboot_type": "soft" if soft else "hard",
+            },
+        )
+
+
+@dataclass
 class DeviceUpgradeRequest(RequestObject):
     """Request object for device upgrade."""
 
@@ -30,7 +69,10 @@ class DeviceUpgradeRequest(RequestObject):
         return cls(
             method="post",
             path="/cmd/devmgr",
-            data={"mac": mac, "cmd": "upgrade"},
+            data={
+                "cmd": "upgrade",
+                "mac": mac,
+            },
         )
 
 
