@@ -5,15 +5,17 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-from ssl import SSLContext
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import aiohttp
 import async_timeout
 
 import aiounifi
 from aiounifi.controller import Controller
-from aiounifi.websocket import WebsocketSignal, WebsocketState
+
+if TYPE_CHECKING:
+    from ssl import SSLContext
+    from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 LOGGER = logging.getLogger(__name__)
 
