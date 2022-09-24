@@ -229,7 +229,6 @@ class Controller:
         self.last_response = None
 
         LOGGER.debug("%s", url)
-        print(method, url, json)
 
         try:
             async with self.session.request(
