@@ -5,6 +5,12 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 
 import pytest
 
+from aiounifi.models.device import (
+    DevicePowerCyclePortRequest,
+    DeviceRestartRequest,
+    DeviceUpgradeRequest,
+)
+
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
     GATEWAY_USG3,
@@ -12,12 +18,6 @@ from .fixtures import (
     PLUG_UP1,
     STRIP_UP6,
     SWITCH_16_PORT_POE,
-)
-
-from aiounifi.models.device import (
-    DevicePowerCyclePortRequest,
-    DeviceRestartRequest,
-    DeviceUpgradeRequest,
 )
 
 

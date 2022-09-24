@@ -5,9 +5,9 @@ pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 
 import pytest
 
-from .fixtures import WLANS
-
 from aiounifi.models.wlan import WlanChangePasswordRequest, WlanEnableRequest
+
+from .fixtures import WLANS
 
 
 async def test_wlan_password_change(
@@ -68,7 +68,7 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
 
     wlan = wlans["SSID 1"]
     assert wlan.id == "012345678910111213141516"
-    assert wlan.bc_filter_enabled == False
+    assert wlan.bc_filter_enabled is False
     assert wlan.bc_filter_list == []
     assert wlan.dtim_mode == "default"
     assert wlan.dtim_na == 1
