@@ -80,12 +80,12 @@ class Controller:
         *,
         username: str,
         password: str,
-        port=8443,
-        site="default",
+        port: int = 8443,
+        site: str = "default",
         sslcontext: SSLContext | None = None,
-        callback: Callable[[WebsocketSignal, dict | WebsocketState], None]
+        callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None]
         | None = None,
-    ):
+    ) -> None:
         """Session setup."""
         self.host = host
         self.session = websession
@@ -147,13 +147,13 @@ class Controller:
 
         self.can_retry_login = True
 
-    async def sites(self) -> dict:
+    async def sites(self) -> dict[str, Any]:
         """Retrieve what sites are provided by controller."""
         sites = await self.request(SiteListRequest.create())
         LOGGER.debug(pformat(sites))
         return {site["desc"]: site for site in sites}
 
-    async def site_description(self) -> list[dict]:
+    async def site_description(self) -> list[dict[str, Any]]:
         """User description of current site."""
         description = await self.request(SiteDescriptionRequest.create())
         LOGGER.debug(description)
@@ -203,7 +203,7 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
 
-    async def request(self, request_object: RequestObject) -> list[dict]:
+    async def request(self, request_object: RequestObject) -> list[dict[str, Any]]:
         """Make a request to the API, retry login on failure."""
         url = self.url + request_object.full_path(self.site, self.is_unifi_os)
 
@@ -224,7 +224,7 @@ class Controller:
         url: str,
         json: dict[str, Any] | None = None,
         **kwargs: bool,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]] | Any:
         """Make a request to the API."""
         self.last_response = None
 
@@ -274,7 +274,7 @@ class Controller:
             ) from None
 
 
-def _raise_on_error(data) -> None:
+def _raise_on_error(data: dict[str, Any]) -> None:
     """Check response for error message."""
     if not isinstance(data, dict):
         return None
