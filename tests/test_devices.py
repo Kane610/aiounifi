@@ -3,6 +3,8 @@
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
+import pytest
+
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
     GATEWAY_USG3,
@@ -10,6 +12,54 @@ from .fixtures import (
     STRIP_UP6,
     SWITCH_16_PORT_POE,
 )
+
+from aiounifi.models.device import (
+    DevicePowerCyclePortRequest,
+    DeviceRestartRequest,
+    DeviceUpgradeRequest,
+)
+
+
+async def test_power_cycle_port(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test power cycle port work."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+
+    await unifi_controller.request(DevicePowerCyclePortRequest.create("00:..:11", 1))
+
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/devmgr",
+        json={"cmd": "power-cycle", "mac": "00:..:11", "port_idx": 1},
+    )
+
+
+@pytest.mark.parametrize("input, expected", [(True, "soft"), (False, "hard")])
+async def test_device_restart(
+    mock_aioresponse, unifi_controller, unifi_called_with, input, expected
+):
+    """Test that no devices also work."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+
+    await unifi_controller.request(DeviceRestartRequest.create("00:..:11", input))
+
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/devmgr",
+        json={"cmd": "restart", "mac": "00:..:11", "reboot_type": expected},
+    )
+
+
+async def test_device_upgrade(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test device upgrade request work."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+
+    await unifi_controller.request(DeviceUpgradeRequest.create("00:..:11"))
+
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/devmgr",
+        json={"cmd": "upgrade", "mac": "00:..:11"},
+    )
 
 
 async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with):

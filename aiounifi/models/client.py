@@ -18,7 +18,10 @@ class ClientBlockRequest(RequestObject):
         return cls(
             method="post",
             path="/cmd/stamgr",
-            data={"mac": mac, "cmd": "block-sta" if block else "unblock-sta"},
+            data={
+                "cmd": "block-sta" if block else "unblock-sta",
+                "mac": mac,
+            },
         )
 
 
@@ -32,7 +35,10 @@ class ClientReconnectRequest(RequestObject):
         return cls(
             method="post",
             path="/cmd/stamgr",
-            data={"mac": mac, "cmd": "kick-sta"},
+            data={
+                "cmd": "kick-sta",
+                "mac": mac,
+            },
         )
 
 
@@ -46,7 +52,10 @@ class ClientRemoveRequest(RequestObject):
         return cls(
             method="post",
             path="/cmd/stamgr",
-            data={"macs": macs, "cmd": "forget-sta"},
+            data={
+                "cmd": "forget-sta",
+                "macs": macs,
+            },
         )
 
 
