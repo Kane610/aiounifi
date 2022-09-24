@@ -1,27 +1,42 @@
 """Use aiounifi as a CLI."""
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import logging
+from ssl import SSLContext
+from typing import Any, Callable
 
 import aiohttp
 import async_timeout
 
 import aiounifi
+from aiounifi.controller import Controller
+from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 LOGGER = logging.getLogger(__name__)
 
 
-def signalling_callback(signal, data):
+def signalling_callback(
+    signal: WebsocketSignal, data: dict[str, Any] | WebsocketState
+) -> None:
     """Receive and print events from websocket."""
-    LOGGER.info(f"{signal}, {data}")
+    LOGGER.info(signal, data)
 
 
 async def unifi_controller(
-    host, username, password, port, site, session, sslcontext, callback
-):
+    host: str,
+    username: str,
+    password: str,
+    port: int,
+    site: str,
+    session: aiohttp.ClientSession,
+    sslcontext: SSLContext | None,
+    callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None],
+) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
-    controller = aiounifi.Controller(
+    controller = Controller(
         host,
         username=username,
         password=password,
@@ -39,19 +54,28 @@ async def unifi_controller(
         return controller
 
     except aiounifi.LoginRequired:
-        LOGGER.warning(f"Connected to UniFi at {host} but couldn't log in")
+        LOGGER.warning("Connected to UniFi at %s but couldn't log in", host)
 
     except aiounifi.Unauthorized:
-        LOGGER.warning(f"Connected to UniFi at {host} but not registered")
+        LOGGER.warning("Connected to UniFi at %s but not registered", host)
 
     except (asyncio.TimeoutError, aiounifi.RequestError):
-        LOGGER.exception(f"Error connecting to the UniFi controller at {host}")
+        LOGGER.exception("Error connecting to the UniFi controller at %s", host)
 
     except aiounifi.AiounifiException:
         LOGGER.exception("Unknown UniFi communication error occurred")
 
+    return None
 
-async def main(host, username, password, port, site, sslcontext=False):
+
+async def main(
+    host: str,
+    username: str,
+    password: str,
+    port: int,
+    site: str,
+    sslcontext: SSLContext | None = None,
+) -> None:
     """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
 
@@ -105,9 +129,7 @@ if __name__ == "__main__":
         loglevel = logging.DEBUG
     logging.basicConfig(format="%(message)s", level=loglevel)
 
-    LOGGER.info(
-        f"{args.host}, {args.username}, {args.password}, {args.port}, {args.site}"
-    )
+    LOGGER.info(args.host, args.username, args.password, args.port, args.site)
 
     try:
         asyncio.run(
