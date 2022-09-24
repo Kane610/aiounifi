@@ -4,11 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
-from typing import Any, Final, final
+from typing import Any, Final, TYPE_CHECKING, final
 
 from ..models.event import Event
 from ..models.message import Message
 from ..models.request_object import RequestObject
+
+if TYPE_CHECKING:
+    from ..controller import Controller
+    from ..models.event import EventKey
+    from ..models.message import MessageKey
 
 SubscriptionType = Callable[[str, str], None]
 UnsubscribeType = Callable[[], None]
@@ -25,11 +30,11 @@ class APIHandler:
     obj_id_key: str
     path: str
     item_cls: Any
-    events: tuple = ()
-    process_messages: tuple = ()
-    remove_messages: tuple = ()
+    events: tuple[EventKey, ...] = ()
+    process_messages: tuple[MessageKey, ...] = ()
+    remove_messages: tuple[MessageKey, ...] = ()
 
-    def __init__(self, controller) -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize API items."""
         self.controller = controller
         self._items: dict[int | str, Any] = {}
@@ -47,9 +52,9 @@ class APIHandler:
         raw = await self.controller.request(RequestObject("get", self.path, None))
         self.process_raw(raw)
 
-    def process_raw(self, raw: list[dict[str, Any]]) -> set:
+    def process_raw(self, raw: list[dict[str, Any]]) -> set[str]:
         """Process full raw response."""
-        new_items = set()
+        new_items: set[str] = set()
         for raw_item in raw:
             if obj_id := self.process_item(raw_item):
                 new_items.add(obj_id)
@@ -74,6 +79,8 @@ class APIHandler:
     @final
     def process_item(self, raw: dict[str, Any]) -> str:
         """Process item data."""
+        obj_id: str
+
         if self.obj_id_key not in raw:
             return ""
 
@@ -92,6 +99,7 @@ class APIHandler:
     @final
     def remove_item(self, raw: dict[str, Any]) -> str:
         """Remove item."""
+        obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items.pop(obj_id)
             obj.clear_callbacks()
@@ -106,7 +114,7 @@ class APIHandler:
         """
         self._subscribers.append(callback)
 
-        def unsubscribe():
+        def unsubscribe() -> None:
             self._subscribers.remove(callback)
 
         return unsubscribe

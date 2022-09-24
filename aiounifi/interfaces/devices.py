@@ -5,7 +5,7 @@ Access points, gateways, power plugs, switches.
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Any, Final
 
 from ..models.device import Device, DeviceUpgradeRequest
 from ..models.event import EventKey
@@ -52,6 +52,6 @@ class Devices(APIHandler):
     )
     process_messages = (MessageKey.DEVICE,)
 
-    async def upgrade(self, mac: str) -> list[dict]:
+    async def upgrade(self, mac: str) -> list[dict[str, Any]]:
         """Upgrade network device."""
         return await self.controller.request(DeviceUpgradeRequest.create(mac))

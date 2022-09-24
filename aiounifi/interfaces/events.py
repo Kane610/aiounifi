@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from ..models.event import Event, EventKey
 from ..models.message import Message, MessageKey
+
+if TYPE_CHECKING:
+    from ..controller import Controller
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ UnsubscribeType = Callable[[], None]
 class EventHandler:
     """Event handler class."""
 
-    def __init__(self, controller) -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize API items."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []

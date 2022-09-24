@@ -208,7 +208,11 @@ class Controller:
         url = self.url + request_object.full_path(self.site, self.is_unifi_os)
 
         try:
-            return await self._request(request_object.method, url, request_object.data)
+            response: list[dict[str, Any]] = await self._request(
+                request_object.method, url, request_object.data
+            )
+            return response
+            # return await self._request(request_object.method, url, request_object.data)
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -216,7 +220,7 @@ class Controller:
             # Session likely expired, try again
             self.can_retry_login = False
             await self.login()
-            return await self._request(request_object.method, url, request_object.data)
+            return await self.request(request_object)
 
     async def _request(
         self,
