@@ -517,9 +517,11 @@ class Outlet:
         return self.raw["index"]
 
     @property
-    def has_relay(self) -> bool:
+    def has_relay(self) -> bool | None:
         """Is the outlet controllable."""
-        return self.raw.get("has_relay", False)
+        if "has_relay" in self.raw:
+            return self.raw["has_relay"]
+        return None
 
     @property
     def relay_state(self) -> bool:
@@ -527,20 +529,24 @@ class Outlet:
         return self.raw["relay_state"]
 
     @property
-    def cycle_enabled(self) -> bool:
+    def cycle_enabled(self) -> bool | None:
         """Modem Power Cycle."""
-        return self.raw.get("cycle_enabled", False)
+        if "cycle_enabled" in self.raw:
+            return self.raw["cycle_enabled"]
+        return None
 
     # Metering capabilities of outlet
 
     @property
-    def has_metering(self) -> bool:
+    def has_metering(self) -> bool | None:
         """Is metering supported.
 
         Reported false by UP1 and UP6 which does not have power metering.
         Not reported by UPD Pro which does report power metering.
         """
-        return self.raw.get("has_metering", False)
+        if "has_metering" in self.raw:
+            return self.raw["has_metering"]
+        return None
 
     @property
     def caps(self) -> int:
@@ -548,24 +554,32 @@ class Outlet:
         return self.raw["outlet_caps"]
 
     @property
-    def voltage(self) -> str:
+    def voltage(self) -> str | None:
         """Voltage draw of outlet."""
-        return self.raw.get("outlet_voltage", "")
+        if "outlet_voltage" in self.raw:
+            return self.raw["outlet_voltage"]
+        return None
 
     @property
-    def current(self) -> str:
+    def current(self) -> str | None:
         """Usage of outlet."""
-        return self.raw.get("outlet_current", "")
+        if "outlet_current" in self.raw:
+            return self.raw["outlet_current"]
+        return None
 
     @property
-    def power(self) -> str:
+    def power(self) -> str | None:
         """Power consumption of the outlet."""
-        return self.raw.get("outlet_power", "")
+        if "outlet_power" in self.raw:
+            return self.raw["outlet_power"]
+        return None
 
     @property
-    def power_factor(self) -> str:
+    def power_factor(self) -> str | None:
         """Power factor."""
-        return self.raw.get("outlet_power_factor", "")
+        if "outlet_power_factor" in self.raw:
+            return self.raw["outlet_power_factor"]
+        return None
 
 
 class Outlets:

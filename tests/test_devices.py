@@ -335,7 +335,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
     assert outlet_1.has_relay is True
     assert outlet_1.has_metering is False
     assert outlet_1.relay_state is False
-    assert outlet_1.cycle_enabled is False
+    assert outlet_1.cycle_enabled is None
 
     await plug.set_outlet_cycle_enabled(1, True)
     assert unifi_called_with(
@@ -370,7 +370,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
     assert outlet_1.has_relay is False
     assert outlet_1.has_metering is True
     assert outlet_1.relay_state is True
-    assert outlet_1.cycle_enabled is False
+    assert outlet_1.cycle_enabled is None
 
 
 async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
@@ -941,17 +941,17 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         power,
         power_factor,
     ) in [
-        ("USB Outlet 1", 1, False, True, False, False, 1, "", "", "", ""),
-        ("USB Outlet 2", 2, False, False, False, False, 1, "", "", "", ""),
-        ("USB Outlet 3", 3, False, True, False, False, 1, "", "", "", ""),
-        ("USB Outlet 4", 4, False, False, False, False, 1, "", "", "", ""),
+        ("USB Outlet 1", 1, None, True, False, None, 1, None, None, None, None),
+        ("USB Outlet 2", 2, None, False, False, None, 1, None, None, None, None),
+        ("USB Outlet 3", 3, None, True, False, None, 1, None, None, None, None),
+        ("USB Outlet 4", 4, None, False, False, None, 1, None, None, None, None),
         (
             "Console",
             5,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.061",
@@ -961,10 +961,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "UDM Pro",
             6,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.248",
@@ -974,10 +974,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Unraid",
             7,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "1.454",
@@ -987,10 +987,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 8",
             8,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1000,10 +1000,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 9",
             9,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1013,10 +1013,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 10",
             10,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1026,10 +1026,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 11",
             11,
+            None,
             False,
-            False,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1039,10 +1039,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 12",
             12,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1052,10 +1052,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 13",
             13,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1065,10 +1065,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 14",
             14,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1078,10 +1078,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 15",
             15,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.127",
@@ -1091,10 +1091,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "UNVR Pro",
             16,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.278",
@@ -1104,10 +1104,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Outlet 17",
             17,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
@@ -1117,10 +1117,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Home Assistant",
             18,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.328",
@@ -1130,10 +1130,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Server Cabinet Switch",
             19,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.495",
@@ -1143,10 +1143,10 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         (
             "Rear Cabinet Lights",
             20,
-            False,
+            None,
             True,
-            False,
-            False,
+            None,
+            None,
             3,
             "118.566",
             "0.000",
