@@ -15,6 +15,7 @@ from aiounifi.controller import Controller
 
 if TYPE_CHECKING:
     from ssl import SSLContext
+
     from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 LOGGER = logging.getLogger(__name__)

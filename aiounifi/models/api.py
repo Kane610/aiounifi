@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import logging
-from typing import TYPE_CHECKING, Final, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from ..events import Event as UniFiEvent
 
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..controller import Controller
 
 SubscriptionType = Callable[..., None]
+UnsubscribeType = Callable[[], None]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +25,8 @@ class APIItem:
 
     def __init__(
         self,
-        raw: dict,
+        raw: Any,
+        # raw: dict[str, Any],
         controller: Controller,
     ) -> None:
         """Initialize API item."""
@@ -50,7 +52,7 @@ class APIItem:
 
     def update(
         self,
-        raw: dict | None = None,
+        raw: dict[str, Any] | None = None,
         event: UniFiEvent | None = None,
     ) -> None:
         """Update raw data and signal new data is available."""
@@ -68,14 +70,14 @@ class APIItem:
         for signal_update in self._callbacks + self._subscribers:
             signal_update()
 
-    def subscribe(self, callback: SubscriptionType) -> Callable:
+    def subscribe(self, callback: SubscriptionType) -> UnsubscribeType:
         """Subscribe to events.
 
         Return function to unsubscribe.
         """
         self._subscribers.append(callback)
 
-        def unsubscribe():
+        def unsubscribe() -> None:
             self._subscribers.remove(callback)
 
         return unsubscribe

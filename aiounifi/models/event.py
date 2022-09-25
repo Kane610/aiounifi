@@ -2,9 +2,10 @@
 
 #  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
 
+from dataclasses import dataclass
 import enum
 import logging
-from typing import Any, Final, final
+from typing import Any, Final, TypedDict, final
 
 LOGGER = logging.getLogger(__name__)
 
@@ -165,13 +166,112 @@ DEVICE_EVENTS: Final = (
 )
 
 
+class TypedEvent(TypedDict):
+    """Event type definition."""
+
+    _id: str
+    ap: str
+    bytes: int
+    channel: int
+    client: str
+    datetime: str
+    duration: int
+    guest: str
+    gw: str
+    hostname: str
+    key: str
+    msg: str
+    network: str
+    radio: str
+    site_id: str
+    ssid: str
+    sw: str
+    sw_name: str
+    subsystem: str
+    time: int
+    user: str
+    version_from: str
+    version_to: str
+
+
+@dataclass
+class Event2:
+    """Event type definition.
+
+    NOT DONE
+    """
+
+    _id: str
+    ap: str
+    bytes: int
+    channel: int
+    client: str
+    datetime: str
+    duration: int
+    guest: str
+    gw: str
+    hostname: str
+    key: EventKey
+    event: str
+    msg: str
+    network: str
+    radio: str
+    site_id: str
+    ssid: str
+    sw: str
+    sw_name: str
+    subsystem: str
+    time: int
+    user: str
+    version_from: str
+    version_to: str
+
+    def mac(self) -> str:
+        """Helper to retrieve mac from event."""
+        return self.client or self.guest or self.user or self.ap or self.gw or self.sw
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Event2":
+        """Create data container instance from dict."""
+        return cls(
+            _id=data["_id"],
+            datetime=data["datetime"],
+            event=data["key"],
+            key=EventKey(data["key"]),
+            msg=data["msg"],
+            time=data["time"],
+            ap=data.get("ap", ""),
+            bytes=data.get("bytes", 0),
+            channel=data.get("channel", 0),
+            client=data.get("client", ""),
+            duration=data.get("duration", 0),
+            guest=data.get("guest", ""),
+            gw=data.get("gw", ""),
+            hostname=data.get("hostname", ""),
+            network=data.get("network", ""),
+            radio=data.get("radio", ""),
+            site_id=data.get("site_id", ""),
+            ssid=data.get("ssid", ""),
+            sw=data.get("sw", ""),
+            sw_name=data.get("sw_name", ""),
+            subsystem=data.get("subsystem", ""),
+            user=data.get("user", ""),
+            version_from=data.get("version_from", ""),
+            version_to=data.get("version_to", ""),
+        )
+
+
 @final
 class Event:
     """UniFi event."""
 
-    def __init__(self, raw: dict[str, Any]) -> None:
+    # raw: TypedEvent
+
+    # def __init__(self, raw: TypedEvent) -> None:
+    # def __init__(self, raw: dict[str, Any]) -> None:
+    def __init__(self, raw: Any) -> None:
         """Initialize event."""
-        self.raw = raw
+        self.raw: TypedEvent = raw
 
     @property
     def datetime(self) -> str:

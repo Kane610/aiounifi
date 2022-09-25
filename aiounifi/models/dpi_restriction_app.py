@@ -3,9 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypedDict
 
 from .api import APIItem
 from .request_object import RequestObject
+
+
+class TypedDPIRestrictionApp(TypedDict):
+    """DPI restriction app type definition."""
+
+    _id: str
+    apps: list[str]
+    blocked: bool
+    cats: list[str]
+    enabled: bool
+    log: bool
+    site_id: str
 
 
 @dataclass
@@ -25,13 +38,15 @@ class DPIRestrictionAppEnableRequest(RequestObject):
 class DPIRestrictionApp(APIItem):
     """Represents a DPI App configuration."""
 
+    raw: TypedDPIRestrictionApp
+
     @property
     def id(self) -> str:
         """DPI app ID."""
         return self.raw["_id"]
 
     @property
-    def apps(self) -> list:
+    def apps(self) -> list[str]:
         """List of apps."""
         return self.raw["apps"]
 
@@ -41,7 +56,7 @@ class DPIRestrictionApp(APIItem):
         return self.raw["blocked"]
 
     @property
-    def cats(self) -> list:
+    def cats(self) -> list[str]:
         """Categories."""
         return self.raw["cats"]
 

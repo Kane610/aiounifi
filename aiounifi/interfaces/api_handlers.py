@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
-from typing import Any, Final, TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Any, Final, final
 
 from ..models.event import Event
 from ..models.message import Message

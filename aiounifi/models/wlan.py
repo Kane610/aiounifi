@@ -3,9 +3,52 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypedDict
 
 from .api import APIItem
 from .request_object import RequestObject
+
+
+class TypedWlan(TypedDict):
+    """Wlan type definition."""
+
+    _id: str
+    bc_filter_enabled: bool
+    bc_filter_list: list[str]
+    dtim_mode: str
+    dtim_na: int
+    dtim_ng: int
+    enabled: bool
+    group_rekey: int
+    is_guest: bool
+    mac_filter_enabled: bool
+    mac_filter_list: list[str]
+    mac_filter_policy: str
+    minrate_na_advertising_rates: bool
+    minrate_na_beacon_rate_kbps: int
+    minrate_na_data_rate_kbps: int
+    minrate_na_enabled: bool
+    minrate_na_mgmt_rate_kbps: int
+    minrate_ng_advertising_rates: bool
+    minrate_ng_beacon_rate_kbps: int
+    minrate_ng_cck_rates_enabled: bool
+    minrate_ng_data_rate_kbps: int
+    minrate_ng_enabled: bool
+    minrate_ng_mgmt_rate_kbps: int
+    name: str
+    name_combine_enabled: bool
+    name_combine_suffix: str
+    no2ghz_oui: bool
+    schedule: list[str]
+    security: str
+    site_id: str
+    usergroup_id: str
+    wep_idx: int
+    wlangroup_id: str
+    wpa_enc: str
+    wpa_mode: str
+    x_iapp_key: str
+    x_passphrase: str
 
 
 @dataclass
@@ -39,6 +82,8 @@ class WlanEnableRequest(RequestObject):
 class Wlan(APIItem):
     """Represent a WLAN configuration."""
 
+    raw: TypedWlan
+
     @property
     def id(self) -> str:
         """ID of WLAN."""
@@ -50,7 +95,7 @@ class Wlan(APIItem):
         return self.raw.get("bc_filter_enabled", False)
 
     @property
-    def bc_filter_list(self) -> list:
+    def bc_filter_list(self) -> list[str]:
         """List of BC filters."""
         return self.raw["bc_filter_list"]
 
@@ -80,17 +125,21 @@ class Wlan(APIItem):
         return self.raw["group_rekey"]
 
     @property
-    def is_guest(self) -> bool:
+    def is_guest(self) -> bool | None:
         """Is WLAN a guest network."""
-        return self.raw.get("is_guest", False)
+        if "is_guest" in self.raw:
+            return self.raw["is_guest"]
+        return None
 
     @property
-    def mac_filter_enabled(self) -> bool:
+    def mac_filter_enabled(self) -> bool | None:
         """Is MAC filtering enabled."""
-        return self.raw.get("mac_filter_enabled", False)
+        if "mac_filter_enabled" in self.raw:
+            return self.raw["mac_filter_enabled"]
+        return None
 
     @property
-    def mac_filter_list(self) -> list:
+    def mac_filter_list(self) -> list[str]:
         """List of MAC filters."""
         return self.raw["mac_filter_list"]
 
@@ -115,9 +164,11 @@ class Wlan(APIItem):
         return self.raw["minrate_na_data_rate_kbps"]
 
     @property
-    def minrate_na_enabled(self) -> bool:
+    def minrate_na_enabled(self) -> bool | None:
         """Is minrate NA enabled."""
-        return self.raw.get("minrate_na_enabled", False)
+        if "minrate_na_enabled" in self.raw:
+            return self.raw["minrate_na_enabled"]
+        return None
 
     @property
     def minrate_na_mgmt_rate_kbps(self) -> int:
@@ -135,9 +186,11 @@ class Wlan(APIItem):
         return self.raw["minrate_ng_beacon_rate_kbps"]
 
     @property
-    def minrate_ng_cck_rates_enabled(self) -> bool:
+    def minrate_ng_cck_rates_enabled(self) -> bool | None:
         """Is minrate NG CCK rates enabled."""
-        return self.raw.get("minrate_ng_cck_rates_enabled", False)
+        if "minrate_ng_cck_rates_enabled" in self.raw:
+            return self.raw["minrate_ng_cck_rates_enabled"]
+        return None
 
     @property
     def minrate_ng_data_rate_kbps(self) -> int:
@@ -145,9 +198,11 @@ class Wlan(APIItem):
         return self.raw["minrate_ng_data_rate_kbps"]
 
     @property
-    def minrate_ng_enabled(self) -> bool:
+    def minrate_ng_enabled(self) -> bool | None:
         """Is minrate NG enabled."""
-        return self.raw.get("minrate_ng_enabled", False)
+        if "minrate_ng_enabled" in self.raw:
+            return self.raw["minrate_ng_enabled"]
+        return None
 
     @property
     def minrate_ng_mgmt_rate_kbps(self) -> int:
@@ -160,14 +215,18 @@ class Wlan(APIItem):
         return self.raw["name"]
 
     @property
-    def name_combine_enabled(self) -> bool:
+    def name_combine_enabled(self) -> bool | None:
         """If 2.5 and 5 GHz SSIDs should be combined."""
-        return self.raw.get("name_combine_enabled", True)
+        if "name_combine_enabled" in self.raw:
+            return self.raw["name_combine_enabled"]
+        return None
 
     @property
-    def name_combine_suffix(self) -> str:
+    def name_combine_suffix(self) -> str | None:
         """Suffix for 2.4GHz SSID if name is not combined."""
-        return self.raw.get("name_combine_suffix", "")
+        if "name_combine_suffix" in self.raw:
+            return self.raw["name_combine_suffix"]
+        return None
 
     @property
     def no2ghz_oui(self) -> bool:
@@ -175,7 +234,7 @@ class Wlan(APIItem):
         return self.raw["no2ghz_oui"]
 
     @property
-    def schedule(self) -> list:
+    def schedule(self) -> list[str]:
         """Schedule list."""
         return self.raw["schedule"]
 

@@ -1,10 +1,27 @@
 """DPI Restrictions as part of a UniFi network."""
 
+from __future__ import annotations
+
+from typing import TypedDict
+
 from .api import APIItem
+
+
+class TypedDPIRestrictionGroup(TypedDict):
+    """DPI restriction group type definition."""
+
+    _id: str
+    attr_no_delete: bool
+    attr_hidden_id: str
+    name: str
+    site_id: str
+    dpiapp_ids: list[str]
 
 
 class DPIRestrictionGroup(APIItem):
     """Represents a DPI Group configuration."""
+
+    raw: TypedDPIRestrictionGroup
 
     @property
     def id(self) -> str:
@@ -12,9 +29,11 @@ class DPIRestrictionGroup(APIItem):
         return self.raw["_id"]
 
     @property
-    def attr_no_delete(self) -> bool:
+    def attr_no_delete(self) -> bool | None:
         """Can be deleted."""
-        return self.raw.get("attr_no_delete", False)
+        if "attr_no_delete" in self.raw:
+            return self.raw["attr_no_delete"]
+        return None
 
     @property
     def attr_hidden_id(self) -> str:
@@ -32,6 +51,8 @@ class DPIRestrictionGroup(APIItem):
         return self.raw["site_id"]
 
     @property
-    def dpiapp_ids(self) -> list[str]:
+    def dpiapp_ids(self) -> list[str] | None:
         """DPI app IDs belonging to group."""
-        return self.raw.get("dpiapp_ids", [])
+        if "dpiapp_ids" in self.raw:
+            return self.raw["dpiapp_ids"]
+        return None

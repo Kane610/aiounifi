@@ -75,7 +75,7 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     assert wlan.dtim_ng == 1
     assert wlan.enabled is True
     assert wlan.group_rekey == 3600
-    assert wlan.is_guest is False
+    assert wlan.is_guest is None
     assert wlan.mac_filter_enabled is False
     assert wlan.mac_filter_list == []
     assert wlan.mac_filter_policy == "allow"
@@ -86,13 +86,13 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     assert wlan.minrate_na_mgmt_rate_kbps == 6000
     assert wlan.minrate_ng_advertising_rates is False
     assert wlan.minrate_ng_beacon_rate_kbps == 1000
-    assert wlan.minrate_ng_cck_rates_enabled is False
+    assert wlan.minrate_ng_cck_rates_enabled is None
     assert wlan.minrate_ng_data_rate_kbps == 1000
     assert wlan.minrate_ng_enabled is False
     assert wlan.minrate_ng_mgmt_rate_kbps == 1000
     assert wlan.name == "SSID 1"
-    assert wlan.name_combine_enabled is True
-    assert wlan.name_combine_suffix == ""
+    assert wlan.name_combine_enabled is None
+    assert wlan.name_combine_suffix == None
     assert wlan.no2ghz_oui is False
     assert wlan.schedule == []
     assert wlan.security == "wpapsk"
