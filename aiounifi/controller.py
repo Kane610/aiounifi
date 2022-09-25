@@ -278,7 +278,7 @@ class Controller:
             ) from None
 
 
-def _raise_on_error(data: dict[str, Any]) -> None:
+def _raise_on_error(data: dict[str, Any] | None) -> None:
     """Check response for error message."""
     if not isinstance(data, dict):
         return None
