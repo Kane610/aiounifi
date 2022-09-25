@@ -227,7 +227,7 @@ class Event2:
     version_to: str
 
     def mac(self) -> str:
-        """Helper to retrieve mac from event."""
+        """Help retrieve mac from event."""
         return self.client or self.guest or self.user or self.ap or self.gw or self.sw
 
     @classmethod
