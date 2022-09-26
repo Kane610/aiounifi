@@ -7,7 +7,7 @@ from collections.abc import Callable
 import enum
 import logging
 from ssl import SSLContext
-from typing import Final
+from typing import Any, Final
 
 import aiohttp
 import orjson
@@ -63,11 +63,11 @@ class WSClient:
 
         self._loop = asyncio.get_running_loop()
 
-        self._data: dict = {}
+        self._data: dict[str, Any] = {}
         self._state = WebsocketState.STOPPED
 
     @property
-    def data(self) -> dict:
+    def data(self) -> dict[str, Any]:
         """Return data."""
         return self._data
 

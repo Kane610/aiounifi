@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Final, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Final, Optional, Union
 
 from ..models.event import Event
 from ..models.message import Message, MessageKey
+
+if TYPE_CHECKING:
+    from ..controller import Controller
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +52,7 @@ MESSAGE_TO_CHANGE = {
 class MessageHandler:
     """Message handler class."""
 
-    def __init__(self, controller) -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize message handler class."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []
