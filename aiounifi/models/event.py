@@ -63,6 +63,8 @@ class EventKey(enum.Enum):
     WIRELESS_GUEST_ROAM = "EVT_WG_Roam"
     WIRELESS_GUEST_ROAMRADIO = "EVT_WG_RoamRadio"
 
+    IPS_ALERT = "EVT_IPS_IpsAlert"
+
     UNKNOWN = "unknown"
 
     @classmethod
