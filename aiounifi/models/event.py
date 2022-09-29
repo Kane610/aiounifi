@@ -43,7 +43,7 @@ class EventKey(enum.Enum):
     SWITCH_LOST_CONTACT = "EVT_SW_Lost_Contact"
     SWITCH_OVERHEAT = "EVT_SW_Overheat"
     SWITCH_POE_OVERLOAD = "EVT_SW_POE_Overload"
-    SWITCH_POE_DISCONNECT = "EVT_SW_POE_Disconnect"
+    SWITCH_POE_DISCONNECT = "EVT_SW_PoeDisconnect"
     SWITCH_RESTARTED = "EVT_SW_Restarted"
     SWITCH_RESTARTED_UNKNOWN = "EVT_SW_RestartedUnknown"
     SWITCH_UPGRADED = "EVT_SW_Upgraded"
