@@ -23,6 +23,7 @@ class EventKey(enum.Enum):
     ACCESS_POINT_CONNECTED = "EVT_AP_Connected"
     ACCESS_POINT_DELETED = "EVT_AP_Deleted"
     ACCESS_POINT_LOST_CONTACT = "EVT_AP_Lost_Contact"
+    ACCESS_POINT_AUTO_READOPTED = "EVT_AP_AutoReadopted"
     ACCESS_POINT_RESTARTED = "EVT_AP_Restarted"
     ACCESS_POINT_RESTARTED_UNKNOWN = "EVT_AP_RestartedUnknown"
     ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
