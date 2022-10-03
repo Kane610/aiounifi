@@ -8,7 +8,7 @@ from .api_handlers import APIHandler
 URL: Final = "/rest/wlanconf"  # List WLAN configuration
 
 
-class Wlans(APIHandler):
+class Wlans(APIHandler[Wlan]):
     """Represents WLAN configurations."""
 
     obj_id_key = "name"

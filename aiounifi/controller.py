@@ -212,7 +212,6 @@ class Controller:
                 request_object.method, url, request_object.data
             )
             return response
-            # return await self._request(request_object.method, url, request_object.data)
 
         except LoginRequired:
             if not self.can_retry_login:

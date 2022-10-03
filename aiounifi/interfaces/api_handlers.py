@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import logging
-from typing import TYPE_CHECKING, Any, Final, final
+from typing import TYPE_CHECKING, Any, Final, Generic, final
 
-from ..models.event import Event
-from ..models.message import Message
+from ..models import ResourceType
 from ..models.request_object import RequestObject
 
 if TYPE_CHECKING:
     from ..controller import Controller
-    from ..models.event import EventKey
-    from ..models.message import MessageKey
+    from ..models.event import Event, EventKey
+    from ..models.message import Message, MessageKey
 
 SubscriptionType = Callable[[str, str], None]
 UnsubscribeType = Callable[[], None]
@@ -24,7 +23,7 @@ SOURCE_DATA: Final = "data"
 SOURCE_EVENT: Final = "event"
 
 
-class APIHandler:
+class APIHandler(Generic[ResourceType]):
     """Base class for a map of API Items."""
 
     obj_id_key: str
@@ -37,7 +36,7 @@ class APIHandler:
     def __init__(self, controller: Controller) -> None:
         """Initialize API items."""
         self.controller = controller
-        self._items: dict[int | str, Any] = {}
+        self._items: dict[int | str, ResourceType] = {}
         self._subscribers: list[SubscriptionType] = []
 
         if message_filter := self.process_messages + self.remove_messages:
@@ -120,12 +119,12 @@ class APIHandler:
         return unsubscribe
 
     @final
-    def items(self) -> ItemsView[int | str, Any]:
+    def items(self) -> ItemsView[int | str, ResourceType]:
         """Return items dictionary."""
         return self._items.items()
 
     @final
-    def values(self) -> ValuesView[Any]:
+    def values(self) -> ValuesView[ResourceType]:
         """Return items."""
         return self._items.values()
 
@@ -134,7 +133,7 @@ class APIHandler:
         self,
         obj_id: int | str,
         default: Any | None = None,
-    ) -> Any | None:
+    ) -> ResourceType | None:
         """Get item value based on key, return default if no match."""
         return self._items.get(obj_id, default)
 
@@ -144,7 +143,7 @@ class APIHandler:
         return obj_id in self._items
 
     @final
-    def __getitem__(self, obj_id: int | str) -> Any:
+    def __getitem__(self, obj_id: int | str) -> ResourceType:
         """Get item value based on key."""
         return self._items[obj_id]
 

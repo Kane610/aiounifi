@@ -12,7 +12,7 @@ from .api_handlers import APIHandler
 APP_URL: Final = "/rest/dpiapp"
 
 
-class DPIRestrictionApps(APIHandler):
+class DPIRestrictionApps(APIHandler[DPIRestrictionApp]):
     """Represents DPI App configurations."""
 
     obj_id_key = "_id"

@@ -9,7 +9,7 @@ from .api_handlers import APIHandler
 GROUP_URL: Final = "/rest/dpigroup"
 
 
-class DPIRestrictionGroups(APIHandler):
+class DPIRestrictionGroups(APIHandler[DPIRestrictionGroup]):
     """Represents DPI Group configurations."""
 
     obj_id_key = "_id"
