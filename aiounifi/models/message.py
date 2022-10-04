@@ -29,6 +29,7 @@ class MessageKey(enum.Enum):
     DPI_GROUP_ADDED = "dpigroup:add"
     DPI_GROUP_REMOVED = "dpigroup:delete"
     DPI_GROUP_UPDATED = "dpigroup:sync"
+    WLAN_CONF_UPDATED = "wlanconf:sync"
 
     UNKNOWN = "unknown"
 
