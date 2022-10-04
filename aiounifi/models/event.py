@@ -23,10 +23,14 @@ class EventKey(enum.Enum):
     ACCESS_POINT_CONFIGURED = "EVT_AP_Configured"
     ACCESS_POINT_CONNECTED = "EVT_AP_Connected"
     ACCESS_POINT_DELETED = "EVT_AP_Deleted"
+    ACCESS_POINT_DETECTED_ROGUE_AP = "EVT_AP_DetectedRogueAP"
+    ACCESS_POINT_DISCOVERED_PENDING = "EVT_AP_DiscoveredPending"
+    ACCESS_POINT_ISOLATED = "EVT_AP_Isolated"
     ACCESS_POINT_LOST_CONTACT = "EVT_AP_Lost_Contact"
     ACCESS_POINT_POSSIBLE_INTERFERENCE = "EVT_AP_PossibleInterference"
     ACCESS_POINT_RESTARTED = "EVT_AP_Restarted"
     ACCESS_POINT_RESTARTED_UNKNOWN = "EVT_AP_RestartedUnknown"
+    ACCESS_POINT_UPGRADE_SCHEDULED = "EVT_AP_UpgradeScheduled"
     ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
 
     GATEWAY_ADOPTED = "EVT_GW_Adopted"
@@ -42,12 +46,14 @@ class EventKey(enum.Enum):
     SWITCH_CONFIGURED = "EVT_SW_Configured"
     SWITCH_CONNECTED = "EVT_SW_Connected"
     SWITCH_DELETED = "EVT_SW_Deleted"
+    SWITCH_DISCOVERED_PENDING = "EVT_SW_DiscoveredPending"
     SWITCH_LOST_CONTACT = "EVT_SW_Lost_Contact"
     SWITCH_OVERHEAT = "EVT_SW_Overheat"
     SWITCH_POE_OVERLOAD = "EVT_SW_POE_Overload"
     SWITCH_POE_DISCONNECT = "EVT_SW_PoeDisconnect"
     SWITCH_RESTARTED = "EVT_SW_Restarted"
     SWITCH_RESTARTED_UNKNOWN = "EVT_SW_RestartedUnknown"
+    SWITCH_UPGRADE_SCHEDULED = "EVT_SW_UpgradeScheduled"
     SWITCH_UPGRADED = "EVT_SW_Upgraded"
 
     WIRED_CLIENT_CONNECTED = "EVT_LU_Connected"
@@ -66,6 +72,8 @@ class EventKey(enum.Enum):
     WIRELESS_GUEST_ROAMRADIO = "EVT_WG_RoamRadio"
 
     IPS_ALERT = "EVT_IPS_IpsAlert"
+
+    AD_LOGIN = "EVT_AD_Login"
 
     UNKNOWN = "unknown"
 
