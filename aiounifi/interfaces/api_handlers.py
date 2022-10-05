@@ -146,7 +146,6 @@ class APIHandler(Generic[ResourceType]):
         elif isinstance(id_filter, str):
             _id_filter = (id_filter,)
 
-        subscription = (callback, event_filter)
         for obj_id in _id_filter:
             if obj_id not in self._subscribers:
                 self._subscribers[obj_id] = []
@@ -155,6 +154,8 @@ class APIHandler(Generic[ResourceType]):
         def unsubscribe() -> None:
             for obj_id in _id_filter:
                 if obj_id not in self._subscribers:
+                    continue
+                if subscription not in self._subscribers[obj_id]:
                     continue
                 self._subscribers[obj_id].remove(subscription)
 
