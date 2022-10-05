@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-import logging
 from typing import TYPE_CHECKING, Any, Final, Generic, Optional, final
 
 from ..models import ResourceType
@@ -29,8 +28,6 @@ SubscriptionType = tuple[CallbackType, Optional[tuple[ItemEvent, ...]]]
 UnsubscribeType = Callable[[], None]
 
 ID_FILTER_ALL = "*"
-
-LOGGER = logging.getLogger(__name__)
 
 SOURCE_DATA: Final = "data"
 SOURCE_EVENT: Final = "event"
@@ -99,6 +96,7 @@ class APIHandler(Generic[ResourceType]):
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items[obj_id]
             obj.update(raw=raw)
+            self.signal_subscribers(ItemEvent.CHANGED, obj_id)
             return ""
 
         self._items[obj_id] = self.item_cls(raw, self.controller)
@@ -113,6 +111,7 @@ class APIHandler(Generic[ResourceType]):
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items.pop(obj_id)
             obj.clear_callbacks()
+            self.signal_subscribers(ItemEvent.DELETED, obj_id)
             return obj_id
         return ""
 
