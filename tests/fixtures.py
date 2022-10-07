@@ -1047,6 +1047,13 @@ SWITCH_16_PORT_POE = {
     "overheating": False,
     "port_overrides": [
         {
+            "poe_mode": "auto",
+            "portconf_id": "5e1b309714bd614afd3d11a7",
+            "port_security_mac_address": [],
+            "autoneg": True,
+            "stp_port_mode": True,
+        },
+        {
             "poe_mode": "off",
             "port_idx": 3,
             "portconf_id": "5a32aa4ee4babd4452422ddd22222",

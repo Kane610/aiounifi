@@ -643,7 +643,7 @@ class DeviceSetPoePortModeRequest(RequestObject):
         """
         existing_override = False
         for port_override in device.port_overrides:
-            if port_idx == port_override["port_idx"]:
+            if "port_idx" in port_override and port_idx == port_override["port_idx"]:
                 port_override["poe_mode"] = mode
                 existing_override = True
                 break
