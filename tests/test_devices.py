@@ -1196,6 +1196,13 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
     assert switch.overheating is False
     assert switch.port_overrides == [
         {
+            "poe_mode": "auto",
+            "portconf_id": "5e1b309714bd614afd3d11a7",
+            "port_security_mac_address": [],
+            "autoneg": True,
+            "stp_port_mode": True,
+        },
+        {
             "poe_mode": "off",
             "port_idx": 3,
             "portconf_id": "5a32aa4ee4babd4452422ddd22222",
@@ -1243,6 +1250,13 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
         json={
             "port_overrides": [
                 {
+                    "poe_mode": "auto",
+                    "portconf_id": "5e1b309714bd614afd3d11a7",
+                    "port_security_mac_address": [],
+                    "autoneg": True,
+                    "stp_port_mode": True,
+                },
+                {
                     "poe_mode": "off",
                     "port_idx": 3,
                     "portconf_id": "5a32aa4ee4babd4452422ddd22222",
@@ -1272,6 +1286,13 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
         "/api/s/default/rest/device/235678987654345678",
         json={
             "port_overrides": [
+                {
+                    "poe_mode": "auto",
+                    "portconf_id": "5e1b309714bd614afd3d11a7",
+                    "port_security_mac_address": [],
+                    "autoneg": True,
+                    "stp_port_mode": True,
+                },
                 {
                     "poe_mode": "off",
                     "port_idx": 3,
