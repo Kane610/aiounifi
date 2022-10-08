@@ -15,7 +15,7 @@ from .api_handlers import APIHandler
 URL: Final = "/stat/device"
 
 
-class Devices(APIHandler):
+class Devices(APIHandler[Device]):
     """Represents network devices."""
 
     obj_id_key = "mac"

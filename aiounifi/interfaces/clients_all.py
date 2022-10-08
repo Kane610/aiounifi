@@ -10,7 +10,7 @@ from .api_handlers import APIHandler
 URL_ALL: Final = "/rest/user"  # All known and configured clients
 
 
-class ClientsAll(APIHandler):
+class ClientsAll(APIHandler[Client]):
     """Represents all client network devices."""
 
     obj_id_key = "mac"

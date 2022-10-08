@@ -26,7 +26,6 @@ class APIItem:
     def __init__(
         self,
         raw: Any,
-        # raw: dict[str, Any],
         controller: Controller,
     ) -> None:
         """Initialize API item."""
