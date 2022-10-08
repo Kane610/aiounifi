@@ -19,6 +19,7 @@ class MessageKey(enum.Enum):
     ALERT = "alert"
     CLIENT = "sta:sync"
     CLIENT_REMOVED = "user:delete"
+    CLIENT_UPDATED = "user:sync"
     DEVICE = "device:sync"
     DEVICE_UPDATE = "device:update"
     UNIFI_DEVICE = "unifi-device:sync"
