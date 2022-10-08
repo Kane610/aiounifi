@@ -20,6 +20,7 @@ class EventKey(enum.Enum):
 
     ACCESS_POINT_ADOPTED = "EVT_AP_Adopted"
     ACCESS_POINT_AUTO_READOPTED = "EVT_AP_AutoReadopted"
+    ACCESS_POINT_CHANNEL_CHANGED = "EVT_AP_ChannelChanged"
     ACCESS_POINT_CONFIGURED = "EVT_AP_Configured"
     ACCESS_POINT_CONNECTED = "EVT_AP_Connected"
     ACCESS_POINT_DELETED = "EVT_AP_Deleted"
