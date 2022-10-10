@@ -280,10 +280,6 @@ class Event2:
 class Event:
     """UniFi event."""
 
-    # raw: TypedEvent
-
-    # def __init__(self, raw: TypedEvent) -> None:
-    # def __init__(self, raw: dict[str, Any]) -> None:
     def __init__(self, raw: Any) -> None:
         """Initialize event."""
         self.raw: TypedEvent = raw
@@ -296,7 +292,10 @@ class Event:
     @property
     def key(self) -> EventKey:
         """Event key e.g. 'EVT_WU_Disconnected'."""
-        return EventKey(self.raw["key"])
+        key = EventKey(self.raw["key"])
+        if key == EventKey.UNKNOWN:
+            LOGGER.warning("Unsupported event %s", self.raw)
+        return key
 
     @property
     def event(self) -> str:
