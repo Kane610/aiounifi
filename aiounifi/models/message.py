@@ -22,14 +22,15 @@ class MessageKey(enum.Enum):
     CLIENT_UPDATED = "user:sync"
     DEVICE = "device:sync"
     DEVICE_UPDATE = "device:update"
-    UNIFI_DEVICE = "unifi-device:sync"
-    EVENT = "events"
     DPI_APP_ADDED = "dpiapp:add"
     DPI_APP_REMOVED = "dpiapp:delete"
     DPI_APP_UPDATED = "dpiapp:sync"
     DPI_GROUP_ADDED = "dpigroup:add"
     DPI_GROUP_REMOVED = "dpigroup:delete"
     DPI_GROUP_UPDATED = "dpigroup:sync"
+    EVENT = "events"
+    SPEED_TEST_UPDATE = "speed-test:update"
+    UNIFI_DEVICE = "unifi-device:sync"
     WLAN_CONF_UPDATED = "wlanconf:sync"
 
     UNKNOWN = "unknown"
@@ -69,7 +70,10 @@ class Message:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Message":
         """Create data container instance from dict."""
+        meta = Meta.from_dict(data["meta"])
+        if meta.message == MessageKey.UNKNOWN:
+            LOGGER.warning("Unsupported message %s", data)
         return cls(
-            meta=Meta.from_dict(data["meta"]),
+            meta=meta,
             data=data["data"],
         )
