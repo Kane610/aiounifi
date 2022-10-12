@@ -44,7 +44,7 @@ class APIHandler(Generic[ResourceType]):
     remove_messages: tuple[MessageKey, ...] = ()
 
     def __init__(self, controller: Controller) -> None:
-        """Initialize API items."""
+        """Initialize API handler."""
         self.controller = controller
         self._items: dict[int | str, ResourceType] = {}
         self._subscribers: dict[str, list[SubscriptionType]] = {ID_FILTER_ALL: []}
