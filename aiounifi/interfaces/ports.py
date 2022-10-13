@@ -45,12 +45,12 @@ class Ports:
                 self.signal_subscribers(event, obj_id)
 
         else:
-            for obj_id in self._items:
-                if not obj_id.startswith(device_id):
-                    continue
-                port = self._items.pop(obj_id)
+            matched_obj_ids = [
+                obj_id for obj_id in self._items if obj_id.startswith(device_id)
+            ]
+            for obj_id in matched_obj_ids:
+                self._items.pop(obj_id)
                 self.signal_subscribers(event, obj_id)
-            # device_ports = self._items.pop(device_id)
 
     @final
     def items(self) -> ItemsView[str, Port]:
