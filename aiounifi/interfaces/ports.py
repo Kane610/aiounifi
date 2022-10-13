@@ -39,14 +39,17 @@ class Ports:
                 port = Port(raw_port)
                 if (port_idx := port.port_idx or port.ifname) is None:
                     continue
-                self._items[f"{device_id}_{port_idx}"] = port
+                obj_id = f"{device_id}_{port_idx}"
+                self._items[obj_id] = port
                 # self._items[device_id][port_idx] = port
+                self.signal_subscribers(event, obj_id)
 
         else:
-            for port_id in self._items:
-                if not port_id.startswith(device_id):
+            for obj_id in self._items:
+                if not obj_id.startswith(device_id):
                     continue
-                port = self._items.pop(port_id)
+                port = self._items.pop(obj_id)
+                self.signal_subscribers(event, obj_id)
             # device_ports = self._items.pop(device_id)
 
     @final

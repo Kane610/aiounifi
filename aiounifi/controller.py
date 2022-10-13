@@ -28,6 +28,7 @@ from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .interfaces.events import EventHandler
 from .interfaces.messages import MessageHandler
+from .interfaces.ports import Ports
 from .interfaces.wlans import Wlans
 from .models.message import MessageKey
 from .models.site import SiteDescriptionRequest, SiteListRequest
@@ -110,6 +111,7 @@ class Controller:
         self.clients = Clients(self)
         self.clients_all = ClientsAll(self)
         self.devices = Devices(self)
+        self.ports = Ports(self)
         self.dpi_apps = DPIRestrictionApps(self)
         self.dpi_groups = DPIRestrictionGroups(self)
         self.wlans = Wlans(self)
