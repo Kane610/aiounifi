@@ -1,17 +1,17 @@
-""""""
+"""Device port handler."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ItemsView, Iterator, ValuesView, final
 
+from ..models.port import Port
 from .api_handlers import (
-    CallbackType,
     ID_FILTER_ALL,
+    CallbackType,
     ItemEvent,
     SubscriptionType,
     UnsubscribeType,
 )
-from ..models.port import Port
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -33,8 +33,8 @@ class Ports:
 
     def process_device(self, event: ItemEvent, device_id: str) -> None:
         """Add, update, remove."""
-        self._items.setdefault(device_id, {})
-        if event in (event.ADDED, event.CHANGED):
+        # self._items.setdefault(device_id, {})
+        if event in (ItemEvent.ADDED, ItemEvent.CHANGED):
             for raw_port in self.controller.devices[device_id].raw["port_table"]:
                 port = Port(raw_port)
                 if (port_idx := port.port_idx or port.ifname) is None:

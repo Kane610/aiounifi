@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from .device import TypedDevicePortTable
 
-
 # from dataclasses import dataclass
 
 # @dataclass
@@ -69,7 +68,7 @@ class Port:
         return self.raw.get("portconf_id")
 
     @property
-    def port_poe(self) -> bool:
+    def port_poe(self) -> bool | None:
         """Is POE used."""
         return self.raw.get("port_poe")
 
