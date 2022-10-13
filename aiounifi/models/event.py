@@ -42,6 +42,7 @@ class EventKey(enum.Enum):
     GATEWAY_RESTARTED = "EVT_GW_Restarted"
     GATEWAY_RESTARTED_UNKNOWN = "EVT_GW_RestartedUnknown"
     GATEWAY_UPGRADED = "EVT_GW_Upgraded"
+    GATEWAY_WAN_TRANSITION = "EVT_GW_WANTransition"
 
     SWITCH_ADOPTED = "EVT_SW_Adopted"
     SWITCH_CONFIGURED = "EVT_SW_Configured"
