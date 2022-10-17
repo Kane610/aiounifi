@@ -35,7 +35,10 @@ class Ports:
         """Add, update, remove."""
         # self._items.setdefault(device_id, {})
         if event in (ItemEvent.ADDED, ItemEvent.CHANGED):
-            for raw_port in self.controller.devices[device_id].raw["port_table"]:
+            device = self.controller.devices[device_id]
+            if "port_table" not in device.raw:
+                return
+            for raw_port in device.raw["port_table"]:
                 port = Port(raw_port)
                 if (port_idx := port.port_idx or port.ifname) is None:
                     continue
