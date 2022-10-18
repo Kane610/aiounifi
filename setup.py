@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 MIN_PY_VERSION = "3.9"
 PACKAGES = find_packages(exclude=["tests", "tests.*"])
-VERSION = "39"
+VERSION = "40"
 
 setup(
     name="aiounifi",
