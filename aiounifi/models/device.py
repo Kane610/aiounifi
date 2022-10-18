@@ -676,8 +676,8 @@ class Device(APIItem):
     ) -> None:
         """Initialize device."""
         super().__init__(raw, controller)
-        self.ports = Ports(raw.get("port_table", []))
-        self.outlets = Outlets(raw.get("outlet_table", []))
+        self.ports = Ports(self.port_table)
+        self.outlets = Outlets(self.outlet_table)
 
     def update(
         self,
