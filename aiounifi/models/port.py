@@ -4,11 +4,6 @@ from __future__ import annotations
 
 from .device import TypedDevicePortTable
 
-# from dataclasses import dataclass
-
-# @dataclass
-# def port():
-
 
 class Port:
     """Represents a network port."""

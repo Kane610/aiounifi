@@ -5,35 +5,26 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ItemsView, Iterator, ValuesView, final
 
 from ..models.port import Port
-from .api_handlers import (
-    ID_FILTER_ALL,
-    CallbackType,
-    ItemEvent,
-    SubscriptionType,
-    UnsubscribeType,
-)
+from .api_handlers import ItemEvent, SubscriptionHandler
 
 if TYPE_CHECKING:
     from ..controller import Controller
 
 
-class Ports:
+class Ports(SubscriptionHandler):
     """Represents network device ports."""
 
     item_cls = Port
 
     def __init__(self, controller: Controller) -> None:
         """Initialize API handler."""
-        controller.devices.subscribe(self.process_device)
-
+        super().__init__()
         self.controller = controller
         self._items: dict[str, Port] = {}
-        # self._items: dict[str, dict[int | str, Port]] = {}
-        self._subscribers: dict[str, list[SubscriptionType]] = {ID_FILTER_ALL: []}
+        controller.devices.subscribe(self.process_device)
 
     def process_device(self, event: ItemEvent, device_id: str) -> None:
         """Add, update, remove."""
-        # self._items.setdefault(device_id, {})
         if event in (ItemEvent.ADDED, ItemEvent.CHANGED):
             device = self.controller.devices[device_id]
             if "port_table" not in device.raw:
@@ -44,7 +35,6 @@ class Ports:
                     continue
                 obj_id = f"{device_id}_{port_idx}"
                 self._items[obj_id] = port
-                # self._items[device_id][port_idx] = port
                 self.signal_subscribers(event, obj_id)
 
         else:
@@ -84,49 +74,3 @@ class Ports:
     def __iter__(self) -> Iterator[str]:
         """Allow iterate over items."""
         return iter(self._items)
-
-    def signal_subscribers(self, event: ItemEvent, obj_id: str) -> None:
-        """Signal subscribers."""
-        subscribers: list[SubscriptionType] = (
-            self._subscribers.get(obj_id, []) + self._subscribers[ID_FILTER_ALL]
-        )
-        for callback, event_filter in subscribers:
-            if event_filter is not None and event not in event_filter:
-                continue
-            callback(event, obj_id)
-
-    def subscribe(
-        self,
-        callback: CallbackType,
-        event_filter: tuple[ItemEvent, ...] | ItemEvent | None = None,
-        id_filter: tuple[str] | str | None = None,
-    ) -> UnsubscribeType:
-        """Subscribe to added events.
-
-        "callback" - callback function to call when an event emits.
-        Return function to unsubscribe.
-        """
-        if isinstance(event_filter, ItemEvent):
-            event_filter = (event_filter,)
-        subscription = (callback, event_filter)
-
-        _id_filter: tuple[str]
-        if id_filter is None:
-            _id_filter = (ID_FILTER_ALL,)
-        elif isinstance(id_filter, str):
-            _id_filter = (id_filter,)
-
-        for obj_id in _id_filter:
-            if obj_id not in self._subscribers:
-                self._subscribers[obj_id] = []
-            self._subscribers[obj_id].append(subscription)
-
-        def unsubscribe() -> None:
-            for obj_id in _id_filter:
-                if obj_id not in self._subscribers:
-                    continue
-                if subscription not in self._subscribers[obj_id]:
-                    continue
-                self._subscribers[obj_id].remove(subscription)
-
-        return unsubscribe
