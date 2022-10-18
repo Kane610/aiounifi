@@ -2,7 +2,45 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from .device import TypedDevicePortTable
+
+
+@dataclass
+class Port2:
+    """Network port representation."""
+
+    ifname: str | None
+    media: str | None
+    name: str
+    port_idx: int | None
+    poe_class: str | None
+    poe_enable: bool | None
+    poe_mode: str | None
+    poe_power: str | None
+    poe_voltage: str | None
+    portconf_id: str | None
+    port_poe: bool | None
+    up: bool | None
+
+    @classmethod
+    def from_dict(cls, data: TypedDevicePortTable) -> "Port2":
+        """Create data container instance from dict."""
+        return cls(
+            ifname=data.get("ifname"),  # Port index as name used by USG
+            media=data.get("media"),  # Media port is connected to
+            name=data["name"],  # Port name
+            port_idx=data.get("port_idx"),  # Port index
+            poe_class=data.get("poe_class"),  # Port PoE class
+            poe_enable=data.get("poe_enable"),  # Is PoE supported/requested by client
+            poe_mode=data.get("poe_mode"),  # auto, pasv24, passthrough, off or None
+            poe_power=data.get("poe_power"),  # PoE power usage
+            poe_voltage=data.get("poe_voltage"),  # PoE voltage usage
+            portconf_id=data.get("portconf_id"),  # Port configuration ID
+            port_poe=data.get("port_poe"),  # Is PoE used
+            up=data.get("up"),  # Is port up
+        )
 
 
 class Port:
