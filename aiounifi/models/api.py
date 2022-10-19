@@ -6,7 +6,7 @@ from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Any, Final, final
 
-from ..events import Event as UniFiEvent
+from .event import Event as UniFiEvent
 
 if TYPE_CHECKING:
     from ..controller import Controller

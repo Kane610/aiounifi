@@ -7,7 +7,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -30,7 +30,6 @@ from .interfaces.events import EventHandler
 from .interfaces.messages import MessageHandler
 from .interfaces.ports import Ports
 from .interfaces.wlans import Wlans
-from .models.message import MessageKey
 from .models.site import SiteDescriptionRequest, SiteListRequest
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
@@ -38,37 +37,6 @@ if TYPE_CHECKING:
     from .models.request_object import RequestObject
 
 LOGGER = logging.getLogger(__name__)
-
-# Legacy
-SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
-SIGNAL_DATA: Final = WebsocketSignal.DATA
-
-MESSAGE_CLIENT: Final = MessageKey.CLIENT.value
-MESSAGE_CLIENT_REMOVED: Final = MessageKey.CLIENT_REMOVED.value
-MESSAGE_DEVICE: Final = MessageKey.DEVICE.value
-MESSAGE_EVENT: Final = MessageKey.EVENT.value
-MESSAGE_DPI_APP_ADDED: Final = MessageKey.DPI_APP_ADDED.value
-MESSAGE_DPI_APP_REMOVED: Final = MessageKey.DPI_APP_REMOVED.value
-MESSAGE_DPI_APP_UPDATED: Final = MessageKey.DPI_APP_UPDATED.value
-MESSAGE_DPI_GROUP_ADDED: Final = MessageKey.DPI_GROUP_ADDED.value
-MESSAGE_DPI_GROUP_REMOVED: Final = MessageKey.DPI_GROUP_REMOVED.value
-MESSAGE_DPI_GROUP_UPDATED: Final = MessageKey.DPI_GROUP_UPDATED.value
-
-ATTR_MESSAGE: Final = "message"
-ATTR_META: Final = "meta"
-ATTR_DATA: Final = "data"
-
-DATA_CLIENT: Final = "client"
-DATA_CLIENT_REMOVED: Final = "client_removed"
-DATA_DEVICE: Final = "device"
-DATA_EVENT: Final = "event"
-DATA_DPI_APP: Final = "dpi_app"
-DATA_DPI_APP_REMOVED: Final = "dpi_app_removed"
-DATA_DPI_GROUP: Final = "dpi_group"
-DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
-
-
-IGNORE_MESSAGES: Final = ("device:update", "unifi-device:sync")
 
 
 class Controller:

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING, Any, TypedDict
 
-from ..events import Event as UniFiEvent
+from .event import Event as UniFiEvent
 from .api import APIItem
 from .request_object import RequestObject
 
