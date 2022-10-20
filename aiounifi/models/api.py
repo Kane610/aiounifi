@@ -6,7 +6,7 @@ from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Any, Final, final
 
-from ..events import Event as UniFiEvent
+from .event import Event
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -32,14 +32,14 @@ class APIItem:
         self.raw = raw
         self._controller = controller
         self._request = controller.request
-        self._event: UniFiEvent | None = None
+        self._event: Event | None = None
         self._source = SOURCE_DATA
         self._callbacks: list[SubscriptionType] = []
         self._subscribers: list[SubscriptionType] = []
 
     @final
     @property
-    def event(self) -> UniFiEvent | None:
+    def event(self) -> Event | None:
         """Read only event data."""
         return self._event
 
@@ -52,7 +52,7 @@ class APIItem:
     def update(
         self,
         raw: dict[str, Any] | None = None,
-        event: UniFiEvent | None = None,
+        event: Event | None = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:

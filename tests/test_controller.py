@@ -19,9 +19,7 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.controller import (
-    ATTR_MESSAGE,
-    ATTR_META,
+from aiounifi.interfaces.messages import (
     DATA_CLIENT,
     DATA_CLIENT_REMOVED,
     DATA_DEVICE,
@@ -30,11 +28,10 @@ from aiounifi.controller import (
     DATA_DPI_GROUP,
     DATA_DPI_GROUP_REMOVED,
     DATA_EVENT,
-    MESSAGE_CLIENT,
-    MESSAGE_DEVICE,
 )
-from aiounifi.interfaces.api_handlers import SOURCE_DATA, SOURCE_EVENT
+from aiounifi.models.api import SOURCE_DATA, SOURCE_EVENT
 from aiounifi.models.event import EventKey
+from aiounifi.models.message import MessageKey
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
@@ -410,7 +407,7 @@ async def test_no_data(mock_aioresponse, unifi_controller):
     assert 1 not in unifi_controller.clients
     assert not unifi_controller.clients.get(1)
 
-    message = {ATTR_META: {ATTR_MESSAGE: "blabla"}}
+    message = {"meta": {"message": "blabla"}}
     assert unifi_controller.messages.handler(message) == {}
 
     assert not unifi_controller.stop_websocket()
@@ -474,7 +471,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
 
     # Add client from websocket
     unifi_controller.websocket._data = {
-        "meta": {"message": MESSAGE_CLIENT},
+        "meta": {"message": MessageKey.CLIENT.value},
         "data": [WIRELESS_CLIENT],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
@@ -499,7 +496,7 @@ async def test_clients(mock_aioresponse, unifi_controller):
 
     # Retrieve websocket data
     unifi_controller.websocket._data = {
-        "meta": {"message": MESSAGE_CLIENT},
+        "meta": {"message": MessageKey.CLIENT.value},
         "data": [WIRELESS_CLIENT],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
@@ -624,7 +621,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
 
     # Add client from websocket
     unifi_controller.websocket._data = {
-        "meta": {"message": MESSAGE_DEVICE},
+        "meta": {"message": MessageKey.DEVICE.value},
         "data": [SWITCH_16_PORT_POE],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
@@ -653,7 +650,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
 
     # Retrieve websocket data
     unifi_controller.websocket._data = {
-        "meta": {"message": MESSAGE_DEVICE},
+        "meta": {"message": MessageKey.DEVICE.value},
         "data": [SWITCH_16_PORT_POE],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)

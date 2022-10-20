@@ -10,8 +10,8 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING, Any, TypedDict
 
-from ..events import Event as UniFiEvent
 from .api import APIItem
+from .event import Event
 from .request_object import RequestObject
 
 if TYPE_CHECKING:
@@ -682,7 +682,7 @@ class Device(APIItem):
     def update(
         self,
         raw: Any | None = None,
-        event: UniFiEvent | None = None,
+        event: Event | None = None,
     ) -> None:
         """Refresh data."""
         if raw:

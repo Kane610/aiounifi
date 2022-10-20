@@ -21,11 +21,6 @@ SubscriptionType = tuple[
 ]
 UnsubscribeType = Callable[[], None]
 
-
-ATTR_MESSAGE: Final = "message"
-ATTR_META: Final = "meta"
-ATTR_DATA: Final = "data"
-
 DATA_CLIENT: Final = "client"
 DATA_CLIENT_REMOVED: Final = "client_removed"
 DATA_DEVICE: Final = "device"

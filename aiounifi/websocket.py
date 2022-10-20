@@ -7,7 +7,7 @@ from collections.abc import Callable
 import enum
 import logging
 from ssl import SSLContext
-from typing import Any, Final
+from typing import Any
 
 import aiohttp
 import orjson
@@ -29,13 +29,6 @@ class WebsocketState(enum.Enum):
     RUNNING = "running"
     STARTING = "starting"
     STOPPED = "stopped"
-
-
-# Legacy
-SIGNAL_DATA: Final = WebsocketSignal.DATA
-SIGNAL_CONNECTION_STATE: Final = WebsocketSignal.CONNECTION_STATE
-STATE_DISCONNECTED: Final = WebsocketState.DISCONNECTED
-STATE_RUNNING: Final = WebsocketState.RUNNING
 
 
 class WSClient:

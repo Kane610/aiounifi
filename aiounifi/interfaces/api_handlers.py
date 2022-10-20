@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Final, Generic, Optional, final
+from typing import TYPE_CHECKING, Any, Generic, Optional, final
 
 from ..models import ResourceType
 from ..models.request_object import RequestObject
@@ -28,9 +28,6 @@ SubscriptionType = tuple[CallbackType, Optional[tuple[ItemEvent, ...]]]
 UnsubscribeType = Callable[[], None]
 
 ID_FILTER_ALL = "*"
-
-SOURCE_DATA: Final = "data"
-SOURCE_EVENT: Final = "event"
 
 
 class SubscriptionHandler:
