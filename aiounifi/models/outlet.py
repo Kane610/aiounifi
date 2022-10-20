@@ -35,7 +35,7 @@ class Outlet2:
             has_relay=data.get("has_relay"),
             cycle_enabled=data.get("cycle_enabled"),
             has_metering=data.get("has_metering"),
-            caps=data["outlet_caps"],
+            caps=data.get("outlet_caps"),
             voltage=data.get("outlet_voltage"),
             current=data.get("outlet_current"),
             power=data.get("outlet_power"),
@@ -87,9 +87,9 @@ class Outlet:
         return self.raw.get("has_metering")
 
     @property
-    def caps(self) -> int:
+    def caps(self) -> int | None:
         """Unknown."""
-        return self.raw["outlet_caps"]
+        return self.raw.get("outlet_caps")
 
     @property
     def voltage(self) -> str | None:
@@ -110,3 +110,7 @@ class Outlet:
     def power_factor(self) -> str | None:
         """Power factor."""
         return self.raw.get("outlet_power_factor")
+
+    def __repr__(self) -> str:
+        """Return the representation."""
+        return f"<{self.name}: relay state {self.relay_state}>"
