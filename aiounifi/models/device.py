@@ -10,8 +10,8 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING, Any, TypedDict
 
-from .event import Event
 from .api import APIItem
+from .event import Event
 from .request_object import RequestObject
 
 if TYPE_CHECKING:
