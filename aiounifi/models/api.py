@@ -52,7 +52,7 @@ class APIItem:
     def update(
         self,
         raw: dict[str, Any] | None = None,
-        event: UniFiEvent | None = None,
+        event: Event | None = None,
     ) -> None:
         """Update raw data and signal new data is available."""
         if raw:
