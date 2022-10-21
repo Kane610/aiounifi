@@ -1079,8 +1079,6 @@ class Outlets:
         """Initialize outlet manager."""
         self.outlets: dict[int, Outlet] = {}
         for raw_outlet in raw:
-            if not raw_outlet:
-                continue
             outlet = Outlet(raw_outlet)
             self.outlets[outlet.index] = outlet
 

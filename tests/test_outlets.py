@@ -88,7 +88,7 @@ async def test_handler_ports(unifi_controller):
 async def test_handler_process_device_no_index(unifi_controller):
     """Verify that device ports works."""
     ports = unifi_controller.ports
-    unifi_controller.devices.process_raw([{"mac": "1", "outlet_table": [{}]}])
+    unifi_controller.devices.process_raw([{"mac": "1", "outlet_table": []}])
     assert len(ports.items()) == 0
 
 

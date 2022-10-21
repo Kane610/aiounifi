@@ -19,7 +19,7 @@ class Outlet2:
 
     # Metering capabilities of outlet
     has_metering: bool | None
-    caps: int
+    caps: int | None
     voltage: str | None
     current: str | None
     power: str | None

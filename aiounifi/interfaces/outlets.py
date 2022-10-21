@@ -28,8 +28,6 @@ class Outlets(SubscriptionHandler):
         if event in (ItemEvent.ADDED, ItemEvent.CHANGED):
             device = self.controller.devices[device_id]
             for raw_outlet in device.outlet_table:
-                if not raw_outlet:
-                    continue
                 outlet = Outlet(raw_outlet)
                 obj_id = f"{device_id}_{outlet.index}"
                 self._items[obj_id] = outlet
