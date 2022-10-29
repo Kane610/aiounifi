@@ -50,6 +50,7 @@ class MessageHandler:
     def __init__(self, controller: Controller) -> None:
         """Initialize message handler class."""
         self.controller = controller
+        self._watched_messages: tuple[MessageKey] = ()
         self._subscribers: list[SubscriptionType] = []
 
     def subscribe(
@@ -88,10 +89,9 @@ class MessageHandler:
                     "data": raw_data,
                 }
             )
-            if data.meta.message not in MESSAGE_TO_CHANGE:
-                break
 
-            message_key = MESSAGE_TO_CHANGE[data.meta.message]
+            if (message_key := MESSAGE_TO_CHANGE.get(data.meta.message)) is None:
+                break
 
             for callback, message_filter in self._subscribers:
                 if (
