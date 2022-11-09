@@ -55,6 +55,7 @@ class EventKey(enum.Enum):
     SWITCH_POE_DISCONNECT = "EVT_SW_PoeDisconnect"
     SWITCH_RESTARTED = "EVT_SW_Restarted"
     SWITCH_RESTARTED_UNKNOWN = "EVT_SW_RestartedUnknown"
+    SWITCH_STP_PORT_BLOCKING = "EVT_SW_StpPortBlocking"
     SWITCH_UPGRADE_SCHEDULED = "EVT_SW_UpgradeScheduled"
     SWITCH_UPGRADED = "EVT_SW_Upgraded"
 
