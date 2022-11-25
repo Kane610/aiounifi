@@ -48,6 +48,7 @@ class EventKey(enum.Enum):
     GATEWAY_WAN_TRANSITION = "EVT_GW_WANTransition"
 
     SWITCH_ADOPTED = "EVT_SW_Adopted"
+    SWITCH_AUTO_READOPTED = "EVT_SW_AutoReadopted"
     SWITCH_CONFIGURED = "EVT_SW_Configured"
     SWITCH_CONNECTED = "EVT_SW_Connected"
     SWITCH_DELETED = "EVT_SW_Deleted"
