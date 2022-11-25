@@ -29,6 +29,7 @@ class EventKey(enum.Enum):
     ACCESS_POINT_ISOLATED = "EVT_AP_Isolated"
     ACCESS_POINT_LOST_CONTACT = "EVT_AP_Lost_Contact"
     ACCESS_POINT_POSSIBLE_INTERFERENCE = "EVT_AP_PossibleInterference"
+    ACCESS_POINT_RADAR_DETECTED = "EVT_AP_RadarDetected"
     ACCESS_POINT_RESTARTED = "EVT_AP_Restarted"
     ACCESS_POINT_RESTARTED_UNKNOWN = "EVT_AP_RestartedUnknown"
     ACCESS_POINT_UPGRADE_SCHEDULED = "EVT_AP_UpgradeScheduled"
