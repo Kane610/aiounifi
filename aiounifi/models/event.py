@@ -80,6 +80,7 @@ class EventKey(enum.Enum):
     WIRELESS_GUEST_ROAM = "EVT_WG_Roam"
     WIRELESS_GUEST_ROAMRADIO = "EVT_WG_RoamRadio"
 
+    XG_AUTO_READOPTED = "EVT_XG_AutoReadopted"
     XG_OUTLET_POWER_CYCLE = "EVT_XG_OutletPowerCycle"
 
     IPS_ALERT = "EVT_IPS_IpsAlert"
