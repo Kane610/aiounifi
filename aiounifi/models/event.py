@@ -38,6 +38,7 @@ class EventKey(enum.Enum):
     DREAM_MACHINE_LOST_CONTACT = "EVT_DM_Lost_Contact"
 
     GATEWAY_ADOPTED = "EVT_GW_Adopted"
+    GATEWAY_AUTO_READOPTED = "EVT_GW_AutoReadopted"
     GATEWAY_CONFIGURED = "EVT_GW_Configured"
     GATEWAY_CONNECTED = "EVT_GW_Connected"
     GATEWAY_DELETED = "EVT_GW_Deleted"
