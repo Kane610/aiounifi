@@ -35,7 +35,10 @@ def unifi_called_with(mock_aioresponse):
                 for key in kwargs:
                     if key not in call[1] or call[1][key] != kwargs[key]:
                         successful_match = False
+
                 for key, value in call[1].items():
+                    if key == "allow_redirects":
+                        continue
                     if value and key not in kwargs:
                         successful_match = False
 
