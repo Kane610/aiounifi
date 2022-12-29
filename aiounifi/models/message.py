@@ -30,6 +30,7 @@ class MessageKey(enum.Enum):
     DPI_GROUP_UPDATED = "dpigroup:sync"
     EVENT = "events"
     FIREWALL_RULE_ADDED = "firewallrule:add"
+    FIREWALL_RULE_UPDATED = "firewallrule:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
     WLAN_CONF_UPDATED = "wlanconf:sync"
