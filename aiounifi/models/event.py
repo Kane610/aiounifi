@@ -80,7 +80,7 @@ class EventKey(enum.Enum):
     WIRELESS_GUEST_CONNECTED = "EVT_WG_Connected"
     WIRELESS_GUEST_DISCONNECTED = "EVT_WG_Disconnected"
     WIRELESS_GUEST_ROAM = "EVT_WG_Roam"
-    WIRELESS_GUEST_ROAMRADIO = "EVT_WG_RoamRadio"
+    WIRELESS_GUEST_ROAM_RADIO = "EVT_WG_RoamRadio"
 
     XG_AUTO_READOPTED = "EVT_XG_AutoReadopted"
     XG_CONNECTED = "EVT_XG_Connected"
