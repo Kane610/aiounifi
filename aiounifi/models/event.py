@@ -88,6 +88,7 @@ class EventKey(enum.Enum):
 
     IPS_ALERT = "EVT_IPS_IpsAlert"
 
+    AD_GUEST_UNAUTHORIZED = "EVT_AD_GuestUnauthorized"
     AD_LOGIN = "EVT_AD_Login"
     AD_SCHEDULE_UPGRADE_FAILED_NOT_FOUND = "EVT_AD_ScheduleUpgradeFailedNotFound"
 
