@@ -33,11 +33,11 @@ class Clients(APIHandler[Client]):
         EventKey.WIRELESS_CLIENT_BLOCKED,
         EventKey.WIRELESS_CLIENT_UNBLOCKED,
         EventKey.WIRELESS_CLIENT_ROAM,
-        EventKey.WIRELESS_CLIENT_ROAMRADIO,
+        EventKey.WIRELESS_CLIENT_ROAM_RADIO,
         EventKey.WIRELESS_GUEST_CONNECTED,
         EventKey.WIRELESS_GUEST_DISCONNECTED,
         EventKey.WIRELESS_GUEST_ROAM,
-        EventKey.WIRELESS_GUEST_ROAMRADIO,
+        EventKey.WIRELESS_GUEST_ROAM_RADIO,
     )
     process_messages = (MessageKey.CLIENT,)
     remove_messages = (MessageKey.CLIENT_REMOVED,)
