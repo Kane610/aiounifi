@@ -109,7 +109,7 @@ class WSClient:
                         break
 
                     elif msg.type == aiohttp.WSMsgType.ERROR:
-                        LOGGER.error("AIOHTTP websocket error")
+                        LOGGER.error("AIOHTTP websocket error: '%s'", msg.data)
                         break
 
         except aiohttp.ClientConnectorError:
