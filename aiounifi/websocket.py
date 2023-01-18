@@ -39,7 +39,7 @@ class WSClient:
         session: aiohttp.ClientSession,
         host: str,
         port: int,
-        ssl_context: SSLContext | None,
+        ssl_context: SSLContext | bool,
         site: str,
         callback: Callable[[WebsocketSignal], None],
         is_unifi_os: bool = False,

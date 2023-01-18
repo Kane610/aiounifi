@@ -52,7 +52,7 @@ class Controller:
         password: str,
         port: int = 8443,
         site: str = "default",
-        sslcontext: SSLContext | None = None,
+        sslcontext: SSLContext | bool = False,
         callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None]
         | None = None,
     ) -> None:
