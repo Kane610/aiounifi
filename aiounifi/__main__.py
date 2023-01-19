@@ -46,7 +46,7 @@ async def unifi_controller(
         port=port,
         site=site,
         websession=session,
-        sslcontext=ssl_context,
+        ssl_context=ssl_context,
         callback=callback,
     )
 
