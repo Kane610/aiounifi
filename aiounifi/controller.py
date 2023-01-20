@@ -52,7 +52,7 @@ class Controller:
         password: str,
         port: int = 8443,
         site: str = "default",
-        sslcontext: SSLContext | None = None,
+        ssl_context: SSLContext | bool = False,
         callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None]
         | None = None,
     ) -> None:
@@ -63,7 +63,7 @@ class Controller:
         self.username = username
         self.password = password
         self.site = site
-        self.sslcontext = sslcontext
+        self.ssl_context = ssl_context
         self.callback = callback
         self.can_retry_login = False
 
@@ -146,7 +146,7 @@ class Controller:
             self.session,
             self.host,
             self.port,
-            self.sslcontext,
+            self.ssl_context,
             self.site,
             callback=self.session_handler,
             is_unifi_os=self.is_unifi_os,
@@ -210,7 +210,7 @@ class Controller:
                 method,
                 url,
                 json=json,
-                ssl=self.sslcontext,
+                ssl=self.ssl_context,
                 headers=self.headers,
                 **kwargs,
             ) as res:

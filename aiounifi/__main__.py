@@ -25,7 +25,7 @@ def signalling_callback(
     signal: WebsocketSignal, data: dict[str, Any] | WebsocketState
 ) -> None:
     """Receive and print events from websocket."""
-    LOGGER.info(signal, data)
+    LOGGER.info("%s, %s", signal, data)
 
 
 async def unifi_controller(
@@ -35,7 +35,7 @@ async def unifi_controller(
     port: int,
     site: str,
     session: aiohttp.ClientSession,
-    sslcontext: SSLContext | None,
+    ssl_context: SSLContext | bool,
     callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None],
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
@@ -46,7 +46,7 @@ async def unifi_controller(
         port=port,
         site=site,
         websession=session,
-        sslcontext=sslcontext,
+        ssl_context=ssl_context,
         callback=callback,
     )
 
@@ -77,7 +77,7 @@ async def main(
     password: str,
     port: int,
     site: str,
-    sslcontext: SSLContext | None = None,
+    ssl_context: SSLContext | bool = False,
 ) -> None:
     """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
@@ -91,7 +91,7 @@ async def main(
         port=port,
         site=site,
         session=websession,
-        sslcontext=sslcontext,
+        ssl_context=ssl_context,
         callback=signalling_callback,
     )
 
@@ -127,12 +127,19 @@ if __name__ == "__main__":
     parser.add_argument("-D", "--debug", action="store_true")
     args = parser.parse_args()
 
-    loglevel = logging.INFO
+    LOG_LEVEL = logging.INFO
     if args.debug:
-        loglevel = logging.DEBUG
-    logging.basicConfig(format="%(message)s", level=loglevel)
+        LOG_LEVEL = logging.DEBUG
+    logging.basicConfig(format="%(message)s", level=LOG_LEVEL)
 
-    LOGGER.info(args.host, args.username, args.password, args.port, args.site)
+    LOGGER.info(
+        "%s, %s, %s, %i, %s",
+        args.host,
+        args.username,
+        args.password,
+        args.port,
+        args.site,
+    )
 
     try:
         asyncio.run(
