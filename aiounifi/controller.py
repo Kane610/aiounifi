@@ -93,6 +93,7 @@ class Controller:
             response := self.last_response
         ) is not None and response.status == HTTPStatus.OK:
             self.is_unifi_os = True
+            self.session.cookie_jar.clear_domain(self.host)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
     async def login(self) -> None:
