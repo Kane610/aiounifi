@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Generic, Optional, final
+from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models import ResourceType
 from ..models.request_object import RequestObject
@@ -22,7 +22,7 @@ class ItemEvent(enum.Enum):
 
 
 CallbackType = Callable[[ItemEvent, str], None]
-SubscriptionType = tuple[CallbackType, Optional[tuple[ItemEvent, ...]]]
+SubscriptionType = tuple[CallbackType, tuple[ItemEvent, ...] | None]
 UnsubscribeType = Callable[[], None]
 
 ID_FILTER_ALL = "*"

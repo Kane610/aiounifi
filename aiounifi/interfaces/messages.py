@@ -1,7 +1,7 @@
 """Manage events from UniFi Network Controller."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Final, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Final
 
 from ..models.event import Event
 from ..models.message import Message, MessageKey
@@ -12,11 +12,8 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-SubscriptionCallback = Callable[[Message], Union[Event, str]]
-SubscriptionType = tuple[
-    SubscriptionCallback,
-    Optional[tuple[MessageKey, ...]],
-]
+SubscriptionCallback = Callable[[Message], Event | str]
+SubscriptionType = tuple[SubscriptionCallback, tuple[MessageKey, ...] | None]
 UnsubscribeType = Callable[[], None]
 
 DATA_CLIENT: Final = "client"
