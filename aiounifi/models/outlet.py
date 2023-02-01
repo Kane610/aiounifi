@@ -1,7 +1,5 @@
 """Device outlet implementation."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from .device import TypedDeviceOutletTable

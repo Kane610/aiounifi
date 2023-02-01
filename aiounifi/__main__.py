@@ -1,7 +1,5 @@
 """Use aiounifi as a CLI."""
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import logging

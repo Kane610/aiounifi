@@ -1,7 +1,5 @@
 """Python library to interact with UniFi controller."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from http import HTTPStatus
 import logging
@@ -176,7 +174,7 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
 
-    async def request(self, request_object: RequestObject) -> list[dict[str, Any]]:
+    async def request(self, request_object: "RequestObject") -> list[dict[str, Any]]:
         """Make a request to the API, retry login on failure."""
         url = self.url + request_object.full_path(self.site, self.is_unifi_os)
 
