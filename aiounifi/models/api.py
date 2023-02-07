@@ -1,7 +1,5 @@
 """API management class and base class for the different end points."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Any, Final, final
@@ -23,11 +21,7 @@ SOURCE_EVENT: Final = "event"
 class APIItem:
     """Base class for all end points using APIItems class."""
 
-    def __init__(
-        self,
-        raw: Any,
-        controller: Controller,
-    ) -> None:
+    def __init__(self, raw: Any, controller: "Controller") -> None:
         """Initialize API item."""
         self.raw = raw
         self._controller = controller

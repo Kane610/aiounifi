@@ -1,10 +1,8 @@
 """API management class and base class for the different end points."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Generic, Optional, final
+from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models import ResourceType
 from ..models.request_object import RequestObject
@@ -24,7 +22,7 @@ class ItemEvent(enum.Enum):
 
 
 CallbackType = Callable[[ItemEvent, str], None]
-SubscriptionType = tuple[CallbackType, Optional[tuple[ItemEvent, ...]]]
+SubscriptionType = tuple[CallbackType, tuple[ItemEvent, ...] | None]
 UnsubscribeType = Callable[[], None]
 
 ID_FILTER_ALL = "*"
@@ -86,11 +84,11 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
     obj_id_key: str
     path: str
     item_cls: Any
-    events: tuple[EventKey, ...] = ()
-    process_messages: tuple[MessageKey, ...] = ()
-    remove_messages: tuple[MessageKey, ...] = ()
+    events: tuple["EventKey", ...] = ()
+    process_messages: tuple["MessageKey", ...] = ()
+    remove_messages: tuple["MessageKey", ...] = ()
 
-    def __init__(self, controller: Controller) -> None:
+    def __init__(self, controller: "Controller") -> None:
         """Initialize API handler."""
         super().__init__()
         self.controller = controller
@@ -116,7 +114,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
                 new_items.add(obj_id)
         return new_items
 
-    def process_message(self, message: Message) -> str:
+    def process_message(self, message: "Message") -> str:
         """Process and forward websocket data."""
         if message.meta.message in self.process_messages:
             return self.process_item(message.data)
@@ -127,7 +125,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
         return ""
 
     @final
-    def process_event(self, event: Event) -> None:
+    def process_event(self, event: "Event") -> None:
         """Process event."""
         if (obj := self._items.get(event.mac)) is not None:
             obj.update(event=event)

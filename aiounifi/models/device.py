@@ -3,8 +3,6 @@
 Access points, Gateways, Switches.
 """
 
-from __future__ import annotations
-
 from collections.abc import Iterator, ValuesView
 from dataclasses import dataclass
 import logging
@@ -562,7 +560,7 @@ class DeviceSetOutletRelayRequest(RequestObject):
 
     @classmethod
     def create(
-        cls, device: Device, outlet_idx: int, state: bool
+        cls, device: "Device", outlet_idx: int, state: bool
     ) -> "DeviceSetOutletRelayRequest":
         """Create device outlet relay state request.
 
@@ -598,7 +596,7 @@ class DeviceSetOutletCycleEnabledRequest(RequestObject):
 
     @classmethod
     def create(
-        cls, device: Device, outlet_idx: int, state: bool
+        cls, device: "Device", outlet_idx: int, state: bool
     ) -> "DeviceSetOutletCycleEnabledRequest":
         """Create device outlet outlet cycle_enabled flag request.
 
@@ -634,7 +632,7 @@ class DeviceSetPoePortModeRequest(RequestObject):
 
     @classmethod
     def create(
-        cls, device: Device, port_idx: int, mode: str
+        cls, device: "Device", port_idx: int, mode: str
     ) -> "DeviceSetPoePortModeRequest":
         """Create device set port poe mode request.
 
@@ -672,7 +670,7 @@ class Device(APIItem):
     def __init__(
         self,
         raw: Any,
-        controller: Controller,
+        controller: "Controller",
     ) -> None:
         """Initialize device."""
         super().__init__(raw, controller)

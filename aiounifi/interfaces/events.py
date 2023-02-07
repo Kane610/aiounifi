@@ -1,9 +1,7 @@
 """Manage events from UniFi Network Controller."""
 
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
 from ..models.event import Event, EventKey
 from ..models.message import Message, MessageKey
@@ -15,17 +13,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 SubscriptionCallback = Callable[[Event], None]
-SubscriptionType = tuple[
-    SubscriptionCallback,
-    Optional[tuple[EventKey, ...]],
-]
+SubscriptionType = tuple[SubscriptionCallback, tuple[EventKey, ...] | None]
 UnsubscribeType = Callable[[], None]
 
 
 class EventHandler:
     """Event handler class."""
 
-    def __init__(self, controller: Controller) -> None:
+    def __init__(self, controller: "Controller") -> None:
         """Initialize API items."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []

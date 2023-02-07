@@ -1,7 +1,5 @@
 """DPI Restrictions as part of a UniFi network."""
 
-from __future__ import annotations
-
 from typing import TypedDict
 
 from .api import APIItem

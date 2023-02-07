@@ -1,9 +1,7 @@
 """Manage events from UniFi Network Controller."""
 
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Final, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Final
 
 from ..models.event import Event
 from ..models.message import Message, MessageKey
@@ -14,11 +12,8 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-SubscriptionCallback = Callable[[Message], Union[Event, str]]
-SubscriptionType = tuple[
-    SubscriptionCallback,
-    Optional[tuple[MessageKey, ...]],
-]
+SubscriptionCallback = Callable[[Message], Event | str]
+SubscriptionType = tuple[SubscriptionCallback, tuple[MessageKey, ...] | None]
 UnsubscribeType = Callable[[], None]
 
 DATA_CLIENT: Final = "client"
@@ -47,7 +42,7 @@ MESSAGE_TO_CHANGE = {
 class MessageHandler:
     """Message handler class."""
 
-    def __init__(self, controller: Controller) -> None:
+    def __init__(self, controller: "Controller") -> None:
         """Initialize message handler class."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []

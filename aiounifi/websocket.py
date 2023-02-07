@@ -1,7 +1,5 @@
 """Python library to connect UniFi and Home Assistant to work together."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Callable
 import enum

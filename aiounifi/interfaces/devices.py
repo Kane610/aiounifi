@@ -3,8 +3,6 @@
 Access points, gateways, power plugs, switches.
 """
 
-from __future__ import annotations
-
 from typing import Any, Final
 
 from ..models.device import Device, DeviceUpgradeRequest

@@ -1,7 +1,5 @@
 """Clients are devices on a UniFi network."""
 
-from __future__ import annotations
-
 from typing import Final
 
 from ..models.client import Client
