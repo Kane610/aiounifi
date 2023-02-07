@@ -95,7 +95,6 @@ class WSClient:
                 self.state = WebsocketState.RUNNING
 
                 async for msg in ws:
-
                     if self.state == WebsocketState.STOPPED:
                         break
 
