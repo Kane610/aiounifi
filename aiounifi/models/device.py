@@ -691,7 +691,7 @@ class Device(APIItem):
     @property
     def board_revision(self) -> int:
         """Board revision of device."""
-        return self.raw["board_rev"]
+        return self.raw.get("board_rev",0)
 
     @property
     def considered_lost_at(self) -> int:
