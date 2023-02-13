@@ -6,7 +6,9 @@ Access points, Gateways, Switches.
 from collections.abc import Iterator, ValuesView
 from dataclasses import dataclass
 import logging
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
+
+from typing_extensions import NotRequired, TypedDict
 
 from .api import APIItem
 from .event import Event
@@ -122,16 +124,16 @@ class TypedDeviceOutletOverrides(TypedDict, total=False):
 class TypedDeviceOutletTable(TypedDict):
     """Device outlet table type definition."""
 
-    cycle_enabled: bool
+    cycle_enabled: NotRequired[bool]
     index: int
-    has_relay: bool
-    has_metering: bool
+    has_relay: NotRequired[bool]
+    has_metering: NotRequired[bool]
     name: str
     outlet_caps: int
-    outlet_voltage: str
-    outlet_current: str
-    outlet_power: str
-    outlet_power_factor: str
+    outlet_voltage: NotRequired[str]
+    outlet_current: NotRequired[str]
+    outlet_power: NotRequired[str]
+    outlet_power_factor: NotRequired[str]
     relay_state: bool
 
 
@@ -185,7 +187,7 @@ class TypedDevicePortTable(TypedDict):
     flowctrl_rx: bool
     flowctrl_tx: bool
     full_duplex: bool
-    ifname: str
+    ifname: NotRequired[str]
     is_uplink: bool
     jumbo: bool
     lldp_table: list[TypedDevicePortTableLldpTable]
@@ -203,7 +205,7 @@ class TypedDevicePortTable(TypedDict):
     poe_power: str
     poe_voltage: str
     port_delta: TypedDevicePortTablePortDelta
-    port_idx: int
+    port_idx: NotRequired[int]
     port_poe: bool
     portconf_id: str
     rx_broadcast: int
@@ -224,7 +226,7 @@ class TypedDevicePortTable(TypedDict):
     tx_errors: int
     tx_multicast: int
     tx_packets: int
-    up: bool
+    up: NotRequired[bool]
 
 
 class TypedDeviceRadioTable(TypedDict):
@@ -365,7 +367,7 @@ class TypedDevice(TypedDict):
     countrycode_table: list  # type: ignore[type-arg]
     device_id: str
     dhcp_server_table: list  # type: ignore[type-arg]
-    disabled: bool
+    disabled: NotRequired[bool]
     disconnection_reason: str
     displayable_version: str
     dot1x_portctrl_enabled: bool
@@ -439,7 +441,7 @@ class TypedDevice(TypedDict):
     prev_non_busy_state: int
     provisioned_at: int
     port_overrides: list[TypedDevicePortOverrides]
-    port_table: list[TypedDevicePortTable]
+    port_table: NotRequired[list[TypedDevicePortTable]]
     radio_table: list[TypedDeviceRadioTable]
     radio_table_stats: list[TypedDeviceRadioTableStats]
     required_version: str

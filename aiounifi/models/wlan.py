@@ -1,7 +1,8 @@
 """WLANs as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import TypedDict
+
+from typing_extensions import NotRequired, TypedDict
 
 from .api import APIItem
 from .request_object import RequestObject
@@ -18,24 +19,24 @@ class TypedWlan(TypedDict):
     dtim_ng: int
     enabled: bool
     group_rekey: int
-    is_guest: bool
-    mac_filter_enabled: bool
+    is_guest: NotRequired[bool]
+    mac_filter_enabled: NotRequired[bool]
     mac_filter_list: list[str]
     mac_filter_policy: str
     minrate_na_advertising_rates: bool
     minrate_na_beacon_rate_kbps: int
     minrate_na_data_rate_kbps: int
-    minrate_na_enabled: bool
+    minrate_na_enabled: NotRequired[bool]
     minrate_na_mgmt_rate_kbps: int
     minrate_ng_advertising_rates: bool
     minrate_ng_beacon_rate_kbps: int
-    minrate_ng_cck_rates_enabled: bool
+    minrate_ng_cck_rates_enabled: NotRequired[bool]
     minrate_ng_data_rate_kbps: int
-    minrate_ng_enabled: bool
+    minrate_ng_enabled: NotRequired[bool]
     minrate_ng_mgmt_rate_kbps: int
     name: str
-    name_combine_enabled: bool
-    name_combine_suffix: str
+    name_combine_enabled: NotRequired[bool]
+    name_combine_suffix: NotRequired[str]
     no2ghz_oui: bool
     schedule: list[str]
     security: str
