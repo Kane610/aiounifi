@@ -1,6 +1,6 @@
 """DPI Restrictions as part of a UniFi network."""
 
-from typing import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from .api import APIItem
 
@@ -9,11 +9,11 @@ class TypedDPIRestrictionGroup(TypedDict):
     """DPI restriction group type definition."""
 
     _id: str
-    attr_no_delete: bool
+    attr_no_delete: NotRequired[bool]
     attr_hidden_id: str
     name: str
     site_id: str
-    dpiapp_ids: list[str]
+    dpiapp_ids: NotRequired[list[str]]
 
 
 class DPIRestrictionGroup(APIItem):
