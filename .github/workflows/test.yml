@@ -23,6 +23,9 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+      - name: Lint with Ruff
+        run: |
+          ruff check aiounifi
       - name: Lint with Flake8
         run: |
           flake8 aiounifi
