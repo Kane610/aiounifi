@@ -77,6 +77,7 @@ class EventKey(enum.Enum):
 
     WIRED_GUEST_CONNECTED = "EVT_LG_Connected"
     WIRED_GUEST_DISCONNECTED = "EVT_LG_Disconnected"
+    WIRELESS_GUEST_AUTHENTICATION_ENDED = "EVT_WG_AuthorizationEnded"
     WIRELESS_GUEST_CONNECTED = "EVT_WG_Connected"
     WIRELESS_GUEST_DISCONNECTED = "EVT_WG_Disconnected"
     WIRELESS_GUEST_ROAM = "EVT_WG_Roam"
@@ -91,6 +92,8 @@ class EventKey(enum.Enum):
     AD_GUEST_UNAUTHORIZED = "EVT_AD_GuestUnauthorized"
     AD_LOGIN = "EVT_AD_Login"
     AD_SCHEDULE_UPGRADE_FAILED_NOT_FOUND = "EVT_AD_ScheduleUpgradeFailedNotFound"
+
+    HOT_SPOT_VOUCHER_USED = "EVT_HS_VoucherUsed"
 
     UNKNOWN = "unknown"
 
