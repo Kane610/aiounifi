@@ -167,9 +167,7 @@ class Controller:
         assert self.websocket
 
         if signal == WebsocketSignal.DATA:
-            new_items = self.messages.handler(self.websocket.data)
-            if new_items and self.callback:
-                self.callback(WebsocketSignal.DATA, new_items)
+            self.messages.handler(self.websocket.data)
 
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)

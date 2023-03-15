@@ -114,15 +114,13 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
                 new_items.add(obj_id)
         return new_items
 
-    def process_message(self, message: "Message") -> str:
+    def process_message(self, message: "Message") -> None:
         """Process and forward websocket data."""
         if message.meta.message in self.process_messages:
-            return self.process_item(message.data)
+            self.process_item(message.data)
 
-        if message.meta.message in self.remove_messages:
-            return self.remove_item(message.data)
-
-        return ""
+        elif message.meta.message in self.remove_messages:
+            self.remove_item(message.data)
 
     @final
     def process_event(self, event: "Event") -> None:
