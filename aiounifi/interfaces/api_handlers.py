@@ -106,13 +106,10 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
         raw = await self.controller.request(RequestObject("get", self.path, None))
         self.process_raw(raw)
 
-    def process_raw(self, raw: list[dict[str, Any]]) -> set[str]:
+    def process_raw(self, raw: list[dict[str, Any]]) -> None:
         """Process full raw response."""
-        new_items: set[str] = set()
         for raw_item in raw:
-            if obj_id := self.process_item(raw_item):
-                new_items.add(obj_id)
-        return new_items
+            self.process_item(raw_item)
 
     def process_message(self, message: "Message") -> None:
         """Process and forward websocket data."""
@@ -129,34 +126,29 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
             obj.update(event=event)
 
     @final
-    def process_item(self, raw: dict[str, Any]) -> str:
+    def process_item(self, raw: dict[str, Any]) -> None:
         """Process item data."""
-        obj_id: str
-
         if self.obj_id_key not in raw:
-            return ""
+            return
 
+        obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items[obj_id]
             obj.update(raw=raw)
             self.signal_subscribers(ItemEvent.CHANGED, obj_id)
-            return ""
+            return
 
         self._items[obj_id] = self.item_cls(raw, self.controller)
         self.signal_subscribers(ItemEvent.ADDED, obj_id)
 
-        return obj_id
-
     @final
-    def remove_item(self, raw: dict[str, Any]) -> str:
+    def remove_item(self, raw: dict[str, Any]) -> None:
         """Remove item."""
         obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items.pop(obj_id)
             obj.clear_callbacks()
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
-            return obj_id
-        return ""
 
     @final
     def items(self) -> ItemsView[int | str, ResourceType]:
