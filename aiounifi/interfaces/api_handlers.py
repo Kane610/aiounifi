@@ -123,7 +123,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
         obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items[obj_id]
-            obj.update(raw=raw)
+            obj.update(raw)
             self.signal_subscribers(ItemEvent.CHANGED, obj_id)
             return
 

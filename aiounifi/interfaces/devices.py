@@ -3,20 +3,18 @@
 Access points, gateways, power plugs, switches.
 """
 
-from typing import Any, Final
+from typing import Any
 
 from ..models.device import Device, DeviceUpgradeRequest
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
-
-URL: Final = "/stat/device"
 
 
 class Devices(APIHandler[Device]):
     """Represents network devices."""
 
     obj_id_key = "mac"
-    path = URL
+    path = "/stat/device"
     item_cls = Device
     process_messages = (MessageKey.DEVICE,)
 

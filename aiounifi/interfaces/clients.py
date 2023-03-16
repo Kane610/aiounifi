@@ -1,6 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Any, Final
+from typing import Any
 
 from ..models.client import (
     Client,
@@ -11,14 +11,12 @@ from ..models.client import (
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
 
-URL: Final = "/stat/sta"
-
 
 class Clients(APIHandler[Client]):
     """Represents client network devices."""
 
     obj_id_key = "mac"
-    path = URL
+    path = "/stat/sta"
     item_cls = Client
     process_messages = (MessageKey.CLIENT,)
     remove_messages = (MessageKey.CLIENT_REMOVED,)
