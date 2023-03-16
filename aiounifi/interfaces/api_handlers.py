@@ -146,8 +146,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
         """Remove item."""
         obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
-            obj = self._items.pop(obj_id)
-            obj.clear_callbacks()
+            self._items.pop(obj_id)
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
 
     @final

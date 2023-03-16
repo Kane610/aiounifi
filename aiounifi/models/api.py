@@ -62,34 +62,3 @@ class APIItem:
 
         for signal_update in self._callbacks + self._subscribers:
             signal_update()
-
-    def subscribe(self, callback: SubscriptionType) -> UnsubscribeType:
-        """Subscribe to events.
-
-        Return function to unsubscribe.
-        """
-        self._subscribers.append(callback)
-
-        def unsubscribe() -> None:
-            self._subscribers.remove(callback)
-
-        return unsubscribe
-
-    @final
-    def register_callback(self, callback: SubscriptionType) -> None:
-        """Register callback for signalling.
-
-        Callback will be used by update.
-        """
-        self._callbacks.append(callback)
-
-    @final
-    def remove_callback(self, callback: SubscriptionType) -> None:
-        """Remove registered callback."""
-        if callback in self._callbacks:
-            self._callbacks.remove(callback)
-
-    @final
-    def clear_callbacks(self) -> None:
-        """Clear all registered callbacks."""
-        self._callbacks.clear()
