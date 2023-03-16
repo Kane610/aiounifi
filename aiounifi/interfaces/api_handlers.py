@@ -9,7 +9,6 @@ from ..models.request_object import RequestObject
 
 if TYPE_CHECKING:
     from ..controller import Controller
-    from ..models.event import Event, EventKey
     from ..models.message import Message, MessageKey
 
 
@@ -84,7 +83,6 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
     obj_id_key: str
     path: str
     item_cls: Any
-    events: tuple["EventKey", ...] = ()
     process_messages: tuple["MessageKey", ...] = ()
     remove_messages: tuple["MessageKey", ...] = ()
 
@@ -96,9 +94,6 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
 
         if message_filter := self.process_messages + self.remove_messages:
             controller.messages.subscribe(self.process_message, message_filter)
-
-        if self.events:
-            controller.events.subscribe(self.process_event, self.events)
 
     @final
     async def update(self) -> None:
@@ -118,12 +113,6 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
 
         elif message.meta.message in self.remove_messages:
             self.remove_item(message.data)
-
-    @final
-    def process_event(self, event: "Event") -> None:
-        """Process event."""
-        if (obj := self._items.get(event.mac)) is not None:
-            obj.update(event=event)
 
     @final
     def process_item(self, raw: dict[str, Any]) -> None:

@@ -19,14 +19,10 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.models.api import SOURCE_DATA, SOURCE_EVENT
-from aiounifi.models.event import EventKey
 from aiounifi.models.message import MessageKey
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
-    EVENT_SWITCH_16_CONNECTED,
-    EVENT_WIRELESS_CLIENT_CONNECTED,
     MESSAGE_WIRELESS_CLIENT_REMOVED,
     SWITCH_16_PORT_POE,
     WIRELESS_CLIENT,
@@ -486,15 +482,6 @@ async def test_clients(mock_aioresponse, unifi_controller):
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
 
-    assert client.last_updated == SOURCE_DATA
-    assert mock_callback.call_count == 1
-
-    # Retrieve websocket event
-    unifi_controller.websocket._data = EVENT_WIRELESS_CLIENT_CONNECTED
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    assert client.event.key == EventKey.WIRELESS_CLIENT_CONNECTED
-    assert client.last_updated == SOURCE_EVENT
     assert mock_callback.call_count == 1
 
     # Remove callback
@@ -614,8 +601,6 @@ async def test_devices(mock_aioresponse, unifi_controller):
     port_1 = next(iter(device.ports))
     assert port_1 == 1
 
-    assert device.update() is None
-
     # Register callback
     devices = unifi_controller.devices
     mock_callback = Mock()
@@ -629,17 +614,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
 
-    assert device.last_updated == SOURCE_DATA
     assert mock_callback.call_count == 1
-
-    # Retrieve websocket event
-    unifi_controller.websocket._data = EVENT_SWITCH_16_CONNECTED
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    assert device.event.key == EventKey.SWITCH_CONNECTED
-    assert device.last_updated == SOURCE_EVENT
-    assert mock_callback.call_count == 1
-    assert len(devices._subscribers["*"]) == 3
 
     # Remove callback
     unsub()
