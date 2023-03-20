@@ -3,8 +3,7 @@
 from dataclasses import dataclass
 from typing import TypedDict
 
-from .api import APIItem
-from .request_object import RequestObject
+from .api import APIItem, ApiRequest
 
 
 class TypedDPIRestrictionApp(TypedDict):
@@ -20,7 +19,7 @@ class TypedDPIRestrictionApp(TypedDict):
 
 
 @dataclass
-class DPIRestrictionAppEnableRequest(RequestObject):
+class DPIRestrictionAppEnableRequest(ApiRequest):
     """Request object for enabling DPI Restriction App."""
 
     @classmethod

@@ -3,8 +3,7 @@
 from dataclasses import dataclass
 from typing import TypedDict
 
-from .api import APIItem
-from .request_object import RequestObject
+from .api import APIItem, ApiRequest
 
 
 class TypedClient(TypedDict):
@@ -101,7 +100,7 @@ class TypedClient(TypedDict):
 
 
 @dataclass
-class ClientBlockRequest(RequestObject):
+class ClientBlockRequest(ApiRequest):
     """Request object for client block."""
 
     @classmethod
@@ -118,7 +117,7 @@ class ClientBlockRequest(RequestObject):
 
 
 @dataclass
-class ClientReconnectRequest(RequestObject):
+class ClientReconnectRequest(ApiRequest):
     """Request object for client reconnect."""
 
     @classmethod
@@ -135,7 +134,7 @@ class ClientReconnectRequest(RequestObject):
 
 
 @dataclass
-class ClientRemoveRequest(RequestObject):
+class ClientRemoveRequest(ApiRequest):
     """Request object for client removal."""
 
     @classmethod

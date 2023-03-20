@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 
-from .request_object import RequestObject
+from .api import ApiRequest
 
 
 @dataclass
-class SiteListRequest(RequestObject):
+class SiteListRequest(ApiRequest):
     """Request object for site list."""
 
     @classmethod
@@ -22,7 +22,7 @@ class SiteListRequest(RequestObject):
 
 
 @dataclass
-class SiteDescriptionRequest(RequestObject):
+class SiteDescriptionRequest(ApiRequest):
     """Request object for site description."""
 
     @classmethod
