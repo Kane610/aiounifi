@@ -31,6 +31,7 @@ class MessageKey(enum.Enum):
     EVENT = "events"
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
+    NETWORK_CONF_UPDATED = "networkconf:sync"
     SETTING_UPDATED = "setting:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
