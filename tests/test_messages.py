@@ -11,7 +11,7 @@ from aiounifi.interfaces.messages import MessageHandler
 from aiounifi.models.message import MessageKey
 
 MESSAGE_HANDLER_DATA = [
-    (None, True),  # No filter
+    (None, False),  # No subscriber registered
     (MessageKey.CLIENT_REMOVED, True),  # Filter correct
     (MessageKey.CLIENT, False),  # Filter incorrect
     ((MessageKey.CLIENT, MessageKey.CLIENT_REMOVED), True),  # Filter correct
