@@ -36,6 +36,7 @@ class MessageHandler:
         """Initialize message handler class."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []
+        self._subscribed_messages: set[MessageKey] = set()
 
     def subscribe(
         self,
@@ -49,6 +50,9 @@ class MessageHandler:
         """
         if isinstance(message_filter, MessageKey):
             message_filter = (message_filter,)
+
+        if message_filter is not None:
+            self._subscribed_messages.update(message_filter)
 
         subscription = (callback, message_filter)
         self._subscribers.append(subscription)
@@ -70,7 +74,7 @@ class MessageHandler:
                     "data": raw_data,
                 }
             )
-            if data.meta.message not in MESSAGE_TO_CHANGE:
+            if data.meta.message not in self._subscribed_messages:
                 break
 
             for callback, message_filter in self._subscribers:
