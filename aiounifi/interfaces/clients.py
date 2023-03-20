@@ -1,6 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Any, Final
+from typing import Any
 
 from ..models.client import (
     Client,
@@ -8,35 +8,16 @@ from ..models.client import (
     ClientReconnectRequest,
     ClientRemoveRequest,
 )
-from ..models.event import EventKey
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
-
-URL: Final = "/stat/sta"
 
 
 class Clients(APIHandler[Client]):
     """Represents client network devices."""
 
     obj_id_key = "mac"
-    path = URL
+    path = "/stat/sta"
     item_cls = Client
-    events = (
-        EventKey.WIRED_CLIENT_CONNECTED,
-        EventKey.WIRED_CLIENT_DISCONNECTED,
-        EventKey.WIRED_CLIENT_BLOCKED,
-        EventKey.WIRED_CLIENT_UNBLOCKED,
-        EventKey.WIRELESS_CLIENT_CONNECTED,
-        EventKey.WIRELESS_CLIENT_DISCONNECTED,
-        EventKey.WIRELESS_CLIENT_BLOCKED,
-        EventKey.WIRELESS_CLIENT_UNBLOCKED,
-        EventKey.WIRELESS_CLIENT_ROAM,
-        EventKey.WIRELESS_CLIENT_ROAM_RADIO,
-        EventKey.WIRELESS_GUEST_CONNECTED,
-        EventKey.WIRELESS_GUEST_DISCONNECTED,
-        EventKey.WIRELESS_GUEST_ROAM,
-        EventKey.WIRELESS_GUEST_ROAM_RADIO,
-    )
     process_messages = (MessageKey.CLIENT,)
     remove_messages = (MessageKey.CLIENT_REMOVED,)
 

@@ -9,7 +9,6 @@ from ..models.request_object import RequestObject
 
 if TYPE_CHECKING:
     from ..controller import Controller
-    from ..models.event import Event, EventKey
     from ..models.message import Message, MessageKey
 
 
@@ -84,7 +83,6 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
     obj_id_key: str
     path: str
     item_cls: Any
-    events: tuple["EventKey", ...] = ()
     process_messages: tuple["MessageKey", ...] = ()
     remove_messages: tuple["MessageKey", ...] = ()
 
@@ -97,68 +95,48 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
         if message_filter := self.process_messages + self.remove_messages:
             controller.messages.subscribe(self.process_message, message_filter)
 
-        if self.events:
-            controller.events.subscribe(self.process_event, self.events)
-
     @final
     async def update(self) -> None:
         """Refresh data."""
         raw = await self.controller.request(RequestObject("get", self.path, None))
         self.process_raw(raw)
 
-    def process_raw(self, raw: list[dict[str, Any]]) -> set[str]:
+    def process_raw(self, raw: list[dict[str, Any]]) -> None:
         """Process full raw response."""
-        new_items: set[str] = set()
         for raw_item in raw:
-            if obj_id := self.process_item(raw_item):
-                new_items.add(obj_id)
-        return new_items
+            self.process_item(raw_item)
 
-    def process_message(self, message: "Message") -> str:
+    def process_message(self, message: "Message") -> None:
         """Process and forward websocket data."""
         if message.meta.message in self.process_messages:
-            return self.process_item(message.data)
+            self.process_item(message.data)
 
-        if message.meta.message in self.remove_messages:
-            return self.remove_item(message.data)
-
-        return ""
+        elif message.meta.message in self.remove_messages:
+            self.remove_item(message.data)
 
     @final
-    def process_event(self, event: "Event") -> None:
-        """Process event."""
-        if (obj := self._items.get(event.mac)) is not None:
-            obj.update(event=event)
-
-    @final
-    def process_item(self, raw: dict[str, Any]) -> str:
+    def process_item(self, raw: dict[str, Any]) -> None:
         """Process item data."""
-        obj_id: str
-
         if self.obj_id_key not in raw:
-            return ""
+            return
 
+        obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
             obj = self._items[obj_id]
-            obj.update(raw=raw)
+            obj.update(raw)
             self.signal_subscribers(ItemEvent.CHANGED, obj_id)
-            return ""
+            return
 
         self._items[obj_id] = self.item_cls(raw, self.controller)
         self.signal_subscribers(ItemEvent.ADDED, obj_id)
 
-        return obj_id
-
     @final
-    def remove_item(self, raw: dict[str, Any]) -> str:
+    def remove_item(self, raw: dict[str, Any]) -> None:
         """Remove item."""
         obj_id: str
         if (obj_id := raw[self.obj_id_key]) in self._items:
-            obj = self._items.pop(obj_id)
-            obj.clear_callbacks()
+            self._items.pop(obj_id)
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
-            return obj_id
-        return ""
 
     @final
     def items(self) -> ItemsView[int | str, ResourceType]:

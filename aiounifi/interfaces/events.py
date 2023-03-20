@@ -48,7 +48,7 @@ class EventHandler:
 
         return unsubscribe
 
-    def handler(self, message: Message) -> Event:
+    def handler(self, message: Message) -> None:
         """Receive event from message handler and identifies where the event belong."""
         event = Event(message.data)
 
@@ -56,8 +56,6 @@ class EventHandler:
             if event_filter is not None and event.key not in event_filter:
                 continue
             callback(event)
-
-        return event
 
     def __len__(self) -> int:
         """List number of event subscribers."""

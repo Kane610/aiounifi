@@ -1,9 +1,8 @@
 """Manage events from UniFi Network Controller."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Final
+from typing import TYPE_CHECKING, Any, Callable
 
-from ..models.event import Event
 from ..models.message import Message, MessageKey
 
 if TYPE_CHECKING:
@@ -12,30 +11,21 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-SubscriptionCallback = Callable[[Message], Event | str]
+SubscriptionCallback = Callable[[Message], None]
 SubscriptionType = tuple[SubscriptionCallback, tuple[MessageKey, ...] | None]
 UnsubscribeType = Callable[[], None]
 
-DATA_CLIENT: Final = "client"
-DATA_CLIENT_REMOVED: Final = "client_removed"
-DATA_DEVICE: Final = "device"
-DATA_EVENT: Final = "event"
-DATA_DPI_APP: Final = "dpi_app"
-DATA_DPI_APP_REMOVED: Final = "dpi_app_removed"
-DATA_DPI_GROUP: Final = "dpi_group"
-DATA_DPI_GROUP_REMOVED: Final = "dpi_group_removed"
-
 MESSAGE_TO_CHANGE = {
-    MessageKey.EVENT: DATA_EVENT,
-    MessageKey.CLIENT: DATA_CLIENT,
-    MessageKey.CLIENT_REMOVED: DATA_CLIENT_REMOVED,
-    MessageKey.DEVICE: DATA_DEVICE,
-    MessageKey.DPI_APP_ADDED: DATA_DPI_APP,
-    MessageKey.DPI_APP_UPDATED: DATA_DPI_APP,
-    MessageKey.DPI_APP_REMOVED: DATA_DPI_APP_REMOVED,
-    MessageKey.DPI_GROUP_ADDED: DATA_DPI_GROUP,
-    MessageKey.DPI_GROUP_UPDATED: DATA_DPI_GROUP,
-    MessageKey.DPI_GROUP_REMOVED: DATA_DPI_GROUP_REMOVED,
+    MessageKey.EVENT,
+    MessageKey.CLIENT,
+    MessageKey.CLIENT_REMOVED,
+    MessageKey.DEVICE,
+    MessageKey.DPI_APP_ADDED,
+    MessageKey.DPI_APP_UPDATED,
+    MessageKey.DPI_APP_REMOVED,
+    MessageKey.DPI_GROUP_ADDED,
+    MessageKey.DPI_GROUP_UPDATED,
+    MessageKey.DPI_GROUP_REMOVED,
 }
 
 
@@ -68,13 +58,10 @@ class MessageHandler:
 
         return unsubscribe
 
-    def handler(self, raw: dict[str, Any]) -> dict[str, set[Event | str]]:
+    def handler(self, raw: dict[str, Any]) -> None:
         """Receive message from websocket and identifies where the message belong."""
-        message_key = ""
-        changes = set()
-
         if "meta" not in raw or "data" not in raw:
-            return {}
+            return
 
         for raw_data in raw["data"]:
             data = Message.from_dict(
@@ -86,22 +73,13 @@ class MessageHandler:
             if data.meta.message not in MESSAGE_TO_CHANGE:
                 break
 
-            message_key = MESSAGE_TO_CHANGE[data.meta.message]
-
             for callback, message_filter in self._subscribers:
                 if (
                     message_filter is not None
                     and data.meta.message not in message_filter
                 ):
                     continue
-
-                change = callback(data)
-                if data.meta.message in MESSAGE_TO_CHANGE and change:
-                    changes.add(change)
-
-        if message_key:
-            return {message_key: changes}
-        return {}
+                callback(data)
 
     def __len__(self) -> int:
         """List number of message subscribers."""

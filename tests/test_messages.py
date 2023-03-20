@@ -44,24 +44,3 @@ async def test_message_handler(message_filter, expected):
 
     unsubscribe_callback()
     assert len(message_handler) == 0
-
-
-@pytest.mark.parametrize("data", [{}, {"data": [{}]}])
-async def test_message_handler_empty_cases(data):
-    """Verify message handler returns empty response in specific cases."""
-    message_handler = MessageHandler(controller=Mock())
-
-    message_handler.subscribe(mock_callback := Mock())
-    assert (
-        message_handler.handler(
-            {
-                "meta": {
-                    "rc": "ok",
-                    "message": "unsupported",
-                },
-            }
-            | data
-        )
-        == {}
-    )
-    assert mock_callback.called is False

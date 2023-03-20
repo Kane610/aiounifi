@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import NotRequired, TypedDict
 
 from .api import APIItem
-from .event import Event
 from .request_object import RequestObject
 
 if TYPE_CHECKING:
@@ -679,16 +678,12 @@ class Device(APIItem):
         self.ports = Ports(self.port_table)
         self.outlets = Outlets(self.outlet_table)
 
-    def update(
-        self,
-        raw: Any | None = None,
-        event: Event | None = None,
-    ) -> None:
+    def update(self, raw: Any | None = None) -> None:
         """Refresh data."""
         if raw:
             self.ports.update(raw.get("port_table", []))
             self.outlets.update(raw.get("outlet_table", []))
-        super().update(raw, event)
+        super().update(raw)
 
     @property
     def board_revision(self) -> int:
