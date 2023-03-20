@@ -33,7 +33,7 @@ from .models.site import SiteDescriptionRequest, SiteListRequest
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
-    from .models.request_object import RequestObject
+    from .models.api import ApiRequest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -172,13 +172,13 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
             self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
 
-    async def request(self, request_object: "RequestObject") -> list[dict[str, Any]]:
+    async def request(self, api_request: "ApiRequest") -> list[dict[str, Any]]:
         """Make a request to the API, retry login on failure."""
-        url = self.url + request_object.full_path(self.site, self.is_unifi_os)
+        url = self.url + api_request.full_path(self.site, self.is_unifi_os)
 
         try:
             response: list[dict[str, Any]] = await self._request(
-                request_object.method, url, request_object.data
+                api_request.method, url, api_request.data
             )
             return response
 
@@ -188,7 +188,7 @@ class Controller:
             # Session likely expired, try again
             self.can_retry_login = False
             await self.login()
-            return await self.request(request_object)
+            return await self.request(api_request)
 
     async def _request(
         self,

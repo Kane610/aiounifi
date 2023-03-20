@@ -5,7 +5,7 @@ import enum
 from typing import TYPE_CHECKING, Any, Generic, Type, final
 
 from ..models import ResourceType
-from ..models.request_object import RequestObject
+from ..models.api import ApiRequest
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -98,7 +98,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
     @final
     async def update(self) -> None:
         """Refresh data."""
-        raw = await self.controller.request(RequestObject("get", self.path, None))
+        raw = await self.controller.request(ApiRequest("get", self.path, None))
         self.process_raw(raw)
 
     def process_raw(self, raw: list[dict[str, Any]]) -> None:

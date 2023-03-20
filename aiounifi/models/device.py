@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import NotRequired, TypedDict
 
-from .api import APIItem
-from .request_object import RequestObject
+from .api import APIItem, ApiRequest
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -500,7 +499,7 @@ class TypedDevice(TypedDict):
 
 
 @dataclass
-class DevicePowerCyclePortRequest(RequestObject):
+class DevicePowerCyclePortRequest(ApiRequest):
     """Request object for power cycle PoE port."""
 
     @classmethod
@@ -518,7 +517,7 @@ class DevicePowerCyclePortRequest(RequestObject):
 
 
 @dataclass
-class DeviceRestartRequest(RequestObject):
+class DeviceRestartRequest(ApiRequest):
     """Request object for device restart."""
 
     @classmethod
@@ -539,7 +538,7 @@ class DeviceRestartRequest(RequestObject):
 
 
 @dataclass
-class DeviceUpgradeRequest(RequestObject):
+class DeviceUpgradeRequest(ApiRequest):
     """Request object for device upgrade."""
 
     @classmethod
@@ -556,7 +555,7 @@ class DeviceUpgradeRequest(RequestObject):
 
 
 @dataclass
-class DeviceSetOutletRelayRequest(RequestObject):
+class DeviceSetOutletRelayRequest(ApiRequest):
     """Request object for outlet relay state."""
 
     @classmethod
@@ -592,7 +591,7 @@ class DeviceSetOutletRelayRequest(RequestObject):
 
 
 @dataclass
-class DeviceSetOutletCycleEnabledRequest(RequestObject):
+class DeviceSetOutletCycleEnabledRequest(ApiRequest):
     """Request object for outlet cycle_enabled flag."""
 
     @classmethod
@@ -628,7 +627,7 @@ class DeviceSetOutletCycleEnabledRequest(RequestObject):
 
 
 @dataclass
-class DeviceSetPoePortModeRequest(RequestObject):
+class DeviceSetPoePortModeRequest(ApiRequest):
     """Request object for setting port POE mode."""
 
     @classmethod

@@ -4,8 +4,7 @@ from dataclasses import dataclass
 
 from typing_extensions import NotRequired, TypedDict
 
-from .api import APIItem
-from .request_object import RequestObject
+from .api import APIItem, ApiRequest
 
 
 class TypedWlan(TypedDict):
@@ -51,7 +50,7 @@ class TypedWlan(TypedDict):
 
 
 @dataclass
-class WlanChangePasswordRequest(RequestObject):
+class WlanChangePasswordRequest(ApiRequest):
     """Request object for wlan password change."""
 
     @classmethod
@@ -65,7 +64,7 @@ class WlanChangePasswordRequest(RequestObject):
 
 
 @dataclass
-class WlanEnableRequest(RequestObject):
+class WlanEnableRequest(ApiRequest):
     """Request object for wlan enable."""
 
     @classmethod
