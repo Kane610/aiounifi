@@ -467,8 +467,6 @@ async def test_clients(mock_aioresponse, unifi_controller):
     client_mac = next(iter(unifi_controller.clients))
     assert client_mac == client.mac
 
-    assert client.update() is None
-
     # Register callback
     clients = unifi_controller.clients
     mock_callback = Mock()

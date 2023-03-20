@@ -30,7 +30,6 @@ class APIItem:
         self.raw = raw
         self._controller = controller
 
-    def update(self, raw: dict[str, Any] | None = None) -> None:
+    def update(self, raw: dict[str, Any]) -> None:
         """Update raw data and signal new data is available."""
-        if raw:
-            self.raw = raw
+        self.raw = raw
