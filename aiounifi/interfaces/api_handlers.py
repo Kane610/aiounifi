@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Generic, final
+from typing import TYPE_CHECKING, Any, Generic, Type, final
 
 from ..models import ResourceType
 from ..models.request_object import RequestObject
@@ -82,7 +82,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
 
     obj_id_key: str
     path: str
-    item_cls: Any
+    item_cls: Type[ResourceType]
     process_messages: tuple["MessageKey", ...] = ()
     remove_messages: tuple["MessageKey", ...] = ()
 
