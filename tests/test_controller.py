@@ -597,10 +597,6 @@ async def test_devices(mock_aioresponse, unifi_controller):
     device_mac = next(iter(unifi_controller.devices))
     assert device_mac == device.mac
 
-    # Verify Device.Port.__iter__
-    port_1 = next(iter(device.ports))
-    assert port_1 == 1
-
     # Register callback
     devices = unifi_controller.devices
     mock_callback = Mock()

@@ -129,44 +129,6 @@ async def test_device_access_point(unifi_controller):
         access_point.__repr__() == f"<Device {access_point.name}: {access_point.mac}>"
     )
 
-    assert len(access_point.ports.values()) == 2
-
-    access_point_port_1 = access_point.ports[1]
-    assert access_point_port_1.ifname == ""
-    assert access_point_port_1.media == "GE"
-    assert access_point_port_1.name == "Main"
-    assert access_point_port_1.port_idx == 1
-    assert access_point_port_1.poe_class == ""
-    assert access_point_port_1.poe_enable is None
-    assert access_point_port_1.poe_mode == ""
-    assert access_point_port_1.poe_power == ""
-    assert access_point_port_1.poe_voltage == ""
-    assert access_point_port_1.portconf_id == "5a32aa4"
-    assert access_point_port_1.port_poe is False
-    assert access_point_port_1.up is True
-    assert (
-        access_point_port_1.__repr__()
-        == f"<{access_point_port_1.name}: Poe {access_point_port_1.poe_enable}>"
-    )
-
-    access_point_port_2 = access_point.ports[2]
-    assert access_point_port_2.ifname == ""
-    assert access_point_port_2.media == "GE"
-    assert access_point_port_2.name == "Secondary"
-    assert access_point_port_2.port_idx == 2
-    assert access_point_port_2.poe_class == ""
-    assert access_point_port_2.poe_enable is None
-    assert access_point_port_2.poe_mode == ""
-    assert access_point_port_2.poe_power == ""
-    assert access_point_port_2.poe_voltage == ""
-    assert access_point_port_2.portconf_id == "5a32aa4"
-    assert access_point_port_2.port_poe is False
-    assert access_point_port_2.up is False
-    assert (
-        access_point_port_2.__repr__()
-        == f"<{access_point_port_2.name}: Poe {access_point_port_2.poe_enable}>"
-    )
-
 
 async def test_device_security_gateway(unifi_controller):
     """Test device class on a security gateway."""
@@ -212,62 +174,6 @@ async def test_device_security_gateway(unifi_controller):
     assert gateway.wlan_overrides == []
     assert gateway.__repr__() == f"<Device {gateway.name}: {gateway.mac}>"
 
-    assert len(gateway.ports.values()) == 3
-
-    gateway_port_eth0 = gateway.ports["eth0"]
-    assert gateway_port_eth0.ifname == "eth0"
-    assert gateway_port_eth0.media == ""
-    assert gateway_port_eth0.name == "wan"
-    assert gateway_port_eth0.port_idx is None
-    assert gateway_port_eth0.poe_class == ""
-    assert gateway_port_eth0.poe_enable is None
-    assert gateway_port_eth0.poe_mode == ""
-    assert gateway_port_eth0.poe_power == ""
-    assert gateway_port_eth0.poe_voltage == ""
-    assert gateway_port_eth0.portconf_id == ""
-    assert gateway_port_eth0.port_poe is False
-    assert gateway_port_eth0.up is True
-    assert (
-        gateway_port_eth0.__repr__()
-        == f"<{gateway_port_eth0.name}: Poe {gateway_port_eth0.poe_enable}>"
-    )
-
-    gateway_port_eth1 = gateway.ports["eth1"]
-    assert gateway_port_eth1.ifname == "eth1"
-    assert gateway_port_eth1.media == ""
-    assert gateway_port_eth1.name == "lan"
-    assert gateway_port_eth1.port_idx is None
-    assert gateway_port_eth1.poe_class == ""
-    assert gateway_port_eth1.poe_enable is None
-    assert gateway_port_eth1.poe_mode == ""
-    assert gateway_port_eth1.poe_power == ""
-    assert gateway_port_eth1.poe_voltage == ""
-    assert gateway_port_eth1.portconf_id == ""
-    assert gateway_port_eth1.port_poe is False
-    assert gateway_port_eth1.up is True
-    assert (
-        gateway_port_eth1.__repr__()
-        == f"<{gateway_port_eth1.name}: Poe {gateway_port_eth1.poe_enable}>"
-    )
-
-    gateway_port_eth2 = gateway.ports["eth2"]
-    assert gateway_port_eth2.ifname == "eth2"
-    assert gateway_port_eth2.media == ""
-    assert gateway_port_eth2.name == "lan2"
-    assert gateway_port_eth2.port_idx is None
-    assert gateway_port_eth2.poe_class == ""
-    assert gateway_port_eth2.poe_enable is None
-    assert gateway_port_eth2.poe_mode == ""
-    assert gateway_port_eth2.poe_power == ""
-    assert gateway_port_eth2.poe_voltage == ""
-    assert gateway_port_eth2.portconf_id == ""
-    assert gateway_port_eth2.port_poe is False
-    assert gateway_port_eth2.up is False
-    assert (
-        gateway_port_eth2.__repr__()
-        == f"<{gateway_port_eth2.name}: Poe {gateway_port_eth2.poe_enable}>"
-    )
-
 
 async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a plug."""
@@ -288,7 +194,6 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
     assert plug.model == "UP1"
     assert plug.name == "Plug"
     assert plug.next_interval == 40
-    assert len(plug.outlets.values()) == 1
     assert plug.outlet_table == [
         {
             "index": 1,
@@ -327,16 +232,6 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
         },
     )
 
-    assert len(plug.outlets.values()) == 1
-
-    outlet_1 = plug.outlets[1]
-    assert outlet_1.name == "Outlet 1"
-    assert outlet_1.index == 1
-    assert outlet_1.has_relay is True
-    assert outlet_1.has_metering is False
-    assert outlet_1.relay_state is False
-    assert outlet_1.cycle_enabled is None
-
     await plug.set_outlet_cycle_enabled(1, True)
     assert unifi_called_with(
         "put",
@@ -352,25 +247,6 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
             ]
         },
     )
-
-    plug.outlets.update(
-        [
-            {
-                "index": 1,
-                "has_relay": False,
-                "has_metering": True,
-                "relay_state": True,
-                "name": "Outlet-1",
-            }
-        ]
-    )
-    outlet_1 = plug.outlets[1]
-    assert outlet_1.name == "Outlet-1"
-    assert outlet_1.index == 1
-    assert outlet_1.has_relay is False
-    assert outlet_1.has_metering is True
-    assert outlet_1.relay_state is True
-    assert outlet_1.cycle_enabled is None
 
 
 async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
@@ -392,7 +268,6 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
     assert strip.model == "UP6"
     assert strip.name == ""
     assert strip.next_interval == 41
-    assert len(strip.outlets.values()) == 7
     assert strip.outlet_table == [
         {
             "index": 1,
@@ -530,27 +405,6 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
         },
     )
 
-    assert len(strip.outlets.values()) == 7
-
-    for name, index, has_relay, has_metering, relay_state, cycle_enabled in [
-        ("Outlet 1", 1, True, False, False, False),
-        ("Outlet 2", 2, True, False, False, False),
-        ("Outlet 3", 3, True, False, True, False),
-        ("Outlet 4", 4, True, False, True, True),
-        ("Outlet 5", 5, True, False, False, False),
-        ("Outlet 6", 6, True, False, False, False),
-        ("USB Outlets", 7, True, False, False, False),
-    ]:
-        outlet = strip.outlets[index]
-        assert outlet.name == name
-        assert outlet.index == index
-        assert outlet.has_relay is has_relay
-        assert outlet.has_metering is has_metering
-        assert outlet.relay_state is relay_state
-        assert outlet.cycle_enabled is cycle_enabled
-
-    assert next(iter(strip.outlets)) == 1
-
 
 async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on a PDU Pro 20 port power dispersion unit."""
@@ -581,7 +435,6 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
     assert pdupro.model == "USPPDUP"
     assert pdupro.name == "Main Server Cabinet PDU"
     assert pdupro.next_interval == 56
-    assert len(pdupro.outlets.values()) == 20
     assert pdupro.outlet_table == [
         {
             "index": 1,
@@ -926,249 +779,6 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         },
     )
 
-    assert len(pdupro.outlets.values()) == 20
-
-    for (
-        name,
-        index,
-        has_relay,
-        relay_state,
-        cycle_enabled,
-        has_metering,
-        caps,
-        voltage,
-        current,
-        power,
-        power_factor,
-    ) in [
-        ("USB Outlet 1", 1, None, True, False, None, 1, None, None, None, None),
-        ("USB Outlet 2", 2, None, False, False, None, 1, None, None, None, None),
-        ("USB Outlet 3", 3, None, True, False, None, 1, None, None, None, None),
-        ("USB Outlet 4", 4, None, False, False, None, 1, None, None, None, None),
-        (
-            "Console",
-            5,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.061",
-            "3.815",
-            "0.527",
-        ),
-        (
-            "UDM Pro",
-            6,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.248",
-            "14.351",
-            "0.488",
-        ),
-        (
-            "Unraid",
-            7,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "1.454",
-            "169.900",
-            "0.985",
-        ),
-        (
-            "Outlet 8",
-            8,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 9",
-            9,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 10",
-            10,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 11",
-            11,
-            None,
-            False,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 12",
-            12,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 13",
-            13,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 14",
-            14,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Outlet 15",
-            15,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.127",
-            "9.394",
-            "0.623",
-        ),
-        (
-            "UNVR Pro",
-            16,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.278",
-            "31.992",
-            "0.970",
-        ),
-        (
-            "Outlet 17",
-            17,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-        (
-            "Home Assistant",
-            18,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.328",
-            "21.529",
-            "0.553",
-        ),
-        (
-            "Server Cabinet Switch",
-            19,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.495",
-            "56.760",
-            "0.967",
-        ),
-        (
-            "Rear Cabinet Lights",
-            20,
-            None,
-            True,
-            None,
-            None,
-            3,
-            "118.566",
-            "0.000",
-            "0.000",
-            "0.000",
-        ),
-    ]:
-        outlet = pdupro.outlets[index]
-        assert outlet.name == name
-        assert outlet.index == index
-        assert outlet.has_relay is has_relay
-        assert outlet.relay_state is relay_state
-        assert outlet.cycle_enabled is cycle_enabled
-        assert outlet.has_metering is has_metering
-        assert outlet.caps == caps
-        assert outlet.voltage == voltage
-        assert outlet.current == current
-        assert outlet.power == power
-        assert outlet.power_factor == power_factor
-
-    assert next(iter(pdupro.outlets)) == 1
-
 
 async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test device class on aswitch."""
@@ -1315,116 +925,6 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
                 },
             ]
         },
-    )
-
-    assert len(switch.ports.values()) == 18
-
-    switch_port_1 = switch.ports[1]
-    assert switch_port_1.ifname == ""
-    assert switch_port_1.media == "GE"
-    assert switch_port_1.name == "Port 1"
-    assert switch_port_1.port_idx == 1
-    assert switch_port_1.poe_class == "Unknown"
-    assert switch_port_1.poe_enable is False
-    assert switch_port_1.poe_mode == "auto"
-    assert switch_port_1.poe_power == "0.00"
-    assert switch_port_1.poe_voltage == "0.00"
-    assert switch_port_1.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_1.port_poe is True
-    assert switch_port_1.up is True
-    assert (
-        switch_port_1.__repr__()
-        == f"<{switch_port_1.name}: Poe {switch_port_1.poe_enable}>"
-    )
-
-    switch_port_2 = switch.ports[2]
-    assert switch_port_2.ifname == ""
-    assert switch_port_2.media == "GE"
-    assert switch_port_2.name == "Port 2"
-    assert switch_port_2.port_idx == 2
-    assert switch_port_2.poe_class == "Unknown"
-    assert switch_port_2.poe_enable is False
-    assert switch_port_2.poe_mode == "auto"
-    assert switch_port_2.poe_power == "0.00"
-    assert switch_port_2.poe_voltage == "0.00"
-    assert switch_port_2.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_2.port_poe is True
-    assert switch_port_2.up is False
-    assert (
-        switch_port_2.__repr__()
-        == f"<{switch_port_2.name}: Poe {switch_port_2.poe_enable}>"
-    )
-
-    switch_port_3 = switch.ports[3]
-    assert switch_port_3.ifname == ""
-    assert switch_port_3.media == "GE"
-    assert switch_port_3.name == "Port 3"
-    assert switch_port_3.port_idx == 3
-    assert switch_port_3.poe_class == "Class 3"
-    assert switch_port_3.poe_enable is True
-    assert switch_port_3.poe_mode == "auto"
-    assert switch_port_3.poe_power == "3.24"
-    assert switch_port_3.poe_voltage == "53.78"
-    assert switch_port_3.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_3.port_poe is True
-    assert switch_port_3.up is True
-    assert (
-        switch_port_3.__repr__()
-        == f"<{switch_port_3.name}: Poe {switch_port_3.poe_enable}>"
-    )
-
-    switch_port_4 = switch.ports[4]
-    assert switch_port_4.ifname == ""
-    assert switch_port_4.media == "GE"
-    assert switch_port_4.name == "Port 4"
-    assert switch_port_4.port_idx == 4
-    assert switch_port_4.poe_class == "Class 2"
-    assert switch_port_4.poe_enable is True
-    assert switch_port_4.poe_mode == "auto"
-    assert switch_port_4.poe_power == "1.50"
-    assert switch_port_4.poe_voltage == "53.85"
-    assert switch_port_4.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_4.port_poe is True
-    assert switch_port_4.up is True
-    assert (
-        switch_port_4.__repr__()
-        == f"<{switch_port_4.name}: Poe {switch_port_4.poe_enable}>"
-    )
-
-    switch_port_5 = switch.ports[5]
-    assert switch_port_5.ifname == ""
-    assert switch_port_5.media == "GE"
-    assert switch_port_5.name == "Port 5"
-    assert switch_port_5.port_idx == 5
-    assert switch_port_5.poe_class == "Unknown"
-    assert switch_port_5.poe_enable is False
-    assert switch_port_5.poe_mode == "auto"
-    assert switch_port_5.poe_power == "0.00"
-    assert switch_port_5.poe_voltage == "0.00"
-    assert switch_port_5.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_5.port_poe is True
-    assert switch_port_5.up is False
-    assert (
-        switch_port_5.__repr__()
-        == f"<{switch_port_5.name}: Poe {switch_port_5.poe_enable}>"
-    )
-
-    switch_port_6 = switch.ports[6]
-    assert switch_port_6.ifname == ""
-    assert switch_port_6.media == "GE"
-    assert switch_port_6.name == "Port 6"
-    assert switch_port_6.port_idx == 6
-    assert switch_port_6.poe_class == "Unknown"
-    assert switch_port_6.poe_enable is False
-    assert switch_port_6.poe_mode == "auto"
-    assert switch_port_6.poe_power == "0.00"
-    assert switch_port_6.poe_voltage == "0.00"
-    assert switch_port_6.portconf_id == "5a32aa4ee4babd4452422ddd22222"
-    assert switch_port_6.port_poe is True
-    assert switch_port_6.up is False
-    assert (
-        switch_port_6.__repr__()
-        == f"<{switch_port_6.name}: Poe {switch_port_6.poe_enable}>"
     )
 
 

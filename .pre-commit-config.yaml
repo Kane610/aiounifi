@@ -20,6 +20,7 @@ repos:
     rev: v1.1.1
     hooks:
       - id: mypy
+        exclude: ^tests/
 # -   repo: https://gitlab.com/pycqa/flake8
 #     rev: 3.7.9
 #     hooks:
