@@ -575,10 +575,11 @@ class DeviceSetOutletRelayRequest(ApiRequest):
                 break
 
         if not existing_override:
+            name = device.outlet_table[outlet_idx - 1].get("name", "")
             device.outlet_overrides.append(
                 {
                     "index": outlet_idx,
-                    "name": device.outlets[outlet_idx].name,
+                    "name": name,
                     "relay_state": state,
                 }
             )
@@ -611,10 +612,11 @@ class DeviceSetOutletCycleEnabledRequest(ApiRequest):
                 break
 
         if not existing_override:
+            name = device.outlet_table[outlet_idx - 1].get("name", "")
             device.outlet_overrides.append(
                 {
                     "index": outlet_idx,
-                    "name": device.outlets[outlet_idx].name,
+                    "name": name,
                     "cycle_enabled": state,
                 }
             )
@@ -647,10 +649,11 @@ class DeviceSetPoePortModeRequest(ApiRequest):
                 break
 
         if not existing_override:
+            portconf_id = device.port_table[port_idx - 1].get("portconf_id", "")
             device.port_overrides.append(
                 {
                     "port_idx": port_idx,
-                    "portconf_id": device.ports[port_idx].portconf_id,
+                    "portconf_id": portconf_id,
                     "poe_mode": mode,
                 }
             )
