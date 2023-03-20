@@ -15,19 +15,6 @@ SubscriptionCallback = Callable[[Message], None]
 SubscriptionType = tuple[SubscriptionCallback, tuple[MessageKey, ...] | None]
 UnsubscribeType = Callable[[], None]
 
-MESSAGE_TO_CHANGE = {
-    MessageKey.EVENT,
-    MessageKey.CLIENT,
-    MessageKey.CLIENT_REMOVED,
-    MessageKey.DEVICE,
-    MessageKey.DPI_APP_ADDED,
-    MessageKey.DPI_APP_UPDATED,
-    MessageKey.DPI_APP_REMOVED,
-    MessageKey.DPI_GROUP_ADDED,
-    MessageKey.DPI_GROUP_UPDATED,
-    MessageKey.DPI_GROUP_REMOVED,
-}
-
 
 class MessageHandler:
     """Message handler class."""
