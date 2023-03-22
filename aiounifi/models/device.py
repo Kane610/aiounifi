@@ -9,7 +9,7 @@ from typing import Any
 
 from typing_extensions import NotRequired, TypedDict
 
-from .api import APIItem, ApiRequest
+from .api import ApiItem, ApiRequest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -661,7 +661,7 @@ class DeviceSetPoePortModeRequest(ApiRequest):
         )
 
 
-class Device(APIItem):
+class Device(ApiItem):
     """Represents a network device."""
 
     raw: TypedDevice
@@ -819,31 +819,6 @@ class Device(APIItem):
     def wlan_overrides(self) -> list[TypedDeviceWlanOverrides]:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
-
-    async def set_outlet_relay_state(
-        self, outlet_idx: int, state: bool
-    ) -> list[dict[str, Any]]:
-        """Set outlet relay state."""
-        LOGGER.debug("Override outlet %d with relay_state %s", outlet_idx, str(state))
-        return await self._controller.request(
-            DeviceSetOutletRelayRequest.create(self, outlet_idx, state)
-        )
-
-    async def set_outlet_cycle_enabled(
-        self, outlet_idx: int, state: bool
-    ) -> list[dict[str, Any]]:
-        """Set outlet cycle_enabled flag."""
-        LOGGER.debug("Override outlet %d with cycle_enabled %s", outlet_idx, str(state))
-        return await self._controller.request(
-            DeviceSetOutletCycleEnabledRequest.create(self, outlet_idx, state)
-        )
-
-    async def set_port_poe_mode(self, port_idx: int, mode: str) -> list[dict[str, Any]]:
-        """Set port poe mode."""
-        LOGGER.debug("Override port %d with mode %s", port_idx, mode)
-        return await self._controller.request(
-            DeviceSetPoePortModeRequest.create(self, port_idx, mode)
-        )
 
     def __repr__(self) -> str:
         """Return the representation."""

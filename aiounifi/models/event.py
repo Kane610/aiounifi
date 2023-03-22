@@ -7,6 +7,8 @@ import enum
 import logging
 from typing import Any, TypedDict, final
 
+from .api import ApiItem
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -200,12 +202,10 @@ class Event2:
 
 
 @final
-class Event:
+class Event(ApiItem):
     """UniFi event."""
 
-    def __init__(self, raw: Any) -> None:
-        """Initialize event."""
-        self.raw: TypedEvent = raw
+    raw: TypedEvent
 
     @property
     def datetime(self) -> str:

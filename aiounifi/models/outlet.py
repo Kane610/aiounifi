@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .api import ApiItem
 from .device import TypedDeviceOutletTable
 
 
@@ -41,12 +42,10 @@ class Outlet2:
         )
 
 
-class Outlet:
+class Outlet(ApiItem):
     """Represents an outlet."""
 
-    def __init__(self, raw: TypedDeviceOutletTable) -> None:
-        """Initialize outlet."""
-        self.raw = raw
+    raw: TypedDeviceOutletTable
 
     @property
     def name(self) -> str:

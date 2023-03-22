@@ -1,10 +1,8 @@
 """API management class and base class for the different end points."""
 
+from abc import ABC
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from ..controller import Controller
+from typing import Any
 
 
 @dataclass
@@ -22,10 +20,16 @@ class ApiRequest:
         return f"/api/s/{site}{self.path}"
 
 
-class APIItem:
+# @dataclass
+# class ApiItem(ABC):
+#     """Base class for all end points using APIItems class."""
+
+#     raw: Any
+
+
+class ApiItem(ABC):
     """Base class for all end points using APIItems class."""
 
-    def __init__(self, raw: Any, controller: "Controller") -> None:
+    def __init__(self, raw: Any) -> None:
         """Initialize API item."""
         self.raw = raw
-        self._controller = controller
