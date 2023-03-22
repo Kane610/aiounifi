@@ -2,6 +2,6 @@
 
 from typing import TypeVar
 
-from .api import APIItem
+from .api import ApiItem
 
-ResourceType = TypeVar("ResourceType", bound=APIItem)
+ResourceType = TypeVar("ResourceType", bound=ApiItem)

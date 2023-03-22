@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from typing_extensions import NotRequired, TypedDict
 
-from .api import APIItem, ApiRequest
+from .api import ApiItem, ApiRequest
 
 
 class TypedWlan(TypedDict):
@@ -77,7 +77,7 @@ class WlanEnableRequest(ApiRequest):
         )
 
 
-class Wlan(APIItem):
+class Wlan(ApiItem):
     """Represent a WLAN configuration."""
 
     raw: TypedWlan

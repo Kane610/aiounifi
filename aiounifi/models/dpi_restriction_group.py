@@ -2,7 +2,7 @@
 
 from typing_extensions import NotRequired, TypedDict
 
-from .api import APIItem
+from .api import ApiItem
 
 
 class TypedDPIRestrictionGroup(TypedDict):
@@ -16,7 +16,7 @@ class TypedDPIRestrictionGroup(TypedDict):
     dpiapp_ids: NotRequired[list[str]]
 
 
-class DPIRestrictionGroup(APIItem):
+class DPIRestrictionGroup(ApiItem):
     """Represents a DPI Group configuration."""
 
     raw: TypedDPIRestrictionGroup

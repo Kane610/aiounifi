@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import TypedDict
 
-from .api import APIItem, ApiRequest
+from .api import ApiItem, ApiRequest
 
 
 class TypedClient(TypedDict):
@@ -150,7 +150,7 @@ class ClientRemoveRequest(ApiRequest):
         )
 
 
-class Client(APIItem):
+class Client(ApiItem):
     """Represents a client network device."""
 
     raw: TypedClient

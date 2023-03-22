@@ -8,6 +8,9 @@ import pytest
 from aiounifi.models.device import (
     DevicePowerCyclePortRequest,
     DeviceRestartRequest,
+    DeviceSetOutletCycleEnabledRequest,
+    DeviceSetOutletRelayRequest,
+    DeviceSetPoePortModeRequest,
     DeviceUpgradeRequest,
 )
 
@@ -217,7 +220,7 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
         payload="",
         repeat=True,
     )
-    await plug.set_outlet_relay_state(1, False)
+    await unifi_controller.request(DeviceSetOutletRelayRequest.create(plug, 1, False))
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/600c8356942a6ade50707b56",
@@ -232,7 +235,9 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
         },
     )
 
-    await plug.set_outlet_cycle_enabled(1, True)
+    await unifi_controller.request(
+        DeviceSetOutletCycleEnabledRequest.create(plug, 1, True)
+    )
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/600c8356942a6ade50707b56",
@@ -353,7 +358,7 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
         payload="",
         repeat=True,
     )
-    await strip.set_outlet_relay_state(5, True)
+    await unifi_controller.request(DeviceSetOutletRelayRequest.create(strip, 5, True))
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
@@ -729,7 +734,7 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
         payload="",
         repeat=True,
     )
-    await pdupro.set_outlet_relay_state(5, True)
+    await unifi_controller.request(DeviceSetOutletRelayRequest.create(pdupro, 5, True))
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/61e4a1e60bbb2d53aeb430ea",
@@ -853,7 +858,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
         payload="",
         repeat=True,
     )
-    await switch.set_port_poe_mode(1, "off")
+    await unifi_controller.request(DeviceSetPoePortModeRequest.create(switch, 1, "off"))
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/235678987654345678",
@@ -890,7 +895,7 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
         },
     )
 
-    await switch.set_port_poe_mode(3, "off")
+    await unifi_controller.request(DeviceSetPoePortModeRequest.create(switch, 3, "off"))
     assert unifi_called_with(
         "put",
         "/api/s/default/rest/device/235678987654345678",

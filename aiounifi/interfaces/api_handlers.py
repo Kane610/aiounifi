@@ -1,5 +1,6 @@
 """API management class and base class for the different end points."""
 
+from abc import ABC
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
 from typing import TYPE_CHECKING, Any, Generic, Type, final
@@ -27,7 +28,7 @@ UnsubscribeType = Callable[[], None]
 ID_FILTER_ALL = "*"
 
 
-class SubscriptionHandler:
+class SubscriptionHandler(ABC):
     """Manage subscription and notification to subscribers."""
 
     def __init__(self) -> None:
@@ -122,7 +123,7 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
 
         obj_id: str
         obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
-        self._items[obj_id] = self.item_cls(raw, self.controller)
+        self._items[obj_id] = self.item_cls(raw)
 
         self.signal_subscribers(
             ItemEvent.CHANGED if obj_is_known else ItemEvent.ADDED,
