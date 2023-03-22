@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .api import ApiItem
 from .device import TypedDevicePortTable
 
 
@@ -41,12 +42,10 @@ class Port2:
         )
 
 
-class Port:
+class Port(ApiItem):
     """Represents a network port."""
 
-    def __init__(self, raw: TypedDevicePortTable) -> None:
-        """Initialize port."""
-        self.raw = raw
+    raw: TypedDevicePortTable
 
     @property
     def ifname(self) -> str | None:

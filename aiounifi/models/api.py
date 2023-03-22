@@ -20,8 +20,16 @@ class ApiRequest:
         return f"/api/s/{site}{self.path}"
 
 
-@dataclass
+# @dataclass
+# class ApiItem(ABC):
+#     """Base class for all end points using APIItems class."""
+
+#     raw: Any
+
+
 class ApiItem(ABC):
     """Base class for all end points using APIItems class."""
 
-    raw: Any
+    def __init__(self, raw: Any) -> None:
+        """Initialize API item."""
+        self.raw = raw
