@@ -29,8 +29,3 @@ class APIItem:
         """Initialize API item."""
         self.raw = raw
         self._controller = controller
-
-    def update(self, raw: dict[str, Any] | None = None) -> None:
-        """Update raw data and signal new data is available."""
-        if raw:
-            self.raw = raw

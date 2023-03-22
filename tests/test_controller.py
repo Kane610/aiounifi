@@ -467,8 +467,6 @@ async def test_clients(mock_aioresponse, unifi_controller):
     client_mac = next(iter(unifi_controller.clients))
     assert client_mac == client.mac
 
-    assert client.update() is None
-
     # Register callback
     clients = unifi_controller.clients
     mock_callback = Mock()
@@ -597,10 +595,6 @@ async def test_devices(mock_aioresponse, unifi_controller):
     device_mac = next(iter(unifi_controller.devices))
     assert device_mac == device.mac
 
-    # Verify Device.Port.__iter__
-    port_1 = next(iter(device.ports))
-    assert port_1 == 1
-
     # Register callback
     devices = unifi_controller.devices
     mock_callback = Mock()
@@ -672,7 +666,6 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
     unifi_controller.session_handler(WebsocketSignal.DATA)
     assert len(unifi_controller.dpi_apps.values()) == 1
     assert "61783e89c1773a18c0c61f00" in unifi_controller.dpi_apps
-    dpi_app = unifi_controller.dpi_apps["61783e89c1773a18c0c61f00"]
 
     mock_app_callback.assert_called()
     mock_app_callback.reset_mock()
@@ -693,6 +686,7 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
         ],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
+    dpi_app = unifi_controller.dpi_apps["61783e89c1773a18c0c61f00"]
     assert dpi_app.enabled
 
     mock_app_callback.assert_called()
@@ -766,7 +760,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     unifi_controller.session_handler(WebsocketSignal.DATA)
     assert len(unifi_controller.dpi_groups.values()) == 1
     assert "61783dbdc1773a18c0c61ef6" in unifi_controller.dpi_groups
-    dpi_group = unifi_controller.dpi_groups["61783dbdc1773a18c0c61ef6"]
 
     mock_group_callback.assert_called()
     mock_group_callback.reset_mock()
@@ -784,6 +777,7 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
         ],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
+    dpi_group = unifi_controller.dpi_groups["61783dbdc1773a18c0c61ef6"]
     assert "61783e89c1773a18c0c61f00" in dpi_group.dpiapp_ids
 
     mock_group_callback.assert_called()

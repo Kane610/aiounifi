@@ -121,14 +121,13 @@ class APIHandler(SubscriptionHandler, Generic[ResourceType]):
             return
 
         obj_id: str
-        if (obj_id := raw[self.obj_id_key]) in self._items:
-            obj = self._items[obj_id]
-            obj.update(raw)
-            self.signal_subscribers(ItemEvent.CHANGED, obj_id)
-            return
-
+        obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
         self._items[obj_id] = self.item_cls(raw, self.controller)
-        self.signal_subscribers(ItemEvent.ADDED, obj_id)
+
+        self.signal_subscribers(
+            ItemEvent.CHANGED if obj_is_known else ItemEvent.ADDED,
+            obj_id,
+        )
 
     @final
     def remove_item(self, raw: dict[str, Any]) -> None:
