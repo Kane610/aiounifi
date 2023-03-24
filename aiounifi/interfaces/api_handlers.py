@@ -101,11 +101,13 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         raw = await self.controller.request(ApiRequest("get", self.path, None))
         self.process_raw(raw)
 
+    @final
     def process_raw(self, raw: list[dict[str, Any]]) -> None:
         """Process full raw response."""
         for raw_item in raw:
             self.process_item(raw_item)
 
+    @final
     def process_message(self, message: "Message") -> None:
         """Process and forward websocket data."""
         if message.meta.message in self.process_messages:
