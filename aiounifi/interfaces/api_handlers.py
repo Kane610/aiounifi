@@ -90,7 +90,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         """Initialize API handler."""
         super().__init__()
         self.controller = controller
-        self._items: dict[int | str, ApiItemT] = {}
+        self._items: dict[str, ApiItemT] = {}
 
         if message_filter := self.process_messages + self.remove_messages:
             controller.messages.subscribe(self.process_message, message_filter)
@@ -140,7 +140,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
 
     @final
-    def items(self) -> ItemsView[int | str, ApiItemT]:
+    def items(self) -> ItemsView[str, ApiItemT]:
         """Return items dictionary."""
         return self._items.items()
 
@@ -150,21 +150,21 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         return self._items.values()
 
     @final
-    def get(self, obj_id: int | str, default: Any | None = None) -> ApiItemT | None:
+    def get(self, obj_id: str, default: Any | None = None) -> ApiItemT | None:
         """Get item value based on key, return default if no match."""
         return self._items.get(obj_id, default)
 
     @final
-    def __contains__(self, obj_id: int | str) -> bool:
+    def __contains__(self, obj_id: str) -> bool:
         """Validate membership of item ID."""
         return obj_id in self._items
 
     @final
-    def __getitem__(self, obj_id: int | str) -> ApiItemT:
+    def __getitem__(self, obj_id: str) -> ApiItemT:
         """Get item value based on key."""
         return self._items[obj_id]
 
     @final
-    def __iter__(self) -> Iterator[int | str]:
+    def __iter__(self) -> Iterator[str]:
         """Allow iterate over items."""
         return iter(self._items)

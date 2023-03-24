@@ -32,13 +32,11 @@ class Ports(APIHandler[Port]):
                 obj_id = f"{device_id}_{port_idx}"
                 self._items[obj_id] = port
                 self.signal_subscribers(event, obj_id)
+            return
 
-        else:
-            matched_obj_ids = [
-                str(obj_id)
-                for obj_id in self._items
-                if str(obj_id).startswith(device_id)
-            ]
-            for obj_id in matched_obj_ids:
-                self._items.pop(obj_id)
-                self.signal_subscribers(event, obj_id)
+        matched_obj_ids = [
+            obj_id for obj_id in self._items if obj_id.startswith(device_id)
+        ]
+        for obj_id in matched_obj_ids:
+            self._items.pop(obj_id)
+            self.signal_subscribers(event, obj_id)
