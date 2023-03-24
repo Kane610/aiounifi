@@ -2,7 +2,7 @@
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 
 @dataclass
@@ -33,3 +33,6 @@ class ApiItem(ABC):
     def __init__(self, raw: Any) -> None:
         """Initialize API item."""
         self.raw = raw
+
+
+ApiItemT = TypeVar("ApiItemT", bound=ApiItem)
