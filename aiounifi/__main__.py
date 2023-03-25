@@ -14,16 +14,14 @@ from aiounifi.controller import Controller
 if TYPE_CHECKING:
     from ssl import SSLContext
 
-    from aiounifi.websocket import WebsocketSignal, WebsocketState
+    from aiounifi.websocket import WebsocketState
 
 LOGGER = logging.getLogger(__name__)
 
 
-def signalling_callback(
-    signal: WebsocketSignal, data: dict[str, Any] | WebsocketState
-) -> None:
+def signalling_callback(data: WebsocketState) -> None:
     """Receive and print events from websocket."""
-    LOGGER.info("%s, %s", signal, data)
+    LOGGER.info("%s", data)
 
 
 async def unifi_controller(
@@ -34,7 +32,7 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | bool,
-    callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None],
+    callback: Callable[[WebsocketState], None],
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -45,8 +43,8 @@ async def unifi_controller(
         site=site,
         websession=session,
         ssl_context=ssl_context,
-        callback=callback,
     )
+    controller.ws_state_callback = callback
 
     try:
         async with async_timeout.timeout(10):

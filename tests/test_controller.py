@@ -891,10 +891,10 @@ async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
 
-    unifi_controller.callback.reset_mock()
+    unifi_controller.ws_state_callback.reset_mock()
     unifi_controller.websocket._data = {"meta": {"message": unsupported_message}}
     unifi_controller.session_handler(WebsocketSignal.DATA)
-    unifi_controller.callback.assert_not_called()
+    unifi_controller.ws_state_callback.assert_not_called()
 
     assert len(unifi_controller.clients._items) == 0
 

@@ -51,8 +51,6 @@ class Controller:
         port: int = 8443,
         site: str = "default",
         ssl_context: SSLContext | bool = False,
-        callback: Callable[[WebsocketSignal, dict[str, Any] | WebsocketState], None]
-        | None = None,
     ) -> None:
         """Session setup."""
         self.host = host
@@ -62,7 +60,6 @@ class Controller:
         self.password = password
         self.site = site
         self.ssl_context = ssl_context
-        self.callback = callback
         self.can_retry_login = False
 
         self.url = f"https://{self.host}:{self.port}"
@@ -71,6 +68,7 @@ class Controller:
         self.last_response: aiohttp.ClientResponse | None = None
 
         self.websocket: WSClient | None = None
+        self.ws_state_callback: Callable[[WebsocketState], None] | None = None
 
         self.messages = MessageHandler(self)
         self.events = EventHandler(self)
@@ -169,8 +167,8 @@ class Controller:
         if signal == WebsocketSignal.DATA:
             self.messages.handler(self.websocket.data)
 
-        elif signal == WebsocketSignal.CONNECTION_STATE and self.callback:
-            self.callback(WebsocketSignal.CONNECTION_STATE, self.websocket.state)
+        elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
+            self.ws_state_callback(self.websocket.state)
 
     async def request(self, api_request: "ApiRequest") -> list[dict[str, Any]]:
         """Make a request to the API, retry login on failure."""
