@@ -22,7 +22,6 @@ def unifi_called_with(mock_aioresponse):
     def verify_call(method: str, path: str, **kwargs: dict) -> bool:
         """Verify expected data was provided with a request to aioresponse."""
         for req, call_list in mock_aioresponse.requests.items():
-
             if method != req[0]:
                 continue
 
@@ -57,9 +56,8 @@ async def unifi_controller() -> Controller:
     Clean up sessions automatically at the end of each test.
     """
     session = aiohttp.ClientSession()
-    controller = Controller(
-        "host", session, username="user", password="pass", callback=Mock()
-    )
+    controller = Controller("host", session, username="user", password="pass")
+    controller.ws_state_callback = Mock()
     yield controller
     await session.close()
 
