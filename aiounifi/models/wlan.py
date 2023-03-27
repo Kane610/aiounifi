@@ -79,15 +79,12 @@ class WlanEnableRequest(ApiRequest):
         )
 
 
-def wlan_qr_code(
-    name: str, passphrase: str, kind: str = "svg", scale: int = 4
-) -> io.BytesIO:
-    """Generate QR code based on Wlan properties."""
+def wlan_qr_code(name: str, password: str, kind: str = "svg", scale: int = 4) -> bytes:
+    """Generate WLAN QR code."""
     buffer = io.BytesIO()
-    qr_code = segno.helpers.make_wifi(ssid=name, password=passphrase, security="WPA")
+    qr_code = segno.helpers.make_wifi(ssid=name, password=password, security="WPA")
     qr_code.save(out=buffer, kind=kind, scale=scale)
-    buffer.seek(0)
-    return buffer
+    return buffer.getvalue()
 
 
 class Wlan(ApiItem):
