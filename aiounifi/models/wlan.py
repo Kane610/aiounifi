@@ -1,7 +1,9 @@
 """WLANs as part of a UniFi network."""
 
 from dataclasses import dataclass
+import io
 
+import segno.helpers
 from typing_extensions import NotRequired, TypedDict
 
 from .api import ApiItem, ApiRequest
@@ -75,6 +77,19 @@ class WlanEnableRequest(ApiRequest):
             path=f"/rest/wlanconf/{wlan_id}",
             data={"enabled": enable},
         )
+
+
+def wlan_qr_code(wlan: "Wlan", kind: str = "svg", scale: int = 4) -> io.BytesIO:
+    """Generate QR code based on Wlan properties."""
+    stream = io.BytesIO()
+    qr_code = segno.helpers.make_wifi(
+        ssid=wlan.name,
+        password=wlan.x_passphrase,
+        security="WPA",
+    )
+    qr_code.save(out=stream, kind=kind, scale=scale)
+    stream.seek(0)
+    return stream
 
 
 class Wlan(ApiItem):
