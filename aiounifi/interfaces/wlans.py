@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from ..models.wlan import Wlan, WlanEnableRequest
+from ..models.wlan import Wlan, WlanEnableRequest, wlan_qr_code
 from .api_handlers import APIHandler
 
 
@@ -24,3 +24,7 @@ class Wlans(APIHandler[Wlan]):
         return await self.controller.request(
             WlanEnableRequest.create(wlan.id, enable=False)
         )
+
+    def generate_wlan_qr_code(self, wlan: Wlan) -> bytes:
+        """Generate QR code based on WLAN properties."""
+        return wlan_qr_code(wlan.name, wlan.x_passphrase)

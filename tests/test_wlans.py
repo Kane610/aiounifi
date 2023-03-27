@@ -51,10 +51,8 @@ async def test_wlan_enable(
 
 def test_wlan_qr_code():
     """Test that wlan can be enabled and disabled."""
-    qr_code = wlan_qr_code("ssid", "passphrase")
-
     assert (
-        qr_code
+        wlan_qr_code("ssid", "passphrase")
         == b'<?xml version="1.0" encoding="utf-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="132" height="132" class="segno"><path transform="scale(4)" class="qrline" stroke="#000" d="M4 4.5h7m2 0h2m5 0h1m1 0h7m-25 1h1m5 0h1m3 0h1m2 0h1m4 0h1m5 0h1m-25 1h1m1 0h3m1 0h1m2 0h4m1 0h3m1 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m1 0h3m5 0h1m1 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-25 1h1m5 0h1m2 0h1m6 0h1m1 0h1m5 0h1m-25 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-15 1h1m1 0h1m-13 1h2m3 0h3m4 0h2m6 0h2m-22 1h3m4 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h5m1 0h1m-19 1h1m1 0h1m3 0h2m1 0h2m1 0h1m2 0h4m-24 1h5m1 0h1m2 0h3m2 0h1m1 0h2m2 0h1m1 0h2m-25 1h1m2 0h2m1 0h2m1 0h3m3 0h1m1 0h2m1 0h4m-24 1h3m2 0h1m5 0h1m2 0h4m1 0h1m2 0h1m1 0h1m-25 1h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m2 0h2m2 0h2m2 0h2m-25 1h1m1 0h1m4 0h1m4 0h1m1 0h4m1 0h2m1 0h2m-24 1h1m1 0h5m3 0h11m1 0h3m-17 1h1m1 0h2m3 0h2m3 0h1m1 0h3m-25 1h7m1 0h2m1 0h4m1 0h1m1 0h1m1 0h2m2 0h1m-25 1h1m5 0h1m1 0h1m1 0h1m1 0h1m1 0h3m3 0h2m2 0h1m-25 1h1m1 0h3m1 0h1m2 0h2m2 0h8m3 0h1m-25 1h1m1 0h3m1 0h1m2 0h1m1 0h1m5 0h6m-23 1h1m1 0h3m1 0h1m2 0h2m2 0h1m1 0h5m1 0h1m2 0h1m-25 1h1m5 0h1m1 0h2m1 0h2m1 0h3m1 0h1m1 0h1m3 0h1m-25 1h7m1 0h1m1 0h2m3 0h2m2 0h1m4 0h1"/></svg>\n'
     )
 
@@ -137,4 +135,9 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
         "put",
         "/api/s/default/rest/wlanconf/012345678910111213141516",
         json={"enabled": False},
+    )
+
+    assert (
+        wlans.generate_wlan_qr_code(wlan)
+        == b'<?xml version="1.0" encoding="utf-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="148" height="148" class="segno"><path transform="scale(4)" class="qrline" stroke="#000" d="M4 4.5h7m2 0h1m6 0h1m2 0h2m1 0h7m-29 1h1m5 0h1m1 0h2m1 0h2m1 0h2m2 0h1m3 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h3m2 0h3m1 0h2m2 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h2m2 0h1m1 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m1 0h1m3 0h1m1 0h2m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h1m4 0h2m1 0h1m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-17 1h1m1 0h1m-15 1h5m1 0h5m1 0h4m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m-27 1h3m1 0h1m2 0h2m4 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h2m-23 1h2m1 0h2m1 0h3m1 0h1m1 0h2m1 0h4m1 0h1m-25 1h3m3 0h5m3 0h1m3 0h1m1 0h2m1 0h1m2 0h2m-27 1h1m3 0h4m1 0h3m1 0h1m1 0h1m1 0h2m2 0h4m-26 1h2m1 0h2m3 0h2m1 0h1m6 0h1m3 0h2m1 0h2m-28 1h1m2 0h4m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h2m1 0h1m2 0h1m-25 1h2m1 0h1m2 0h1m1 0h1m1 0h1m3 0h1m5 0h1m2 0h1m-26 1h1m3 0h3m1 0h3m1 0h3m2 0h1m2 0h1m2 0h1m1 0h1m1 0h2m-29 1h3m1 0h2m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m4 0h2m1 0h1m-28 1h1m3 0h3m1 0h1m1 0h1m3 0h4m3 0h1m1 0h2m-25 1h1m2 0h3m5 0h2m2 0h1m6 0h1m1 0h1m3 0h1m-29 1h1m4 0h3m1 0h3m1 0h2m2 0h1m2 0h7m-19 1h5m3 0h3m1 0h1m3 0h1m1 0h1m-27 1h7m1 0h1m5 0h2m1 0h1m1 0h2m1 0h1m1 0h1m1 0h1m-27 1h1m5 0h1m3 0h3m1 0h2m4 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h3m1 0h1m2 0h6m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m9 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h1m2 0h1m1 0h3m1 0h1m1 0h5m-28 1h1m5 0h1m1 0h1m1 0h1m4 0h2m1 0h1m2 0h2m1 0h2m1 0h1m-28 1h7m1 0h1m1 0h1m2 0h3m1 0h1m1 0h1m4 0h2"/></svg>\n'
     )
