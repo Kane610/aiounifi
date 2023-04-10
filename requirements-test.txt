@@ -8,7 +8,7 @@ isort==5.12.0
 mypy==1.1.1
 orjson==3.8.10
 pydocstyle==6.3.0
-pylint==2.17.1
+pylint==2.17.2
 pytest==7.2.2
 pytest-aiohttp==1.0.4
 pytest-asyncio==0.21.0
