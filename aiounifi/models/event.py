@@ -96,6 +96,7 @@ class EventKey(enum.Enum):
     AD_SCHEDULE_UPGRADE_FAILED_NOT_FOUND = "EVT_AD_ScheduleUpgradeFailedNotFound"
 
     HOT_SPOT_VOUCHER_USED = "EVT_HS_VoucherUsed"
+    HOT_SPOT_AUTHED_BY_PASSWORD = "EVT_HS_AuthedByPassword"
 
     UNKNOWN = "unknown"
 
