@@ -37,6 +37,7 @@ class EventKey(enum.Enum):
     ACCESS_POINT_UPGRADE_SCHEDULED = "EVT_AP_UpgradeScheduled"
     ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
 
+    DREAM_MACHINE_CONNECTED = "EVT_DM_Connected"
     DREAM_MACHINE_LOST_CONTACT = "EVT_DM_Lost_Contact"
 
     GATEWAY_ADOPTED = "EVT_GW_Adopted"
