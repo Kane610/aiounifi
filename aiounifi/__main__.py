@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import logging
+from ssl import SSLContext
 from typing import TYPE_CHECKING, Callable
 
 import aiohttp
@@ -12,14 +13,12 @@ import aiounifi
 from aiounifi.controller import Controller
 
 if TYPE_CHECKING:
-    from ssl import SSLContext
-
     from aiounifi.websocket import WebsocketState
 
 LOGGER = logging.getLogger(__name__)
 
 
-def signalling_callback(data: WebsocketState) -> None:
+def signalling_callback(data: "WebsocketState") -> None:
     """Receive and print events from websocket."""
     LOGGER.info("%s", data)
 
@@ -32,7 +31,7 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | bool,
-    callback: Callable[[WebsocketState], None],
+    callback: Callable[["WebsocketState"], None],
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
