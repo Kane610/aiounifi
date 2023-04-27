@@ -349,6 +349,7 @@ class TypedDevice(TypedDict):
     antenna_table: list[TypedDeviceAntennaTable]
     architecture: str
     adoption_completed: int
+    board_rev: NotRequired[int]
     bytes: int
     bytes_d: int
     bytes_r: int
