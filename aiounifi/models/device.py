@@ -348,7 +348,8 @@ class TypedDevice(TypedDict):
     adopted: bool
     antenna_table: list[TypedDeviceAntennaTable]
     architecture: str
-    board_rev: int
+    adoption_completed: int
+    board_rev: NotRequired[int]
     bytes: int
     bytes_d: int
     bytes_r: int
@@ -667,9 +668,9 @@ class Device(ApiItem):
     raw: TypedDevice
 
     @property
-    def board_revision(self) -> int:
+    def board_revision(self) -> int | None:
         """Board revision of device."""
-        return self.raw["board_rev"]
+        return self.raw.get("board_rev")
 
     @property
     def considered_lost_at(self) -> int:
