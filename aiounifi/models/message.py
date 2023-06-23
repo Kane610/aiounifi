@@ -32,6 +32,8 @@ class MessageKey(enum.Enum):
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
     NETWORK_CONF_UPDATED = "networkconf:sync"
+    PORT_FORWARD_ADDED = "portforward:add"
+    PORT_FORWARD_UPDATED = "portforward:sync"
     SETTING_UPDATED = "setting:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
