@@ -14,5 +14,5 @@ pytest-aiohttp==1.0.4
 pytest-asyncio==0.21.0
 pytest-cov==4.1.0
 ruff==0.0.275
-tox==4.6.2
+tox==4.6.3
 types-orjson==3.6.2
