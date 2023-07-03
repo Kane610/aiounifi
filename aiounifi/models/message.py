@@ -37,6 +37,7 @@ class MessageKey(enum.Enum):
     SETTING_UPDATED = "setting:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
+    UNIFI_DEVICE_ADD = "unifi-device:add"
     WLAN_CONF_UPDATED = "wlanconf:sync"
 
     UNKNOWN = "unknown"
