@@ -35,6 +35,7 @@ class EventKey(enum.Enum):
     ACCESS_POINT_RESTARTED = "EVT_AP_Restarted"
     ACCESS_POINT_RESTARTED_UNKNOWN = "EVT_AP_RestartedUnknown"
     ACCESS_POINT_UPGRADE_SCHEDULED = "EVT_AP_UpgradeScheduled"
+    ACCESS_POINT_UPGRADE_FAILED = "EVT_AP_UpgradeFailed"
     ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
 
     DREAM_MACHINE_CONNECTED = "EVT_DM_Connected"
