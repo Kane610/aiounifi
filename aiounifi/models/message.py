@@ -35,6 +35,7 @@ class MessageKey(enum.Enum):
     NETWORK_CONF_UPDATED = "networkconf:sync"
     PORT_FORWARD_ADDED = "portforward:add"
     PORT_FORWARD_UPDATED = "portforward:sync"
+    SCHEDULE_TASK_ADDED = "scheduletask:add"
     SETTING_UPDATED = "setting:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
