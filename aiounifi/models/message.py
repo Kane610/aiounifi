@@ -21,6 +21,7 @@ class MessageKey(enum.Enum):
     CLIENT_REMOVED = "user:delete"
     CLIENT_UPDATED = "user:sync"
     DEVICE = "device:sync"
+    DEVICE_ADD = "device:add"
     DEVICE_UPDATE = "device:update"
     DPI_APP_ADDED = "dpiapp:add"
     DPI_APP_REMOVED = "dpiapp:delete"
