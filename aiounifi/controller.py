@@ -198,7 +198,7 @@ class Controller:
         """Make a request to the API."""
         self.last_response = None
 
-        LOGGER.debug("%s", url)
+        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, kwargs)
 
         try:
             async with self.session.request(
@@ -209,7 +209,13 @@ class Controller:
                 headers=self.headers,
                 **kwargs,
             ) as res:
-                LOGGER.debug("%s %s %s", res.status, res.content_type, res)
+                LOGGER.debug(
+                    "received (from %s) %s %s %s",
+                    url,
+                    res.status,
+                    res.content_type,
+                    res,
+                )
 
                 self.last_response = res
 
@@ -232,6 +238,7 @@ class Controller:
 
                 if res.content_type == "application/json":
                     response = await res.json()
+                    LOGGER.debug("data (from %s) %s", url, response)
                     _raise_on_error(response)
                     if "data" in response:
                         return response["data"]
