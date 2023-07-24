@@ -78,7 +78,7 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
 
     assert len(wlans.values()) == 2
 
-    wlan = wlans["SSID 1"]
+    wlan = wlans["012345678910111213141516"]
     assert wlan.id == "012345678910111213141516"
     assert wlan.bc_filter_enabled is False
     assert wlan.bc_filter_list == []
