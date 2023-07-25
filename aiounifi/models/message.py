@@ -17,6 +17,8 @@ class MessageKey(enum.Enum):
     """
 
     ALERT = "alert"
+    EVENT = "events"
+
     CLIENT = "sta:sync"
     CLIENT_REMOVED = "user:delete"
     CLIENT_UPDATED = "user:sync"
@@ -29,7 +31,6 @@ class MessageKey(enum.Enum):
     DPI_GROUP_ADDED = "dpigroup:add"
     DPI_GROUP_REMOVED = "dpigroup:delete"
     DPI_GROUP_UPDATED = "dpigroup:sync"
-    EVENT = "events"
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
     NETWORK_CONF_UPDATED = "networkconf:sync"
@@ -40,7 +41,9 @@ class MessageKey(enum.Enum):
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
     UNIFI_DEVICE_ADD = "unifi-device:add"
+    WLAN_CONF_ADDED = "wlanconf:add"
     WLAN_CONF_UPDATED = "wlanconf:sync"
+    WLAN_CONF_DELETED = "wlanconf:delete"
 
     UNKNOWN = "unknown"
 
