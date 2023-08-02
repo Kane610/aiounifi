@@ -48,7 +48,7 @@ class TypedWlan(TypedDict):
     wpa_enc: str
     wpa_mode: str
     x_iapp_key: str
-    x_passphrase: str
+    x_passphrase: NotRequired[str]
 
 
 @dataclass
@@ -79,7 +79,9 @@ class WlanEnableRequest(ApiRequest):
         )
 
 
-def wlan_qr_code(name: str, password: str, kind: str = "png", scale: int = 4) -> bytes:
+def wlan_qr_code(
+    name: str, password: str | None, kind: str = "png", scale: int = 4
+) -> bytes:
     """Generate WLAN QR code."""
     buffer = io.BytesIO()
     qr_code = segno.helpers.make_wifi(ssid=name, password=password, security="WPA")
@@ -135,16 +137,12 @@ class Wlan(ApiItem):
     @property
     def is_guest(self) -> bool | None:
         """Is WLAN a guest network."""
-        if "is_guest" in self.raw:
-            return self.raw["is_guest"]
-        return None
+        return self.raw.get("is_guest")
 
     @property
     def mac_filter_enabled(self) -> bool | None:
         """Is MAC filtering enabled."""
-        if "mac_filter_enabled" in self.raw:
-            return self.raw["mac_filter_enabled"]
-        return None
+        return self.raw.get("mac_filter_enabled")
 
     @property
     def mac_filter_list(self) -> list[str]:
@@ -174,9 +172,7 @@ class Wlan(ApiItem):
     @property
     def minrate_na_enabled(self) -> bool | None:
         """Is minrate NA enabled."""
-        if "minrate_na_enabled" in self.raw:
-            return self.raw["minrate_na_enabled"]
-        return None
+        return self.raw.get("minrate_na_enabled")
 
     @property
     def minrate_na_mgmt_rate_kbps(self) -> int:
@@ -196,9 +192,7 @@ class Wlan(ApiItem):
     @property
     def minrate_ng_cck_rates_enabled(self) -> bool | None:
         """Is minrate NG CCK rates enabled."""
-        if "minrate_ng_cck_rates_enabled" in self.raw:
-            return self.raw["minrate_ng_cck_rates_enabled"]
-        return None
+        return self.raw.get("minrate_ng_cck_rates_enabled")
 
     @property
     def minrate_ng_data_rate_kbps(self) -> int:
@@ -208,9 +202,7 @@ class Wlan(ApiItem):
     @property
     def minrate_ng_enabled(self) -> bool | None:
         """Is minrate NG enabled."""
-        if "minrate_ng_enabled" in self.raw:
-            return self.raw["minrate_ng_enabled"]
-        return None
+        return self.raw.get("minrate_ng_enabled")
 
     @property
     def minrate_ng_mgmt_rate_kbps(self) -> int:
@@ -225,16 +217,12 @@ class Wlan(ApiItem):
     @property
     def name_combine_enabled(self) -> bool | None:
         """If 2.5 and 5 GHz SSIDs should be combined."""
-        if "name_combine_enabled" in self.raw:
-            return self.raw["name_combine_enabled"]
-        return None
+        return self.raw.get("name_combine_enabled")
 
     @property
     def name_combine_suffix(self) -> str | None:
         """Suffix for 2.4GHz SSID if name is not combined."""
-        if "name_combine_suffix" in self.raw:
-            return self.raw["name_combine_suffix"]
-        return None
+        return self.raw.get("name_combine_suffix")
 
     @property
     def no2ghz_oui(self) -> bool:
@@ -287,6 +275,6 @@ class Wlan(ApiItem):
         return self.raw["x_iapp_key"]
 
     @property
-    def x_passphrase(self) -> str:
-        """X passphrase."""
-        return self.raw["x_passphrase"]
+    def x_passphrase(self) -> str | None:
+        """Passphrase."""
+        return self.raw.get("x_passphrase")
