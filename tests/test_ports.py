@@ -102,6 +102,7 @@ async def test_port(unifi_controller):
     assert port.name == "Port 1"
     assert port.port_idx == 1
     assert port.poe_class == "Unknown"
+    assert port.poe_caps == 7
     assert port.poe_enable is False
     assert port.poe_mode == "auto"
     assert port.poe_power == "0.00"

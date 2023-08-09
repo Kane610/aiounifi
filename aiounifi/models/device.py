@@ -627,13 +627,13 @@ class DeviceSetOutletCycleEnabledRequest(ApiRequest):
 
 @dataclass
 class DeviceSetPoePortModeRequest(ApiRequest):
-    """Request object for setting port POE mode."""
+    """Request object for setting port PoE mode."""
 
     @classmethod
     def create(
         cls, device: "Device", port_idx: int, mode: str
     ) -> "DeviceSetPoePortModeRequest":
-        """Create device set port poe mode request.
+        """Create device set port PoE mode request.
 
         Auto, 24v, passthrough, off.
         Make sure to not overwrite any existing configs.
