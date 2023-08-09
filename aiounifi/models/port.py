@@ -68,28 +68,40 @@ class Port(ApiItem):
         return self.raw.get("port_idx")
 
     @property
+    def poe_caps(self) -> int | None:
+        """Port PoE capabilities.
+
+        0 - no caps
+        3 - auto (PoE/PoE+)
+        35 - auto (Poe/PoE+/PoE++)
+        7 - 24V passive
+        8 - Passthrough
+        """
+        return self.raw.get("poe_caps")
+
+    @property
     def poe_class(self) -> str | None:
-        """Port POE class."""
+        """Port PoE class."""
         return self.raw.get("poe_class")
 
     @property
     def poe_enable(self) -> bool | None:
-        """Is POE supported/requested by client."""
+        """Is PoE supported/requested by client."""
         return self.raw.get("poe_enable")
 
     @property
     def poe_mode(self) -> str | None:
-        """Is POE auto, pasv24, passthrough, off or None."""
+        """Is PoE auto, pasv24, passthrough, off or None."""
         return self.raw.get("poe_mode")
 
     @property
     def poe_power(self) -> str | None:
-        """POE power usage."""
+        """Is PoE power usage."""
         return self.raw.get("poe_power")
 
     @property
     def poe_voltage(self) -> str | None:
-        """POE voltage usage."""
+        """Is PoE voltage usage."""
         return self.raw.get("poe_voltage")
 
     @property
@@ -99,7 +111,7 @@ class Port(ApiItem):
 
     @property
     def port_poe(self) -> bool | None:
-        """Is POE used."""
+        """Is PoE used."""
         return self.raw.get("port_poe")
 
     @property
