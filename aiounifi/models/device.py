@@ -646,14 +646,13 @@ class DeviceSetPoePortModeRequest(ApiRequest):
                 break
 
         if not existing_override:
-            portconf_id = device.port_table[port_idx - 1].get("portconf_id", "")
-            device.port_overrides.append(
-                {
-                    "port_idx": port_idx,
-                    "portconf_id": portconf_id,
-                    "poe_mode": mode,
-                }
-            )
+            port_override = {
+                "port_idx": port_idx,
+                "poe_mode": mode,
+            }
+            if portconf_id := device.port_table[port_idx - 1].get("portconf_id"):
+                port_override["portconf_id"] = portconf_id
+            device.port_overrides.append(port_override)
 
         return cls(
             method="put",
