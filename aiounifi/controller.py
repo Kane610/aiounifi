@@ -257,7 +257,9 @@ def _raise_on_error(data: dict[str, Any] | None) -> None:
         return None
 
     if "meta" in data and data["meta"]["rc"] == "error":
+        LOGGER.error(data)
         raise_error(data["meta"]["msg"])
 
     if "errors" in data:
+        LOGGER.error(data)
         raise_error(data["errors"][0])
