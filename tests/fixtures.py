@@ -4346,3 +4346,21 @@ EVENT_SWITCH_16_UPGRADED = {
         }
     ],
 }
+
+PORT_FORWARDING = {
+    "meta": {"rc": "ok"},
+    "data": [
+        {
+            "_id": "5a32aa4ee4b0412345678911",
+            "dst_port": "12345",
+            "enabled": True,
+            "fwd_port": "12345",
+            "fwd": "10.0.0.2",
+            "name": "New port forward",
+            "pfwd_interface": "wan",
+            "proto": "tcp_udp",
+            "site_id": "5a32aa4ee4b0412345678910",
+            "src": "any",
+        }
+    ],
+}
