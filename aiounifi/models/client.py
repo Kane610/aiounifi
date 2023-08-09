@@ -25,7 +25,7 @@ class TypedClient(TypedDict):
     authorized: bool
     blocked: bool
     bssid: str
-    bytes_r: int
+    bytes_r: float
     ccq: int
     channel: int
     dev_cat: int
@@ -95,8 +95,8 @@ class TypedClient(TypedDict):
     wired_rx_bytes: int
     wired_tx_packets: int
     wired_rx_packets: int
-    wired_tx_bytes_r: int
-    wired_rx_bytes_r: int
+    wired_tx_bytes_r: float
+    wired_rx_bytes_r: float
 
 
 @dataclass
@@ -291,10 +291,10 @@ class Client(ApiItem):
         return self.raw.get("rx_bytes", 0)
 
     @property
-    def rx_bytes_r(self) -> int:
+    def rx_bytes_r(self) -> float:
         """Bytes recently received over wireless connection."""
-        value = self.raw.get("rx_bytes-r", 0)
-        assert isinstance(value, int)
+        value = self.raw.get("rx_bytes-r", 0.0)
+        assert isinstance(value, float)
         return value
 
     @property
@@ -303,10 +303,10 @@ class Client(ApiItem):
         return self.raw.get("tx_bytes", 0)
 
     @property
-    def tx_bytes_r(self) -> int:
+    def tx_bytes_r(self) -> float:
         """Bytes recently transferred over wireless connection."""
-        value = self.raw.get("tx_bytes-r", 0)
-        assert isinstance(value, int)
+        value = self.raw.get("tx_bytes-r", 0.0)
+        assert isinstance(value, float)
         return value
 
     @property
@@ -342,10 +342,10 @@ class Client(ApiItem):
         return value
 
     @property
-    def wired_rx_bytes_r(self) -> int:
+    def wired_rx_bytes_r(self) -> float:
         """Bytes recently received over wired connection."""
-        value = self.raw.get("wired-rx_bytes-r", 0)
-        assert isinstance(value, int)
+        value = self.raw.get("wired-rx_bytes-r", 0.0)
+        assert isinstance(value, float)
         return value
 
     @property
@@ -356,8 +356,8 @@ class Client(ApiItem):
         return value
 
     @property
-    def wired_tx_bytes_r(self) -> int:
+    def wired_tx_bytes_r(self) -> float:
         """Bytes recently transferred over wired connection."""
-        value = self.raw.get("wired-tx_bytes-r", 0)
-        assert isinstance(value, int)
+        value = self.raw.get("wired-tx_bytes-r", 0.0)
+        assert isinstance(value, float)
         return value
