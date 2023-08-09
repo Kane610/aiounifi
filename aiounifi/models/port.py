@@ -96,12 +96,12 @@ class Port(ApiItem):
 
     @property
     def poe_power(self) -> str | None:
-        """PoE power usage."""
+        """Is PoE power usage."""
         return self.raw.get("poe_power")
 
     @property
     def poe_voltage(self) -> str | None:
-        """PoE voltage usage."""
+        """Is PoE voltage usage."""
         return self.raw.get("poe_voltage")
 
     @property
