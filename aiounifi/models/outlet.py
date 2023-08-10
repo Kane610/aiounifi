@@ -59,7 +59,10 @@ class Outlet(ApiItem):
 
     @property
     def has_relay(self) -> bool | None:
-        """Is the outlet controllable."""
+        """Is the outlet controllable.
+
+        Not reported by USP-PDU-Pro, see caps.
+        """
         return self.raw.get("has_relay")
 
     @property
@@ -79,13 +82,17 @@ class Outlet(ApiItem):
         """Is metering supported.
 
         Reported false by UP1 and UP6 which does not have power metering.
-        Not reported by UPD Pro which does report power metering.
+        Not reported by by USP-PDU-Pro, see caps.
         """
         return self.raw.get("has_metering")
 
     @property
     def caps(self) -> int | None:
-        """Unknown."""
+        """Outlet capabilities.
+
+        1: Outlet supports relay (switching)
+        3: Outlet supports relay and metering
+        """
         return self.raw.get("outlet_caps")
 
     @property
