@@ -440,6 +440,8 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
     assert pdupro.model == "USPPDUP"
     assert pdupro.name == "Main Server Cabinet PDU"
     assert pdupro.next_interval == 56
+    assert pdupro.outlet_ac_power_budget == "1875.000"
+    assert pdupro.outlet_ac_power_consumption == "307.741"
     assert pdupro.outlet_table == [
         {
             "index": 1,
