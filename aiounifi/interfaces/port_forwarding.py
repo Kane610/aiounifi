@@ -11,4 +11,4 @@ class PortForwarding(APIHandler[PortForward]):
     obj_id_key = "_id"
     path = "/rest/portforward"
     item_cls = PortForward
-    process_messages = (MessageKey.PORT_FORWARD_UPDATED,)
+    process_messages = (MessageKey.PORT_FORWARD_ADDED, MessageKey.PORT_FORWARD_UPDATED)

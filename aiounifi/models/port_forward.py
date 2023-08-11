@@ -31,8 +31,8 @@ class PortForwardEnableRequest(ApiRequest):
         """Create enable port forward request."""
         data["enabled"] = enable
         return cls(
-            method="post",
-            path="/rest/portforward",
+            method="put",
+            path=f"/rest/portforward/{data['_id']}",
             data=data,
         )
 

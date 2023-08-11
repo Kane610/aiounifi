@@ -13,8 +13,9 @@ async def test_port_forward_enable_request(
     mock_aioresponse, unifi_controller: Controller, unifi_called_with
 ):
     """Test port forward enable request work."""
-    mock_aioresponse.post(
-        "https://host:8443/api/s/default/rest/portforward",
+    id = PORT_FORWARDING["data"][0]["_id"]
+    mock_aioresponse.put(
+        f"https://host:8443/api/s/default/rest/portforward/{id}",
         payload={},
     )
 
@@ -29,8 +30,8 @@ async def test_port_forward_enable_request(
     )
 
     assert unifi_called_with(
-        "post",
-        "/api/s/default/rest/portforward",
+        "put",
+        f"/api/s/default/rest/portforward/{id}",
         json=expected,
     )
 
