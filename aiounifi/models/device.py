@@ -754,6 +754,16 @@ class Device(ApiItem):
         return self.raw.get("outlet_overrides", [])
 
     @property
+    def outlet_ac_power_budget(self) -> str | None:
+        """The amount of power available to outlets."""
+        return self.raw.get("outlet_ac_power_budget")
+
+    @property
+    def outlet_ac_power_consumption(self) -> str | None:
+        """The amount of power consumed by all outlets."""
+        return self.raw.get("outlet_ac_power_consumption")
+
+    @property
     def outlet_table(self) -> list[TypedDeviceOutletTable]:
         """List of outlets."""
         return self.raw.get("outlet_table", [])
