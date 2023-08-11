@@ -4,11 +4,38 @@ pytest --cov-report term-missing --cov=aiounifi.port_forwarding tests/test_port_
 """
 
 from aiounifi.controller import Controller
+from aiounifi.models.port_forward import PortForwardEnableRequest, TypedPortForward
 
 from .fixtures import PORT_FORWARDING
 
 
-async def test_device_access_point(mock_aioresponse, unifi_controller: Controller):
+async def test_port_forward_enable_request(
+    mock_aioresponse, unifi_controller: Controller, unifi_called_with
+):
+    """Test port forward enable request work."""
+    mock_aioresponse.post(
+        "https://host:8443/api/s/default/rest/portforward",
+        payload={},
+    )
+
+    expected: TypedPortForward = PORT_FORWARDING["data"][0].copy()
+    expected["enabled"] = False
+
+    await unifi_controller.request(
+        PortForwardEnableRequest.create(
+            PORT_FORWARDING["data"][0].copy(),
+            False,
+        )
+    )
+
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/rest/portforward",
+        json=expected,
+    )
+
+
+async def test_port_forward(mock_aioresponse, unifi_controller: Controller):
     """Test device class on an access point."""
     port_forwarding = unifi_controller.port_forwarding
     port_forwarding.process_raw([PORT_FORWARDING["data"][0]])

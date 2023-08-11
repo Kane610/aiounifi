@@ -1,8 +1,10 @@
 """Port forwarding in a UniFi network."""
-
+from dataclasses import dataclass
 from typing import TypedDict
 
-from .api import ApiItem
+from typing_extensions import Self
+
+from .api import ApiItem, ApiRequest
 
 
 class TypedPortForward(TypedDict):
@@ -18,6 +20,21 @@ class TypedPortForward(TypedDict):
     proto: str
     site_id: str
     src: str
+
+
+@dataclass
+class PortForwardEnableRequest(ApiRequest):
+    """Request object for enabling port forward."""
+
+    @classmethod
+    def create(cls, data: TypedPortForward, enable: bool) -> Self:
+        """Create enable port forward request."""
+        data["enabled"] = enable
+        return cls(
+            method="post",
+            path="/rest/portforward",
+            data=data,
+        )
 
 
 class PortForward(ApiItem):

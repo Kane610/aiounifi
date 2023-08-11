@@ -2,7 +2,7 @@
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, Mapping, TypeVar
 
 
 @dataclass
@@ -11,7 +11,7 @@ class ApiRequest:
 
     method: str
     path: str
-    data: dict[str, Any] | None
+    data: Mapping[str, Any] | None
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""

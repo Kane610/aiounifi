@@ -5,7 +5,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Mapping
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -195,7 +195,7 @@ class Controller:
         self,
         method: str,
         url: str,
-        json: dict[str, Any] | None = None,
+        json: Mapping[str, Any] | None = None,
         **kwargs: bool,
     ) -> list[dict[str, Any]] | Any:
         """Make a request to the API."""
