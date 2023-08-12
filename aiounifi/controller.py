@@ -5,7 +5,7 @@ from http import HTTPStatus
 import logging
 from pprint import pformat
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Mapping
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -27,6 +27,7 @@ from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .interfaces.events import EventHandler
 from .interfaces.messages import MessageHandler
 from .interfaces.outlets import Outlets
+from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
 from .interfaces.wlans import Wlans
 from .models.site import SiteDescriptionRequest, SiteListRequest
@@ -80,6 +81,7 @@ class Controller:
         self.ports = Ports(self)
         self.dpi_apps = DPIRestrictionApps(self)
         self.dpi_groups = DPIRestrictionGroups(self)
+        self.port_forwarding = PortForwarding(self)
         self.wlans = Wlans(self)
 
     async def check_unifi_os(self) -> None:
@@ -135,6 +137,7 @@ class Controller:
         await self.devices.update()
         await self.dpi_apps.update()
         await self.dpi_groups.update()
+        await self.port_forwarding.update()
         await self.wlans.update()
 
     def start_websocket(self) -> None:
@@ -192,7 +195,7 @@ class Controller:
         self,
         method: str,
         url: str,
-        json: dict[str, Any] | None = None,
+        json: Mapping[str, Any] | None = None,
         **kwargs: bool,
     ) -> list[dict[str, Any]] | Any:
         """Make a request to the API."""
@@ -238,6 +241,8 @@ class Controller:
 
                 if res.content_type == "application/json":
                     response = await res.json()
+                    if "/rest/portforward" in url:
+                        print(response)
                     LOGGER.debug("data (from %s) %s", url, response)
                     _raise_on_error(response)
                     if "data" in response:
