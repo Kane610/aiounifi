@@ -27,8 +27,9 @@ class PortForwardEnableRequest(ApiRequest):
     """Request object for enabling port forward."""
 
     @classmethod
-    def create(cls, data: TypedPortForward, enable: bool) -> Self:
+    def create(cls, port_forward: "PortForward", enable: bool) -> Self:
         """Create enable port forward request."""
+        data = port_forward.raw.copy()
         data["enabled"] = enable
         return cls(
             method="put",

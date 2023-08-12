@@ -9,35 +9,10 @@ from aiounifi.models.port_forward import PortForwardEnableRequest, TypedPortForw
 from .fixtures import PORT_FORWARDING
 
 
-async def test_port_forward_enable_request(
+async def test_port_forward(
     mock_aioresponse, unifi_controller: Controller, unifi_called_with
 ):
-    """Test port forward enable request work."""
-    id = PORT_FORWARDING["data"][0]["_id"]
-    mock_aioresponse.put(
-        f"https://host:8443/api/s/default/rest/portforward/{id}",
-        payload={},
-    )
-
-    expected: TypedPortForward = PORT_FORWARDING["data"][0].copy()
-    expected["enabled"] = False
-
-    await unifi_controller.request(
-        PortForwardEnableRequest.create(
-            PORT_FORWARDING["data"][0].copy(),
-            False,
-        )
-    )
-
-    assert unifi_called_with(
-        "put",
-        f"/api/s/default/rest/portforward/{id}",
-        json=expected,
-    )
-
-
-async def test_port_forward(mock_aioresponse, unifi_controller: Controller):
-    """Test device class on an access point."""
+    """Test port forwarding interface and model."""
     port_forwarding = unifi_controller.port_forwarding
     port_forwarding.process_raw([PORT_FORWARDING["data"][0]])
 
@@ -54,3 +29,23 @@ async def test_port_forward(mock_aioresponse, unifi_controller: Controller):
     assert port_forward.protocol == "tcp_udp"
     assert port_forward.site_id == "5a32aa4ee4b0412345678910"
     assert port_forward.source == "any"
+
+    # Port forward enable request
+
+    pf_id = PORT_FORWARDING["data"][0]["_id"]
+    mock_aioresponse.put(
+        f"https://host:8443/api/s/default/rest/portforward/{pf_id}",
+        payload={},
+    )
+
+    expected: TypedPortForward = PORT_FORWARDING["data"][0].copy()
+    expected["enabled"] = False
+
+    await unifi_controller.request(PortForwardEnableRequest.create(port_forward, False))
+
+    assert unifi_called_with(
+        "put",
+        f"/api/s/default/rest/portforward/{pf_id}",
+        json=expected,
+    )
+    assert port_forward.raw != expected
