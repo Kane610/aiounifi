@@ -1,15 +1,13 @@
 """UniFi sites of network infrastructure."""
 
-from typing import Any
-
-from ..models.message import MessageKey
-from ..models.site import Site
+from ..models.site import Site, SiteListRequest
 from .api_handlers import APIHandler
 
 
-class Devices(APIHandler[Site]):
+class Sites(APIHandler[Site]):
     """Represent UniFi sites."""
 
-    obj_id_key = "mac"
-    path = "/stat/device"  # sxxxxxxxx
+    obj_id_key = "_id"
+    path = "/self/sites"
     item_cls = Site
+    api_request = SiteListRequest.create()

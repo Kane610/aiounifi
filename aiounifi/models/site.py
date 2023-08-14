@@ -25,13 +25,13 @@ class SiteListRequest(ApiRequest):
     @classmethod
     def create(cls) -> Self:
         """Create site list request."""
-        return cls(method="get", path="", data=None)
+        return cls(method="get", path="/self/sites", data=None)
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Url to list sites is global for controller."""
         if is_unifi_os:
-            return "/proxy/network/api/self/sites"
-        return "/api/self/sites"
+            return f"/proxy/network/api{self.path}"
+        return f"/api{self.path}"
 
 
 @dataclass
@@ -49,26 +49,32 @@ class Site(ApiItem):
 
     raw: TypedSite
 
+    @property
     def site_id(self) -> str:
         """Site ID."""
         return self.raw["_id"]
 
-    def attr_hidden_id(self) -> str:
-        """Unknown."""
-        return self.raw["attr_hidden_id"]
-
-    def attr_no_delete(self) -> bool:
-        """Can not delete site."""
-        return self.raw["attr_no_delete"]
-
-    def desc(self) -> str:
+    @property
+    def description(self) -> str:
         """Site description."""
         return self.raw["desc"]
 
+    @property
+    def hidden_id(self) -> str:
+        """Unknown."""
+        return self.raw["attr_hidden_id"]
+
+    @property
     def name(self) -> str:
         """Site name."""
         return self.raw["name"]
 
+    @property
+    def no_delete(self) -> bool:
+        """Can not delete site."""
+        return self.raw["attr_no_delete"]
+
+    @property
     def role(self) -> str:
         """User role."""
         return self.raw["role"]
