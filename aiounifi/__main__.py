@@ -96,8 +96,6 @@ async def main(
         return
 
     await controller.initialize()
-    await controller.sites()
-    await controller.site_description()
     controller.start_websocket()
 
     try:

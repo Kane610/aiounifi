@@ -59,7 +59,8 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
         payload=EMPTY_RESPONSE,
     )
     mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/device", payload=EMPTY_RESPONSE
+        "https://host:8443/api/s/default/stat/device",
+        payload=EMPTY_RESPONSE,
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/dpiapp",
@@ -74,44 +75,20 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
         payload=EMPTY_RESPONSE,
     )
     mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
+        payload=SITE_UNIFIOS_RESPONSE,
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload=WLAN_UNIFIOS_RESPONSE,
     )
     await unifi_controller.initialize()
 
-    assert unifi_called_with(
-        "get",
-        "/api/s/default/stat/sta",
-    )
-    assert unifi_called_with(
-        "get",
-        "/api/s/default/stat/device",
-    )
-    assert unifi_called_with(
-        "get",
-        "/api/s/default/rest/user",
-    )
-    assert unifi_called_with(
-        "get",
-        "/api/s/default/rest/wlanconf",
-    )
-
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
-    )
-    await unifi_controller.sites()
-    assert unifi_called_with(
-        "get",
-        "/api/s/default/rest/wlanconf",
-    )
-
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/self",
-        payload=SELF_RESPONSE,
-    )
-    await unifi_controller.site_description()
-    assert unifi_called_with("get", "/api/s/default/self")
+    assert unifi_called_with("get", "/api/s/default/stat/sta")
+    assert unifi_called_with("get", "/api/s/default/stat/device")
+    assert unifi_called_with("get", "/api/s/default/rest/user")
+    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+    assert unifi_called_with("get", "/api/self/sites")
 
     assert not unifi_controller.websocket
 
@@ -180,6 +157,10 @@ async def test_unifios_controller(
         payload=EMPTY_RESPONSE,
     )
     mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/self/sites",
+        payload=SITE_UNIFIOS_RESPONSE,
+    )
+    mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
         payload=WLAN_UNIFIOS_RESPONSE,
     )
@@ -202,29 +183,12 @@ async def test_unifios_controller(
     )
     assert unifi_called_with(
         "get",
-        "/proxy/network/api/s/default/rest/wlanconf",
+        "/proxy/network/api/self/sites",
         headers={"x-csrf-token": "123"},
     )
-
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
-    )
-    await unifi_controller.sites()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/rest/wlanconf",
-        headers={"x-csrf-token": "123"},
-    )
-
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/self",
-        payload=SELF_RESPONSE,
-    )
-    await unifi_controller.site_description()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/self",
         headers={"x-csrf-token": "123"},
     )
 
@@ -391,6 +355,10 @@ async def test_no_data(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -432,6 +400,10 @@ async def test_client(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -460,6 +432,10 @@ async def test_clients(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -531,6 +507,10 @@ async def test_message_client_removed(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -572,6 +552,10 @@ async def test_device(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -600,6 +584,10 @@ async def test_devices(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -668,6 +656,10 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -770,6 +762,10 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -1074,32 +1070,6 @@ SITE_UNIFIOS_RESPONSE = {
             "attr_hidden_id": "default",
             "attr_no_delete": True,
             "role": "admin",
-        }
-    ],
-}
-
-SELF_RESPONSE = {
-    "meta": {"rc": "ok"},
-    "data": [
-        {
-            "name": "hass",
-            "site_id": "5a32aa4ee4b047ede12345678",
-            "site_name": "default",
-            "site_role": "admin",
-            "site_permissions": [],
-            "super_site_permissions": [],
-            "last_site_id": "5a32aa4ee4b047ede12345678",
-            "requires_new_password": False,
-            "is_super": False,
-            "device_id": "8ed4f0ae-4447-43a4-907d-46bb24bce1bd",
-            "admin_id": "5b8c123456b04eb40c39e709",
-            "email_alert_enabled": False,
-            "email_alert_grouping_enabled": False,
-            "email_alert_grouping_delay": 60,
-            "push_alert_enabled": True,
-            "is_professional_installer": False,
-            "html_email_enabled": True,
-            "ui_settings": {},
         }
     ],
 }

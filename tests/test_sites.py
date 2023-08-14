@@ -9,7 +9,7 @@ from aiounifi.controller import Controller
 async def test_sites(mock_aioresponse, unifi_controller: Controller, unifi_called_with):
     """Test sites class."""
 
-    sites = unifi_controller.site_handler
+    sites = unifi_controller.sites
     sites.process_raw(
         [
             {

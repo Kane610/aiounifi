@@ -34,16 +34,6 @@ class SiteListRequest(ApiRequest):
         return f"/api{self.path}"
 
 
-@dataclass
-class SiteDescriptionRequest(ApiRequest):
-    """Request object for site description."""
-
-    @classmethod
-    def create(cls) -> Self:
-        """Create site list request."""
-        return cls(method="get", path="/self", data=None)
-
-
 class Site(ApiItem):
     """Represents a network device."""
 
