@@ -3,7 +3,7 @@
 from typing import Any
 
 from ..models.message import MessageKey
-from ..models.wlan import Wlan, WlanEnableRequest, wlan_qr_code
+from ..models.wlan import Wlan, WlanEnableRequest, WlanListRequest, wlan_qr_code
 from .api_handlers import APIHandler
 
 
@@ -14,6 +14,7 @@ class Wlans(APIHandler[Wlan]):
     path = "/rest/wlanconf"
     item_cls = Wlan
     process_messages = (MessageKey.WLAN_CONF_UPDATED,)
+    api_request = WlanListRequest.create()
 
     async def enable(self, wlan: Wlan) -> list[dict[str, Any]]:
         """Block client from controller."""

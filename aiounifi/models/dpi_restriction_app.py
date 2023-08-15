@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import TypedDict
 
+from typing_extensions import Self
+
 from .api import ApiItem, ApiRequest
 
 
@@ -19,11 +21,21 @@ class TypedDPIRestrictionApp(TypedDict):
 
 
 @dataclass
+class DpiRestrictionAppListRequest(ApiRequest):
+    """Request object for DPI restriction app list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create DPI restriction app list request."""
+        return cls(method="get", path="/rest/dpiapp")
+
+
+@dataclass
 class DPIRestrictionAppEnableRequest(ApiRequest):
     """Request object for enabling DPI Restriction App."""
 
     @classmethod
-    def create(cls, app_id: str, enable: bool) -> "DPIRestrictionAppEnableRequest":
+    def create(cls, app_id: str, enable: bool) -> Self:
         """Create enabling DPI Restriction App request."""
         return cls(
             method="put",

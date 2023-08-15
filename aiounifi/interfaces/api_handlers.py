@@ -81,9 +81,8 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """Base class for a map of API Items."""
 
     obj_id_key: str
-    path: str
     item_cls: Type[ApiItemT]
-    api_request: ApiRequest | None = None
+    api_request: ApiRequest
     process_messages: tuple["MessageKey", ...] = ()
     remove_messages: tuple["MessageKey", ...] = ()
 
@@ -99,8 +98,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     async def update(self) -> None:
         """Refresh data."""
-        api_request = self.api_request or ApiRequest("get", self.path, None)
-        raw = await self.controller.request(api_request)
+        raw = await self.controller.request(self.api_request)
         self.process_raw(raw)
 
     @final

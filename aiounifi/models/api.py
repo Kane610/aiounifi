@@ -11,7 +11,7 @@ class ApiRequest:
 
     method: str
     path: str
-    data: Mapping[str, Any] | None
+    data: Mapping[str, Any] | None = None
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -496,11 +496,21 @@ class TypedDevice(TypedDict):
 
 
 @dataclass
+class DeviceListRequest(ApiRequest):
+    """Request object for device list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create device list request."""
+        return cls(method="get", path="/stat/device")
+
+
+@dataclass
 class DevicePowerCyclePortRequest(ApiRequest):
     """Request object for power cycle PoE port."""
 
     @classmethod
-    def create(cls, mac: str, port_idx: int) -> "DevicePowerCyclePortRequest":
+    def create(cls, mac: str, port_idx: int) -> Self:
         """Create power cycle of PoE request."""
         return cls(
             method="post",
@@ -518,7 +528,7 @@ class DeviceRestartRequest(ApiRequest):
     """Request object for device restart."""
 
     @classmethod
-    def create(cls, mac: str, soft: bool = True) -> "DeviceRestartRequest":
+    def create(cls, mac: str, soft: bool = True) -> Self:
         """Create device restart request.
 
         Hard is specifically for PoE switches and will additionally cycle PoE ports.
@@ -539,7 +549,7 @@ class DeviceUpgradeRequest(ApiRequest):
     """Request object for device upgrade."""
 
     @classmethod
-    def create(cls, mac: str) -> "DeviceUpgradeRequest":
+    def create(cls, mac: str) -> Self:
         """Create device upgrade request."""
         return cls(
             method="post",
@@ -556,9 +566,7 @@ class DeviceSetOutletRelayRequest(ApiRequest):
     """Request object for outlet relay state."""
 
     @classmethod
-    def create(
-        cls, device: "Device", outlet_idx: int, state: bool
-    ) -> "DeviceSetOutletRelayRequest":
+    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
         """Create device outlet relay state request.
 
         True:  outlet power output on.
@@ -593,9 +601,7 @@ class DeviceSetOutletCycleEnabledRequest(ApiRequest):
     """Request object for outlet cycle_enabled flag."""
 
     @classmethod
-    def create(
-        cls, device: "Device", outlet_idx: int, state: bool
-    ) -> "DeviceSetOutletCycleEnabledRequest":
+    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
         """Create device outlet outlet cycle_enabled flag request.
 
         True:  UniFi Network will power cycle this outlet if the internet goes down.
@@ -630,9 +636,7 @@ class DeviceSetPoePortModeRequest(ApiRequest):
     """Request object for setting port PoE mode."""
 
     @classmethod
-    def create(
-        cls, device: "Device", port_idx: int, mode: str
-    ) -> "DeviceSetPoePortModeRequest":
+    def create(cls, device: "Device", port_idx: int, mode: str) -> Self:
         """Create device set port PoE mode request.
 
         Auto, 24v, passthrough, off.

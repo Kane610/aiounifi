@@ -1,8 +1,20 @@
 """DPI Restrictions as part of a UniFi network."""
 
-from typing_extensions import NotRequired, TypedDict
+from dataclasses import dataclass
 
-from .api import ApiItem
+from typing_extensions import NotRequired, Self, TypedDict
+
+from .api import ApiItem, ApiRequest
+
+
+@dataclass
+class DpiRestrictionGroupListRequest(ApiRequest):
+    """Request object for DPI restriction group list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create DPI restriction group list request."""
+        return cls(method="get", path="/rest/dpigroup")
 
 
 class TypedDPIRestrictionGroup(TypedDict):
