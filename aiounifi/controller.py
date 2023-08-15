@@ -3,7 +3,6 @@
 from collections.abc import Callable
 from http import HTTPStatus
 import logging
-from pprint import pformat
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Mapping
 
@@ -29,8 +28,8 @@ from .interfaces.messages import MessageHandler
 from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
+from .interfaces.sites import Sites
 from .interfaces.wlans import Wlans
-from .models.site import SiteDescriptionRequest, SiteListRequest
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
@@ -82,6 +81,7 @@ class Controller:
         self.dpi_apps = DPIRestrictionApps(self)
         self.dpi_groups = DPIRestrictionGroups(self)
         self.port_forwarding = PortForwarding(self)
+        self.sites = Sites(self)
         self.wlans = Wlans(self)
 
     async def check_unifi_os(self) -> None:
@@ -118,18 +118,6 @@ class Controller:
 
         self.can_retry_login = True
 
-    async def sites(self) -> dict[str, Any]:
-        """Retrieve what sites are provided by controller."""
-        sites = await self.request(SiteListRequest.create())
-        LOGGER.debug(pformat(sites))
-        return {site["desc"]: site for site in sites}
-
-    async def site_description(self) -> list[dict[str, Any]]:
-        """User description of current site."""
-        description = await self.request(SiteDescriptionRequest.create())
-        LOGGER.debug(description)
-        return description
-
     async def initialize(self) -> None:
         """Load UniFi parameters."""
         await self.clients.update()
@@ -138,6 +126,7 @@ class Controller:
         await self.dpi_apps.update()
         await self.dpi_groups.update()
         await self.port_forwarding.update()
+        await self.sites.update()
         await self.wlans.update()
 
     def start_websocket(self) -> None:
@@ -241,8 +230,6 @@ class Controller:
 
                 if res.content_type == "application/json":
                     response = await res.json()
-                    if "/rest/portforward" in url:
-                        print(response)
                     LOGGER.debug("data (from %s) %s", url, response)
                     _raise_on_error(response)
                     if "data" in response:
