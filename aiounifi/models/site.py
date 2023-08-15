@@ -25,7 +25,7 @@ class SiteListRequest(ApiRequest):
     @classmethod
     def create(cls) -> Self:
         """Create site list request."""
-        return cls(method="get", path="/self/sites", data=None)
+        return cls(method="get", path="/self/sites")
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Url to list sites is global for controller."""

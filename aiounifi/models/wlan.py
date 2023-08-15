@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import io
 
 import segno.helpers
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -52,11 +52,21 @@ class TypedWlan(TypedDict):
 
 
 @dataclass
+class WlanListRequest(ApiRequest):
+    """Request object for wlan list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create wlan list request."""
+        return cls(method="get", path="/rest/wlanconf")
+
+
+@dataclass
 class WlanChangePasswordRequest(ApiRequest):
     """Request object for wlan password change."""
 
     @classmethod
-    def create(cls, wlan_id: str, password: str) -> "WlanChangePasswordRequest":
+    def create(cls, wlan_id: str, password: str) -> Self:
         """Create wlan password change request."""
         return cls(
             method="put",
@@ -70,7 +80,7 @@ class WlanEnableRequest(ApiRequest):
     """Request object for wlan enable."""
 
     @classmethod
-    def create(cls, wlan_id: str, enable: bool) -> "WlanEnableRequest":
+    def create(cls, wlan_id: str, enable: bool) -> Self:
         """Create wlan enable request."""
         return cls(
             method="put",

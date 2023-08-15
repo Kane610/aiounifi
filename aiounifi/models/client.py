@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import TypedDict
 
+from typing_extensions import Self
+
 from .api import ApiItem, ApiRequest
 
 
@@ -100,11 +102,31 @@ class TypedClient(TypedDict):
 
 
 @dataclass
+class AllClientListRequest(ApiRequest):
+    """Request object for all clients list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create all clients list request."""
+        return cls(method="get", path="/rest/user")
+
+
+@dataclass
+class ClientListRequest(ApiRequest):
+    """Request object for active client list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create active client list request."""
+        return cls(method="get", path="/stat/sta")
+
+
+@dataclass
 class ClientBlockRequest(ApiRequest):
     """Request object for client block."""
 
     @classmethod
-    def create(cls, mac: str, block: bool) -> "ClientBlockRequest":
+    def create(cls, mac: str, block: bool) -> Self:
         """Create client block request."""
         return cls(
             method="post",
@@ -121,7 +143,7 @@ class ClientReconnectRequest(ApiRequest):
     """Request object for client reconnect."""
 
     @classmethod
-    def create(cls, mac: str) -> "ClientReconnectRequest":
+    def create(cls, mac: str) -> Self:
         """Create client reconnect request."""
         return cls(
             method="post",
@@ -138,7 +160,7 @@ class ClientRemoveRequest(ApiRequest):
     """Request object for client removal."""
 
     @classmethod
-    def create(cls, macs: list[str]) -> "ClientRemoveRequest":
+    def create(cls, macs: list[str]) -> Self:
         """Create client removal request."""
         return cls(
             method="post",

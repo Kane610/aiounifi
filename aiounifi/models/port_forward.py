@@ -23,6 +23,16 @@ class TypedPortForward(TypedDict):
 
 
 @dataclass
+class PortForwardListRequest(ApiRequest):
+    """Request object for port forward list."""
+
+    @classmethod
+    def create(cls) -> Self:
+        """Create port forward list request."""
+        return cls(method="get", path="/rest/portforward")
+
+
+@dataclass
 class PortForwardEnableRequest(ApiRequest):
     """Request object for enabling port forward."""
 

@@ -5,6 +5,7 @@ from typing import Any
 from ..models.client import (
     Client,
     ClientBlockRequest,
+    ClientListRequest,
     ClientReconnectRequest,
     ClientRemoveRequest,
 )
@@ -16,10 +17,11 @@ class Clients(APIHandler[Client]):
     """Represents client network devices."""
 
     obj_id_key = "mac"
-    path = "/stat/sta"
+    path = ""
     item_cls = Client
     process_messages = (MessageKey.CLIENT,)
     remove_messages = (MessageKey.CLIENT_REMOVED,)
+    api_request = ClientListRequest.create()
 
     async def block(self, mac: str) -> list[dict[str, Any]]:
         """Block client from controller."""
