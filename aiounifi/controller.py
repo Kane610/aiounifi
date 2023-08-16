@@ -29,6 +29,7 @@ from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
 from .interfaces.sites import Sites
+from .interfaces.system_information import SystemInformationHandler
 from .interfaces.wlans import Wlans
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
@@ -82,6 +83,7 @@ class Controller:
         self.dpi_groups = DPIRestrictionGroups(self)
         self.port_forwarding = PortForwarding(self)
         self.sites = Sites(self)
+        self.system_information = SystemInformationHandler(self)
         self.wlans = Wlans(self)
 
     async def check_unifi_os(self) -> None:
@@ -127,6 +129,7 @@ class Controller:
         await self.dpi_groups.update()
         await self.port_forwarding.update()
         await self.sites.update()
+        await self.system_information.update()
         await self.wlans.update()
 
     def start_websocket(self) -> None:

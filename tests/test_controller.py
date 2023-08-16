@@ -79,6 +79,10 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
         payload=SITE_UNIFIOS_RESPONSE,
     )
     mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        payload=EMPTY_RESPONSE,
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload=WLAN_UNIFIOS_RESPONSE,
     )
@@ -159,6 +163,10 @@ async def test_unifios_controller(
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/self/sites",
         payload=SITE_UNIFIOS_RESPONSE,
+    )
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/sysinfo",
+        payload=EMPTY_RESPONSE,
     )
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
@@ -359,6 +367,10 @@ async def test_no_data(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -404,6 +416,10 @@ async def test_client(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -436,6 +452,10 @@ async def test_clients(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
     mock_aioresponse.get(
@@ -511,6 +531,10 @@ async def test_message_client_removed(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -556,6 +580,10 @@ async def test_device(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        payload={},
+    )
+    mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/wlanconf",
         payload={},
     )
@@ -588,6 +616,10 @@ async def test_devices(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
     mock_aioresponse.get(
@@ -660,6 +692,10 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
     mock_aioresponse.get(
@@ -766,6 +802,10 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/self/sites",
+        payload={},
+    )
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
     mock_aioresponse.get(
