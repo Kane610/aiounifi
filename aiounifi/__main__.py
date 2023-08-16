@@ -2,12 +2,12 @@
 
 import argparse
 import asyncio
+from asyncio.timeouts import timeout
 import logging
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Callable
 
 import aiohttp
-import async_timeout
 
 import aiounifi
 from aiounifi.controller import Controller
@@ -46,7 +46,7 @@ async def unifi_controller(
     controller.ws_state_callback = callback
 
     try:
-        async with async_timeout.timeout(10):
+        async with timeout(10):
             await controller.check_unifi_os()
             await controller.login()
         return controller
