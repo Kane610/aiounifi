@@ -30,26 +30,184 @@ from .fixtures import (
 )
 
 
-async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with):
-    """Test controller communicating with a non UniFiOS UniFi controller."""
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_check_unifi(
+    mock_aioresponse, unifi_controller, unifi_called_with, is_unifi_os
+):
+    """Test validating if controller is hosted on UniFi OS."""
+    if is_unifi_os:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="text/html",
+            headers={"x-csrf-token": "012"},
+        )
+    else:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="application/octet-stream",
+            status=302,
+        )
+    await unifi_controller.check_unifi_os()
+    assert unifi_controller.is_unifi_os is is_unifi_os
+    assert unifi_called_with("get", "", allow_redirects=False)
+
+
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_login(
+    mock_aioresponse, unifi_controller, unifi_called_with, is_unifi_os
+):
+    """Test logging in to controller."""
+    if is_unifi_os:
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            headers={"x-csrf-token": "123"},
+            content_type="text/json",
+        )
+        await unifi_controller.login()
+        assert unifi_called_with(
+            "post",
+            "/api/auth/login",
+            json={"username": "user", "password": "pass", "remember": True},
+        )
+    else:
+        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        await unifi_controller.login()
+        assert unifi_called_with(
+            "post",
+            "/api/login",
+            json={"username": "user", "password": "pass", "remember": True},
+        )
+
+
+async def test_relogin_success(mock_aioresponse, unifi_controller):
+    """Test controller communicating with a UniFi OS controller with retries."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        body="<html>",
+        headers={"x-csrf-token": "012"},
+        content_type="text/html",
+        status=200,
+    )
+
+    await unifi_controller.check_unifi_os()
+    assert unifi_controller.is_unifi_os
+
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+        headers={"x-csrf-token": "123"},
+        status=200,
+    )
+
+    await unifi_controller.login()
+
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/sta",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+    await unifi_controller.clients.update()
+
+    # After a login failure we retry once
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
 
     mock_aioresponse.get(
         "https://host:8443",
-        content_type="application/octet-stream",
-        status=302,
+        body="<html>",
+        headers={"x-csrf-token": "012"},
+        content_type="text/html",
+        status=200,
     )
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "563"},
+        content_type="text/json",
+        status=200,
+    )
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/device",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+
+    await unifi_controller.devices.update()
+    assert unifi_controller.last_response.status == 200
+
+
+async def test_relogin_fails(mock_aioresponse, unifi_controller):
+    """Test controller communicating with a UniFi OS controller with retries."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        body="<html>",
+        headers={"x-csrf-token": "012"},
+        content_type="text/html",
+        status=200,
+    )
+
     await unifi_controller.check_unifi_os()
-    assert not unifi_controller.is_unifi_os
-    assert unifi_called_with("get", "", allow_redirects=False)
+    assert unifi_controller.is_unifi_os
+    assert len(mock_aioresponse.requests) == 1
 
-    mock_aioresponse.post("https://host:8443/api/login", payload="")
-    await unifi_controller.login()
-    assert unifi_called_with(
-        "post",
-        "/api/login",
-        json={"username": "user", "password": "pass", "remember": True},
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
+        content_type="text/json",
+        status=200,
     )
 
+    await unifi_controller.login()
+
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/sta",
+        payload=EMPTY_RESPONSE,
+        content_type="text/json",
+        status=200,
+    )
+    await unifi_controller.clients.update()
+
+    # After a login failure we retry once
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "456"},
+        content_type="text/json",
+        status=401,
+    )
+
+    with pytest.raises(LoginRequired):
+        await unifi_controller.devices.update()
+
+    # After a login failure and retry, we do
+    # not retry over and over
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/api/s/default/stat/device",
+        body="<html>AUTH FAILED</html>",
+        content_type="text/html",
+        status=401,
+    )
+    with pytest.raises(LoginRequired):
+        await unifi_controller.devices.update()
+
+
+async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test controller communicating with a non UniFiOS UniFi controller."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
         payload=EMPTY_RESPONSE,
@@ -106,23 +264,11 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
     assert unifi_controller.websocket.state == WebsocketState.STOPPED
 
 
+@pytest.mark.parametrize("is_unifi_os", [True])
 async def test_unifios_controller(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
     """Test controller communicating with a UniFi OS controller."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="text/html",
-        headers={"x-csrf-token": "012"},
-    )
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
-    assert unifi_called_with(
-        "get",
-        "",
-        allow_redirects=False,
-    )
-
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
@@ -130,11 +276,6 @@ async def test_unifios_controller(
         content_type="text/json",
     )
     await unifi_controller.login()
-    assert unifi_called_with(
-        "post",
-        "/api/auth/login",
-        json={"username": "user", "password": "pass", "remember": True},
-    )
 
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/stat/sta",
@@ -206,132 +347,6 @@ async def test_unifios_controller(
             unifi_controller.websocket.url
             == "wss://host:8443/proxy/network/wss/s/default/events"
         )
-
-
-async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_controller):
-    """Test controller communicating with a UniFi OS controller with retries."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        body="<html>",
-        headers={"x-csrf-token": "012"},
-        content_type="text/html",
-        status=200,
-    )
-
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        content_type="text/json",
-        headers={"x-csrf-token": "123"},
-        status=200,
-    )
-
-    await unifi_controller.login()
-
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-        content_type="text/json",
-        status=200,
-    )
-    await unifi_controller.clients.update()
-
-    # After a login failure we retry once
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/device",
-        body="<html>AUTH FAILED</html>",
-        content_type="text/html",
-        status=401,
-    )
-
-    mock_aioresponse.get(
-        "https://host:8443",
-        body="<html>",
-        headers={"x-csrf-token": "012"},
-        content_type="text/html",
-        status=200,
-    )
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        headers={"x-csrf-token": "563"},
-        content_type="text/json",
-        status=200,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/device",
-        payload=EMPTY_RESPONSE,
-        content_type="text/json",
-        status=200,
-    )
-
-    await unifi_controller.devices.update()
-    assert unifi_controller.last_response.status == 200
-
-
-async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controller):
-    """Test controller communicating with a UniFi OS controller with retries."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        body="<html>",
-        headers={"x-csrf-token": "012"},
-        content_type="text/html",
-        status=200,
-    )
-
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
-    assert len(mock_aioresponse.requests) == 1
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        headers={"x-csrf-token": "123"},
-        content_type="text/json",
-        status=200,
-    )
-
-    await unifi_controller.login()
-
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-        content_type="text/json",
-        status=200,
-    )
-    await unifi_controller.clients.update()
-
-    # After a login failure we retry once
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/device",
-        body="<html>AUTH FAILED</html>",
-        content_type="text/html",
-        status=401,
-    )
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        headers={"x-csrf-token": "456"},
-        content_type="text/json",
-        status=401,
-    )
-
-    with pytest.raises(LoginRequired):
-        await unifi_controller.devices.update()
-
-    # After a login failure and retry, we do
-    # not retry over and over
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/device",
-        body="<html>AUTH FAILED</html>",
-        content_type="text/html",
-        status=401,
-    )
-    with pytest.raises(LoginRequired):
-        await unifi_controller.devices.update()
 
 
 async def test_no_data(mock_aioresponse, unifi_controller):

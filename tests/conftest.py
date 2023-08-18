@@ -9,10 +9,17 @@ import pytest
 from aiounifi.controller import Controller
 
 
-@pytest.fixture
-def mock_aioresponse():
+@pytest.fixture(name="mock_aioresponse")
+def aioresponse_fixture():
+    """AIOHTTP fixture."""
     with aioresponses() as m:
         yield m
+
+
+@pytest.fixture(name="is_unifi_os")
+def is_unifi_os_fixture() -> bool:
+    """If use UniFi OS response."""
+    return False
 
 
 @pytest.fixture
@@ -49,14 +56,12 @@ def unifi_called_with(mock_aioresponse):
     yield verify_call
 
 
-@pytest.fixture
-async def unifi_controller() -> Controller:
-    """Return UniFi controller.
-
-    Clean up sessions automatically at the end of each test.
-    """
+@pytest.fixture(name="unifi_controller")
+async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
+    """Provide a test-ready UniFi controller."""
     session = aiohttp.ClientSession()
     controller = Controller("host", session, username="user", password="pass")
+    controller.is_unifi_os = is_unifi_os
     controller.ws_state_callback = Mock()
     yield controller
     await session.close()
