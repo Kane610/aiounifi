@@ -1,5 +1,6 @@
 """Setup common test helpers."""
 
+from typing import Any
 from unittest.mock import Mock, patch
 
 import aiohttp
@@ -72,3 +73,27 @@ def mock_wsclient():
     """No real websocket allowed."""
     with patch("aiounifi.controller.WSClient") as mock:
         yield mock
+
+
+@pytest.fixture(name="mock_endpoints")
+def endpoint_fixture(mock_site_request) -> None:
+    """Mock all endpoints."""
+
+
+@pytest.fixture(name="mock_site_request")
+def site_request_fixture(
+    mock_aioresponse: aioresponses,
+    is_unifi_os: bool,
+    site_payload: dict[str, Any],
+) -> None:
+    """Mock site request."""
+    path = "/api/self/sites"
+    if is_unifi_os:
+        path = "/proxy/network/api/self/sites"
+    mock_aioresponse.get(f"https://host:8443{path}", payload=site_payload)
+
+
+@pytest.fixture(name="site_payload")
+def site_data_fixture() -> dict[str, Any]:
+    """Site data."""
+    return {}

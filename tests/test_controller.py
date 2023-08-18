@@ -24,6 +24,7 @@ from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
     MESSAGE_WIRELESS_CLIENT_REMOVED,
+    SITE_RESPONSE,
     SWITCH_16_PORT_POE,
     WIRELESS_CLIENT,
     WLANS,
@@ -206,7 +207,10 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         await unifi_controller.devices.update()
 
 
-async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("site_payload", [SITE_RESPONSE])
+async def test_controller(
+    mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
+):
     """Test controller communicating with a non UniFiOS UniFi controller."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -231,10 +235,6 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
         payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sysinfo",
@@ -264,9 +264,9 @@ async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with)
     assert unifi_controller.websocket.state == WebsocketState.STOPPED
 
 
-@pytest.mark.parametrize("is_unifi_os", [True])
+@pytest.mark.parametrize("is_unifi_os,site_payload", [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
-    mock_aioresponse, unifi_controller, unifi_called_with
+    mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
 ):
     """Test controller communicating with a UniFi OS controller."""
     mock_aioresponse.post(
@@ -300,10 +300,6 @@ async def test_unifios_controller(
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/rest/portforward",
         payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
     )
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/stat/sysinfo",
@@ -349,7 +345,7 @@ async def test_unifios_controller(
         )
 
 
-async def test_no_data(mock_aioresponse, unifi_controller):
+async def test_no_data(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller initialize."""
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.DATA)
@@ -378,10 +374,6 @@ async def test_no_data(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
@@ -403,7 +395,7 @@ async def test_no_data(mock_aioresponse, unifi_controller):
     assert not unifi_controller.stop_websocket()
 
 
-async def test_client(mock_aioresponse, unifi_controller):
+async def test_client(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller adding client on initialize."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -427,10 +419,6 @@ async def test_client(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
@@ -442,7 +430,7 @@ async def test_client(mock_aioresponse, unifi_controller):
     assert len(unifi_controller.clients._items) == 1
 
 
-async def test_clients(mock_aioresponse, unifi_controller):
+async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing clients."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -463,10 +451,6 @@ async def test_clients(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -518,7 +502,9 @@ async def test_clients(mock_aioresponse, unifi_controller):
     assert len(clients._subscribers["*"]) == 0
 
 
-async def test_message_client_removed(mock_aioresponse, unifi_controller):
+async def test_message_client_removed(
+    mock_aioresponse, unifi_controller, mock_endpoints
+):
     """Test controller communicating client has been removed."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -542,10 +528,6 @@ async def test_message_client_removed(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
@@ -565,7 +547,7 @@ async def test_message_client_removed(mock_aioresponse, unifi_controller):
     assert len(unifi_controller.clients._items) == 0
 
 
-async def test_device(mock_aioresponse, unifi_controller):
+async def test_device(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller adding device on initialize."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -591,10 +573,6 @@ async def test_device(mock_aioresponse, unifi_controller):
         payload={},
     )
     mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sysinfo",
         payload={},
     )
@@ -606,7 +584,7 @@ async def test_device(mock_aioresponse, unifi_controller):
     assert len(unifi_controller.devices._items) == 1
 
 
-async def test_devices(mock_aioresponse, unifi_controller):
+async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -627,10 +605,6 @@ async def test_devices(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -682,7 +656,7 @@ async def test_devices(mock_aioresponse, unifi_controller):
     assert len(devices._subscribers["*"]) == 2
 
 
-async def test_dpi_apps(mock_aioresponse, unifi_controller):
+async def test_dpi_apps(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -703,10 +677,6 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -792,7 +762,7 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller):
     mock_app_callback.assert_called()
 
 
-async def test_dpi_groups(mock_aioresponse, unifi_controller):
+async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/sta",
@@ -813,10 +783,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller):
     )
     mock_aioresponse.get(
         "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
         payload={},
     )
     mock_aioresponse.get(
@@ -1114,17 +1080,3 @@ LOGIN_UNIFIOS_JSON_RESPONSE = {
 }
 
 WLAN_UNIFIOS_RESPONSE = {"meta": {"rc": "ok"}, "data": WLANS}
-
-SITE_UNIFIOS_RESPONSE = {
-    "meta": {"rc": "ok"},
-    "data": [
-        {
-            "_id": "5e231c10931eb902acf25112",
-            "name": "default",
-            "desc": "Default",
-            "attr_hidden_id": "default",
-            "attr_no_delete": True,
-            "role": "admin",
-        }
-    ],
-}
