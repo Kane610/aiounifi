@@ -76,29 +76,38 @@ def mock_wsclient():
 
 
 @pytest.fixture(name="mock_endpoints")
-def endpoint_fixture(mock_site_request) -> None:
-    """Mock all endpoints."""
+def endpoint_fixture(
+    mock_aioresponse: aioresponses,
+    is_unifi_os: bool,
+    site_payload: dict[str, Any],
+    system_information_payload: dict[str, Any],
+) -> None:
+    """Use fixtures to mock all endpoints."""
 
-
-@pytest.fixture(name="mock_get_request")
-def mock_get_request_fixture(mock_aioresponse: aioresponses, is_unifi_os: bool):
-    """Get request generic fixture."""
-
-    def callback(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
+    def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
         """Register HTTP response mock."""
         go = unifi_path if is_unifi_os else path
         mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
 
-    return callback
-
-
-@pytest.fixture(name="mock_site_request")
-def site_request_fixture(mock_get_request, site_payload: dict[str, Any]) -> None:
-    """Mock site request."""
-    mock_get_request("/api/self/sites", "/proxy/network/api/self/sites", site_payload)
+    mock_get_request(
+        "/api/self/sites",
+        "/proxy/network/api/self/sites",
+        site_payload,
+    )
+    mock_get_request(
+        "/api/s/default/stat/sysinfo",
+        "/proxy/network/api/s/default/default/stat/sysinfo",
+        system_information_payload,
+    )
 
 
 @pytest.fixture(name="site_payload")
 def site_data_fixture() -> dict[str, Any]:
     """Site data."""
+    return {}
+
+
+@pytest.fixture(name="system_information_payload")
+def system_information_data_fixture() -> dict[str, Any]:
+    """System information data."""
     return {}

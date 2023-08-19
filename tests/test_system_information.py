@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.system_information tests/test_system_information.py
 """
+import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.system_information import SystemInformationRequest
@@ -16,16 +17,16 @@ async def test_sys_info_request(mock_aioresponse, unifi_controller, unifi_called
     assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
 
 
+@pytest.mark.parametrize("system_information_payload", [[SYSTEM_INFORMATION]])
 async def test_system_information(
-    mock_aioresponse, unifi_controller: Controller, unifi_called_with
-):
+    unifi_controller: Controller, mock_endpoints: None
+) -> None:
     """Test port forwarding interface and model."""
     system_information = unifi_controller.system_information
-    system_information.process_raw([SYSTEM_INFORMATION])
-
+    await system_information.update()
     assert len(system_information.values()) == 1
 
-    sys_info = system_information[SYSTEM_INFORMATION["anonymous_controller_id"]]
+    sys_info = next(iter(system_information.values()))
     assert sys_info.anonymous_controller_id == "24f81231-a456-4c32-abcd-f5612345385f"
     assert sys_info.device_type == "UDMPRO"
     assert sys_info.hostname == "UDMP"
