@@ -79,6 +79,7 @@ def mock_wsclient():
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
+    port_forward_payload: dict[str, Any],
     site_payload: dict[str, Any],
     system_information_payload: dict[str, Any],
     wlan_payload: dict[str, Any],
@@ -90,6 +91,11 @@ def endpoint_fixture(
         go = unifi_path if is_unifi_os else path
         mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
 
+    mock_get_request(
+        "/api/s/default/rest/portforward",
+        "/proxy/network/api/s/default/rest/portforward",
+        port_forward_payload,
+    )
     mock_get_request(
         "/api/self/sites",
         "/proxy/network/api/self/sites",
@@ -105,6 +111,12 @@ def endpoint_fixture(
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
     )
+
+
+@pytest.fixture(name="port_forward_payload")
+def port_forward_data_fixture() -> dict[str, Any]:
+    """Port forwarding data."""
+    return {}
 
 
 @pytest.fixture(name="site_payload")
