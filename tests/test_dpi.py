@@ -11,14 +11,10 @@ from aiounifi.models.dpi_restriction_group import DPIRestrictionGroup
 from .fixtures import DPI_APPS, DPI_GROUPS
 
 
-@pytest.mark.asyncio
-async def test_no_apps(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_no_apps(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that dpi_apps work without data."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-
     dpi_apps = unifi_controller.dpi_apps
     await dpi_apps.update()
 
@@ -26,14 +22,10 @@ async def test_no_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     assert len(dpi_apps.values()) == 0
 
 
-@pytest.mark.asyncio
-async def test_no_groups(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_no_groups(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that dpi_groups work without data."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-
     dpi_groups = unifi_controller.dpi_groups
     await dpi_groups.update()
 
@@ -41,12 +33,13 @@ async def test_no_groups(mock_aioresponse, unifi_controller, unifi_called_with):
     assert len(dpi_groups.values()) == 0
 
 
-@pytest.mark.asyncio
-async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("dpi_app_payload", [DPI_APPS])
+async def test_dpi_apps(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that dpi_apps can create an app."""
     dpi_apps = unifi_controller.dpi_apps
-    dpi_apps.process_raw(DPI_APPS)
-
+    await dpi_apps.update()
     assert len(dpi_apps.values()) == 1
 
     app: DPIRestrictionApp = dpi_apps["5f976f62e3c58f018ec7e17d"]
@@ -78,12 +71,11 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller, unifi_called_with):
     )
 
 
-@pytest.mark.asyncio
-async def test_dpi_groups(mock_aioresponse, unifi_controller):
+@pytest.mark.parametrize("dpi_group_payload", [DPI_GROUPS])
+async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test that dpi_groups can create a group."""
     dpi_groups = unifi_controller.dpi_groups
-    dpi_groups.process_raw(DPI_GROUPS)
-
+    await dpi_groups.update()
     assert len(dpi_groups.values()) == 2
 
     group: DPIRestrictionGroup = dpi_groups["5f976f4ae3c58f018ec7dff6"]

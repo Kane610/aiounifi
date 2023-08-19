@@ -224,14 +224,6 @@ async def test_controller(
         "https://host:8443/api/s/default/stat/device",
         payload=EMPTY_RESPONSE,
     )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
 
     assert unifi_called_with("get", "/api/s/default/stat/sta")
@@ -276,14 +268,6 @@ async def test_unifios_controller(
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/stat/device",
         payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/dpiapp",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/dpigroup",
-        payload={},
     )
     await unifi_controller.initialize()
 
@@ -337,14 +321,6 @@ async def test_no_data(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
 
     assert len(unifi_controller.clients._items) == 0
@@ -369,14 +345,6 @@ async def test_client(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 1
 
@@ -392,14 +360,6 @@ async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 0
 
@@ -454,14 +414,6 @@ async def test_message_client_removed(
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 1
 
@@ -487,14 +439,6 @@ async def test_device(mock_aioresponse, unifi_controller, mock_endpoints):
     mock_aioresponse.get(
         "https://host:8443/api/s/default/stat/device", payload=[SWITCH_16_PORT_POE]
     )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.devices._items) == 1
 
@@ -510,14 +454,6 @@ async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.devices._items) == 0
 
@@ -570,14 +506,6 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_apps.values()) == 0
 
@@ -663,14 +591,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
         payload={},
     )
     mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_groups.values()) == 0
 

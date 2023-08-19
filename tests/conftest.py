@@ -79,6 +79,8 @@ def mock_wsclient():
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
+    dpi_app_payload: dict[str, Any],
+    dpi_group_payload: dict[str, Any],
     port_forward_payload: dict[str, Any],
     site_payload: dict[str, Any],
     system_information_payload: dict[str, Any],
@@ -91,6 +93,16 @@ def endpoint_fixture(
         go = unifi_path if is_unifi_os else path
         mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
 
+    mock_get_request(
+        "/api/s/default/rest/dpiapp",
+        "/proxy/network/api/s/default/rest/dpiapp",
+        dpi_app_payload,
+    )
+    mock_get_request(
+        "/api/s/default/rest/dpigroup",
+        "/proxy/network/api/s/default/rest/dpigroup",
+        dpi_group_payload,
+    )
     mock_get_request(
         "/api/s/default/rest/portforward",
         "/proxy/network/api/s/default/rest/portforward",
@@ -113,9 +125,21 @@ def endpoint_fixture(
     )
 
 
+@pytest.fixture(name="dpi_app_payload")
+def dpi_app_data_fixture() -> dict[str, Any]:
+    """DPI app data."""
+    return {}
+
+
+@pytest.fixture(name="dpi_group_payload")
+def dpi_group_data_fixture() -> dict[str, Any]:
+    """DPI group data."""
+    return {}
+
+
 @pytest.fixture(name="port_forward_payload")
 def port_forward_data_fixture() -> dict[str, Any]:
-    """Port forwarding data."""
+    """Port forward data."""
     return {}
 
 
