@@ -81,6 +81,7 @@ def endpoint_fixture(
     is_unifi_os: bool,
     site_payload: dict[str, Any],
     system_information_payload: dict[str, Any],
+    wlan_payload: dict[str, Any],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 
@@ -96,8 +97,13 @@ def endpoint_fixture(
     )
     mock_get_request(
         "/api/s/default/stat/sysinfo",
-        "/proxy/network/api/s/default/default/stat/sysinfo",
+        "/proxy/network/api/s/default/stat/sysinfo",
         system_information_payload,
+    )
+    mock_get_request(
+        "/api/s/default/rest/wlanconf",
+        "/proxy/network/api/s/default/rest/wlanconf",
+        wlan_payload,
     )
 
 
@@ -110,4 +116,10 @@ def site_data_fixture() -> dict[str, Any]:
 @pytest.fixture(name="system_information_payload")
 def system_information_data_fixture() -> dict[str, Any]:
     """System information data."""
+    return {}
+
+
+@pytest.fixture(name="wlan_payload")
+def wlan_data_fixture() -> dict[str, Any]:
+    """WLAN data."""
     return {}

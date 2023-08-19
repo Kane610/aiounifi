@@ -71,11 +71,13 @@ async def test_no_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     assert len(wlans.values()) == 0
 
 
-async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("wlan_payload", [WLANS])
+async def test_wlans(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
-    wlans.process_raw(WLANS)
-
+    await wlans.update()
     assert len(wlans.values()) == 2
 
     wlan = wlans["012345678910111213141516"]
