@@ -8,10 +8,10 @@ import pytest
 from .fixtures import WIRED_CLIENT, WIRELESS_CLIENT
 
 
-async def test_no_clients(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_no_clients(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that no clients also work."""
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/sta", payload={})
-
     clients = unifi_controller.clients
     await clients.update()
 
@@ -21,7 +21,7 @@ async def test_no_clients(mock_aioresponse, unifi_controller, unifi_called_with)
 
 test_data = [
     (
-        {"mac": "0"},
+        [{"mac": "0"}],
         {
             "access_point_mac": "",
             "association_time": 0,
@@ -65,7 +65,7 @@ test_data = [
         },
     ),
     (
-        WIRELESS_CLIENT,
+        [WIRELESS_CLIENT],
         {
             "access_point_mac": "80:2a:a8:00:01:02",
             "association_time": 1587753456,
@@ -109,7 +109,7 @@ test_data = [
         },
     ),
     (
-        WIRED_CLIENT,
+        [WIRED_CLIENT],
         {
             "access_point_mac": "",
             "association_time": 1642487042,
@@ -155,18 +155,21 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize("raw_data, reference_data", test_data)
+@pytest.mark.parametrize("client_payload, reference_data", test_data)
 async def test_clients(
-    mock_aioresponse, unifi_controller, unifi_called_with, raw_data, reference_data
+    mock_aioresponse,
+    unifi_controller,
+    mock_endpoints,
+    unifi_called_with,
+    reference_data,
 ):
     """Test clients class."""
 
     clients = unifi_controller.clients
-    clients.process_raw([raw_data])
-
+    await clients.update()
     assert len(clients.items()) == 1
 
-    client = clients[raw_data["mac"]]
+    client = next(iter(clients.values()))
     for key, value in reference_data.items():
         assert getattr(client, key) == value
 

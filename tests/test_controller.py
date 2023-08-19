@@ -212,14 +212,6 @@ async def test_controller(
     mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
 ):
     """Test controller communicating with a non UniFiOS UniFi controller."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload=EMPTY_RESPONSE,
-    )
     await unifi_controller.initialize()
 
     assert unifi_called_with("get", "/api/s/default/stat/sta")
@@ -253,14 +245,6 @@ async def test_unifios_controller(
     )
     await unifi_controller.login()
 
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/user",
-        payload=EMPTY_RESPONSE,
-    )
     await unifi_controller.initialize()
 
     assert unifi_called_with(
@@ -304,20 +288,12 @@ async def test_no_data(mock_aioresponse, unifi_controller, mock_endpoints):
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.CONNECTION_STATE)
 
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
 
-    assert len(unifi_controller.clients._items) == 0
-    assert len(unifi_controller.clients_all._items) == 0
-    assert len(unifi_controller.devices._items) == 0
-    assert len(unifi_controller.wlans._items) == 0
+    assert len(unifi_controller.clients.items()) == 0
+    assert len(unifi_controller.clients_all.items()) == 0
+    assert len(unifi_controller.devices.items()) == 0
+    assert len(unifi_controller.wlans.items()) == 0
 
     assert 1 not in unifi_controller.clients
     assert not unifi_controller.clients.get(1)
@@ -325,30 +301,15 @@ async def test_no_data(mock_aioresponse, unifi_controller, mock_endpoints):
     assert not unifi_controller.stop_websocket()
 
 
+@pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
 async def test_client(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller adding client on initialize."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=[WIRELESS_CLIENT],
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 1
 
 
 async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing clients."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 0
 
@@ -390,18 +351,11 @@ async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
     assert len(clients._subscribers["*"]) == 0
 
 
+@pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
 async def test_message_client_removed(
     mock_aioresponse, unifi_controller, mock_endpoints
 ):
     """Test controller communicating client has been removed."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=[WIRELESS_CLIENT],
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.clients._items) == 1
 
@@ -417,28 +371,12 @@ async def test_message_client_removed(
 @pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
 async def test_device(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller adding device on initialize."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.devices._items) == 1
 
 
 async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.devices._items) == 0
 
@@ -482,14 +420,6 @@ async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
 
 async def test_dpi_apps(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_apps.values()) == 0
 
@@ -566,14 +496,6 @@ async def test_dpi_apps(mock_aioresponse, unifi_controller, mock_endpoints):
 
 async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_groups.values()) == 0
 
