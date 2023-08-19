@@ -80,17 +80,22 @@ def endpoint_fixture(mock_site_request) -> None:
     """Mock all endpoints."""
 
 
+@pytest.fixture(name="mock_get_request")
+def mock_get_request_fixture(mock_aioresponse: aioresponses, is_unifi_os: bool):
+    """Get request generic fixture."""
+
+    def callback(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
+        """Register HTTP response mock."""
+        go = unifi_path if is_unifi_os else path
+        mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
+
+    return callback
+
+
 @pytest.fixture(name="mock_site_request")
-def site_request_fixture(
-    mock_aioresponse: aioresponses,
-    is_unifi_os: bool,
-    site_payload: dict[str, Any],
-) -> None:
+def site_request_fixture(mock_get_request, site_payload: dict[str, Any]) -> None:
     """Mock site request."""
-    path = "/api/self/sites"
-    if is_unifi_os:
-        path = "/proxy/network/api/self/sites"
-    mock_aioresponse.get(f"https://host:8443{path}", payload=site_payload)
+    mock_get_request("/api/self/sites", "/proxy/network/api/self/sites", site_payload)
 
 
 @pytest.fixture(name="site_payload")
