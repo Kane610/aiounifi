@@ -68,10 +68,10 @@ async def test_device_upgrade_request(
     )
 
 
-async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_no_devices(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that no devices also work."""
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-
     devices = unifi_controller.devices
     await devices.update()
 
@@ -79,11 +79,11 @@ async def test_no_devices(mock_aioresponse, unifi_controller, unifi_called_with)
     assert len(devices.values()) == 0
 
 
-async def test_device_access_point(unifi_controller):
+@pytest.mark.parametrize("device_payload", [[ACCESS_POINT_AC_PRO]])
+async def test_device_access_point(unifi_controller, mock_endpoints):
     """Test device class on an access point."""
     devices = unifi_controller.devices
-    devices.process_raw([ACCESS_POINT_AC_PRO])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     access_point = devices[ACCESS_POINT_AC_PRO["mac"]]
@@ -133,11 +133,11 @@ async def test_device_access_point(unifi_controller):
     )
 
 
-async def test_device_security_gateway(unifi_controller):
+@pytest.mark.parametrize("device_payload", [[GATEWAY_USG3]])
+async def test_device_security_gateway(unifi_controller, mock_endpoints):
     """Test device class on a security gateway."""
     devices = unifi_controller.devices
-    devices.process_raw([GATEWAY_USG3])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     gateway = devices[GATEWAY_USG3["mac"]]
@@ -178,11 +178,13 @@ async def test_device_security_gateway(unifi_controller):
     assert gateway.__repr__() == f"<Device {gateway.name}: {gateway.mac}>"
 
 
-async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("device_payload", [[PLUG_UP1]])
+async def test_device_plug(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test device class on a plug."""
     devices = unifi_controller.devices
-    devices.process_raw([PLUG_UP1])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     plug = devices[PLUG_UP1["mac"]]
@@ -254,11 +256,13 @@ async def test_device_plug(mock_aioresponse, unifi_controller, unifi_called_with
     )
 
 
-async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("device_payload", [[STRIP_UP6]])
+async def test_device_strip(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test device class on a usp-strip-us."""
     devices = unifi_controller.devices
-    devices.process_raw([STRIP_UP6])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     strip = devices[STRIP_UP6["mac"]]
@@ -411,12 +415,13 @@ async def test_device_strip(mock_aioresponse, unifi_controller, unifi_called_wit
     )
 
 
-async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("device_payload", [[PDU_PRO]])
+async def test_device_pdu_pro(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test device class on a PDU Pro 20 port power dispersion unit."""
     devices = unifi_controller.devices
-    devices.process_raw([PDU_PRO])
-
-    print({k: PDU_PRO[k] for k in sorted(PDU_PRO)})
+    await devices.update()
     assert len(devices.values()) == 1
 
     pdupro = devices[PDU_PRO["mac"]]
@@ -787,11 +792,13 @@ async def test_device_pdu_pro(mock_aioresponse, unifi_controller, unifi_called_w
     )
 
 
-async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
+async def test_device_switch(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test device class on aswitch."""
     devices = unifi_controller.devices
-    devices.process_raw([SWITCH_16_PORT_POE])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     switch = devices[SWITCH_16_PORT_POE["mac"]]
@@ -935,12 +942,13 @@ async def test_device_switch(mock_aioresponse, unifi_controller, unifi_called_wi
     )
 
 
-async def test_device_upgrade(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("device_payload", [[ACCESS_POINT_AC_PRO]])
+async def test_device_upgrade(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test device upgrade command."""
-
     devices = unifi_controller.devices
-    devices.process_raw([ACCESS_POINT_AC_PRO])
-
+    await devices.update()
     assert len(devices.values()) == 1
 
     mock_aioresponse.post(

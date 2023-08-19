@@ -79,6 +79,7 @@ def mock_wsclient():
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
+    device_payload: dict[str, Any],
     dpi_app_payload: dict[str, Any],
     dpi_group_payload: dict[str, Any],
     port_forward_payload: dict[str, Any],
@@ -93,6 +94,11 @@ def endpoint_fixture(
         go = unifi_path if is_unifi_os else path
         mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
 
+    mock_get_request(
+        "/api/s/default/stat/device",
+        "/proxy/network/api/s/default/stat/device",
+        device_payload,
+    )
     mock_get_request(
         "/api/s/default/rest/dpiapp",
         "/proxy/network/api/s/default/rest/dpiapp",
@@ -123,6 +129,12 @@ def endpoint_fixture(
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
     )
+
+
+@pytest.fixture(name="device_payload")
+def device_data_fixture() -> dict[str, Any]:
+    """Device data."""
+    return {}
 
 
 @pytest.fixture(name="dpi_app_payload")
