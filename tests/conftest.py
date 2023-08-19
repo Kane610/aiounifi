@@ -143,6 +143,12 @@ def endpoint_fixture(
     )
 
 
+@pytest.fixture(name="response_payload")
+def response_data_fixture() -> dict[str, Any]:
+    """Base response data."""
+    return {"meta": {"rc": "ok"}, "data": []}
+
+
 @pytest.fixture(name="client_payload")
 def client_data_fixture() -> dict[str, Any]:
     """Client data."""

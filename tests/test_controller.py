@@ -215,10 +215,26 @@ async def test_controller(
     await unifi_controller.initialize()
 
     assert unifi_called_with("get", "/api/s/default/stat/sta")
-    assert unifi_called_with("get", "/api/s/default/stat/device")
     assert unifi_called_with("get", "/api/s/default/rest/user")
-    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+    assert unifi_called_with("get", "/api/s/default/stat/device")
+    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
+    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
+    assert unifi_called_with("get", "/api/s/default/rest/portforward")
     assert unifi_called_with("get", "/api/self/sites")
+    assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
+    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+
+    assert len(unifi_controller.clients.items()) == 0
+    assert len(unifi_controller.clients_all.items()) == 0
+    assert len(unifi_controller.devices.items()) == 0
+    assert len(unifi_controller.outlets.items()) == 0
+    assert len(unifi_controller.ports.items()) == 0
+    assert len(unifi_controller.dpi_apps.items()) == 0
+    assert len(unifi_controller.dpi_groups.items()) == 0
+    assert len(unifi_controller.port_forwarding.items()) == 0
+    assert len(unifi_controller.sites.items()) == 1
+    assert len(unifi_controller.system_information.items()) == 0
+    assert len(unifi_controller.wlans.items()) == 0
 
     assert not unifi_controller.websocket
 
@@ -232,7 +248,7 @@ async def test_controller(
     assert unifi_controller.websocket.state == WebsocketState.STOPPED
 
 
-@pytest.mark.parametrize("is_unifi_os,site_payload", [(True, SITE_RESPONSE)])
+@pytest.mark.parametrize("is_unifi_os, site_payload", [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
     mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
 ):
@@ -281,37 +297,101 @@ async def test_unifios_controller(
         )
 
 
-async def test_no_data(mock_aioresponse, unifi_controller, mock_endpoints):
-    """Test controller initialize."""
+async def test_no_websocket_callback(unifi_controller):
+    """Test asserts of no websocket callback."""
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.DATA)
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.CONNECTION_STATE)
 
-    await unifi_controller.initialize()
-
-    assert len(unifi_controller.clients.items()) == 0
-    assert len(unifi_controller.clients_all.items()) == 0
-    assert len(unifi_controller.devices.items()) == 0
-    assert len(unifi_controller.wlans.items()) == 0
-
-    assert 1 not in unifi_controller.clients
-    assert not unifi_controller.clients.get(1)
-
     assert not unifi_controller.stop_websocket()
 
 
-@pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
-async def test_client(mock_aioresponse, unifi_controller, mock_endpoints):
-    """Test controller adding client on initialize."""
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 1
+async def test_unifios_controller_no_csrf_token(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """Test controller communicating with a UniFi OS controller without csrf token."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        content_type="text/html",
+    )
+    await unifi_controller.check_unifi_os()
+    assert unifi_controller.is_unifi_os
+    assert unifi_called_with(
+        "get",
+        "",
+        allow_redirects=False,
+    )
+
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        content_type="text/json",
+    )
+    await unifi_controller.login()
+    assert unifi_called_with(
+        "post",
+        "/api/auth/login",
+        json={"username": "user", "password": "pass", "remember": True},
+    )
+
+
+test_data = [
+    ({"status": 401}, LoginRequired),
+    ({"status": 403}, Forbidden),
+    ({"status": 404}, ResponseError),
+    ({"status": 502}, BadGateway),
+    ({"status": 503}, ServiceUnavailable),
+    ({"exception": client_exceptions.ClientError}, RequestError),
+    (
+        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
+        LoginRequired,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
+        Unauthorized,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
+        NoPermission,
+    ),
+    (
+        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
+        TwoFaTokenRequired,
+    ),
+]
+
+
+@pytest.mark.parametrize("unwanted_behavior, expected_exception", test_data)
+async def test_controller_raise_expected_exception(
+    mock_aioresponse, unifi_controller, unwanted_behavior, expected_exception
+):
+    """Verify request raise login required on a 401."""
+    mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
+    with pytest.raises(expected_exception):
+        await unifi_controller.login()
+
+
+@pytest.mark.parametrize(
+    "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
+)
+async def test_handle_unsupported_events(unifi_controller, unsupported_message):
+    """Test controller properly ignores unsupported events."""
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    unifi_controller.ws_state_callback.reset_mock()
+    unifi_controller.websocket._data = {"meta": {"message": unsupported_message}}
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    unifi_controller.ws_state_callback.assert_not_called()
+
+    assert len(unifi_controller.clients.items()) == 0
 
 
 async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing clients."""
     await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 0
+    assert len(unifi_controller.clients.items()) == 0
 
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
@@ -322,7 +402,7 @@ async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
         "data": [WIRELESS_CLIENT],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.clients._items) == 1
+    assert len(unifi_controller.clients.items()) == 1
 
     # Verify expected callback signalling
     client = unifi_controller.clients[WIRELESS_CLIENT["mac"]]
@@ -357,7 +437,7 @@ async def test_message_client_removed(
 ):
     """Test controller communicating client has been removed."""
     await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 1
+    assert len(unifi_controller.clients.items()) == 1
 
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
@@ -365,20 +445,13 @@ async def test_message_client_removed(
     unifi_controller.websocket._data = MESSAGE_WIRELESS_CLIENT_REMOVED
     unifi_controller.session_handler(WebsocketSignal.DATA)
 
-    assert len(unifi_controller.clients._items) == 0
-
-
-@pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
-async def test_device(mock_aioresponse, unifi_controller, mock_endpoints):
-    """Test controller adding device on initialize."""
-    await unifi_controller.initialize()
-    assert len(unifi_controller.devices._items) == 1
+    assert len(unifi_controller.clients.items()) == 0
 
 
 async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
     """Test controller managing devices."""
     await unifi_controller.initialize()
-    assert len(unifi_controller.devices._items) == 0
+    assert len(unifi_controller.devices.items()) == 0
 
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
@@ -389,7 +462,7 @@ async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
         "data": [SWITCH_16_PORT_POE],
     }
     unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.devices._items) == 1
+    assert len(unifi_controller.devices.items()) == 1
 
     # Verify expected callback signalling
     device = unifi_controller.devices[SWITCH_16_PORT_POE["mac"]]
@@ -575,87 +648,6 @@ async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
     mock_group_callback.assert_called()
     assert len(unifi_controller.dpi_groups.values()) == 0
     assert "61783dbdc1773a18c0c61ef6" not in unifi_controller.dpi_groups
-
-
-async def test_unifios_controller_no_csrf_token(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
-    """Test controller communicating with a UniFi OS controller without csrf token."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="text/html",
-    )
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
-    assert unifi_called_with(
-        "get",
-        "",
-        allow_redirects=False,
-    )
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        content_type="text/json",
-    )
-    await unifi_controller.login()
-    assert unifi_called_with(
-        "post",
-        "/api/auth/login",
-        json={"username": "user", "password": "pass", "remember": True},
-    )
-
-
-test_data = [
-    ({"status": 401}, LoginRequired),
-    ({"status": 403}, Forbidden),
-    ({"status": 404}, ResponseError),
-    ({"status": 502}, BadGateway),
-    ({"status": 503}, ServiceUnavailable),
-    ({"exception": client_exceptions.ClientError}, RequestError),
-    (
-        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
-        LoginRequired,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
-        Unauthorized,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
-        NoPermission,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
-        TwoFaTokenRequired,
-    ),
-]
-
-
-@pytest.mark.parametrize("unwanted_behavior, expected_exception", test_data)
-async def test_controller_raise_expected_exception(
-    mock_aioresponse, unifi_controller, unwanted_behavior, expected_exception
-):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
-    with pytest.raises(expected_exception):
-        await unifi_controller.login()
-
-
-@pytest.mark.parametrize(
-    "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
-)
-async def test_handle_unsupported_events(unifi_controller, unsupported_message):
-    """Test controller properly ignores unsupported events."""
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    unifi_controller.ws_state_callback.reset_mock()
-    unifi_controller.websocket._data = {"meta": {"message": unsupported_message}}
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    unifi_controller.ws_state_callback.assert_not_called()
-
-    assert len(unifi_controller.clients._items) == 0
 
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
