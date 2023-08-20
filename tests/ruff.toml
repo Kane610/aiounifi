@@ -1,0 +1,15 @@
+# This extend our general Ruff rules specifically for tests
+extend = "../pyproject.toml"
+
+[isort]
+known-first-party = [
+    "aiounifi",
+    "tests",
+]
+known-third-party = [
+    "aiohttp",
+    "pytest",
+]
+forced-separate = [
+    "tests",
+]
