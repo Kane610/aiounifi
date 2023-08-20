@@ -2,15 +2,14 @@
 
 pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
+import pytest
 
 from aiounifi.controller import Controller
 
 
-async def test_sites(mock_aioresponse, unifi_controller: Controller, unifi_called_with):
-    """Test sites class."""
-
-    sites = unifi_controller.sites
-    sites.process_raw(
+@pytest.mark.parametrize(
+    "site_payload",
+    [
         [
             {
                 "_id": "5e231c10931eb902acf25112",
@@ -21,12 +20,15 @@ async def test_sites(mock_aioresponse, unifi_controller: Controller, unifi_calle
                 "role": "admin",
             }
         ]
-    )
-
+    ],
+)
+async def test_sites(unifi_controller: Controller, mock_endpoints: None) -> None:
+    """Test sites class."""
+    sites = unifi_controller.sites
+    await sites.update()
     assert len(sites.items()) == 1
 
     site = sites["5e231c10931eb902acf25112"]
-
     assert site.site_id == "5e231c10931eb902acf25112"
     assert site.description == "Default"
     assert site.hidden_id == "default"

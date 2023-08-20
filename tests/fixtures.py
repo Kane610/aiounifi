@@ -1,5 +1,21 @@
 """Fixtures for different items from UniFi controller."""
 
+
+SITE_RESPONSE = {
+    "meta": {"rc": "ok"},
+    "data": [
+        {
+            "_id": "5e231c10931eb902acf25112",
+            "name": "default",
+            "desc": "Default",
+            "attr_hidden_id": "default",
+            "attr_no_delete": True,
+            "role": "admin",
+        }
+    ],
+}
+
+
 ACCESS_POINT_AC_PRO = {
     "_id": "5a4c022",
     "_uptime": 3971849,

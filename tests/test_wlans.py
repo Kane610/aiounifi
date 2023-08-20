@@ -57,13 +57,10 @@ def test_wlan_qr_code():
     )
 
 
-async def test_no_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_no_wlans(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that no ports also work."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-
     wlans = unifi_controller.wlans
     await wlans.update()
 
@@ -71,11 +68,13 @@ async def test_no_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     assert len(wlans.values()) == 0
 
 
-async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
+@pytest.mark.parametrize("wlan_payload", [WLANS])
+async def test_wlans(
+    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
-    wlans.process_raw(WLANS)
-
+    await wlans.update()
     assert len(wlans.values()) == 2
 
     wlan = wlans["012345678910111213141516"]
@@ -104,7 +103,7 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     assert wlan.minrate_ng_mgmt_rate_kbps == 1000
     assert wlan.name == "SSID 1"
     assert wlan.name_combine_enabled is None
-    assert wlan.name_combine_suffix == None
+    assert wlan.name_combine_suffix is None
     assert wlan.no2ghz_oui is False
     assert wlan.schedule == []
     assert wlan.security == "wpapsk"

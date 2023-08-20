@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.port_forwarding tests/test_port_forwarding.py
 """
+import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.port_forward import PortForwardEnableRequest, TypedPortForward
@@ -9,16 +10,16 @@ from aiounifi.models.port_forward import PortForwardEnableRequest, TypedPortForw
 from .fixtures import PORT_FORWARDING
 
 
+@pytest.mark.parametrize("port_forward_payload", [PORT_FORWARDING])
 async def test_port_forward(
-    mock_aioresponse, unifi_controller: Controller, unifi_called_with
+    mock_aioresponse, unifi_controller: Controller, mock_endpoints, unifi_called_with
 ):
     """Test port forwarding interface and model."""
     port_forwarding = unifi_controller.port_forwarding
-    port_forwarding.process_raw([PORT_FORWARDING["data"][0]])
-
+    await port_forwarding.update()
     assert len(port_forwarding.values()) == 1
 
-    port_forward = port_forwarding[PORT_FORWARDING["data"][0]["_id"]]
+    port_forward = next(iter(port_forwarding.values()))
     assert port_forward.id == "5a32aa4ee4b0412345678911"
     assert port_forward.destination_port == "12345"
     assert port_forward.enabled is True

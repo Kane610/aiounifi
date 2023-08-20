@@ -24,191 +24,64 @@ from aiounifi.websocket import WebsocketSignal, WebsocketState
 
 from .fixtures import (
     MESSAGE_WIRELESS_CLIENT_REMOVED,
+    SITE_RESPONSE,
     SWITCH_16_PORT_POE,
     WIRELESS_CLIENT,
     WLANS,
 )
 
 
-async def test_controller(mock_aioresponse, unifi_controller, unifi_called_with):
-    """Test controller communicating with a non UniFiOS UniFi controller."""
-
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="application/octet-stream",
-        status=302,
-    )
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_check_unifi(
+    mock_aioresponse, unifi_controller, unifi_called_with, is_unifi_os
+):
+    """Test validating if controller is hosted on UniFi OS."""
+    if is_unifi_os:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="text/html",
+            headers={"x-csrf-token": "012"},
+        )
+    else:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="application/octet-stream",
+            status=302,
+        )
     await unifi_controller.check_unifi_os()
-    assert not unifi_controller.is_unifi_os
+    assert unifi_controller.is_unifi_os is is_unifi_os
     assert unifi_called_with("get", "", allow_redirects=False)
 
-    mock_aioresponse.post("https://host:8443/api/login", payload="")
-    await unifi_controller.login()
-    assert unifi_called_with(
-        "post",
-        "/api/login",
-        json={"username": "user", "password": "pass", "remember": True},
-    )
 
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/device",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload=WLAN_UNIFIOS_RESPONSE,
-    )
-    await unifi_controller.initialize()
-
-    assert unifi_called_with("get", "/api/s/default/stat/sta")
-    assert unifi_called_with("get", "/api/s/default/stat/device")
-    assert unifi_called_with("get", "/api/s/default/rest/user")
-    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
-    assert unifi_called_with("get", "/api/self/sites")
-
-    assert not unifi_controller.websocket
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-        assert unifi_controller.websocket.url == "wss://host:8443/wss/s/default/events"
-
-    assert unifi_controller.websocket.state == WebsocketState.STARTING
-
-    unifi_controller.stop_websocket()
-    assert unifi_controller.websocket.state == WebsocketState.STOPPED
-
-
-async def test_unifios_controller(
-    mock_aioresponse, unifi_controller, unifi_called_with
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_login(
+    mock_aioresponse, unifi_controller, unifi_called_with, is_unifi_os
 ):
-    """Test controller communicating with a UniFi OS controller."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="text/html",
-        headers={"x-csrf-token": "012"},
-    )
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
-    assert unifi_called_with(
-        "get",
-        "",
-        allow_redirects=False,
-    )
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        headers={"x-csrf-token": "123"},
-        content_type="text/json",
-    )
-    await unifi_controller.login()
-    assert unifi_called_with(
-        "post",
-        "/api/auth/login",
-        json={"username": "user", "password": "pass", "remember": True},
-    )
-
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/sta",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/user",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/device",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/dpiapp",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/portforward",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/self/sites",
-        payload=SITE_UNIFIOS_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/stat/sysinfo",
-        payload=EMPTY_RESPONSE,
-    )
-    mock_aioresponse.get(
-        "https://host:8443/proxy/network/api/s/default/rest/wlanconf",
-        payload=WLAN_UNIFIOS_RESPONSE,
-    )
-    await unifi_controller.initialize()
-
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/stat/sta",
-        headers={"x-csrf-token": "123"},
-    )
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/stat/device",
-        headers={"x-csrf-token": "123"},
-    )
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/rest/user",
-        headers={"x-csrf-token": "123"},
-    )
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/self/sites",
-        headers={"x-csrf-token": "123"},
-    )
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/rest/wlanconf",
-        headers={"x-csrf-token": "123"},
-    )
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-        assert (
-            unifi_controller.websocket.url
-            == "wss://host:8443/proxy/network/wss/s/default/events"
+    """Test logging in to controller."""
+    if is_unifi_os:
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            headers={"x-csrf-token": "123"},
+            content_type="text/json",
+        )
+        await unifi_controller.login()
+        assert unifi_called_with(
+            "post",
+            "/api/auth/login",
+            json={"username": "user", "password": "pass", "remember": True},
+        )
+    else:
+        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        await unifi_controller.login()
+        assert unifi_called_with(
+            "post",
+            "/api/login",
+            json={"username": "user", "password": "pass", "remember": True},
         )
 
 
-async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_controller):
+async def test_relogin_success(mock_aioresponse, unifi_controller):
     """Test controller communicating with a UniFi OS controller with retries."""
     mock_aioresponse.get(
         "https://host:8443",
@@ -272,7 +145,7 @@ async def test_unifios_controller_relogin_success(mock_aioresponse, unifi_contro
     assert unifi_controller.last_response.status == 200
 
 
-async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controller):
+async def test_relogin_fails(mock_aioresponse, unifi_controller):
     """Test controller communicating with a UniFi OS controller with retries."""
     mock_aioresponse.get(
         "https://host:8443",
@@ -334,564 +207,104 @@ async def test_unifios_controller_relogin_fails(mock_aioresponse, unifi_controll
         await unifi_controller.devices.update()
 
 
-async def test_no_data(mock_aioresponse, unifi_controller):
-    """Test controller initialize."""
+@pytest.mark.parametrize("site_payload", [SITE_RESPONSE])
+async def test_controller(
+    mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
+):
+    """Test controller communicating with a non UniFiOS UniFi controller."""
+    await unifi_controller.initialize()
+
+    assert unifi_called_with("get", "/api/s/default/stat/sta")
+    assert unifi_called_with("get", "/api/s/default/rest/user")
+    assert unifi_called_with("get", "/api/s/default/stat/device")
+    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
+    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
+    assert unifi_called_with("get", "/api/s/default/rest/portforward")
+    assert unifi_called_with("get", "/api/self/sites")
+    assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
+    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+
+    assert len(unifi_controller.clients.items()) == 0
+    assert len(unifi_controller.clients_all.items()) == 0
+    assert len(unifi_controller.devices.items()) == 0
+    assert len(unifi_controller.outlets.items()) == 0
+    assert len(unifi_controller.ports.items()) == 0
+    assert len(unifi_controller.dpi_apps.items()) == 0
+    assert len(unifi_controller.dpi_groups.items()) == 0
+    assert len(unifi_controller.port_forwarding.items()) == 0
+    assert len(unifi_controller.sites.items()) == 1
+    assert len(unifi_controller.system_information.items()) == 0
+    assert len(unifi_controller.wlans.items()) == 0
+
+    assert not unifi_controller.websocket
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+        assert unifi_controller.websocket.url == "wss://host:8443/wss/s/default/events"
+
+    assert unifi_controller.websocket.state == WebsocketState.STARTING
+
+    unifi_controller.stop_websocket()
+    assert unifi_controller.websocket.state == WebsocketState.STOPPED
+
+
+@pytest.mark.parametrize("is_unifi_os, site_payload", [(True, SITE_RESPONSE)])
+async def test_unifios_controller(
+    mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
+):
+    """Test controller communicating with a UniFi OS controller."""
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
+        content_type="text/json",
+    )
+    await unifi_controller.login()
+
+    await unifi_controller.initialize()
+
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/api/s/default/stat/sta",
+        headers={"x-csrf-token": "123"},
+    )
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/api/s/default/stat/device",
+        headers={"x-csrf-token": "123"},
+    )
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/api/s/default/rest/user",
+        headers={"x-csrf-token": "123"},
+    )
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/api/self/sites",
+        headers={"x-csrf-token": "123"},
+    )
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/api/s/default/rest/wlanconf",
+        headers={"x-csrf-token": "123"},
+    )
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+        assert (
+            unifi_controller.websocket.url
+            == "wss://host:8443/proxy/network/wss/s/default/events"
+        )
+
+
+async def test_no_websocket_callback(unifi_controller):
+    """Test asserts of no websocket callback."""
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.DATA)
     with pytest.raises(AssertionError):
         unifi_controller.session_handler(WebsocketSignal.CONNECTION_STATE)
 
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-
-    await unifi_controller.initialize()
-
-    assert len(unifi_controller.clients._items) == 0
-    assert len(unifi_controller.clients_all._items) == 0
-    assert len(unifi_controller.devices._items) == 0
-    assert len(unifi_controller.wlans._items) == 0
-
-    assert 1 not in unifi_controller.clients
-    assert not unifi_controller.clients.get(1)
-
     assert not unifi_controller.stop_websocket()
-
-
-async def test_client(mock_aioresponse, unifi_controller):
-    """Test controller adding client on initialize."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=[WIRELESS_CLIENT],
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 1
-
-
-async def test_clients(mock_aioresponse, unifi_controller):
-    """Test controller managing clients."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 0
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    # Add client from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"message": MessageKey.CLIENT.value},
-        "data": [WIRELESS_CLIENT],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.clients._items) == 1
-
-    # Verify expected callback signalling
-    client = unifi_controller.clients[WIRELESS_CLIENT["mac"]]
-
-    # Verify APIItems.__getitem__
-    client_mac = next(iter(unifi_controller.clients))
-    assert client_mac == client.mac
-
-    # Register callback
-    clients = unifi_controller.clients
-    mock_callback = Mock()
-    unsub = clients.subscribe(mock_callback)
-    assert len(clients._subscribers["*"]) == 1
-
-    # Retrieve websocket data
-    unifi_controller.websocket._data = {
-        "meta": {"message": MessageKey.CLIENT.value},
-        "data": [WIRELESS_CLIENT],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    assert mock_callback.call_count == 1
-
-    # Remove callback
-    unsub()
-    assert len(clients._subscribers["*"]) == 0
-
-
-async def test_message_client_removed(mock_aioresponse, unifi_controller):
-    """Test controller communicating client has been removed."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload=[WIRELESS_CLIENT],
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients._items) == 1
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    unifi_controller.websocket._data = MESSAGE_WIRELESS_CLIENT_REMOVED
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    assert len(unifi_controller.clients._items) == 0
-
-
-async def test_device(mock_aioresponse, unifi_controller):
-    """Test controller adding device on initialize."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/device", payload=[SWITCH_16_PORT_POE]
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-    assert len(unifi_controller.devices._items) == 1
-
-
-async def test_devices(mock_aioresponse, unifi_controller):
-    """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-    assert len(unifi_controller.devices._items) == 0
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    # Add client from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"message": MessageKey.DEVICE.value},
-        "data": [SWITCH_16_PORT_POE],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.devices._items) == 1
-
-    # Verify expected callback signalling
-    device = unifi_controller.devices[SWITCH_16_PORT_POE["mac"]]
-
-    # Verify APIItems.__getitem__
-    device_mac = next(iter(unifi_controller.devices))
-    assert device_mac == device.mac
-
-    # Register callback
-    devices = unifi_controller.devices
-    mock_callback = Mock()
-    unsub = devices.subscribe(mock_callback)
-    assert len(devices._subscribers["*"]) == 3
-
-    # Retrieve websocket data
-    unifi_controller.websocket._data = {
-        "meta": {"message": MessageKey.DEVICE.value},
-        "data": [SWITCH_16_PORT_POE],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    assert mock_callback.call_count == 1
-
-    # Remove callback
-    unsub()
-    assert len(devices._subscribers["*"]) == 2
-
-
-async def test_dpi_apps(mock_aioresponse, unifi_controller):
-    """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-
-    assert len(unifi_controller.dpi_apps.values()) == 0
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    mock_app_callback = Mock()
-    unifi_controller.dpi_apps.subscribe(mock_app_callback)
-
-    # Add DPI app from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:add"},
-        "data": [
-            {
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": False,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "_id": "61783e89c1773a18c0c61f00",
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.dpi_apps.values()) == 1
-    assert "61783e89c1773a18c0c61f00" in unifi_controller.dpi_apps
-
-    mock_app_callback.assert_called()
-    mock_app_callback.reset_mock()
-
-    # DPI group is enabled with app from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:sync"},
-        "data": [
-            {
-                "_id": "61783e89c1773a18c0c61f00",
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": True,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    dpi_app = unifi_controller.dpi_apps["61783e89c1773a18c0c61f00"]
-    assert dpi_app.enabled
-
-    mock_app_callback.assert_called()
-    mock_app_callback.reset_mock()
-
-    # Signal removal of app from apps
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpiapp:delete"},
-        "data": [
-            {
-                "_id": "61783e89c1773a18c0c61f00",
-                "apps": [524292],
-                "blocked": False,
-                "cats": [],
-                "enabled": True,
-                "log": False,
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.dpi_apps.values()) == 0
-    assert "61783e89c1773a18c0c61f00" not in unifi_controller.dpi_apps
-    mock_app_callback.assert_called()
-
-
-async def test_dpi_groups(mock_aioresponse, unifi_controller):
-    """Test controller managing devices."""
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sta",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/user",
-        payload={},
-    )
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/device", payload={})
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpiapp",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/dpigroup",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/portforward",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/self/sites",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/sysinfo",
-        payload={},
-    )
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/rest/wlanconf",
-        payload={},
-    )
-    await unifi_controller.initialize()
-
-    assert len(unifi_controller.dpi_groups.values()) == 0
-
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
-
-    mock_group_callback = Mock()
-    unifi_controller.dpi_groups.subscribe(mock_group_callback)
-
-    # Add DPI group from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpigroup:add"},
-        "data": [
-            {
-                "name": "dpi group",
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "_id": "61783dbdc1773a18c0c61ef6",
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    assert len(unifi_controller.dpi_groups.values()) == 1
-    assert "61783dbdc1773a18c0c61ef6" in unifi_controller.dpi_groups
-
-    mock_group_callback.assert_called()
-    mock_group_callback.reset_mock()
-
-    # Update DPI group with app from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpigroup:sync"},
-        "data": [
-            {
-                "_id": "61783dbdc1773a18c0c61ef6",
-                "name": "dpi group",
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "dpiapp_ids": ["61783e89c1773a18c0c61f00"],
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    dpi_group = unifi_controller.dpi_groups["61783dbdc1773a18c0c61ef6"]
-    assert "61783e89c1773a18c0c61f00" in dpi_group.dpiapp_ids
-
-    mock_group_callback.assert_called()
-    mock_group_callback.reset_mock()
-
-    # Signal for group to remove app
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpigroup:sync"},
-        "data": [
-            {
-                "_id": "61783dbdc1773a18c0c61ef6",
-                "name": "dpi group",
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "dpiapp_ids": [],
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-
-    mock_group_callback.assert_called()
-    mock_group_callback.reset_mock()
-
-    # Remove group from UniFI controller group from websocket
-    unifi_controller.websocket._data = {
-        "meta": {"rc": "ok", "message": "dpigroup:delete"},
-        "data": [
-            {
-                "_id": "61783dbdc1773a18c0c61ef6",
-                "name": "dpi group",
-                "site_id": "5f3edd27ba4cc806a19f2d9c",
-                "dpiapp_ids": [],
-            }
-        ],
-    }
-    unifi_controller.session_handler(WebsocketSignal.DATA)
-    mock_group_callback.assert_called()
-    assert len(unifi_controller.dpi_groups.values()) == 0
-    assert "61783dbdc1773a18c0c61ef6" not in unifi_controller.dpi_groups
 
 
 async def test_unifios_controller_no_csrf_token(
@@ -972,7 +385,269 @@ async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     unifi_controller.session_handler(WebsocketSignal.DATA)
     unifi_controller.ws_state_callback.assert_not_called()
 
-    assert len(unifi_controller.clients._items) == 0
+    assert len(unifi_controller.clients.items()) == 0
+
+
+async def test_clients(mock_aioresponse, unifi_controller, mock_endpoints):
+    """Test controller managing clients."""
+    await unifi_controller.initialize()
+    assert len(unifi_controller.clients.items()) == 0
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    # Add client from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"message": MessageKey.CLIENT.value},
+        "data": [WIRELESS_CLIENT],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    assert len(unifi_controller.clients.items()) == 1
+
+    # Verify expected callback signalling
+    client = unifi_controller.clients[WIRELESS_CLIENT["mac"]]
+
+    # Verify APIItems.__getitem__
+    client_mac = next(iter(unifi_controller.clients))
+    assert client_mac == client.mac
+
+    # Register callback
+    clients = unifi_controller.clients
+    mock_callback = Mock()
+    unsub = clients.subscribe(mock_callback)
+    assert len(clients._subscribers["*"]) == 1
+
+    # Retrieve websocket data
+    unifi_controller.websocket._data = {
+        "meta": {"message": MessageKey.CLIENT.value},
+        "data": [WIRELESS_CLIENT],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+
+    assert mock_callback.call_count == 1
+
+    # Remove callback
+    unsub()
+    assert len(clients._subscribers["*"]) == 0
+
+
+@pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
+async def test_message_client_removed(
+    mock_aioresponse, unifi_controller, mock_endpoints
+):
+    """Test controller communicating client has been removed."""
+    await unifi_controller.initialize()
+    assert len(unifi_controller.clients.items()) == 1
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    unifi_controller.websocket._data = MESSAGE_WIRELESS_CLIENT_REMOVED
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+
+    assert len(unifi_controller.clients.items()) == 0
+
+
+async def test_devices(mock_aioresponse, unifi_controller, mock_endpoints):
+    """Test controller managing devices."""
+    await unifi_controller.initialize()
+    assert len(unifi_controller.devices.items()) == 0
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    # Add client from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"message": MessageKey.DEVICE.value},
+        "data": [SWITCH_16_PORT_POE],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    assert len(unifi_controller.devices.items()) == 1
+
+    # Verify expected callback signalling
+    device = unifi_controller.devices[SWITCH_16_PORT_POE["mac"]]
+
+    # Verify APIItems.__getitem__
+    device_mac = next(iter(unifi_controller.devices))
+    assert device_mac == device.mac
+
+    # Register callback
+    devices = unifi_controller.devices
+    mock_callback = Mock()
+    unsub = devices.subscribe(mock_callback)
+    assert len(devices._subscribers["*"]) == 3
+
+    # Retrieve websocket data
+    unifi_controller.websocket._data = {
+        "meta": {"message": MessageKey.DEVICE.value},
+        "data": [SWITCH_16_PORT_POE],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+
+    assert mock_callback.call_count == 1
+
+    # Remove callback
+    unsub()
+    assert len(devices._subscribers["*"]) == 2
+
+
+async def test_dpi_apps(mock_aioresponse, unifi_controller, mock_endpoints):
+    """Test controller managing devices."""
+    await unifi_controller.initialize()
+    assert len(unifi_controller.dpi_apps.values()) == 0
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    mock_app_callback = Mock()
+    unifi_controller.dpi_apps.subscribe(mock_app_callback)
+
+    # Add DPI app from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:add"},
+        "data": [
+            {
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": False,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "_id": "61783e89c1773a18c0c61f00",
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    assert len(unifi_controller.dpi_apps.values()) == 1
+    assert "61783e89c1773a18c0c61f00" in unifi_controller.dpi_apps
+
+    mock_app_callback.assert_called()
+    mock_app_callback.reset_mock()
+
+    # DPI group is enabled with app from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:sync"},
+        "data": [
+            {
+                "_id": "61783e89c1773a18c0c61f00",
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": True,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    dpi_app = unifi_controller.dpi_apps["61783e89c1773a18c0c61f00"]
+    assert dpi_app.enabled
+
+    mock_app_callback.assert_called()
+    mock_app_callback.reset_mock()
+
+    # Signal removal of app from apps
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpiapp:delete"},
+        "data": [
+            {
+                "_id": "61783e89c1773a18c0c61f00",
+                "apps": [524292],
+                "blocked": False,
+                "cats": [],
+                "enabled": True,
+                "log": False,
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    assert len(unifi_controller.dpi_apps.values()) == 0
+    assert "61783e89c1773a18c0c61f00" not in unifi_controller.dpi_apps
+    mock_app_callback.assert_called()
+
+
+async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
+    """Test controller managing devices."""
+    await unifi_controller.initialize()
+    assert len(unifi_controller.dpi_groups.values()) == 0
+
+    with patch("aiounifi.websocket.WSClient.running"):
+        unifi_controller.start_websocket()
+
+    mock_group_callback = Mock()
+    unifi_controller.dpi_groups.subscribe(mock_group_callback)
+
+    # Add DPI group from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpigroup:add"},
+        "data": [
+            {
+                "name": "dpi group",
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "_id": "61783dbdc1773a18c0c61ef6",
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    assert len(unifi_controller.dpi_groups.values()) == 1
+    assert "61783dbdc1773a18c0c61ef6" in unifi_controller.dpi_groups
+
+    mock_group_callback.assert_called()
+    mock_group_callback.reset_mock()
+
+    # Update DPI group with app from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpigroup:sync"},
+        "data": [
+            {
+                "_id": "61783dbdc1773a18c0c61ef6",
+                "name": "dpi group",
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "dpiapp_ids": ["61783e89c1773a18c0c61f00"],
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    dpi_group = unifi_controller.dpi_groups["61783dbdc1773a18c0c61ef6"]
+    assert "61783e89c1773a18c0c61f00" in dpi_group.dpiapp_ids
+
+    mock_group_callback.assert_called()
+    mock_group_callback.reset_mock()
+
+    # Signal for group to remove app
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpigroup:sync"},
+        "data": [
+            {
+                "_id": "61783dbdc1773a18c0c61ef6",
+                "name": "dpi group",
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "dpiapp_ids": [],
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+
+    mock_group_callback.assert_called()
+    mock_group_callback.reset_mock()
+
+    # Remove group from UniFI controller group from websocket
+    unifi_controller.websocket._data = {
+        "meta": {"rc": "ok", "message": "dpigroup:delete"},
+        "data": [
+            {
+                "_id": "61783dbdc1773a18c0c61ef6",
+                "name": "dpi group",
+                "site_id": "5f3edd27ba4cc806a19f2d9c",
+                "dpiapp_ids": [],
+            }
+        ],
+    }
+    unifi_controller.session_handler(WebsocketSignal.DATA)
+    mock_group_callback.assert_called()
+    assert len(unifi_controller.dpi_groups.values()) == 0
+    assert "61783dbdc1773a18c0c61ef6" not in unifi_controller.dpi_groups
 
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
@@ -1099,17 +774,3 @@ LOGIN_UNIFIOS_JSON_RESPONSE = {
 }
 
 WLAN_UNIFIOS_RESPONSE = {"meta": {"rc": "ok"}, "data": WLANS}
-
-SITE_UNIFIOS_RESPONSE = {
-    "meta": {"rc": "ok"},
-    "data": [
-        {
-            "_id": "5e231c10931eb902acf25112",
-            "name": "default",
-            "desc": "Default",
-            "attr_hidden_id": "default",
-            "attr_no_delete": True,
-            "role": "admin",
-        }
-    ],
-}
