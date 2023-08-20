@@ -174,7 +174,7 @@ data_test_outlet = [
 ]
 
 
-@pytest.mark.parametrize("device_payload, test_data", data_test_outlet)
+@pytest.mark.parametrize(("device_payload", "test_data"), data_test_outlet)
 async def test_outlet(unifi_controller, mock_endpoints, test_data):
     """Verify that device outlet model works."""
     await unifi_controller.devices.update()

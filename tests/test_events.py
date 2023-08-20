@@ -20,7 +20,7 @@ EVENT_HANDLER_DATA = [
 ]
 
 
-@pytest.mark.parametrize("event_filter, expected", EVENT_HANDLER_DATA)
+@pytest.mark.parametrize(("event_filter", "expected"), EVENT_HANDLER_DATA)
 async def test_event_handler(event_filter, expected):
     """Verify event handler behaves according to configured filters."""
     event_handler = EventHandler(controller=Mock())

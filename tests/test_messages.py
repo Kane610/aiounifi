@@ -18,7 +18,7 @@ MESSAGE_HANDLER_DATA = [
 ]
 
 
-@pytest.mark.parametrize("message_filter, expected", MESSAGE_HANDLER_DATA)
+@pytest.mark.parametrize(("message_filter", "expected"), MESSAGE_HANDLER_DATA)
 async def test_message_handler(message_filter, expected):
     """Verify message handler behaves according to configured filters."""
     message_handler = MessageHandler(controller=Mock())
