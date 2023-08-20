@@ -26,15 +26,9 @@ jobs:
       - name: Lint with Ruff
         run: |
           ruff check aiounifi
-      - name: Lint with Flake8
-        run: |
-          flake8 aiounifi
       - name: Check formatting with Black
         run: |
           black aiounifi --check
-      - name: Check import order with isort
-        run: |
-          isort aiounifi --check-only
       - name: Check typing with mypy
         run: |
           mypy aiounifi

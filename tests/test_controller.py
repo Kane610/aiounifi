@@ -248,7 +248,7 @@ async def test_controller(
     assert unifi_controller.websocket.state == WebsocketState.STOPPED
 
 
-@pytest.mark.parametrize("is_unifi_os, site_payload", [(True, SITE_RESPONSE)])
+@pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
     mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
 ):
@@ -362,7 +362,7 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize("unwanted_behavior, expected_exception", test_data)
+@pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
 async def test_controller_raise_expected_exception(
     mock_aioresponse, unifi_controller, unwanted_behavior, expected_exception
 ):

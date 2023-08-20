@@ -1,6 +1,7 @@
 """Setup common test helpers."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import Mock, patch
 
 import aiohttp
@@ -23,7 +24,7 @@ def is_unifi_os_fixture() -> bool:
     return False
 
 
-@pytest.fixture
+@pytest.fixture()
 def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], bool]:
     """Verify UniFi call was made with the expected parameters."""
 
@@ -54,7 +55,7 @@ def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], 
 
         return False
 
-    yield verify_call
+    return verify_call
 
 
 @pytest.fixture(name="unifi_controller")
@@ -145,7 +146,7 @@ def endpoint_fixture(
 
 @pytest.fixture(name="response_payload")
 def response_data_fixture() -> dict[str, Any]:
-    """Base response data."""
+    """Response data."""
     return {"meta": {"rc": "ok"}, "data": []}
 
 

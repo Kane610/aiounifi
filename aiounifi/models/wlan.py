@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 import io
+from typing import NotRequired, Self, TypedDict
 
 import segno.helpers
-from typing_extensions import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 

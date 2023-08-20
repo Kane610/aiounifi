@@ -20,7 +20,7 @@ EVENT_HANDLER_DATA = [
 ]
 
 
-@pytest.mark.parametrize("event_filter, expected", EVENT_HANDLER_DATA)
+@pytest.mark.parametrize(("event_filter", "expected"), EVENT_HANDLER_DATA)
 async def test_event_handler(event_filter, expected):
     """Verify event handler behaves according to configured filters."""
     event_handler = EventHandler(controller=Mock())
@@ -97,7 +97,8 @@ async def test_client_event():
     assert client.datetime == "2020-04-24T18:37:36Z"
     assert (
         client.msg
-        == 'User[00:00:00:00:00:01] has connected to AP[80:2a:a8:00:01:02] with SSID "SSID" on "channel 44(na)"'
+        == "User[00:00:00:00:00:01] has connected to AP[80:2a:a8:00:01:02] "
+        + 'with SSID "SSID" on "channel 44(na)"'
     )
     assert client.time == 1587753456179
     assert client.mac == "00:00:00:00:00:01"

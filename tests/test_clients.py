@@ -143,7 +143,7 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize("client_payload, reference_data", test_data)
+@pytest.mark.parametrize(("client_payload", "reference_data"), test_data)
 async def test_clients(unifi_controller, mock_endpoints, reference_data):
     """Test clients class."""
     clients = unifi_controller.clients
@@ -156,7 +156,7 @@ async def test_clients(unifi_controller, mock_endpoints, reference_data):
 
 
 @pytest.mark.parametrize(
-    "method, mac, command",
+    ("method", "mac", "command"),
     [
         ["block", "0", {"mac": "0", "cmd": "block-sta"}],
         ["unblock", "0", {"mac": "0", "cmd": "unblock-sta"}],

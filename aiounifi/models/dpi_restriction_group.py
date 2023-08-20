@@ -1,8 +1,7 @@
 """DPI Restrictions as part of a UniFi network."""
 
 from dataclasses import dataclass
-
-from typing_extensions import NotRequired, Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 

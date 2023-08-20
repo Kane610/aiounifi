@@ -3,7 +3,7 @@
 from abc import ABC
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Generic, Type, final
+from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models.api import ApiItemT, ApiRequest
 
@@ -81,7 +81,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """Base class for a map of API Items."""
 
     obj_id_key: str
-    item_cls: Type[ApiItemT]
+    item_cls: type[ApiItemT]
     api_request: ApiRequest
     process_messages: tuple["MessageKey", ...] = ()
     remove_messages: tuple["MessageKey", ...] = ()

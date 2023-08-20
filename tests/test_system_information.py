@@ -1,7 +1,4 @@
-"""Test system information API.
-
-pytest --cov-report term-missing --cov=aiounifi.system_information tests/test_system_information.py
-"""
+"""Test system information API."""
 import pytest
 
 from aiounifi.controller import Controller

@@ -5,9 +5,7 @@
 from dataclasses import dataclass
 import enum
 import logging
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 LOGGER = logging.getLogger(__name__)
 

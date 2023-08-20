@@ -649,7 +649,7 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize("device_payload, reference_data", test_data)
+@pytest.mark.parametrize(("device_payload", "reference_data"), test_data)
 async def test_device(unifi_controller, mock_endpoints, reference_data):
     """Test device class."""
     devices = unifi_controller.devices
@@ -663,7 +663,7 @@ async def test_device(unifi_controller, mock_endpoints, reference_data):
 
 
 @pytest.mark.parametrize(
-    "method, mac, command",
+    ("method", "mac", "command"),
     [["upgrade", "0", {"mac": "0", "cmd": "upgrade"}]],
 )
 async def test_device_commands(
@@ -677,7 +677,7 @@ async def test_device_commands(
 
 
 @pytest.mark.parametrize(
-    "api_request, input, command",
+    ("api_request", "input", "command"),
     [
         [
             DeviceRestartRequest,
@@ -711,7 +711,7 @@ async def test_device_requests(
 
 
 @pytest.mark.parametrize(
-    "device_payload, api_request, input, command",
+    ("device_payload", "api_request", "input", "command"),
     [
         [  # Outlet set relay without existing override
             [
