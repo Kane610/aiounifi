@@ -3,9 +3,10 @@
 import argparse
 import asyncio
 from asyncio.timeouts import timeout
+from collections.abc import Callable
 import logging
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import aiohttp
 

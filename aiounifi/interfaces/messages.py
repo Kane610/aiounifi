@@ -1,7 +1,7 @@
 """Manage events from UniFi Network Controller."""
-
+from collections.abc import Callable
 import logging
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from ..models.message import Message, MessageKey
 

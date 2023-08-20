@@ -1,10 +1,10 @@
 """Python library to interact with UniFi controller."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from http import HTTPStatus
 import logging
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from aiohttp import client_exceptions

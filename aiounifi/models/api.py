@@ -1,8 +1,9 @@
 """API management class and base class for the different end points."""
 
 from abc import ABC
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping, TypeVar
+from typing import Any, TypeVar
 
 
 @dataclass

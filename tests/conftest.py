@@ -1,6 +1,7 @@
 """Setup common test helpers."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import Mock, patch
 
 import aiohttp

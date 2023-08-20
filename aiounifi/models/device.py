@@ -5,9 +5,7 @@ Access points, Gateways, Switches.
 
 from dataclasses import dataclass
 import logging
-from typing import Any
-
-from typing_extensions import NotRequired, Self, TypedDict
+from typing import Any, NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 

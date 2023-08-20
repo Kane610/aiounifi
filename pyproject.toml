@@ -15,10 +15,12 @@ select = [
     "F",  # pyflakes/autoflake
     "G",  # flake8-logging-format
     "I",  # isort
-    "N804", # First argument of a class method should be named cls
-    "N805", # First argument of a method should be named self
-    "N815", # Variable {name} in class scope should not be mixedCase
+    "N804",   # First argument of a class method should be named cls
+    "N805",   # First argument of a method should be named self
+    "N815",   # Variable {name} in class scope should not be mixedCase
     "RUF006", # Store a reference to the return value of asyncio.create_task
+    "UP",  # pyupgrade
+    "W",   # pycodestyle
 ]
 
 ignore = [

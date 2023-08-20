@@ -13,9 +13,10 @@ repos:
           - --quiet
         files: ^((pydeconz|pylint|script|tests)/.+)?[^/]+\.py$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.0
+    rev: v1.5.1
     hooks:
       - id: mypy
+        args: [--python-version=3.11, --ignore-missing-imports]
         exclude: ^tests/
 # -   repo: https://gitlab.com/pycqa/flake8
 #     rev: 3.7.9
