@@ -7,6 +7,8 @@ import enum
 import logging
 from typing import Any
 
+from typing_extensions import Self
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -64,7 +66,7 @@ class Meta:
     data: dict[str, Any]
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Meta":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create meta instance from dict."""
         return cls(
             rc=data.get("rc", ""),
@@ -81,7 +83,7 @@ class Message:
     data: dict[str, Any]
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Message":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create data container instance from dict."""
         meta = Meta.from_dict(data["meta"])
         if meta.message == MessageKey.UNKNOWN:

@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.messages import MessageHandler
-from aiounifi.models.message import MessageKey
+from aiounifi.models.message import Message, MessageKey
 
 MESSAGE_HANDLER_DATA = [
     (None, False),  # No subscriber registered
@@ -44,3 +44,17 @@ async def test_message_handler(message_filter, expected):
 
     unsubscribe_callback()
     assert len(message_handler) == 0
+
+
+async def test_unsupported_message_key():
+    """Validate unsupported message key handling."""
+    message = Message.from_dict(
+        {
+            "meta": {
+                "rc": "ok",
+                "message": "Unsupported",
+            },
+            "data": [{}],
+        }
+    )
+    assert message.meta.message == MessageKey.UNKNOWN

@@ -2,8 +2,9 @@
 
 pytest --cov-report term-missing --cov=aiounifi.ports tests/test_ports.py
 """
-
 from unittest.mock import Mock
+
+import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
 from aiounifi.models.port import Port
@@ -92,9 +93,10 @@ async def test_handler_process_device_no_index(unifi_controller):
     assert len(ports.items()) == 0
 
 
-async def test_port(unifi_controller):
+@pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
+async def test_port(unifi_controller, mock_endpoints):
     """Verify that device port model works."""
-    unifi_controller.devices.process_raw([SWITCH_16_PORT_POE])
+    await unifi_controller.devices.update()
     port = unifi_controller.ports["fc:ec:da:11:22:33_1"]
 
     assert port.ifname is None
