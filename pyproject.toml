@@ -1,3 +1,41 @@
+[project]
+name        = "aiounifi"
+version     = "55"
+license     = {text = "MIT"}
+description = "Python library for communicating with UniFi Network Controller API"
+readme      = "README.md"
+authors     = [
+    {name = "Robert Svensson", email = "Kane610@users.noreply.github.com"}
+]
+keywords    = ["unifi", "homeassistant"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: The MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Home Automation",
+]
+requires-python = ">=3.11.0"
+dependencies    = [
+    "aiohttp==3.8.5",
+    "orjson==3.9.4",
+    "segno==1.5.2",
+]
+
+[project.urls]
+"Source Code" = "https://github.com/Kane610/aiounifi"
+"Bug Reports" = "https://github.com/Kane610/aiounifi/issues"
+
+[tool.setuptools]
+exclude-package-data = { "*" = ["tests*"]}
+
+[tool.setuptools.packages.find]
+where = ["aiounifi"]
+
+[tool.setuptools.package-data]
+"aiounifi" = ["py.typed"]
+
 [tool.mypy]
 python_version = "3.11"
 check_untyped_defs = true
