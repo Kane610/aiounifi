@@ -32,9 +32,6 @@ jobs:
       - name: Check formatting with Black
         run: |
           black aiounifi --check
-      - name: Check import order with isort
-        run: |
-          isort aiounifi --check-only
       - name: Check typing with mypy
         run: |
           mypy aiounifi
