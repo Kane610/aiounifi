@@ -1,6 +1,6 @@
 """Setup common test helpers."""
 
-from typing import Any
+from typing import Any, Callable
 from unittest.mock import Mock, patch
 
 import aiohttp
@@ -11,7 +11,7 @@ from aiounifi.controller import Controller
 
 
 @pytest.fixture(name="mock_aioresponse")
-def aioresponse_fixture():
+def aioresponse_fixture() -> aioresponses:
     """AIOHTTP fixture."""
     with aioresponses() as m:
         yield m
@@ -24,10 +24,10 @@ def is_unifi_os_fixture() -> bool:
 
 
 @pytest.fixture
-def unifi_called_with(mock_aioresponse):
+def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], bool]:
     """Verify UniFi call was made with the expected parameters."""
 
-    def verify_call(method: str, path: str, **kwargs: dict) -> bool:
+    def verify_call(method: str, path: str, **kwargs: dict[str, Any]) -> bool:
         """Verify expected data was provided with a request to aioresponse."""
         for req, call_list in mock_aioresponse.requests.items():
             if method != req[0]:
@@ -39,8 +39,8 @@ def unifi_called_with(mock_aioresponse):
             for call in call_list:
                 successful_match = True
 
-                for key in kwargs:
-                    if key not in call[1] or call[1][key] != kwargs[key]:
+                for key, value in kwargs.items():
+                    if key not in call[1] or call[1][key] != value:
                         successful_match = False
 
                 for key, value in call[1].items():
@@ -69,7 +69,7 @@ async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
 
 
 @pytest.fixture()
-def mock_wsclient():
+def mock_wsclient() -> Mock:
     """No real websocket allowed."""
     with patch("aiounifi.controller.WSClient") as mock:
         yield mock
