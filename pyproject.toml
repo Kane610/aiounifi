@@ -9,8 +9,10 @@ src = ["aiounifi", "tests"]
 target-version = "py311"
 
 select = [
+    "C",  # complexity
     "D",  # docstrings
     "E",  # pycodestyle
+    "F",  # pyflakes/autoflake
     "G",  # flake8-logging-format
     "I",  # isort
     "N804", # First argument of a class method should be named cls
@@ -30,3 +32,6 @@ force-sort-within-sections = true
 known-first-party = ["aiounifi"]
 combine-as-imports = true
 split-on-trailing-comma = false
+
+[tool.ruff.mccabe]
+max-complexity = 12
