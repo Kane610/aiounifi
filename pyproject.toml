@@ -9,7 +9,13 @@ src = ["aiounifi", "tests"]
 target-version = "py311"
 
 select = [
-    "C",  # complexity
+    "B002", # Python does not support the unary prefix increment
+    "B007", # Loop control variable {name} not used within loop body
+    "B014", # Exception handler with duplicate exception
+    "B023", # Function definition does not bind loop variable {name}
+    "B026", # Star-arg unpacking after a keyword argument is strongly discouraged
+    "C",      # complexity
+    "COM818", # Trailing comma on bare tuple prohibited
     "D",  # docstrings
     "E",  # pycodestyle
     "F",  # pyflakes/autoflake
