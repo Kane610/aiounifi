@@ -16,5 +16,5 @@ repos:
     rev: v1.5.1
     hooks:
       - id: mypy
-        args: [--python-version=3.11, --ignore-missing-imports]
+        args: [--ignore-missing-imports]
         exclude: ^tests/
