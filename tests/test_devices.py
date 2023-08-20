@@ -24,61 +24,6 @@ from .fixtures import (
 )
 
 
-async def test_power_cycle_port(mock_aioresponse, unifi_controller, unifi_called_with):
-    """Test power cycle port work."""
-    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
-
-    await unifi_controller.request(DevicePowerCyclePortRequest.create("00:..:11", 1))
-
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/devmgr",
-        json={"cmd": "power-cycle", "mac": "00:..:11", "port_idx": 1},
-    )
-
-
-@pytest.mark.parametrize("input, expected", [(True, "soft"), (False, "hard")])
-async def test_device_restart(
-    mock_aioresponse, unifi_controller, unifi_called_with, input, expected
-):
-    """Test that no devices also work."""
-    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
-
-    await unifi_controller.request(DeviceRestartRequest.create("00:..:11", input))
-
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/devmgr",
-        json={"cmd": "restart", "mac": "00:..:11", "reboot_type": expected},
-    )
-
-
-async def test_device_upgrade_request(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
-    """Test device upgrade request work."""
-    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
-
-    await unifi_controller.request(DeviceUpgradeRequest.create("00:..:11"))
-
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/devmgr",
-        json={"cmd": "upgrade", "mac": "00:..:11"},
-    )
-
-
-async def test_no_devices(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
-):
-    """Test that no devices also work."""
-    devices = unifi_controller.devices
-    await devices.update()
-
-    assert unifi_called_with("get", "/api/s/default/stat/device")
-    assert len(devices.values()) == 0
-
-
 @pytest.mark.parametrize("device_payload", [[ACCESS_POINT_AC_PRO]])
 async def test_device_access_point(unifi_controller, mock_endpoints):
     """Test device class on an access point."""
@@ -217,44 +162,6 @@ async def test_device_plug(
     assert plug.upgradable is False
     assert plug.uplink == PLUG_UP1["uplink"]
 
-    mock_aioresponse.put(
-        "https://host:8443/api/s/default/rest/device/600c8356942a6ade50707b56",
-        payload="",
-        repeat=True,
-    )
-    await unifi_controller.request(DeviceSetOutletRelayRequest.create(plug, 1, False))
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/600c8356942a6ade50707b56",
-        json={
-            "outlet_overrides": [
-                {
-                    "index": 1,
-                    "relay_state": False,
-                    "name": "Outlet 1",
-                },
-            ]
-        },
-    )
-
-    await unifi_controller.request(
-        DeviceSetOutletCycleEnabledRequest.create(plug, 1, True)
-    )
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/600c8356942a6ade50707b56",
-        json={
-            "outlet_overrides": [
-                {
-                    "index": 1,
-                    "name": "Outlet 1",
-                    "relay_state": False,
-                    "cycle_enabled": True,
-                },
-            ]
-        },
-    )
-
 
 @pytest.mark.parametrize("device_payload", [[STRIP_UP6]])
 async def test_device_strip(
@@ -356,63 +263,6 @@ async def test_device_strip(
     assert strip.version == "2.2.1.511"
     assert strip.upgradable is False
     assert strip.uplink == STRIP_UP6["uplink"]
-
-    mock_aioresponse.put(
-        "https://host:8443/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
-        payload="",
-        repeat=True,
-    )
-    await unifi_controller.request(DeviceSetOutletRelayRequest.create(strip, 5, True))
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/61eb1a75942a6a859b45d2bc",
-        json={
-            "outlet_overrides": [
-                {
-                    "index": 1,
-                    "name": "Outlet 1",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 2,
-                    "name": "Outlet 2",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 3,
-                    "name": "Outlet 3",
-                    "cycle_enabled": False,
-                    "relay_state": True,
-                },
-                {
-                    "index": 4,
-                    "name": "Outlet 4",
-                    "cycle_enabled": True,
-                    "relay_state": True,
-                },
-                {
-                    "index": 5,
-                    "name": "Outlet 5",
-                    "cycle_enabled": False,
-                    "relay_state": True,
-                },
-                {
-                    "index": 6,
-                    "name": "Outlet 6",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 7,
-                    "name": "USB Outlets",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-            ]
-        },
-    )
 
 
 @pytest.mark.parametrize("device_payload", [[PDU_PRO]])
@@ -736,61 +586,6 @@ async def test_device_pdu_pro(
     assert pdupro.upgradable is False
     assert pdupro.uplink == PDU_PRO["uplink"]
 
-    mock_aioresponse.put(
-        "https://host:8443/api/s/default/rest/device/61e4a1e60bbb2d53aeb430ea",
-        payload="",
-        repeat=True,
-    )
-    await unifi_controller.request(DeviceSetOutletRelayRequest.create(pdupro, 5, True))
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/61e4a1e60bbb2d53aeb430ea",
-        json={
-            "outlet_overrides": [
-                {
-                    "index": 1,
-                    "name": "USB Outlet 1",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 2,
-                    "name": "USB Outlet 2",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 3,
-                    "name": "USB Outlet 3",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {
-                    "index": 4,
-                    "name": "USB Outlet 4",
-                    "cycle_enabled": False,
-                    "relay_state": False,
-                },
-                {"index": 5, "name": "Console", "relay_state": True},
-                {"index": 6, "name": "UDM Pro", "relay_state": True},
-                {"index": 7, "name": "Unraid", "relay_state": True},
-                {"index": 8, "relay_state": True},
-                {"index": 9, "relay_state": True},
-                {"index": 10, "relay_state": True},
-                {"index": 11, "relay_state": True},
-                {"index": 12, "relay_state": True},
-                {"index": 13, "relay_state": True},
-                {"index": 14, "relay_state": True},
-                {"index": 15, "relay_state": True},
-                {"index": 16, "name": "UNVR Pro", "relay_state": True},
-                {"index": 17, "relay_state": True},
-                {"index": 18, "name": "Home Assistant", "relay_state": True},
-                {"index": 19, "name": "Server Cabinet Switch", "relay_state": True},
-                {"index": 20, "name": "Rear Cabinet Lights", "relay_state": True},
-            ]
-        },
-    )
-
 
 @pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
 async def test_device_switch(
@@ -862,101 +657,227 @@ async def test_device_switch(
     assert switch.wlan_overrides == []
     assert switch.__repr__() == f"<Device {switch.name}: {switch.mac}>"
 
-    mock_aioresponse.put(
-        "https://host:8443/api/s/default/rest/device/235678987654345678",
-        payload="",
-        repeat=True,
-    )
-    await unifi_controller.request(DeviceSetPoePortModeRequest.create(switch, 1, "off"))
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/235678987654345678",
-        json={
-            "port_overrides": [
-                {
-                    "poe_mode": "auto",
-                    "portconf_id": "5e1b309714bd614afd3d11a7",
-                    "port_security_mac_address": [],
-                    "autoneg": True,
-                    "stp_port_mode": True,
-                },
-                {
-                    "poe_mode": "off",
-                    "port_idx": 3,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "poe_mode": "auto",
-                    "port_idx": 4,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "poe_mode": "auto",
-                    "port_idx": 16,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "port_idx": 1,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "off",
-                },
-            ]
-        },
-    )
 
-    await unifi_controller.request(DeviceSetPoePortModeRequest.create(switch, 3, "off"))
-    assert unifi_called_with(
-        "put",
-        "/api/s/default/rest/device/235678987654345678",
-        json={
-            "port_overrides": [
-                {
-                    "poe_mode": "auto",
-                    "portconf_id": "5e1b309714bd614afd3d11a7",
-                    "port_security_mac_address": [],
-                    "autoneg": True,
-                    "stp_port_mode": True,
-                },
-                {
-                    "poe_mode": "off",
-                    "port_idx": 3,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "poe_mode": "auto",
-                    "port_idx": 4,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "poe_mode": "auto",
-                    "port_idx": 16,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                },
-                {
-                    "port_idx": 1,
-                    "portconf_id": "5a32aa4ee4babd4452422ddd22222",
-                    "poe_mode": "off",
-                },
-            ]
-        },
-    )
-
-
-@pytest.mark.parametrize("device_payload", [[ACCESS_POINT_AC_PRO]])
-async def test_device_upgrade(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+@pytest.mark.parametrize(
+    "method, mac, command",
+    [["upgrade", "0", {"mac": "0", "cmd": "upgrade"}]],
+)
+async def test_device_commands(
+    mock_aioresponse, unifi_controller, unifi_called_with, method, mac, command
 ):
-    """Test device upgrade command."""
+    """Test device commands."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+    class_command = getattr(unifi_controller.devices, method)
+    await class_command(mac)
+    assert unifi_called_with("post", "/api/s/default/cmd/devmgr", json=command)
+
+
+@pytest.mark.parametrize(
+    "api_request, input, command",
+    [
+        [
+            DeviceRestartRequest,
+            {"mac": "0", "soft": True},
+            {"mac": "0", "cmd": "restart", "reboot_type": "soft"},
+        ],
+        [
+            DeviceRestartRequest,
+            {"mac": "0", "soft": False},
+            {"mac": "0", "cmd": "restart", "reboot_type": "hard"},
+        ],
+        [
+            DeviceUpgradeRequest,
+            {"mac": "0"},
+            {"mac": "0", "cmd": "upgrade"},
+        ],
+        [
+            DevicePowerCyclePortRequest,
+            {"mac": "0", "port_idx": 1},
+            {"mac": "0", "port_idx": 1, "cmd": "power-cycle"},
+        ],
+    ],
+)
+async def test_device_requests(
+    mock_aioresponse, unifi_controller, unifi_called_with, api_request, input, command
+):
+    """Test device commands."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+    await unifi_controller.request(api_request.create(**input))
+    assert unifi_called_with("post", "/api/s/default/cmd/devmgr", json=command)
+
+
+@pytest.mark.parametrize(
+    "device_payload, api_request, input, command",
+    [
+        [  # Outlet set relay without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "outlet_overrides": [],
+                    "outlet_table": [
+                        {
+                            "index": 1,
+                            "relay_state": True,
+                            "cycle_enabled": False,
+                            "name": "USB Outlet 1",
+                            "outlet_caps": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetOutletRelayRequest,
+            {"outlet_idx": 1, "state": True},
+            {
+                "outlet_overrides": [
+                    {"index": 1, "name": "USB Outlet 1", "relay_state": True}
+                ]
+            },
+        ],
+        [  # Outlet set relay with existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "outlet_overrides": [{"index": 2}],
+                    "outlet_table": [
+                        {
+                            "index": 2,
+                            "relay_state": True,
+                            "cycle_enabled": False,
+                            "name": "USB Outlet 1",
+                            "outlet_caps": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetOutletRelayRequest,
+            {"outlet_idx": 2, "state": False},
+            {"outlet_overrides": [{"index": 2, "relay_state": False}]},
+        ],
+        [  # Outlet outlet cycle without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "outlet_overrides": [],
+                    "outlet_table": [
+                        {
+                            "index": 1,
+                            "relay_state": True,
+                            "cycle_enabled": False,
+                            "name": "USB Outlet 1",
+                            "outlet_caps": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetOutletCycleEnabledRequest,
+            {"outlet_idx": 1, "state": True},
+            {
+                "outlet_overrides": [
+                    {"index": 1, "name": "USB Outlet 1", "cycle_enabled": True}
+                ]
+            },
+        ],
+        [  # Outlet outlet cycle with existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "outlet_overrides": [{"index": 2}],
+                    "outlet_table": [
+                        {
+                            "index": 2,
+                            "relay_state": True,
+                            "cycle_enabled": False,
+                            "name": "USB Outlet 1",
+                            "outlet_caps": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetOutletCycleEnabledRequest,
+            {"outlet_idx": 2, "state": False},
+            {"outlet_overrides": [{"index": 2, "cycle_enabled": False}]},
+        ],
+        [  # PoE port mode without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [],
+                    "port_table": [
+                        {
+                            "poe_mode": "Auto",
+                            "name": "Port 1",
+                            "port_idx": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPoePortModeRequest,
+            {"port_idx": 1, "mode": "off"},
+            {"port_overrides": [{"port_idx": 1, "poe_mode": "off"}]},
+        ],
+        [  # PoE port mode with portconf_id without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [],
+                    "port_table": [
+                        {
+                            "poe_mode": "Auto",
+                            "name": "Port 1",
+                            "port_idx": 1,
+                            "portconf_id": "123",
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPoePortModeRequest,
+            {"port_idx": 1, "mode": "off"},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "poe_mode": "off", "portconf_id": "123"}
+                ]
+            },
+        ],
+        [  # PoE port mode with existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [{"port_idx": 1, "name": "Office"}],
+                    "port_table": [
+                        {
+                            "poe_mode": "Auto",
+                            "name": "Office",
+                            "port_idx": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPoePortModeRequest,
+            {"port_idx": 1, "mode": "off"},
+            {"port_overrides": [{"port_idx": 1, "poe_mode": "off", "name": "Office"}]},
+        ],
+    ],
+)
+async def test_sub_device_requests(
+    mock_aioresponse,
+    unifi_controller,
+    mock_endpoints,
+    unifi_called_with,
+    api_request,
+    input,
+    command,
+):
+    """Test sub device (port/outlet) commands."""
     devices = unifi_controller.devices
     await devices.update()
-    assert len(devices.values()) == 1
-
-    mock_aioresponse.post(
-        "https://host:8443/api/s/default/cmd/devmgr", payload={}, repeat=True
-    )
-    await devices.upgrade(mac="80:2a:a8:00:01:02")
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/devmgr",
-        json={"mac": ACCESS_POINT_AC_PRO["mac"], "cmd": "upgrade"},
-    )
+    device = next(iter(devices.values()))
+    mock_aioresponse.put("https://host:8443/api/s/default/rest/device/01", payload={})
+    await unifi_controller.request(api_request.create(device, **input))
+    assert unifi_called_with("put", "/api/s/default/rest/device/01", json=command)
