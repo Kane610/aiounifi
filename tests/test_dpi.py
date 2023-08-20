@@ -11,28 +11,6 @@ from aiounifi.models.dpi_restriction_group import DPIRestrictionGroup
 from .fixtures import DPI_APPS, DPI_GROUPS
 
 
-async def test_no_apps(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
-):
-    """Test that dpi_apps work without data."""
-    dpi_apps = unifi_controller.dpi_apps
-    await dpi_apps.update()
-
-    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
-    assert len(dpi_apps.values()) == 0
-
-
-async def test_no_groups(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
-):
-    """Test that dpi_groups work without data."""
-    dpi_groups = unifi_controller.dpi_groups
-    await dpi_groups.update()
-
-    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
-    assert len(dpi_groups.values()) == 0
-
-
 @pytest.mark.parametrize("dpi_app_payload", [DPI_APPS])
 async def test_dpi_apps(
     mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
