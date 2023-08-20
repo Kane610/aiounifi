@@ -11,7 +11,8 @@ setup(
     packages=PACKAGES,
     package_data={"aiounifi": ["py.typed"]},
     version=VERSION,
-    description="An asynchronous Python library for communicating with UniFi Network Controller API",
+    description="An asynchronous Python library for communicating"
+    + "with UniFi Network Controller API",
     author="Robert Svensson",
     author_email="Kane610@users.noreply.github.com",
     license="MIT",

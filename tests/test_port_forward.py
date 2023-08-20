@@ -1,7 +1,4 @@
-"""Test port forwarding API.
-
-pytest --cov-report term-missing --cov=aiounifi.port_forwarding tests/test_port_forwarding.py
-"""
+"""Test port forwarding API."""
 import pytest
 
 from aiounifi.controller import Controller

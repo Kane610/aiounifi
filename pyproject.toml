@@ -10,7 +10,7 @@ target-version = "py311"
 
 select = [
     "D",  # docstrings
-    # "E",  # pycodestyle
+    "E",  # pycodestyle
     # "G", # flake8-logging-format
     "I",  # isort
     "N804", # First argument of a class method should be named cls
