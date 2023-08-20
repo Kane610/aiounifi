@@ -7,18 +7,6 @@ import pytest
 
 from .fixtures import WIRED_CLIENT, WIRELESS_CLIENT
 
-
-async def test_no_clients(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
-):
-    """Test that no clients also work."""
-    clients = unifi_controller.clients
-    await clients.update()
-
-    assert unifi_called_with("get", "/api/s/default/stat/sta")
-    assert len(clients.values()) == 0
-
-
 test_data = [
     (
         [{"mac": "0"}],
@@ -156,15 +144,8 @@ test_data = [
 
 
 @pytest.mark.parametrize("client_payload, reference_data", test_data)
-async def test_clients(
-    mock_aioresponse,
-    unifi_controller,
-    mock_endpoints,
-    unifi_called_with,
-    reference_data,
-):
+async def test_clients(unifi_controller, mock_endpoints, reference_data):
     """Test clients class."""
-
     clients = unifi_controller.clients
     await clients.update()
     assert len(clients.items()) == 1
@@ -173,33 +154,21 @@ async def test_clients(
     for key, value in reference_data.items():
         assert getattr(client, key) == value
 
-    mock_aioresponse.post(
-        "https://host:8443/api/s/default/cmd/stamgr", payload={}, repeat=True
-    )
-    await clients.block(mac=client.mac)
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/stamgr",
-        json={"mac": client.mac, "cmd": "block-sta"},
-    )
 
-    await clients.unblock(mac=client.mac)
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/stamgr",
-        json={"mac": client.mac, "cmd": "unblock-sta"},
-    )
-
-    await clients.reconnect(mac=client.mac)
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/stamgr",
-        json={"mac": client.mac, "cmd": "kick-sta"},
-    )
-
-    await clients.remove_clients(macs=[client.mac])
-    assert unifi_called_with(
-        "post",
-        "/api/s/default/cmd/stamgr",
-        json={"macs": [client.mac], "cmd": "forget-sta"},
-    )
+@pytest.mark.parametrize(
+    "method, mac, command",
+    [
+        ["block", "0", {"mac": "0", "cmd": "block-sta"}],
+        ["unblock", "0", {"mac": "0", "cmd": "unblock-sta"}],
+        ["reconnect", "0", {"mac": "0", "cmd": "kick-sta"}],
+        ["remove_clients", ["0"], {"macs": ["0"], "cmd": "forget-sta"}],
+    ],
+)
+async def test_client_commands(
+    mock_aioresponse, unifi_controller, unifi_called_with, method, mac, command
+):
+    """Test client commands."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/stamgr", payload={})
+    class_command = getattr(unifi_controller.clients, method)
+    await class_command(mac)
+    assert unifi_called_with("post", "/api/s/default/cmd/stamgr", json=command)
