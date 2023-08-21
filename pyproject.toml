@@ -19,13 +19,14 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 requires-python = ">=3.11.0"
-dependencies    = [
+dependencies    = ["aiounifi[required]"]
+
+[project.optional-dependencies]
+required = [
     "aiohttp==3.8.5",
     "orjson==3.9.4",
     "segno==1.5.2",
 ]
-
-[project.optional-dependencies]
 test = [
     "aioresponses==0.7.4",
     "black==23.7.0",

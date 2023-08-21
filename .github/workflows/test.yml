@@ -21,7 +21,7 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install .[required]
           pip install .[test]
       - name: Lint with Ruff
         run: |
