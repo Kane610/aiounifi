@@ -23,9 +23,26 @@ dependencies    = [
     "segno==1.5.2",
 ]
 
+[project.optional-dependencies]
+test = [
+    "aioresponses==0.7.4",
+    "black==23.7.0",
+    "coveralls==3.3.1",
+    "mypy==1.5.0",
+    "pytest==7.4.0",
+    "pytest-aiohttp==1.0.4",
+    "pytest-asyncio==0.21.1",
+    "pytest-cov==4.1.0",
+    "ruff==0.0.284",
+    "types-orjson==3.6.2",
+]
+
 [project.urls]
 "Source Code" = "https://github.com/Kane610/aiounifi"
 "Bug Reports" = "https://github.com/Kane610/aiounifi/issues"
+
+[project.scripts]
+aiounifi = "aiounifi.__main__:main"
 
 [tool.setuptools]
 exclude-package-data = { "*" = ["tests*"]}
