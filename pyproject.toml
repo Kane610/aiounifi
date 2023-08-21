@@ -1,12 +1,14 @@
+[build-system]
+requires = ["setuptools==68.0.0", "wheel~=0.40.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name        = "aiounifi"
 version     = "55"
 license     = {text = "MIT"}
 description = "Python library for communicating with UniFi Network Controller API"
 readme      = "README.md"
-authors     = [
-    {name = "Robert Svensson", email = "Kane610@users.noreply.github.com"}
-]
+authors     = [{name = "Robert Svensson", email = "Kane610@users.noreply.github.com"}]
 keywords    = ["unifi", "homeassistant"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -36,6 +38,9 @@ test = [
     "ruff==0.0.284",
     "types-orjson==3.6.2",
 ]
+dev = [
+    "pre-commit==3.3.3"
+]
 
 [project.urls]
 "Source Code" = "https://github.com/Kane610/aiounifi"
@@ -45,13 +50,9 @@ test = [
 aiounifi = "aiounifi.__main__:main"
 
 [tool.setuptools]
+packages = ["aiounifi"]
+include-package-data = true
 exclude-package-data = { "*" = ["tests*"]}
-
-[tool.setuptools.packages.find]
-where = ["aiounifi"]
-
-[tool.setuptools.package-data]
-"aiounifi" = ["py.typed"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -129,6 +130,9 @@ ignore = [
     "PLR0915",  # Too many statements ({statements} > {max_statements})
     "PLR2004",  # Magic value used in comparison, consider replacing {value} with a constant variable
 ]
+
+[tool.ruff.flake8-pytest-style]
+fixture-parentheses = false
 
 [tool.ruff.isort]
 force-sort-within-sections = true
