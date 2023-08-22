@@ -52,9 +52,7 @@ requirements_dev = [
 aiounifi = "aiounifi.__main__:main"
 
 [tool.setuptools]
-packages = ["aiounifi"]
 include-package-data = true
-exclude-package-data = { "*" = ["tests*"]}
 
 [tool.mypy]
 python_version = "3.11"
