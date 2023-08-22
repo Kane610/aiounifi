@@ -21,7 +21,7 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install .[requirements] .[requirements_test]
+          pip install . .[requirements_test]
       - name: Lint with Ruff
         run: |
           ruff check aiounifi
