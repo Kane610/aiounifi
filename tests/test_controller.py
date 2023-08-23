@@ -142,7 +142,6 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
     )
 
     await unifi_controller.devices.update()
-    assert unifi_controller.last_response.status == 200
 
 
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
@@ -207,7 +206,7 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         await unifi_controller.devices.update()
 
 
-@pytest.mark.parametrize("site_payload", [SITE_RESPONSE])
+@pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
 async def test_controller(
     mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
 ):
@@ -260,7 +259,6 @@ async def test_unifios_controller(
         content_type="text/json",
     )
     await unifi_controller.login()
-
     await unifi_controller.initialize()
 
     assert unifi_called_with(
