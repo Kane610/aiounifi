@@ -16,13 +16,13 @@ class Wlans(APIHandler[Wlan]):
     process_messages = (MessageKey.WLAN_CONF_UPDATED,)
     api_request = WlanListRequest.create()
 
-    async def enable(self, wlan: Wlan) -> list[dict[str, Any]]:
+    async def enable(self, wlan: Wlan) -> dict[str, Any]:
         """Block client from controller."""
         return await self.controller.request(
             WlanEnableRequest.create(wlan.id, enable=True)
         )
 
-    async def disable(self, wlan: Wlan) -> list[dict[str, Any]]:
+    async def disable(self, wlan: Wlan) -> dict[str, Any]:
         """Unblock client from controller."""
         return await self.controller.request(
             WlanEnableRequest.create(wlan.id, enable=False)

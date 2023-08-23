@@ -19,6 +19,6 @@ class Devices(APIHandler[Device]):
     process_messages = (MessageKey.DEVICE,)
     api_request = DeviceListRequest.create()
 
-    async def upgrade(self, mac: str) -> list[dict[str, Any]]:
+    async def upgrade(self, mac: str) -> dict[str, Any]:
         """Upgrade network device."""
         return await self.controller.request(DeviceUpgradeRequest.create(mac))

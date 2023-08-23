@@ -3,7 +3,14 @@
 from abc import ABC
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, TypedDict, TypeVar
+
+
+class TypedApiResponse(TypedDict):
+    """Common response."""
+
+    meta: dict[str, Any]
+    data: list[dict[str, Any]]
 
 
 @dataclass

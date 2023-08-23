@@ -166,20 +166,19 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
             self.ws_state_callback(self.websocket.state)
 
-    async def request(self, api_request: "ApiRequest") -> list[dict[str, Any]]:
+    async def request(self, api_request: "ApiRequest") -> dict[str, Any]:
         """Make a request to the API, retry login on failure."""
         url = self.url + api_request.full_path(self.site, self.is_unifi_os)
+        data: dict[str, Any] = {}
 
         try:
             response, bytes_data = await self._request(
                 api_request.method, url, api_request.data
             )
 
-            if response.content_type != "application/json":
-                return []
-
-            data = orjson.loads(bytes_data)
-            _raise_on_error(data)
+            if response.content_type == "application/json":
+                data = orjson.loads(bytes_data)
+                _raise_on_error(data)
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -189,20 +188,7 @@ class Controller:
             await self.login()
             return await self.request(api_request)
 
-        to_return: list[dict[str, Any]] = data
-        return to_return
-
-        # to_return: list[dict[str, Any]]
-        # if "data" in data:
-        #     print("1 data")
-        #     to_return = data["data"]
-        # else:
-        #     print("2 data")
-        #     to_return = data
-        # return to_return
-        # return data
-        # to_return: list[dict[str, Any]] = data.get("data", data)
-        # return to_return
+        return data
 
     async def _request(
         self,
