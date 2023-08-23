@@ -35,7 +35,7 @@ from .interfaces.wlans import Wlans
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
-    from .models.api import ApiRequest
+    from .models.api import ApiRequest, TypedApiResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,11 +62,11 @@ class Controller:
         self.password = password
         self.site = site
         self.ssl_context = ssl_context
-        self.can_retry_login = False
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
+        self.can_retry_login = False
 
         self.websocket: WSClient | None = None
         self.ws_state_callback: Callable[[WebsocketState], None] | None = None
@@ -166,10 +166,10 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
             self.ws_state_callback(self.websocket.state)
 
-    async def request(self, api_request: "ApiRequest") -> dict[str, Any]:
+    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
         """Make a request to the API, retry login on failure."""
         url = self.url + api_request.full_path(self.site, self.is_unifi_os)
-        data: dict[str, Any] = {}
+        data: TypedApiResponse = {}
 
         try:
             response, bytes_data = await self._request(
@@ -246,15 +246,8 @@ class Controller:
         return res, bytes_data
 
 
-def _raise_on_error(data: dict[str, Any] | None) -> None:
+def _raise_on_error(data: "TypedApiResponse") -> None:
     """Check response for error message."""
-    if not isinstance(data, dict):
-        return None
-
     if "meta" in data and data["meta"]["rc"] == "error":
         LOGGER.error(data)
         raise_error(data["meta"]["msg"])
-
-    if "errors" in data:
-        LOGGER.error(data)
-        raise_error(data["errors"][0])

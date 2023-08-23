@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, TypedDict, TypeVar
 
 
-class TypedApiResponse(TypedDict):
+class TypedApiResponse(TypedDict, total=False):
     """Common response."""
 
     meta: dict[str, Any]
