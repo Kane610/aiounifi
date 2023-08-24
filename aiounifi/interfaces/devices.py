@@ -3,8 +3,7 @@
 Access points, gateways, power plugs, switches.
 """
 
-from typing import Any
-
+from ..models.api import TypedApiResponse
 from ..models.device import Device, DeviceListRequest, DeviceUpgradeRequest
 from ..models.message import MessageKey
 from .api_handlers import APIHandler
@@ -19,6 +18,6 @@ class Devices(APIHandler[Device]):
     process_messages = (MessageKey.DEVICE,)
     api_request = DeviceListRequest.create()
 
-    async def upgrade(self, mac: str) -> list[dict[str, Any]]:
+    async def upgrade(self, mac: str) -> TypedApiResponse:
         """Upgrade network device."""
         return await self.controller.request(DeviceUpgradeRequest.create(mac))

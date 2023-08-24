@@ -7,7 +7,7 @@ from aiounifi.models.port_forward import PortForwardEnableRequest, TypedPortForw
 from .fixtures import PORT_FORWARDING
 
 
-@pytest.mark.parametrize("port_forward_payload", [PORT_FORWARDING])
+@pytest.mark.parametrize("port_forward_payload", [PORT_FORWARDING["data"]])
 async def test_port_forward(
     mock_aioresponse, unifi_controller: Controller, mock_endpoints, unifi_called_with
 ):

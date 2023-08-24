@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from aiohttp import client_exceptions
+import orjson
 
 from .errors import (
     BadGateway,
@@ -34,7 +35,7 @@ from .interfaces.wlans import Wlans
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
-    from .models.api import ApiRequest
+    from .models.api import ApiRequest, TypedApiResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,12 +62,11 @@ class Controller:
         self.password = password
         self.site = site
         self.ssl_context = ssl_context
-        self.can_retry_login = False
 
         self.url = f"https://{self.host}:{self.port}"
         self.is_unifi_os = False
-        self.headers: dict[str, Any] = {}
-        self.last_response: aiohttp.ClientResponse | None = None
+        self.headers: dict[str, str] = {}
+        self.can_retry_login = False
 
         self.websocket: WSClient | None = None
         self.ws_state_callback: Callable[[WebsocketState], None] | None = None
@@ -88,10 +88,8 @@ class Controller:
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
-        await self._request("get", self.url, allow_redirects=False)
-        if (
-            response := self.last_response
-        ) is not None and response.status == HTTPStatus.OK:
+        response, _ = await self._request("get", self.url, allow_redirects=False)
+        if response.status == HTTPStatus.OK:
             self.is_unifi_os = True
             self.session.cookie_jar.clear_domain(self.host)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
@@ -109,11 +107,14 @@ class Controller:
             "remember": True,
         }
 
-        await self._request("post", url, json=auth)
+        response, bytes_data = await self._request("post", url, json=auth)
+
+        if response.content_type == "application/json":
+            data = orjson.loads(bytes_data)
+            _raise_on_error(data)
 
         if (
-            (response := self.last_response) is not None
-            and response.status == HTTPStatus.OK
+            response.status == HTTPStatus.OK
             and (csrf_token := response.headers.get("x-csrf-token")) is not None
         ):
             self.headers = {"x-csrf-token": csrf_token}
@@ -165,15 +166,19 @@ class Controller:
         elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
             self.ws_state_callback(self.websocket.state)
 
-    async def request(self, api_request: "ApiRequest") -> list[dict[str, Any]]:
+    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
         """Make a request to the API, retry login on failure."""
         url = self.url + api_request.full_path(self.site, self.is_unifi_os)
+        data: TypedApiResponse = {}
 
         try:
-            response: list[dict[str, Any]] = await self._request(
+            response, bytes_data = await self._request(
                 api_request.method, url, api_request.data
             )
-            return response
+
+            if response.content_type == "application/json":
+                data = orjson.loads(bytes_data)
+                _raise_on_error(data)
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -183,17 +188,18 @@ class Controller:
             await self.login()
             return await self.request(api_request)
 
+        return data
+
     async def _request(
         self,
         method: str,
         url: str,
         json: Mapping[str, Any] | None = None,
         **kwargs: bool,
-    ) -> list[dict[str, Any]] | Any:
+    ) -> tuple[aiohttp.ClientResponse, bytes]:
         """Make a request to the API."""
-        self.last_response = None
-
         LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, kwargs)
+        bytes_data = b""
 
         try:
             async with self.session.request(
@@ -212,8 +218,6 @@ class Controller:
                     res,
                 )
 
-                self.last_response = res
-
                 if res.status == HTTPStatus.UNAUTHORIZED:
                     raise LoginRequired(f"Call {url} received 401 Unauthorized")
 
@@ -231,30 +235,19 @@ class Controller:
                         f"Call {url} received 503 service unavailable"
                     )
 
-                if res.content_type == "application/json":
-                    response = await res.json()
-                    LOGGER.debug("data (from %s) %s", url, response)
-                    _raise_on_error(response)
-                    if "data" in response:
-                        return response["data"]
-                    return response
-                return []
+                bytes_data = await res.read()
 
         except client_exceptions.ClientError as err:
             raise RequestError(
                 f"Error requesting data from {self.host}: {err}"
             ) from None
 
+        LOGGER.debug("data (from %s) %s", url, bytes_data)
+        return res, bytes_data
 
-def _raise_on_error(data: dict[str, Any] | None) -> None:
+
+def _raise_on_error(data: "TypedApiResponse") -> None:
     """Check response for error message."""
-    if not isinstance(data, dict):
-        return None
-
     if "meta" in data and data["meta"]["rc"] == "error":
         LOGGER.error(data)
         raise_error(data["meta"]["msg"])
-
-    if "errors" in data:
-        LOGGER.error(data)
-        raise_error(data["errors"][0])

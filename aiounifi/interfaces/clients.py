@@ -1,7 +1,6 @@
 """Clients are devices on a UniFi network."""
 
-from typing import Any
-
+from ..models.api import TypedApiResponse
 from ..models.client import (
     Client,
     ClientBlockRequest,
@@ -23,20 +22,20 @@ class Clients(APIHandler[Client]):
     remove_messages = (MessageKey.CLIENT_REMOVED,)
     api_request = ClientListRequest.create()
 
-    async def block(self, mac: str) -> list[dict[str, Any]]:
+    async def block(self, mac: str) -> TypedApiResponse:
         """Block client from controller."""
         return await self.controller.request(ClientBlockRequest.create(mac, block=True))
 
-    async def unblock(self, mac: str) -> list[dict[str, Any]]:
+    async def unblock(self, mac: str) -> TypedApiResponse:
         """Unblock client from controller."""
         return await self.controller.request(
             ClientBlockRequest.create(mac, block=False)
         )
 
-    async def reconnect(self, mac: str) -> list[dict[str, Any]]:
+    async def reconnect(self, mac: str) -> TypedApiResponse:
         """Force a wireless client to reconnect to the network."""
         return await self.controller.request(ClientReconnectRequest.create(mac))
 
-    async def remove_clients(self, macs: list[str]) -> list[dict[str, Any]]:
+    async def remove_clients(self, macs: list[str]) -> TypedApiResponse:
         """Make controller forget provided clients."""
         return await self.controller.request(ClientRemoveRequest.create(macs))

@@ -24,7 +24,7 @@ def is_unifi_os_fixture() -> bool:
     return False
 
 
-@pytest.fixture()
+@pytest.fixture
 def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], bool]:
     """Verify UniFi call was made with the expected parameters."""
 
@@ -69,7 +69,7 @@ async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
     await session.close()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_wsclient() -> Mock:
     """No real websocket allowed."""
     with patch("aiounifi.controller.WSClient") as mock:
@@ -95,7 +95,8 @@ def endpoint_fixture(
     def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
         """Register HTTP response mock."""
         go = unifi_path if is_unifi_os else path
-        mock_aioresponse.get(f"https://host:8443{go}", payload=payload)
+        data = {"meta": {"rc": "OK"}, "data": payload}
+        mock_aioresponse.get(f"https://host:8443{go}", payload=data)
 
     mock_get_request(
         "/api/s/default/stat/sta",
