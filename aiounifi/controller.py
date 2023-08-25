@@ -2,10 +2,7 @@
 
 from collections.abc import Callable
 import logging
-from ssl import SSLContext
 from typing import TYPE_CHECKING
-
-import aiohttp
 
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
@@ -33,29 +30,9 @@ LOGGER = logging.getLogger(__name__)
 class Controller:
     """Control a UniFi controller."""
 
-    def __init__(
-        self,
-        host: str,
-        websession: aiohttp.ClientSession,
-        *,
-        username: str,
-        password: str,
-        port: int = 8443,
-        site: str = "default",
-        ssl_context: SSLContext | bool = False,
-    ) -> None:
+    def __init__(self, config: Configuration) -> None:
         """Session setup."""
-        self.connectivity = Connectivity(
-            Configuration(
-                websession,
-                host,
-                username=username,
-                password=password,
-                port=port,
-                site=site,
-                ssl_context=ssl_context,
-            )
-        )
+        self.connectivity = Connectivity(config)
 
         self.websocket: WSClient | None = None
         self.ws_state_callback: Callable[[WebsocketState], None] | None = None
@@ -75,17 +52,9 @@ class Controller:
         self.system_information = SystemInformationHandler(self)
         self.wlans = Wlans(self)
 
-    @property
-    def is_unifi_os(self) -> bool:
-        """Keep old method."""
-        return self.connectivity.is_unifi_os
-
-    async def check_unifi_os(self) -> None:
-        """Check if controller is running UniFi OS."""
-        await self.connectivity.check_unifi_os()
-
     async def login(self) -> None:
         """Log in to controller."""
+        await self.connectivity.check_unifi_os()
         await self.connectivity.login()
 
     async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":

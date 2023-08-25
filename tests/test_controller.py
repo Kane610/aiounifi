@@ -48,7 +48,7 @@ async def test_check_unifi(
             content_type="application/octet-stream",
             status=302,
         )
-    await unifi_controller.check_unifi_os()
+    await unifi_controller.connectivity.check_unifi_os()
     assert unifi_controller.connectivity.is_unifi_os is is_unifi_os
     assert unifi_called_with("get", "", allow_redirects=False)
 
@@ -59,6 +59,44 @@ async def test_login(
 ):
     """Test logging in to controller."""
     if is_unifi_os:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="text/html",
+            headers={"x-csrf-token": "012"},
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            headers={"x-csrf-token": "123"},
+            content_type="text/json",
+        )
+        await unifi_controller.connectivity.login()
+        assert unifi_called_with(
+            "post",
+            "/api/auth/login",
+            json={"username": "user", "password": "pass", "remember": True},
+        )
+    else:
+        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        await unifi_controller.connectivity.login()
+        assert unifi_called_with(
+            "post",
+            "/api/login",
+            json={"username": "user", "password": "pass", "remember": True},
+        )
+
+
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_controller_login(
+    mock_aioresponse, unifi_controller, unifi_called_with, is_unifi_os
+):
+    """Test logging in to controller."""
+    if is_unifi_os:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="text/html",
+            headers={"x-csrf-token": "012"},
+        )
         mock_aioresponse.post(
             "https://host:8443/api/auth/login",
             payload=LOGIN_UNIFIOS_JSON_RESPONSE,
@@ -72,6 +110,9 @@ async def test_login(
             json={"username": "user", "password": "pass", "remember": True},
         )
     else:
+        mock_aioresponse.get(
+            "https://host:8443", content_type="application/octet-stream", status=302
+        )
         mock_aioresponse.post("https://host:8443/api/login", payload="")
         await unifi_controller.login()
         assert unifi_called_with(
@@ -79,6 +120,7 @@ async def test_login(
             "/api/login",
             json={"username": "user", "password": "pass", "remember": True},
         )
+    assert unifi_called_with("get", "", allow_redirects=False)
 
 
 async def test_relogin_success(mock_aioresponse, unifi_controller):
@@ -91,8 +133,8 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
         status=200,
     )
 
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os
 
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
@@ -102,7 +144,7 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
         status=200,
     )
 
-    await unifi_controller.login()
+    await unifi_controller.connectivity.login()
 
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/stat/sta",
@@ -154,8 +196,8 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         status=200,
     )
 
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os
     assert len(mock_aioresponse.requests) == 1
 
     mock_aioresponse.post(
@@ -166,7 +208,7 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         status=200,
     )
 
-    await unifi_controller.login()
+    await unifi_controller.connectivity.login()
 
     mock_aioresponse.get(
         "https://host:8443/proxy/network/api/s/default/stat/sta",
@@ -258,7 +300,7 @@ async def test_unifios_controller(
         headers={"x-csrf-token": "123"},
         content_type="text/json",
     )
-    await unifi_controller.login()
+    await unifi_controller.connectivity.login()
     await unifi_controller.initialize()
 
     assert unifi_called_with(
@@ -313,8 +355,8 @@ async def test_unifios_controller_no_csrf_token(
         "https://host:8443",
         content_type="text/html",
     )
-    await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os
     assert unifi_called_with(
         "get",
         "",
@@ -326,7 +368,7 @@ async def test_unifios_controller_no_csrf_token(
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
         content_type="text/json",
     )
-    await unifi_controller.login()
+    await unifi_controller.connectivity.login()
     assert unifi_called_with(
         "post",
         "/api/auth/login",
@@ -367,7 +409,7 @@ async def test_controller_raise_expected_exception(
     """Verify request raise login required on a 401."""
     mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
     with pytest.raises(expected_exception):
-        await unifi_controller.login()
+        await unifi_controller.connectivity.login()
 
 
 @pytest.mark.parametrize(
