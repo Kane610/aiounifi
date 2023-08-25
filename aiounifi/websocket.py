@@ -43,10 +43,11 @@ class WSClient:
         self.config = config
         self.session_handler_callback = callback
 
+        self.url = f"wss://{config.host}:{config.port}"
         if is_unifi_os:
-            self.url = f"wss://{config.host}:{config.port}/proxy/network/wss/s/{config.site}/events"
+            self.url += f"/proxy/network/wss/s/{config.site}/events"
         else:
-            self.url = f"wss://{config.host}:{config.port}/wss/s/{config.site}/events"
+            self.url += f"/wss/s/{config.site}/events"
 
         self._loop = asyncio.get_running_loop()
 
