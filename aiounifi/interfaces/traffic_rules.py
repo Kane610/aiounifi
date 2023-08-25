@@ -20,7 +20,7 @@ class TrafficRules(APIHandler[TrafficRule]):
         traffic_rule_dict = tr.raw
         return await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=True)
-        )
+        ) and await self.controller.traffic_rules.update()
 
     async def disable(self, traffic_rule: TrafficRule) -> list[dict[str, Any]]:
         """Disable traffic rule defined in controller."""
@@ -28,4 +28,4 @@ class TrafficRules(APIHandler[TrafficRule]):
         traffic_rule_dict = tr.raw
         return await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=False)
-        )
+        ) and await self.controller.traffic_rules.update()

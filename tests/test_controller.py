@@ -261,6 +261,7 @@ async def test_controller(
     assert unifi_called_with("get", "/api/self/sites")
     assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
     assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
 
     assert len(unifi_controller.clients.items()) == 0
     assert len(unifi_controller.clients_all.items()) == 0
@@ -273,6 +274,7 @@ async def test_controller(
     assert len(unifi_controller.sites.items()) == 1
     assert len(unifi_controller.system_information.items()) == 0
     assert len(unifi_controller.wlans.items()) == 0
+    assert len(unifi_controller.traffic_rules.items()) == 0
 
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
