@@ -49,7 +49,7 @@ async def test_check_unifi(
             status=302,
         )
     await unifi_controller.check_unifi_os()
-    assert unifi_controller.is_unifi_os is is_unifi_os
+    assert unifi_controller.connectivity.is_unifi_os is is_unifi_os
     assert unifi_called_with("get", "", allow_redirects=False)
 
 

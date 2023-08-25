@@ -63,7 +63,7 @@ async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
     """Provide a test-ready UniFi controller."""
     session = aiohttp.ClientSession()
     controller = Controller("host", session, username="user", password="pass")
-    controller.is_unifi_os = is_unifi_os
+    controller.connectivity.is_unifi_os = is_unifi_os
     controller.ws_state_callback = Mock()
     yield controller
     await session.close()
