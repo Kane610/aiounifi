@@ -79,7 +79,7 @@ def mock_wsclient() -> Mock:
         yield mock
 
 
-@pytest.fixture(name="mock_endpoints")
+@pytest.fixture(name="_mock_endpoints")
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,

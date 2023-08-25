@@ -144,7 +144,7 @@ test_data = [
 
 
 @pytest.mark.parametrize(("client_payload", "reference_data"), test_data)
-async def test_clients(unifi_controller, mock_endpoints, reference_data):
+async def test_clients(unifi_controller, _mock_endpoints, reference_data):
     """Test clients class."""
     clients = unifi_controller.clients
     await clients.update()

@@ -94,7 +94,7 @@ async def test_handler_process_device_no_index(unifi_controller):
 
 
 @pytest.mark.parametrize("device_payload", [[SWITCH_16_PORT_POE]])
-async def test_port(unifi_controller, mock_endpoints):
+async def test_port(unifi_controller, _mock_endpoints):
     """Verify that device port model works."""
     await unifi_controller.devices.update()
     port = unifi_controller.ports["fc:ec:da:11:22:33_1"]

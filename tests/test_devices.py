@@ -650,7 +650,7 @@ test_data = [
 
 
 @pytest.mark.parametrize(("device_payload", "reference_data"), test_data)
-async def test_device(unifi_controller, mock_endpoints, reference_data):
+async def test_device(unifi_controller, _mock_endpoints, reference_data):
     """Test device class."""
     devices = unifi_controller.devices
     await devices.update()
@@ -872,7 +872,7 @@ async def test_device_requests(
 async def test_sub_device_requests(
     mock_aioresponse,
     unifi_controller,
-    mock_endpoints,
+    _mock_endpoints,
     unifi_called_with,
     api_request,
     input,

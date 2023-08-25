@@ -13,7 +13,7 @@ from .fixtures import DPI_APPS, DPI_GROUPS
 
 @pytest.mark.parametrize("dpi_app_payload", [DPI_APPS])
 async def test_dpi_apps(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+    mock_aioresponse, unifi_controller, _mock_endpoints, unifi_called_with
 ):
     """Test that dpi_apps can create an app."""
     dpi_apps = unifi_controller.dpi_apps
@@ -50,7 +50,7 @@ async def test_dpi_apps(
 
 
 @pytest.mark.parametrize("dpi_group_payload", [DPI_GROUPS])
-async def test_dpi_groups(unifi_controller, mock_endpoints):
+async def test_dpi_groups(unifi_controller, _mock_endpoints):
     """Test that dpi_groups can create a group."""
     dpi_groups = unifi_controller.dpi_groups
     await dpi_groups.update()

@@ -249,7 +249,7 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
 
 
 @pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
-async def test_controller(unifi_controller, unifi_called_with, mock_endpoints):
+async def test_controller(unifi_controller, unifi_called_with, _mock_endpoints):
     """Test controller communicating with a non UniFiOS UniFi controller."""
     await unifi_controller.initialize()
 
@@ -289,7 +289,7 @@ async def test_controller(unifi_controller, unifi_called_with, mock_endpoints):
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
-    mock_aioresponse, unifi_controller, unifi_called_with, mock_endpoints
+    mock_aioresponse, unifi_controller, unifi_called_with, _mock_endpoints
 ):
     """Test controller communicating with a UniFi OS controller."""
     mock_aioresponse.post(
@@ -426,7 +426,7 @@ async def test_handle_unsupported_events(unifi_controller, unsupported_message):
     assert len(unifi_controller.clients.items()) == 0
 
 
-async def test_clients(unifi_controller, mock_endpoints):
+async def test_clients(unifi_controller, _mock_endpoints):
     """Test controller managing clients."""
     await unifi_controller.initialize()
     assert len(unifi_controller.clients.items()) == 0
@@ -470,7 +470,7 @@ async def test_clients(unifi_controller, mock_endpoints):
 
 
 @pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
-async def test_message_client_removed(unifi_controller, mock_endpoints):
+async def test_message_client_removed(unifi_controller, _mock_endpoints):
     """Test controller communicating client has been removed."""
     await unifi_controller.initialize()
     assert len(unifi_controller.clients.items()) == 1
@@ -484,7 +484,7 @@ async def test_message_client_removed(unifi_controller, mock_endpoints):
     assert len(unifi_controller.clients.items()) == 0
 
 
-async def test_devices(unifi_controller, mock_endpoints):
+async def test_devices(unifi_controller, _mock_endpoints):
     """Test controller managing devices."""
     await unifi_controller.initialize()
     assert len(unifi_controller.devices.items()) == 0
@@ -527,7 +527,7 @@ async def test_devices(unifi_controller, mock_endpoints):
     assert len(devices._subscribers["*"]) == 2
 
 
-async def test_dpi_apps(unifi_controller, mock_endpoints):
+async def test_dpi_apps(unifi_controller, _mock_endpoints):
     """Test controller managing devices."""
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_apps.values()) == 0
@@ -603,7 +603,7 @@ async def test_dpi_apps(unifi_controller, mock_endpoints):
     mock_app_callback.assert_called()
 
 
-async def test_dpi_groups(unifi_controller, mock_endpoints):
+async def test_dpi_groups(unifi_controller, _mock_endpoints):
     """Test controller managing devices."""
     await unifi_controller.initialize()
     assert len(unifi_controller.dpi_groups.values()) == 0
