@@ -81,8 +81,6 @@ async def test_handler_ports(unifi_controller):
     unsub_bad()
 
     unsub_all()
-
-    ports._subscribers.clear()
     unsub_all()
 
 

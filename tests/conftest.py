@@ -15,8 +15,8 @@ from aiounifi.models.configuration import Configuration
 @pytest.fixture(name="mock_aioresponse")
 def aioresponse_fixture() -> aioresponses:
     """AIOHTTP fixture."""
-    with aioresponses() as m:
-        yield m
+    with aioresponses() as mock:
+        yield mock
 
 
 @pytest.fixture(name="is_unifi_os")
@@ -97,9 +97,9 @@ def endpoint_fixture(
 
     def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
         """Register HTTP response mock."""
-        go = unifi_path if is_unifi_os else path
+        url = unifi_path if is_unifi_os else path
         data = {"meta": {"rc": "OK"}, "data": payload}
-        mock_aioresponse.get(f"https://host:8443{go}", payload=data)
+        mock_aioresponse.get(f"https://host:8443{url}", payload=data)
 
     mock_get_request(
         "/api/s/default/stat/sta",
