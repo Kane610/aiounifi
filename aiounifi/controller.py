@@ -1,8 +1,9 @@
 """Python library to interact with UniFi controller."""
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Coroutine
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
@@ -52,6 +53,18 @@ class Controller:
         self.system_information = SystemInformationHandler(self)
         self.wlans = Wlans(self)
 
+        self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
+            self.clients.update,
+            self.clients_all.update,
+            self.devices.update,
+            self.dpi_apps.update,
+            self.dpi_groups.update,
+            self.port_forwarding.update,
+            self.sites.update,
+            self.system_information.update,
+            self.wlans.update,
+        )
+
     async def login(self) -> None:
         """Log in to controller."""
         await self.connectivity.check_unifi_os()
@@ -63,15 +76,7 @@ class Controller:
 
     async def initialize(self) -> None:
         """Load UniFi parameters."""
-        await self.clients.update()
-        await self.clients_all.update()
-        await self.devices.update()
-        await self.dpi_apps.update()
-        await self.dpi_groups.update()
-        await self.port_forwarding.update()
-        await self.sites.update()
-        await self.system_information.update()
-        await self.wlans.update()
+        await asyncio.gather(*[update() for update in self.update_handlers])
 
     def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
