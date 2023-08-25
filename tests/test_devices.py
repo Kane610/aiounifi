@@ -650,7 +650,7 @@ test_data = [
 
 
 @pytest.mark.parametrize(("device_payload", "reference_data"), test_data)
-async def test_device(unifi_controller, mock_endpoints, reference_data):
+async def test_device(unifi_controller, _mock_endpoints, reference_data):
     """Test device class."""
     devices = unifi_controller.devices
     await devices.update()
@@ -659,7 +659,7 @@ async def test_device(unifi_controller, mock_endpoints, reference_data):
     device = next(iter(devices.values()))
     for key, value in reference_data.items():
         assert getattr(device, key) == value
-    assert device.__repr__() == f"<Device {device.name}: {device.mac}>"
+    assert repr(device) == f"<Device {device.name}: {device.mac}>"
 
 
 @pytest.mark.parametrize(
@@ -677,7 +677,7 @@ async def test_device_commands(
 
 
 @pytest.mark.parametrize(
-    ("api_request", "input", "command"),
+    ("api_request", "data", "command"),
     [
         [
             DeviceRestartRequest,
@@ -702,16 +702,16 @@ async def test_device_commands(
     ],
 )
 async def test_device_requests(
-    mock_aioresponse, unifi_controller, unifi_called_with, api_request, input, command
+    mock_aioresponse, unifi_controller, unifi_called_with, api_request, data, command
 ):
     """Test device commands."""
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
-    await unifi_controller.request(api_request.create(**input))
+    await unifi_controller.request(api_request.create(**data))
     assert unifi_called_with("post", "/api/s/default/cmd/devmgr", json=command)
 
 
 @pytest.mark.parametrize(
-    ("device_payload", "api_request", "input", "command"),
+    ("device_payload", "api_request", "data", "command"),
     [
         [  # Outlet set relay without existing override
             [
@@ -872,10 +872,10 @@ async def test_device_requests(
 async def test_sub_device_requests(
     mock_aioresponse,
     unifi_controller,
-    mock_endpoints,
+    _mock_endpoints,
     unifi_called_with,
     api_request,
-    input,
+    data,
     command,
 ):
     """Test sub device (port/outlet) commands."""
@@ -883,5 +883,5 @@ async def test_sub_device_requests(
     await devices.update()
     device = next(iter(devices.values()))
     mock_aioresponse.put("https://host:8443/api/s/default/rest/device/01", payload={})
-    await unifi_controller.request(api_request.create(device, **input))
+    await unifi_controller.request(api_request.create(device, **data))
     assert unifi_called_with("put", "/api/s/default/rest/device/01", json=command)

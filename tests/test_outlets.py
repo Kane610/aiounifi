@@ -82,8 +82,6 @@ async def test_handler_ports(unifi_controller):
     unsub_bad()
 
     unsub_all()
-
-    outlets._subscribers.clear()
     unsub_all()
 
 
@@ -175,7 +173,7 @@ data_test_outlet = [
 
 
 @pytest.mark.parametrize(("device_payload", "test_data"), data_test_outlet)
-async def test_outlet(unifi_controller, mock_endpoints, test_data):
+async def test_outlet(unifi_controller, _mock_endpoints, test_data):
     """Verify that device outlet model works."""
     await unifi_controller.devices.update()
     outlet = unifi_controller.outlets[test_data["obj_id"]]
