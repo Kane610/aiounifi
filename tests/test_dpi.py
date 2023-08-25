@@ -50,7 +50,7 @@ async def test_dpi_apps(
 
 
 @pytest.mark.parametrize("dpi_group_payload", [DPI_GROUPS])
-async def test_dpi_groups(mock_aioresponse, unifi_controller, mock_endpoints):
+async def test_dpi_groups(unifi_controller, mock_endpoints):
     """Test that dpi_groups can create a group."""
     dpi_groups = unifi_controller.dpi_groups
     await dpi_groups.update()
