@@ -1,26 +1,12 @@
 """Python library to interact with UniFi controller."""
 
-from collections.abc import Callable, Mapping
-from http import HTTPStatus
+from collections.abc import Callable
 import logging
-from ssl import SSLContext
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import aiohttp
-from aiohttp import client_exceptions
-import orjson
-
-from .errors import (
-    BadGateway,
-    Forbidden,
-    LoginRequired,
-    RequestError,
-    ResponseError,
-    ServiceUnavailable,
-    raise_error,
-)
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
+from .interfaces.connectivity import Connectivity
 from .interfaces.devices import Devices
 from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
@@ -32,6 +18,7 @@ from .interfaces.ports import Ports
 from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.wlans import Wlans
+from .models.configuration import Configuration
 from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
@@ -43,30 +30,9 @@ LOGGER = logging.getLogger(__name__)
 class Controller:
     """Control a UniFi controller."""
 
-    def __init__(
-        self,
-        host: str,
-        websession: aiohttp.ClientSession,
-        *,
-        username: str,
-        password: str,
-        port: int = 8443,
-        site: str = "default",
-        ssl_context: SSLContext | bool = False,
-    ) -> None:
+    def __init__(self, config: Configuration) -> None:
         """Session setup."""
-        self.host = host
-        self.session = websession
-        self.port = port
-        self.username = username
-        self.password = password
-        self.site = site
-        self.ssl_context = ssl_context
-
-        self.url = f"https://{self.host}:{self.port}"
-        self.is_unifi_os = False
-        self.headers: dict[str, str] = {}
-        self.can_retry_login = False
+        self.connectivity = Connectivity(config)
 
         self.websocket: WSClient | None = None
         self.ws_state_callback: Callable[[WebsocketState], None] | None = None
@@ -86,40 +52,14 @@ class Controller:
         self.system_information = SystemInformationHandler(self)
         self.wlans = Wlans(self)
 
-    async def check_unifi_os(self) -> None:
-        """Check if controller is running UniFi OS."""
-        response, _ = await self._request("get", self.url, allow_redirects=False)
-        if response.status == HTTPStatus.OK:
-            self.is_unifi_os = True
-            self.session.cookie_jar.clear_domain(self.host)
-        LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
-
     async def login(self) -> None:
         """Log in to controller."""
-        if self.is_unifi_os:
-            url = f"{self.url}/api/auth/login"
-        else:
-            url = f"{self.url}/api/login"
+        await self.connectivity.check_unifi_os()
+        await self.connectivity.login()
 
-        auth = {
-            "username": self.username,
-            "password": self.password,
-            "remember": True,
-        }
-
-        response, bytes_data = await self._request("post", url, json=auth)
-
-        if response.content_type == "application/json":
-            data = orjson.loads(bytes_data)
-            _raise_on_error(data)
-
-        if (
-            response.status == HTTPStatus.OK
-            and (csrf_token := response.headers.get("x-csrf-token")) is not None
-        ):
-            self.headers = {"x-csrf-token": csrf_token}
-
-        self.can_retry_login = True
+    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
+        """Make a request to the API, retry login on failure."""
+        return await self.connectivity.request(api_request)
 
     async def initialize(self) -> None:
         """Load UniFi parameters."""
@@ -136,13 +76,9 @@ class Controller:
     def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
         self.websocket = WSClient(
-            self.session,
-            self.host,
-            self.port,
-            self.ssl_context,
-            self.site,
+            self.connectivity.config,
             callback=self.session_handler,
-            is_unifi_os=self.is_unifi_os,
+            is_unifi_os=self.connectivity.is_unifi_os,
         )
         self.websocket.start()
 
@@ -165,89 +101,3 @@ class Controller:
 
         elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
             self.ws_state_callback(self.websocket.state)
-
-    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
-        """Make a request to the API, retry login on failure."""
-        url = self.url + api_request.full_path(self.site, self.is_unifi_os)
-        data: TypedApiResponse = {}
-
-        try:
-            response, bytes_data = await self._request(
-                api_request.method, url, api_request.data
-            )
-
-            if response.content_type == "application/json":
-                data = orjson.loads(bytes_data)
-                _raise_on_error(data)
-
-        except LoginRequired:
-            if not self.can_retry_login:
-                raise
-            # Session likely expired, try again
-            self.can_retry_login = False
-            await self.login()
-            return await self.request(api_request)
-
-        return data
-
-    async def _request(
-        self,
-        method: str,
-        url: str,
-        json: Mapping[str, Any] | None = None,
-        **kwargs: bool,
-    ) -> tuple[aiohttp.ClientResponse, bytes]:
-        """Make a request to the API."""
-        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, kwargs)
-        bytes_data = b""
-
-        try:
-            async with self.session.request(
-                method,
-                url,
-                json=json,
-                ssl=self.ssl_context,
-                headers=self.headers,
-                **kwargs,
-            ) as res:
-                LOGGER.debug(
-                    "received (from %s) %s %s %s",
-                    url,
-                    res.status,
-                    res.content_type,
-                    res,
-                )
-
-                if res.status == HTTPStatus.UNAUTHORIZED:
-                    raise LoginRequired(f"Call {url} received 401 Unauthorized")
-
-                if res.status == HTTPStatus.FORBIDDEN:
-                    raise Forbidden(f"Call {url} received 403 Forbidden")
-
-                if res.status == HTTPStatus.NOT_FOUND:
-                    raise ResponseError(f"Call {url} received 404 Not Found")
-
-                if res.status == HTTPStatus.BAD_GATEWAY:
-                    raise BadGateway(f"Call {url} received 502 bad gateway")
-
-                if res.status == HTTPStatus.SERVICE_UNAVAILABLE:
-                    raise ServiceUnavailable(
-                        f"Call {url} received 503 service unavailable"
-                    )
-
-                bytes_data = await res.read()
-
-        except client_exceptions.ClientError as err:
-            raise RequestError(
-                f"Error requesting data from {self.host}: {err}"
-            ) from None
-
-        LOGGER.debug("data (from %s) %s", url, bytes_data)
-        return res, bytes_data
-
-
-def _raise_on_error(data: "TypedApiResponse") -> None:
-    """Check response for error message."""
-    if "meta" in data and data["meta"]["rc"] == "error":
-        LOGGER.error(data)
-        raise_error(data["meta"]["msg"])

@@ -12,6 +12,7 @@ import aiohttp
 
 import aiounifi
 from aiounifi.controller import Controller
+from aiounifi.models.configuration import Configuration
 
 if TYPE_CHECKING:
     from aiounifi.websocket import WebsocketState
@@ -36,19 +37,20 @@ async def unifi_controller(
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
-        host,
-        username=username,
-        password=password,
-        port=port,
-        site=site,
-        websession=session,
-        ssl_context=ssl_context,
+        Configuration(
+            session,
+            host,
+            username=username,
+            password=password,
+            port=port,
+            site=site,
+            ssl_context=ssl_context,
+        )
     )
     controller.ws_state_callback = callback
 
     try:
         async with timeout(10):
-            await controller.check_unifi_os()
             await controller.login()
         return controller
 

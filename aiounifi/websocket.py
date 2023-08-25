@@ -4,11 +4,12 @@ import asyncio
 from collections.abc import Callable
 import enum
 import logging
-from ssl import SSLContext
 from typing import Any
 
 import aiohttp
 import orjson
+
+from .models.configuration import Configuration
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,23 +35,19 @@ class WSClient:
 
     def __init__(
         self,
-        session: aiohttp.ClientSession,
-        host: str,
-        port: int,
-        ssl_context: SSLContext | bool,
-        site: str,
+        config: Configuration,
         callback: Callable[[WebsocketSignal], None],
         is_unifi_os: bool = False,
     ):
         """Create resources for websocket communication."""
-        self.session = session
-        self.ssl_context = ssl_context
+        self.config = config
         self.session_handler_callback = callback
 
+        self.url = f"wss://{config.host}:{config.port}"
         if is_unifi_os:
-            self.url = f"wss://{host}:{port}/proxy/network/wss/s/{site}/events"
+            self.url += f"/proxy/network/wss/s/{config.site}/events"
         else:
-            self.url = f"wss://{host}:{port}/wss/s/{site}/events"
+            self.url += f"/wss/s/{config.site}/events"
 
         self._loop = asyncio.get_running_loop()
 
@@ -87,8 +84,8 @@ class WSClient:
     async def running(self) -> None:
         """Start websocket connection."""
         try:
-            async with self.session.ws_connect(
-                self.url, ssl=self.ssl_context, heartbeat=15
+            async with self.config.session.ws_connect(
+                self.url, ssl=self.config.ssl_context, heartbeat=15
             ) as ws:
                 self.state = WebsocketState.RUNNING
 

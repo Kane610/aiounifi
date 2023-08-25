@@ -9,6 +9,7 @@ from aioresponses import aioresponses
 import pytest
 
 from aiounifi.controller import Controller
+from aiounifi.models.configuration import Configuration
 
 
 @pytest.fixture(name="mock_aioresponse")
@@ -62,8 +63,10 @@ def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], 
 async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
     """Provide a test-ready UniFi controller."""
     session = aiohttp.ClientSession()
-    controller = Controller("host", session, username="user", password="pass")
-    controller.is_unifi_os = is_unifi_os
+    config = Configuration(session, "host", username="user", password="pass")
+    controller = Controller(config)
+    # controller = Controller("host", session, username="user", password="pass")
+    controller.connectivity.is_unifi_os = is_unifi_os
     controller.ws_state_callback = Mock()
     yield controller
     await session.close()
