@@ -62,7 +62,7 @@ class TypedTrafficRule(TypedDict):
 
 @dataclass
 class TrafficRuleRequest(ApiRequest):
-    """Data class with required properties of a traffic rule request."""
+    """Data class with required properties of a traffic rule API request."""
     '''We need a way to indicate if, for our model, the v2 API must be called.
     Therefore an intermediate dataclass 'TrafficRuleRequest' is made,
     for passing the correct path. This way, we do not need to alter any of the
@@ -84,7 +84,7 @@ class TrafficRuleListRequest(TrafficRuleRequest):
 
 @dataclass
 class TrafficRuleEnableRequest(TrafficRuleRequest):
-    """Request object for wlan enable."""
+    """Request object for traffic rule enable."""
 
     @classmethod
     def create(cls, traffic_rule: dict[str, Any], enable: bool) -> "TrafficRuleEnableRequest":

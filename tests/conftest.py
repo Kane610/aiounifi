@@ -170,7 +170,7 @@ def endpoint_fixture(
     is_unifi_os: bool,
     traffic_rule_payload: dict[str, Any],
 ) -> None:
-    """Use fixtures to mock all endpoints."""
+    """Use fixtures to mock traffic rule endpoint."""
 
     def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
         """Register HTTP response mock."""
