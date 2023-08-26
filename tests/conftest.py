@@ -164,6 +164,26 @@ def endpoint_fixture(
         traffic_rule_payload,
     )
 
+@pytest.fixture(name="_mock_traffic_rule_endpoint")
+def endpoint_fixture(
+    mock_aioresponse: aioresponses,
+    is_unifi_os: bool,
+    traffic_rule_payload: dict[str, Any],
+) -> None:
+    """Use fixtures to mock all endpoints."""
+
+    def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
+        """Register HTTP response mock."""
+        url = unifi_path if is_unifi_os else path
+        data = payload
+        mock_aioresponse.get(f"https://host:8443{url}", payload=data)
+
+    mock_get_request(
+        "/proxy/network/v2/api/site/default/trafficrules",
+        "/proxy/network/v2/api/site/default/trafficrules",
+        traffic_rule_payload,
+    )
+
 @pytest.fixture(name="response_payload")
 def response_data_fixture() -> dict[str, Any]:
     """Response data."""

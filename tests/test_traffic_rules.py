@@ -33,9 +33,14 @@ async def test_traffic_rule_enable(
     )
 
 async def test_no_traffic_rules(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+    mock_aioresponse, unifi_controller, _mock_traffic_rule_endpoint, unifi_called_with
 ):
-    """Test that no ports also work."""
+    """Test that no traffic rules also work."""
+    mock_aioresponse.put(
+        "https://host:8443/proxy/network/v2/api/site/default/trafficrules",
+        payload={},
+        repeat=True,
+    )
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
 
@@ -44,7 +49,7 @@ async def test_no_traffic_rules(
 
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 async def test_traffic_rules(
-    mock_aioresponse, unifi_controller, mock_endpoints, unifi_called_with
+    mock_aioresponse, unifi_controller, _mock_traffic_rule_endpoint, unifi_called_with
 ):
     """Test that different types of ports work."""
     traffic_rules = unifi_controller.traffic_rules

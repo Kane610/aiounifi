@@ -19,6 +19,7 @@ from .interfaces.ports import Ports
 from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.wlans import Wlans
+from .interfaces.traffic_rules import TrafficRules
 from .models.configuration import Configuration
 
 if TYPE_CHECKING:
@@ -48,6 +49,7 @@ class Controller:
         self.sites = Sites(self)
         self.system_information = SystemInformationHandler(self)
         self.wlans = Wlans(self)
+        self.traffic_rules = TrafficRules(self)
 
         self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
             self.clients.update,
@@ -59,6 +61,7 @@ class Controller:
             self.sites.update,
             self.system_information.update,
             self.wlans.update,
+            self.traffic_rules.update,
         )
 
     async def login(self) -> None:
