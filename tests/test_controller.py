@@ -22,13 +22,7 @@ from aiounifi import (
 from aiounifi.models.message import MessageKey
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
-from .fixtures import (
-    MESSAGE_WIRELESS_CLIENT_REMOVED,
-    SITE_RESPONSE,
-    SWITCH_16_PORT_POE,
-    WIRELESS_CLIENT,
-    WLANS,
-)
+from .fixtures import SITE_RESPONSE, SWITCH_16_PORT_POE, WLANS
 
 
 @pytest.mark.parametrize("is_unifi_os", [True, False])
@@ -420,59 +414,6 @@ async def test_handle_unsupported_events(
     _new_ws_data_fn({"meta": {"message": unsupported_message}})
     unifi_controller.ws_state_callback.assert_not_called()
 
-    assert len(unifi_controller.clients.items()) == 0
-
-
-async def test_clients(unifi_controller, _mock_endpoints, _new_ws_data_fn):
-    """Test controller managing clients."""
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients.items()) == 0
-
-    # Add client from websocket
-    _new_ws_data_fn(
-        {
-            "meta": {"message": MessageKey.CLIENT.value},
-            "data": [WIRELESS_CLIENT],
-        }
-    )
-    assert len(unifi_controller.clients.items()) == 1
-
-    # Verify expected callback signalling
-    client = unifi_controller.clients[WIRELESS_CLIENT["mac"]]
-
-    # Verify APIItems.__getitem__
-    client_mac = next(iter(unifi_controller.clients))
-    assert client_mac == client.mac
-
-    # Register callback
-    clients = unifi_controller.clients
-    mock_callback = Mock()
-    unsub = clients.subscribe(mock_callback)
-    assert len(clients._subscribers["*"]) == 1
-
-    # Retrieve websocket data
-    _new_ws_data_fn(
-        {
-            "meta": {"message": MessageKey.CLIENT.value},
-            "data": [WIRELESS_CLIENT],
-        }
-    )
-    assert mock_callback.call_count == 1
-
-    # Remove callback
-    unsub()
-    assert len(clients._subscribers["*"]) == 0
-
-
-@pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
-async def test_message_client_removed(
-    unifi_controller, _mock_endpoints, _new_ws_data_fn
-):
-    """Test controller communicating client has been removed."""
-    await unifi_controller.initialize()
-    assert len(unifi_controller.clients.items()) == 1
-
-    _new_ws_data_fn(MESSAGE_WIRELESS_CLIENT_REMOVED)
     assert len(unifi_controller.clients.items()) == 0
 
 

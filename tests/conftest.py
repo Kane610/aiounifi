@@ -73,17 +73,20 @@ async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
 
 
 @pytest.fixture(name="_new_ws_data_fn")
-async def mock_wsclient(unifi_controller) -> Mock:
+async def mock_wsclient(
+    unifi_controller: Controller,
+) -> Callable[[dict[str, Any]], None]:
     """No real websocket allowed."""
     with patch("aiounifi.websocket.WSClient.running"):
         unifi_controller.start_websocket()
 
-        def new_ws_data_fn(data) -> None:
+        def new_ws_data_fn(data: dict[str, Any]) -> None:
             """Add and signal new websocket data."""
+            assert unifi_controller.websocket
             unifi_controller.websocket._data = data  # pylint: disable=protected-access
             unifi_controller.session_handler(WebsocketSignal.DATA)
 
-        yield new_ws_data_fn
+        return new_ws_data_fn
 
 
 @pytest.fixture(name="_mock_endpoints")
