@@ -93,19 +93,21 @@ async def mock_wsclient(
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
-    client_payload: dict[str, Any],
-    clients_all_payload: dict[str, Any],
-    device_payload: dict[str, Any],
-    dpi_app_payload: dict[str, Any],
-    dpi_group_payload: dict[str, Any],
-    port_forward_payload: dict[str, Any],
-    site_payload: dict[str, Any],
-    system_information_payload: dict[str, Any],
-    wlan_payload: dict[str, Any],
+    client_payload: list[dict[str, Any]],
+    clients_all_payload: list[dict[str, Any]],
+    device_payload: list[dict[str, Any]],
+    dpi_app_payload: list[dict[str, Any]],
+    dpi_group_payload: list[dict[str, Any]],
+    port_forward_payload: list[dict[str, Any]],
+    site_payload: list[dict[str, Any]],
+    system_information_payload: list[dict[str, Any]],
+    wlan_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 
-    def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
+    def mock_get_request(
+        path: str, unifi_path: str, payload: list[dict[str, Any]]
+    ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
         data = {"meta": {"rc": "OK"}, "data": payload}
@@ -165,54 +167,54 @@ def response_data_fixture() -> dict[str, Any]:
 
 
 @pytest.fixture(name="client_payload")
-def client_data_fixture() -> dict[str, Any]:
+def client_data_fixture() -> list[dict[str, Any]]:
     """Client data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="clients_all_payload")
-def clients_all_data_fixture() -> dict[str, Any]:
+def clients_all_data_fixture() -> list[dict[str, Any]]:
     """Clients all data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="device_payload")
-def device_data_fixture() -> dict[str, Any]:
+def device_data_fixture() -> list[dict[str, Any]]:
     """Device data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="dpi_app_payload")
-def dpi_app_data_fixture() -> dict[str, Any]:
+def dpi_app_data_fixture() -> list[dict[str, Any]]:
     """DPI app data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="dpi_group_payload")
-def dpi_group_data_fixture() -> dict[str, Any]:
+def dpi_group_data_fixture() -> list[dict[str, Any]]:
     """DPI group data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="port_forward_payload")
-def port_forward_data_fixture() -> dict[str, Any]:
+def port_forward_data_fixture() -> list[dict[str, Any]]:
     """Port forward data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="site_payload")
-def site_data_fixture() -> dict[str, Any]:
+def site_data_fixture() -> list[dict[str, Any]]:
     """Site data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="system_information_payload")
-def system_information_data_fixture() -> dict[str, Any]:
+def system_information_data_fixture() -> list[dict[str, Any]]:
     """System information data."""
-    return {}
+    return []
 
 
 @pytest.fixture(name="wlan_payload")
-def wlan_data_fixture() -> dict[str, Any]:
+def wlan_data_fixture() -> list[dict[str, Any]]:
     """WLAN data."""
-    return {}
+    return []
