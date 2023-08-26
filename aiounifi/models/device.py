@@ -2,7 +2,7 @@
 
 Access points, Gateways, Switches.
 """
-
+from copy import deepcopy
 from dataclasses import dataclass
 import logging
 from typing import Any, NotRequired, Self, TypedDict
@@ -634,32 +634,50 @@ class DeviceSetPoePortModeRequest(ApiRequest):
     """Request object for setting port PoE mode."""
 
     @classmethod
-    def create(cls, device: "Device", port_idx: int, mode: str) -> Self:
+    def create(
+        cls,
+        device: "Device",
+        port_idx: int | None = None,
+        mode: str | None = None,
+        targets: list[tuple[int, str]] | None = None,
+    ) -> Self:
         """Create device set port PoE mode request.
 
         Auto, 24v, passthrough, off.
         Make sure to not overwrite any existing configs.
         """
-        existing_override = False
-        for port_override in device.port_overrides:
-            if "port_idx" in port_override and port_idx == port_override["port_idx"]:
-                port_override["poe_mode"] = mode
-                existing_override = True
-                break
+        overrides: list[tuple[int, str]] = []
+        if port_idx is not None and mode is not None:
+            overrides.append((port_idx, mode))
+        elif targets is not None:
+            overrides = targets
+        else:
+            raise AttributeError
 
-        if not existing_override:
-            port_override = {
-                "port_idx": port_idx,
-                "poe_mode": mode,
-            }
+        port_overrides = deepcopy(device.port_overrides)
+
+        for override in overrides:
+            port_idx, mode = override
+
+            existing_override = False
+            for port_override in port_overrides:
+                if port_idx == port_override.get("port_idx"):
+                    port_override["poe_mode"] = mode
+                    existing_override = True
+                    break
+
+            if existing_override:
+                continue
+
+            port_override = {"port_idx": port_idx, "poe_mode": mode}
             if portconf_id := device.port_table[port_idx - 1].get("portconf_id"):
                 port_override["portconf_id"] = portconf_id
-            device.port_overrides.append(port_override)
+            port_overrides.append(port_override)
 
         return cls(
             method="put",
             path=f"/rest/device/{device.id}",
-            data={"port_overrides": device.port_overrides},
+            data={"port_overrides": port_overrides},
         )
 
 
