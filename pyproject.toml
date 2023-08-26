@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "aiounifi"
-version     = "57"
+version     = "58"
 license     = {text = "MIT"}
 description = "Python library for communicating with UniFi Network Controller API"
 readme      = "README.md"
@@ -19,7 +19,11 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 requires-python = ">=3.11.0"
-dependencies    = ["aiounifi[requirements]"]
+dependencies    = [
+    "aiohttp>3.8",
+    "orjson>3.9",
+    "segno>=1.5.2",
+]
 
 [project.optional-dependencies]
 requirements = [
