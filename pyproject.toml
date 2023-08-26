@@ -23,8 +23,8 @@ dependencies    = ["aiounifi[requirements]"]
 
 [project.optional-dependencies]
 requirements = [
-    "aiohttp==3.8.5",
-    "orjson==3.9.4",
+    "aiohttp~=3.8.5",
+    "orjson~=3.9.5",
     "segno==1.5.2",
 ]
 requirements_test = [
