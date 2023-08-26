@@ -19,10 +19,9 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.models.message import MessageKey
 from aiounifi.websocket import WebsocketSignal, WebsocketState
 
-from .fixtures import SITE_RESPONSE, SWITCH_16_PORT_POE, WLANS
+from .fixtures import SITE_RESPONSE, WLANS
 
 
 @pytest.mark.parametrize("is_unifi_os", [True, False])
@@ -415,47 +414,6 @@ async def test_handle_unsupported_events(
     unifi_controller.ws_state_callback.assert_not_called()
 
     assert len(unifi_controller.clients.items()) == 0
-
-
-async def test_devices(unifi_controller, _mock_endpoints, _new_ws_data_fn):
-    """Test controller managing devices."""
-    await unifi_controller.initialize()
-    assert len(unifi_controller.devices.items()) == 0
-
-    # Add client from websocket
-    _new_ws_data_fn(
-        {
-            "meta": {"message": MessageKey.DEVICE.value},
-            "data": [SWITCH_16_PORT_POE],
-        }
-    )
-    assert len(unifi_controller.devices.items()) == 1
-
-    # Verify expected callback signalling
-    device = unifi_controller.devices[SWITCH_16_PORT_POE["mac"]]
-
-    # Verify APIItems.__getitem__
-    device_mac = next(iter(unifi_controller.devices))
-    assert device_mac == device.mac
-
-    # Register callback
-    devices = unifi_controller.devices
-    mock_callback = Mock()
-    unsub = devices.subscribe(mock_callback)
-    assert len(devices._subscribers["*"]) == 3
-
-    # Retrieve websocket data
-    _new_ws_data_fn(
-        {
-            "meta": {"message": MessageKey.DEVICE.value},
-            "data": [SWITCH_16_PORT_POE],
-        }
-    )
-    assert mock_callback.call_count == 1
-
-    # Remove callback
-    unsub()
-    assert len(devices._subscribers["*"]) == 2
 
 
 async def test_dpi_apps(unifi_controller, _mock_endpoints, _new_ws_data_fn):

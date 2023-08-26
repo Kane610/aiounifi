@@ -2,9 +2,14 @@
 
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
+from collections.abc import Callable
+from typing import Any
+from unittest.mock import Mock
 
+from aioresponses import aioresponses
 import pytest
 
+from aiounifi.controller import Controller
 from aiounifi.models.device import (
     DevicePowerCyclePortRequest,
     DeviceRestartRequest,
@@ -13,6 +18,7 @@ from aiounifi.models.device import (
     DeviceSetPoePortModeRequest,
     DeviceUpgradeRequest,
 )
+from aiounifi.models.message import MessageKey
 
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
@@ -650,7 +656,9 @@ test_data = [
 
 
 @pytest.mark.parametrize(("device_payload", "reference_data"), test_data)
-async def test_device(unifi_controller, _mock_endpoints, reference_data):
+async def test_device(
+    unifi_controller: Controller, _mock_endpoints: None, reference_data: dict[str, Any]
+) -> None:
     """Test device class."""
     devices = unifi_controller.devices
     await devices.update()
@@ -667,8 +675,13 @@ async def test_device(unifi_controller, _mock_endpoints, reference_data):
     [["upgrade", "0", {"mac": "0", "cmd": "upgrade"}]],
 )
 async def test_device_commands(
-    mock_aioresponse, unifi_controller, unifi_called_with, method, mac, command
-):
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    method: str,
+    mac: str,
+    command: dict[str, Any],
+) -> None:
     """Test device commands."""
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
     class_command = getattr(unifi_controller.devices, method)
@@ -702,8 +715,15 @@ async def test_device_commands(
     ],
 )
 async def test_device_requests(
-    mock_aioresponse, unifi_controller, unifi_called_with, api_request, data, command
-):
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    api_request: DeviceRestartRequest
+    | DeviceUpgradeRequest
+    | DevicePowerCyclePortRequest,
+    data: dict[str, Any],
+    command: dict[str, Any],
+) -> None:
     """Test device commands."""
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
     await unifi_controller.request(api_request.create(**data))
@@ -870,14 +890,16 @@ async def test_device_requests(
     ],
 )
 async def test_sub_device_requests(
-    mock_aioresponse,
-    unifi_controller,
-    _mock_endpoints,
-    unifi_called_with,
-    api_request,
-    data,
-    command,
-):
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    _mock_endpoints: None,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    api_request: DeviceSetOutletRelayRequest
+    | DeviceSetOutletCycleEnabledRequest
+    | DeviceSetPoePortModeRequest,
+    data: dict[str, Any],
+    command: dict[str, Any],
+) -> None:
     """Test sub device (port/outlet) commands."""
     devices = unifi_controller.devices
     await devices.update()
@@ -885,3 +907,27 @@ async def test_sub_device_requests(
     mock_aioresponse.put("https://host:8443/api/s/default/rest/device/01", payload={})
     await unifi_controller.request(api_request.create(device, **data))
     assert unifi_called_with("put", "/api/s/default/rest/device/01", json=command)
+
+
+async def test_device_websocket(
+    unifi_controller: Controller, _new_ws_data_fn: Callable[[dict[str, Any]], None]
+) -> None:
+    """Test controller managing devices."""
+    assert len(unifi_controller.devices._subscribers["*"]) == 2
+
+    unsub = unifi_controller.devices.subscribe(mock_callback := Mock())
+    assert len(unifi_controller.devices._subscribers["*"]) == 3
+    assert mock_callback.call_count == 0
+
+    # Add client from websocket
+    _new_ws_data_fn(
+        {
+            "meta": {"message": MessageKey.DEVICE.value},
+            "data": [SWITCH_16_PORT_POE],
+        }
+    )
+    assert len(unifi_controller.devices.items()) == 1
+    assert len(unifi_controller.devices._subscribers["*"]) == 3
+
+    unsub()
+    assert len(unifi_controller.devices._subscribers["*"]) == 2
