@@ -56,8 +56,11 @@ exclude_also = [
     "if TYPE_CHECKING:"
 ]
 
-[tool.setuptools]
-include-package-data = true
+[tool.setuptools.packages.find]
+include = ["aiounifi*"]
+
+[tool.setuptools.package-data]
+"aiounifi" = ["py.typed"]
 
 [tool.mypy]
 python_version = "3.11"
