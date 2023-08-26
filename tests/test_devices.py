@@ -887,6 +887,35 @@ async def test_device_requests(
             {"port_idx": 1, "mode": "off"},
             {"port_overrides": [{"port_idx": 1, "poe_mode": "off", "name": "Office"}]},
         ],
+        [  # PoE multi target port mode with existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [{"port_idx": 1, "name": "Office"}],
+                    "port_table": [
+                        {
+                            "poe_mode": "Auto",
+                            "name": "Office",
+                            "port_idx": 1,
+                        },
+                        {
+                            "poe_mode": "Off",
+                            "name": "Hallway",
+                            "port_idx": 2,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPoePortModeRequest,
+            {"targets": [(1, "off"), (2, "auto")]},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "poe_mode": "off", "name": "Office"},
+                    {"port_idx": 2, "poe_mode": "auto"},
+                ]
+            },
+        ],
     ],
 )
 async def test_sub_device_requests(
@@ -907,6 +936,17 @@ async def test_sub_device_requests(
     mock_aioresponse.put("https://host:8443/api/s/default/rest/device/01", payload={})
     await unifi_controller.request(api_request.create(device, **data))
     assert unifi_called_with("put", "/api/s/default/rest/device/01", json=command)
+
+
+@pytest.mark.parametrize(("device_payload"), [[SWITCH_16_PORT_POE]])
+async def test_set_poe_request_raise_error(
+    unifi_controller: Controller, _mock_endpoints: None
+) -> None:
+    """Test device class."""
+    await unifi_controller.initialize()
+    device = next(iter(unifi_controller.devices.values()))
+    with pytest.raises(AttributeError):
+        DeviceSetPoePortModeRequest.create(device)
 
 
 async def test_device_websocket(
