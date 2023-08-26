@@ -3,12 +3,12 @@
 from dataclasses import dataclass
 
 from typing_extensions import NotRequired, TypedDict
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from .api import ApiItem, ApiRequest
 
 class BandwidthLimit(TypedDict):
-    """Bandwith limit type definition"""
+    """Bandwidth limit type definition"""
     download_limit_kbps: int
     enabled: bool
     upload_limit_kbps: int
@@ -16,7 +16,7 @@ class BandwidthLimit(TypedDict):
 class PortRange(TypedDict):
     port_start: int
     port_stop: int
-class IPAdress(TypedDict):
+class IPAddress(TypedDict):
     ip_or_subnet: str
     ip_version: str
     port_ranges: list[PortRange]
@@ -51,7 +51,7 @@ class TypedTrafficRule(TypedDict):
     description: str
     domains: list[str]
     enabled: bool
-    ip_addresses: list[IPAdress]
+    ip_addresses: list[IPAddress]
     ip_ranges: list[IPRange]
     matching_target: str
     network_ids: list[str]

@@ -1,7 +1,6 @@
 """WLANs as part of a UniFi network."""
 
-from typing import Any
-
+from ..models.api import TypedApiResponse
 from ..models.traffic_rule import TrafficRule, TrafficRuleListRequest, TrafficRuleEnableRequest
 from .api_handlers import APIHandler
 
@@ -14,18 +13,22 @@ class TrafficRules(APIHandler[TrafficRule]):
     item_cls = TrafficRule
     api_request = TrafficRuleListRequest.create()
 
-    async def enable(self, traffic_rule: TrafficRule) -> list[dict[str, Any]]:
+    async def enable(self, traffic_rule: TrafficRule) -> TypedApiResponse:
         """Enable traffic rule defined in controller."""
         tr = self.controller.traffic_rules.get(traffic_rule.id)
         traffic_rule_dict = tr.raw
-        return await self.controller.request(
+        traffic_rule_enabled = await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=True)
-        ) and await self.controller.traffic_rules.update()
+        )
+        await self.controller.traffic_rules.update()
+        return traffic_rule_enabled
 
-    async def disable(self, traffic_rule: TrafficRule) -> list[dict[str, Any]]:
+    async def disable(self, traffic_rule: TrafficRule) -> TypedApiResponse:
         """Disable traffic rule defined in controller."""
         tr = self.controller.traffic_rules.get(traffic_rule.id)
         traffic_rule_dict = tr.raw
-        return await self.controller.request(
+        traffic_rule_disabled = await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=False)
-        ) and await self.controller.traffic_rules.update()
+        )
+        await self.controller.traffic_rules.update()
+        return traffic_rule_disabled
