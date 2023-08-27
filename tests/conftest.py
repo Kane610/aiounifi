@@ -179,7 +179,7 @@ def endpoint_fixture(
         mock_aioresponse.get(f"https://host:8443{url}", payload=data)
 
     mock_get_request(
-        "/proxy/network/v2/api/site/default/trafficrules",
+        "/v2/api/site/default/trafficrules",
         "/proxy/network/v2/api/site/default/trafficrules",
         traffic_rule_payload,
     )

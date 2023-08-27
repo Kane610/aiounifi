@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 
-from typing_extensions import NotRequired, TypedDict
-from typing import Any
+from typing import Any, NotRequired, TypedDict, Self
 
 from .api import ApiItem, ApiRequest
 
@@ -71,14 +70,16 @@ class TrafficRuleRequest(ApiRequest):
     '''
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
-        return f"/proxy/network/v2/api/site/{site}{self.path}"
+        if is_unifi_os:
+            return f"/proxy/network/v2/api/site/{site}{self.path}"
+        return f"/v2/api/site/{site}{self.path}"
 
 @dataclass
 class TrafficRuleListRequest(TrafficRuleRequest):
     """Request object for traffic rule list."""
 
     @classmethod
-    def create(cls) -> "TrafficRuleListRequest":
+    def create(cls) -> Self:
         """Create traffic rule request."""
         return cls(method="get", path="/trafficrules", data=None)
 
@@ -87,7 +88,7 @@ class TrafficRuleEnableRequest(TrafficRuleRequest):
     """Request object for traffic rule enable."""
 
     @classmethod
-    def create(cls, traffic_rule: dict[str, Any], enable: bool) -> "TrafficRuleEnableRequest":
+    def create(cls, traffic_rule: dict[str, Any], enable: bool) -> Self:
         """Create traffic rule enable request."""
         traffic_rule['enabled'] = enable
         return cls(

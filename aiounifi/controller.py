@@ -48,8 +48,9 @@ class Controller:
         self.port_forwarding = PortForwarding(self)
         self.sites = Sites(self)
         self.system_information = SystemInformationHandler(self)
-        self.wlans = Wlans(self)
         self.traffic_rules = TrafficRules(self)
+        self.wlans = Wlans(self)
+
 
         self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
             self.clients.update,
@@ -60,8 +61,8 @@ class Controller:
             self.port_forwarding.update,
             self.sites.update,
             self.system_information.update,
-            self.wlans.update,
             self.traffic_rules.update,
+            self.wlans.update,
         )
 
     async def login(self) -> None:

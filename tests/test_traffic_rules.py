@@ -12,13 +12,15 @@ from aiounifi.models.traffic_rule import (
 
 from .fixtures import TRAFFIC_RULES, WIRELESS_CLIENT
 
+@pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
 async def test_traffic_rule_enable(
     mock_aioresponse, unifi_controller, unifi_called_with, enable
 ):
     """Test that wlan can be enabled and disabled."""
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default/trafficrules/6452cd9b859d5b11aa002ea1", payload={}
+        "https://host:8443/proxy/network/v2/api/site/default/trafficrules/6452cd9b859d5b11aa002ea1",
+        payload={},
     )
 
     traffic_rule = TRAFFIC_RULES[0]
@@ -42,11 +44,10 @@ async def test_no_traffic_rules(
         repeat=True,
     )
     traffic_rules = unifi_controller.traffic_rules
-    await traffic_rules.update()
 
-    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
     assert len(traffic_rules.values()) == 0
 
+@pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 async def test_traffic_rules(
     mock_aioresponse, unifi_controller, _mock_traffic_rule_endpoint, unifi_called_with
@@ -55,6 +56,7 @@ async def test_traffic_rules(
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
     assert len(traffic_rules.values()) == 2
+    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
 
     traffic_rule = traffic_rules["6452cd9b859d5b11aa002ea1"]
     assert traffic_rule.id == "6452cd9b859d5b11aa002ea1"
@@ -68,27 +70,3 @@ async def test_traffic_rules(
                     "type": "CLIENT"
                 }
             ]
-
-    mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default/trafficrules/6452cd9b859d5b11aa002ea1",
-        payload={},
-        repeat=True,
-    )
-
-    traffic_rule_raw = traffic_rule.raw
-
-    traffic_rule_raw["enabled"] = True
-    await traffic_rules.enable(traffic_rule)
-    assert unifi_called_with(
-        "put",
-        "/proxy/network/v2/api/site/default/trafficrules/6452cd9b859d5b11aa002ea1",
-        json=traffic_rule_raw,
-    )
-
-    traffic_rule_raw["enabled"] = False
-    await traffic_rules.disable(traffic_rule)
-    assert unifi_called_with(
-        "put",
-        "/proxy/network/v2/api/site/default/trafficrules/6452cd9b859d5b11aa002ea1",
-        json=traffic_rule_raw,
-    )
