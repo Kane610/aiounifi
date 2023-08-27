@@ -374,7 +374,7 @@ class TypedDevice(TypedDict):
     flowctrl_enabled: bool
     fw_caps: int
     gateway_mac: str
-    general_temperature: int
+    general_temperature: NotRequired[int]
     guest_num_sta: int
     guest_wlan_num_sta: int
     guest_token: str
@@ -724,9 +724,19 @@ class Device(ApiItem):
         return self.raw.get("fan_level")
 
     @property
+    def general_temperature(self) -> int | None:
+        """General temperature of device."""
+        return self.raw.get("general_temperature")
+
+    @property
     def has_fan(self) -> bool:
         """Do device have a fan."""
         return self.raw.get("has_fan", False)
+
+    @property
+    def has_temperature(self) -> bool:
+        """Do the device have a general temperature."""
+        return self.raw.get("has_temperature", False)
 
     @property
     def last_seen(self) -> int | None:
@@ -809,6 +819,12 @@ class Device(ApiItem):
         return self.raw["sys_stats"]
 
     @property
+    def system_stats(self) -> tuple[str, str, str]:
+        """System statistics."""
+        data = self.raw["system-stats"]  # type: ignore [typeddict-item]
+        return (data.get("cpu", ""), data.get("mem", ""), data.get("uptime", ""))
+
+    @property
     def type(self) -> str:
         """Type of device."""
         return self.raw["type"]
@@ -837,6 +853,11 @@ class Device(ApiItem):
     def uplink_depth(self) -> int | None:
         """Hops to gateway."""
         return self.raw.get("uplink_depth")
+
+    @property
+    def uptime(self) -> int:
+        """Uptime of device."""
+        return self.raw["uptime"]
 
     @property
     def user_num_sta(self) -> int:
