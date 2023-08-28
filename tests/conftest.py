@@ -168,7 +168,7 @@ def endpoint_fixture(
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
-    traffic_rule_payload: dict[str, Any],
+    traffic_rule_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock traffic rule endpoint."""
 

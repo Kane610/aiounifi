@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from typing import Any, NotRequired, TypedDict, Self
 
-from .api import ApiItem, ApiRequest
+from .api import ApiItem, ApiRequest, TypedApiResponse
 
 class BandwidthLimit(TypedDict):
     """Bandwidth limit type definition"""
@@ -73,6 +73,11 @@ class TrafficRuleRequest(ApiRequest):
         if is_unifi_os:
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
+
+    def prepare_data(self, raw: TypedApiResponse):
+        if isinstance(raw, list):
+            return {"meta": {"rc": "OK"}, "data": raw}
+        return raw
 
 @dataclass
 class TrafficRuleListRequest(TrafficRuleRequest):

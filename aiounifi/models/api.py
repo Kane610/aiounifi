@@ -27,6 +27,8 @@ class ApiRequest:
             return f"/proxy/network/api/s/{site}{self.path}"
         return f"/api/s/{site}{self.path}"
 
+    def prepare_data(self, raw: TypedApiResponse):
+        return raw
 
 # @dataclass
 # class ApiItem(ABC):
