@@ -857,7 +857,7 @@ class Device(ApiItem):
     @property
     def uptime(self) -> int:
         """Uptime of device."""
-        return self.raw["uptime"]
+        return self.raw.get("uptime", 0)
 
     @property
     def user_num_sta(self) -> int:
