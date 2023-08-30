@@ -90,6 +90,8 @@ class TrafficRuleRequest(ApiRequest):
 
     def prepare_data(self, raw: TypedApiResponse) -> list[dict[str, Any]]:
         """Put data, received from the unifi controller, into a uniform format."""
+        if isinstance(raw, dict):
+            return [raw]
         return raw
 
 @dataclass
