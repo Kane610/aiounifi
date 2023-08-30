@@ -153,16 +153,16 @@ def endpoint_fixture(
         system_information_payload,
     )
     mock_get_request(
+        "/v2/api/site/default/trafficrules",
+        "/proxy/network/v2/api/site/default/trafficrules",
+        traffic_rule_payload,
+    )
+    mock_get_request(
         "/api/s/default/rest/wlanconf",
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
     )
 
-    mock_get_request(
-        "/proxy/network/v2/api/site/default/trafficrules",
-        "/proxy/network/v2/api/site/default/trafficrules",
-        traffic_rule_payload,
-    )
 
 @pytest.fixture(name="_mock_traffic_rule_endpoint")
 def endpoint_fixture(
@@ -246,4 +246,4 @@ def wlan_data_fixture() -> list[dict[str, Any]]:
 @pytest.fixture(name="traffic_rule_payload")
 def traffic_rule_data_fixture() -> list[dict[str, Any]]:
     """Traffic rule data."""
-    return {}
+    return []

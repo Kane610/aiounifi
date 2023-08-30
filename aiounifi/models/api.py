@@ -27,8 +27,9 @@ class ApiRequest:
             return f"/proxy/network/api/s/{site}{self.path}"
         return f"/api/s/{site}{self.path}"
 
-    def prepare_data(self, raw: TypedApiResponse):
-        return raw
+    def prepare_data(self, raw: TypedApiResponse) -> list[dict[str, Any]]:
+        """Put data, received from the unifi controller, into a uniform format."""
+        return raw.get("data", [])
 
 # @dataclass
 # class ApiItem(ABC):

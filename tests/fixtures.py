@@ -4564,12 +4564,11 @@ TRAFFIC_RULES = [
         "action": "BLOCK",
         "app_category_ids": [],
         "app_ids": [],
-        "bandwidth_limit":
-            {
-                "download_limit_kbps": 1024,
-                "enabled": False,
-                "upload_limit_kbps": 1024
-            },
+        "bandwidth_limit": {
+            "download_limit_kbps": 1024,
+            "enabled": False,
+            "upload_limit_kbps": 1024,
+        },
         "description": "Test 1",
         "domains": [],
         "enabled": False,
@@ -4578,84 +4577,55 @@ TRAFFIC_RULES = [
         "matching_target": "INTERNET",
         "network_ids": [],
         "regions": [],
-        "schedule":
-            {
-                "date_end": "2023-05-10",
-                "date_start": "2023-05-03",
-                "mode": "ALWAYS",
-                "repeat_on_days": [],
-                "time_all_day": False,
-                "time_range_end": "12:00",
-                "time_range_start": "09:00"
-            },
-        "target_devices":
-            [
-                {
-                    "client_mac": WIRELESS_CLIENT["mac"],
-                    "type": "CLIENT"
-                }
-            ]
+        "schedule": {
+            "date_end": "2023-05-10",
+            "date_start": "2023-05-03",
+            "mode": "ALWAYS",
+            "repeat_on_days": [],
+            "time_all_day": False,
+            "time_range_end": "12:00",
+            "time_range_start": "09:00",
+        },
+        "target_devices": [{"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"}],
     },
     {
         "_id": "64628771859d5b11aa050792",
         "action": "BLOCK",
         "app_category_ids": [],
         "app_ids": [],
-        "bandwidth_limit":
-            {
-                "download_limit_kbps": 1024,
-                "enabled": False,
-                "upload_limit_kbps": 1024
-            },
+        "bandwidth_limit": {
+            "download_limit_kbps": 1024,
+            "enabled": False,
+            "upload_limit_kbps": 1024,
+        },
         "description": "Test 2",
         "domains": [],
         "enabled": False,
-        "ip_addresses":
-            [
-                {
-                    "ip_or_subnet": WIRED_CLIENT["ip"],
-                    "ip_version": "v4",
-                    "port_ranges":
-                        [
-                            {
-                                "port_start": 35,
-                                "port_stop": 100
-                            }
-                        ],
-                    "ports": []
-                }
-            ],
-        "ip_ranges":
-            [
-                {
-                    "ip_start": "192.168.0.1",
-                    "ip_stop": "192.168.0.10",
-                    "ip_version": "v4"
-                }
-            ],
+        "ip_addresses": [
+            {
+                "ip_or_subnet": WIRED_CLIENT["ip"],
+                "ip_version": "v4",
+                "port_ranges": [{"port_start": 35, "port_stop": 100}],
+                "ports": [],
+            }
+        ],
+        "ip_ranges": [
+            {"ip_start": "192.168.0.1", "ip_stop": "192.168.0.10", "ip_version": "v4"}
+        ],
         "matching_target": "IP",
         "network_ids": [],
         "regions": [],
-        "schedule":
-            {
-                "date_end": "2023-05-22",
-                "date_start": "2023-05-15",
-                "mode": "CUSTOM",
-                "repeat_on_days":
-                    [
-                        "mon",
-                        "thu"
-                    ],
-                "time_all_day": False,
-                "time_range_end": "12:00",
-                "time_range_start": "09:00"
-            },
-        "target_devices":
-            [
-                {
-                    "network_id": WIRELESS_CLIENT["network_id"],
-                    "type": "NETWORK"
-                }
-            ]
-    }
+        "schedule": {
+            "date_end": "2023-05-22",
+            "date_start": "2023-05-15",
+            "mode": "CUSTOM",
+            "repeat_on_days": ["mon", "thu"],
+            "time_all_day": False,
+            "time_range_end": "12:00",
+            "time_range_start": "09:00",
+        },
+        "target_devices": [
+            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"}
+        ],
+    },
 ]

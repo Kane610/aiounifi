@@ -1,32 +1,42 @@
 """Traffic rules as part of a UniFi network."""
 
 from dataclasses import dataclass
-
-from typing import Any, NotRequired, TypedDict, Self
+from typing import Any, NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest, TypedApiResponse
 
+
 class BandwidthLimit(TypedDict):
-    """Bandwidth limit type definition"""
+    """Bandwidth limit type definition."""
+
     download_limit_kbps: int
     enabled: bool
     upload_limit_kbps: int
 
 class PortRange(TypedDict):
+    """Port range type definition."""
+
     port_start: int
     port_stop: int
+
 class IPAddress(TypedDict):
+    """IP Address for which traffic rule is applicable type definition."""
+
     ip_or_subnet: str
     ip_version: str
     port_ranges: list[PortRange]
     ports: list[int]
 
 class IPRange(TypedDict):
+    """IP Range type definition."""
+
     ip_start: str
     ip_stop: str
     ip_version: str
 
 class Schedule(TypedDict):
+    """Schedule to enable/disable traffic rule type definition."""
+
     date_end: str
     date_start: str
     mode: str
@@ -36,9 +46,12 @@ class Schedule(TypedDict):
     time_range_start: str
 
 class TargetDevice(TypedDict):
+    """Target device to which the traffic rule applies."""
+
     client_mac: NotRequired[str]
     network_id: NotRequired[str]
     type: str
+
 class TypedTrafficRule(TypedDict):
     """Traffic rule type definition."""
 
@@ -58,10 +71,10 @@ class TypedTrafficRule(TypedDict):
     schedule: Schedule
     target_devices: list[TargetDevice]
 
-
 @dataclass
 class TrafficRuleRequest(ApiRequest):
     """Data class with required properties of a traffic rule API request."""
+
     '''We need a way to indicate if, for our model, the v2 API must be called.
     Therefore an intermediate dataclass 'TrafficRuleRequest' is made,
     for passing the correct path. This way, we do not need to alter any of the
@@ -70,13 +83,13 @@ class TrafficRuleRequest(ApiRequest):
     '''
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
+        """Create url to work with a specific controller."""
         if is_unifi_os:
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
 
-    def prepare_data(self, raw: TypedApiResponse):
-        if isinstance(raw, list):
-            return {"meta": {"rc": "OK"}, "data": raw}
+    def prepare_data(self, raw: TypedApiResponse) -> list[dict[str, Any]]:
+        """Put data, received from the unifi controller, into a uniform format."""
         return raw
 
 @dataclass
@@ -93,7 +106,7 @@ class TrafficRuleEnableRequest(TrafficRuleRequest):
     """Request object for traffic rule enable."""
 
     @classmethod
-    def create(cls, traffic_rule: dict[str, Any], enable: bool) -> Self:
+    def create(cls, traffic_rule: TypedTrafficRule, enable: bool) -> Self:
         """Create traffic rule enable request."""
         traffic_rule['enabled'] = enable
         return cls(
@@ -117,7 +130,6 @@ class TrafficRule(ApiItem):
         """Description given by user to traffic rule."""
         return self.raw["description"]
 
-
     @property
     def enabled(self) -> bool:
         """Is traffic rule enabled."""
@@ -125,16 +137,16 @@ class TrafficRule(ApiItem):
 
     @property
     def action(self) -> str:
-        """What action is defined by this traffic rule"""
+        """What action is defined by this traffic rule."""
         return self.raw["action"]
 
     @property
     def matching_target(self) -> str:
-        """What target is matched by this traffic rule"""
+        """What target is matched by this traffic rule."""
         return self.raw["matching_target"]
 
     @property
-    def target_devices(self) -> list[dict[str, str]]:
-        """What target devices are affected by this traffic rule"""
+    def target_devices(self) -> list[TargetDevice]:
+        """What target devices are affected by this traffic rule."""
         return self.raw["target_devices"]
 

@@ -3,7 +3,11 @@
 from copy import deepcopy
 
 from ..models.api import TypedApiResponse
-from ..models.traffic_rule import TrafficRule, TrafficRuleListRequest, TrafficRuleEnableRequest
+from ..models.traffic_rule import (
+    TrafficRule,
+    TrafficRuleEnableRequest,
+    TrafficRuleListRequest,
+)
 from .api_handlers import APIHandler
 
 
@@ -23,11 +27,15 @@ class TrafficRules(APIHandler[TrafficRule]):
         """Disable traffic rule defined in controller."""
         return await self.toggle(traffic_rule, state = False)
 
-    async def toggle(self, traffic_rule: TrafficRule, state: bool):
-        """ Set traffic rule - defined in controller - to the desired state """
+    async def toggle(self, traffic_rule: TrafficRule, state: bool) -> TypedApiResponse:
+        """Set traffic rule - defined in controller - to the desired state."""
         traffic_rule_dict = deepcopy(traffic_rule.raw)
-        traffic_rule_enabled = await self.controller.request(
+        traffic_rule_response = await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=state)
         )
-        await self.controller.traffic_rules.update()
-        return traffic_rule_enabled
+        # Note: the new API returns just a dict of the changed traffic rule, whereas
+        # the other rest calls return a list of dicts. Therefore we pass a list to
+        # process_raw, instead of the dict.
+        data = self.api_request.prepare_data(traffic_rule_response)
+        self.controller.traffic_rules.process_raw(data)
+        return traffic_rule_response
