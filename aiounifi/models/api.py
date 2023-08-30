@@ -31,6 +31,7 @@ class ApiRequest:
         """Put data, received from the unifi controller, into a uniform format."""
         return raw.get("data", [])
 
+
 # @dataclass
 # class ApiItem(ABC):
 #     """Base class for all end points using APIItems class."""

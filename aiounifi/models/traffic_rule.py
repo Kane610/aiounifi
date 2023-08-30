@@ -13,11 +13,13 @@ class BandwidthLimit(TypedDict):
     enabled: bool
     upload_limit_kbps: int
 
+
 class PortRange(TypedDict):
     """Port range type definition."""
 
     port_start: int
     port_stop: int
+
 
 class IPAddress(TypedDict):
     """IP Address for which traffic rule is applicable type definition."""
@@ -27,12 +29,14 @@ class IPAddress(TypedDict):
     port_ranges: list[PortRange]
     ports: list[int]
 
+
 class IPRange(TypedDict):
     """IP Range type definition."""
 
     ip_start: str
     ip_stop: str
     ip_version: str
+
 
 class Schedule(TypedDict):
     """Schedule to enable/disable traffic rule type definition."""
@@ -45,12 +49,14 @@ class Schedule(TypedDict):
     time_range_end: str
     time_range_start: str
 
+
 class TargetDevice(TypedDict):
     """Target device to which the traffic rule applies."""
 
     client_mac: NotRequired[str]
     network_id: NotRequired[str]
     type: str
+
 
 class TypedTrafficRule(TypedDict):
     """Traffic rule type definition."""
@@ -71,16 +77,17 @@ class TypedTrafficRule(TypedDict):
     schedule: Schedule
     target_devices: list[TargetDevice]
 
+
 @dataclass
 class TrafficRuleRequest(ApiRequest):
     """Data class with required properties of a traffic rule API request."""
 
-    '''We need a way to indicate if, for our model, the v2 API must be called.
+    """We need a way to indicate if, for our model, the v2 API must be called.
     Therefore an intermediate dataclass 'TrafficRuleRequest' is made,
     for passing the correct path. This way, we do not need to alter any of the
     other classes that not need to know about the version of the api used.
     With the refactoring of the aiounifi-library, this is now possible.
-    '''
+    """
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""
@@ -94,6 +101,7 @@ class TrafficRuleRequest(ApiRequest):
             return [raw]
         return raw
 
+
 @dataclass
 class TrafficRuleListRequest(TrafficRuleRequest):
     """Request object for traffic rule list."""
@@ -103,6 +111,7 @@ class TrafficRuleListRequest(TrafficRuleRequest):
         """Create traffic rule request."""
         return cls(method="get", path="/trafficrules", data=None)
 
+
 @dataclass
 class TrafficRuleEnableRequest(TrafficRuleRequest):
     """Request object for traffic rule enable."""
@@ -110,12 +119,13 @@ class TrafficRuleEnableRequest(TrafficRuleRequest):
     @classmethod
     def create(cls, traffic_rule: TypedTrafficRule, enable: bool) -> Self:
         """Create traffic rule enable request."""
-        traffic_rule['enabled'] = enable
+        traffic_rule["enabled"] = enable
         return cls(
             method="put",
             path=f"/trafficrules/{traffic_rule['_id']}",
             data=traffic_rule,
         )
+
 
 class TrafficRule(ApiItem):
     """Represent a traffic rule configuration."""
@@ -151,4 +161,3 @@ class TrafficRule(ApiItem):
     def target_devices(self) -> list[TargetDevice]:
         """What target devices are affected by this traffic rule."""
         return self.raw["target_devices"]
-

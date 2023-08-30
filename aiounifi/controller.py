@@ -51,7 +51,6 @@ class Controller:
         self.traffic_rules = TrafficRules(self)
         self.wlans = Wlans(self)
 
-
         self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
             self.clients.update,
             self.clients_all.update,

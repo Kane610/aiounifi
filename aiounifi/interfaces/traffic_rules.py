@@ -25,7 +25,7 @@ class TrafficRules(APIHandler[TrafficRule]):
 
     async def disable(self, traffic_rule: TrafficRule) -> TypedApiResponse:
         """Disable traffic rule defined in controller."""
-        return await self.toggle(traffic_rule, state = False)
+        return await self.toggle(traffic_rule, state=False)
 
     async def toggle(self, traffic_rule: TrafficRule, state: bool) -> TypedApiResponse:
         """Set traffic rule - defined in controller - to the desired state."""
