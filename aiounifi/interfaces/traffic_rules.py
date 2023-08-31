@@ -33,6 +33,5 @@ class TrafficRules(APIHandler[TrafficRule]):
         traffic_rule_response = await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=state)
         )
-        data = self.api_request.prepare_data(traffic_rule_response)
-        self.controller.traffic_rules.process_raw(data)
+        self.controller.traffic_rules.process_raw(traffic_rule_response)
         return traffic_rule_response

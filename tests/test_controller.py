@@ -273,8 +273,8 @@ async def test_controller(
     assert len(unifi_controller.port_forwarding.items()) == 0
     assert len(unifi_controller.sites.items()) == 1
     assert len(unifi_controller.system_information.items()) == 0
-    assert len(unifi_controller.wlans.items()) == 0
     assert len(unifi_controller.traffic_rules.items()) == 0
+    assert len(unifi_controller.wlans.items()) == 0
 
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
@@ -315,6 +315,7 @@ async def test_unifios_controller(
         "/proxy/network/api/self/sites",
         headers={"x-csrf-token": "123"},
     )
+    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/rest/wlanconf",

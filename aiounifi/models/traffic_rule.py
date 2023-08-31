@@ -1,9 +1,9 @@
 """Traffic rules as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Any, NotRequired, Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
-from .api import ApiItem, ApiRequest, TypedApiResponse
+from .api import ApiItem, ApiRequest
 
 
 class BandwidthLimit(TypedDict):
@@ -94,12 +94,6 @@ class TrafficRuleRequest(ApiRequest):
         if is_unifi_os:
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
-
-    def prepare_data(self, raw: TypedApiResponse) -> list[dict[str, Any]]:
-        """Put data, received from the unifi controller, into a uniform format."""
-        if isinstance(raw, dict):
-            return [raw]
-        return raw
 
 
 @dataclass

@@ -5,6 +5,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, TypedDict, TypeVar
 
+import orjson
+
 
 class TypedApiResponse(TypedDict, total=False):
     """Common response."""
@@ -27,9 +29,21 @@ class ApiRequest:
             return f"/proxy/network/api/s/{site}{self.path}"
         return f"/api/s/{site}{self.path}"
 
-    def prepare_data(self, raw: TypedApiResponse) -> list[dict[str, Any]]:
-        """Put data, received from the unifi controller, into a uniform format."""
-        return raw.get("data", [])
+    def prepare_data(self, raw: bytes) -> TypedApiResponse:
+        """Put data, received from the unifi controller, into a TypedApiResponse."""
+        json_data = orjson.loads(raw)
+        return_data: TypedApiResponse = {}
+
+        if isinstance(json_data, dict):
+            if "meta" in json_data:
+                return_data["meta"] = json_data.get("meta", {})
+                return_data["data"] = json_data.get("data", [])
+            else:
+                return_data["data"] = [json_data]
+        if isinstance(json_data, list):
+            return_data["data"] = json_data
+
+        return return_data
 
 
 # @dataclass

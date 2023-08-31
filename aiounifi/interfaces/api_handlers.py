@@ -5,7 +5,7 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
 from typing import TYPE_CHECKING, Any, Generic, final
 
-from ..models.api import ApiItemT, ApiRequest
+from ..models.api import ApiItemT, ApiRequest, TypedApiResponse
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -98,14 +98,13 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     async def update(self) -> None:
         """Refresh data."""
-        raw = await self.controller.request(self.api_request)
-        data = self.api_request.prepare_data(raw)
+        data = await self.controller.request(self.api_request)
         self.process_raw(data)
 
     @final
-    def process_raw(self, raw: list[dict[str, Any]]) -> None:
+    def process_raw(self, raw: TypedApiResponse) -> None:
         """Process full raw response."""
-        for raw_item in raw:
+        for raw_item in raw["data"]:
             self.process_item(raw_item)
 
     @final
