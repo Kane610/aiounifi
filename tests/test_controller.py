@@ -260,8 +260,8 @@ async def test_controller(
     assert unifi_called_with("get", "/api/s/default/rest/portforward")
     assert unifi_called_with("get", "/api/self/sites")
     assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
+    assert unifi_called_with("get", "/v2/api/site/default/trafficrules")
     assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
-    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
 
     assert len(unifi_controller.clients.items()) == 0
     assert len(unifi_controller.clients_all.items()) == 0
@@ -315,7 +315,11 @@ async def test_unifios_controller(
         "/proxy/network/api/self/sites",
         headers={"x-csrf-token": "123"},
     )
-    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/v2/api/site/default/trafficrules",
+        headers={"x-csrf-token": "123"},
+    )
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/rest/wlanconf",

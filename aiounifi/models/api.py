@@ -34,14 +34,8 @@ class ApiRequest:
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
 
-        if isinstance(json_data, dict):
-            if "meta" in json_data:
-                return_data["meta"] = json_data.get("meta", {})
-                return_data["data"] = json_data.get("data", [])
-            else:
-                return_data["data"] = [json_data]
-        if isinstance(json_data, list):
-            return_data["data"] = json_data
+        return_data["meta"] = json_data.get("meta", None)
+        return_data["data"] = json_data.get("data", None)
 
         return return_data
 

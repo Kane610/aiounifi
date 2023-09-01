@@ -3,7 +3,9 @@
 from dataclasses import dataclass
 from typing import NotRequired, Self, TypedDict
 
-from .api import ApiItem, ApiRequest
+import orjson
+
+from .api import ApiItem, ApiRequest, TypedApiResponse
 
 
 class BandwidthLimit(TypedDict):
@@ -94,6 +96,18 @@ class TrafficRuleRequest(ApiRequest):
         if is_unifi_os:
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
+
+    def prepare_data(self, raw: bytes) -> TypedApiResponse:
+        """Put data, received from the unifi controller, into a TypedApiResponse."""
+        json_data = orjson.loads(raw)
+        return_data: TypedApiResponse = {}
+
+        if isinstance(json_data, dict):
+            return_data["data"] = [json_data]
+        if isinstance(json_data, list):
+            return_data["data"] = json_data
+
+        return return_data
 
 
 @dataclass

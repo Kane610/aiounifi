@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
+from aiounifi.models.api import TypedApiResponse
 from aiounifi.models.port import Port
 
 from .fixtures import SWITCH_16_PORT_POE
@@ -37,7 +38,10 @@ async def test_handler_ports(unifi_controller):
     unsub_bad = ports.subscribe(mock_subscribe_bad := Mock(), id_filter="bad")
 
     # Add ports
-    unifi_controller.devices.process_raw([SWITCH_16_PORT_POE])
+    test_data: TypedApiResponse = {}
+    test_data["data"] = [SWITCH_16_PORT_POE]
+
+    unifi_controller.devices.process_raw(test_data)
     assert next(iter(ports)) == "fc:ec:da:11:22:33_1"
     assert "fc:ec:da:11:22:33_18" in ports
     assert isinstance(ports.get("fc:ec:da:11:22:33_18"), Port)
@@ -52,7 +56,7 @@ async def test_handler_ports(unifi_controller):
     mock_subscribe_bad.assert_not_called()
 
     # Update ports
-    unifi_controller.devices.process_raw([SWITCH_16_PORT_POE])
+    unifi_controller.devices.process_raw(test_data)
     assert len(ports.values()) == 18
     assert mock_subscribe_all.call_count == 36
     mock_subscribe_all.assert_called_with(ItemEvent.CHANGED, "fc:ec:da:11:22:33_18")
@@ -86,8 +90,11 @@ async def test_handler_ports(unifi_controller):
 
 async def test_handler_process_device_no_index(unifi_controller):
     """Verify that device ports works."""
+    test_data: TypedApiResponse = {}
+    test_data["data"] = [{"mac": "1", "port_table": [{}]}]
+
     ports = unifi_controller.ports
-    unifi_controller.devices.process_raw([{"mac": "1", "port_table": [{}]}])
+    unifi_controller.devices.process_raw(test_data)
     assert len(ports.items()) == 0
 
 

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.api_handlers import APIHandler, ItemEvent
+from aiounifi.models.api import TypedApiResponse
 
 
 @pytest.mark.parametrize(
@@ -37,11 +38,13 @@ async def test_api_handler_subscriptions(event_filter):
     handler.remove_item({"key": "2"})
 
     # Process raw
+    test_data: TypedApiResponse = {}
+    test_data["data"] = [{"key": "2"}]
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     mock_subscribe_cb.assert_called_with(ItemEvent.ADDED, "2")
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     mock_subscribe_cb.assert_called_with(ItemEvent.CHANGED, "2")
 
     handler.remove_item({"key": "2"})
@@ -79,11 +82,13 @@ async def test_api_handler_subscriptions_event_filter_added():
     handler.remove_item({"key": "2"})
 
     # Process raw
+    test_data: TypedApiResponse = {}
+    test_data["data"] = [{"key": "2"}]
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     mock_subscribe_cb.assert_called_with(ItemEvent.ADDED, "2")
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     assert mock_subscribe_cb.call_count == 2
 
     handler.remove_item({"key": "2"})
@@ -115,11 +120,13 @@ async def test_api_handler_subscriptions_id_filter():
     handler.remove_item({"key": "2"})
 
     # Process raw
+    test_data: TypedApiResponse = {}
+    test_data["data"] = [{"key": "2"}]
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     assert mock_subscribe_cb.call_count == 3
 
-    handler.process_raw([{"key": "2"}])
+    handler.process_raw(test_data)
     assert mock_subscribe_cb.call_count == 3
 
     handler.remove_item({"key": "2"})

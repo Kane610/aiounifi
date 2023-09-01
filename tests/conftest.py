@@ -11,6 +11,7 @@ import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
+from aiounifi.websocket import WebsocketSignal
 
 
 @pytest.fixture(name="mock_aioresponse")
@@ -91,6 +92,7 @@ async def mock_wsclient(
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
+    v2: bool,
     client_payload: list[dict[str, Any]],
     clients_all_payload: list[dict[str, Any]],
     device_payload: list[dict[str, Any]],
@@ -109,7 +111,7 @@ def endpoint_fixture(
     ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
-        data = {"meta": {"rc": "OK"}, "data": payload}
+        data = payload if v2 else {"meta": {"rc": "OK"}, "data": payload}
         mock_aioresponse.get(f"https://host:8443{url}", payload=data)
 
     mock_get_request(
@@ -184,6 +186,7 @@ def endpoint_fixture(
         traffic_rule_payload,
     )
 
+
 @pytest.fixture(name="response_payload")
 def response_data_fixture() -> dict[str, Any]:
     """Response data."""
@@ -242,6 +245,7 @@ def system_information_data_fixture() -> list[dict[str, Any]]:
 def wlan_data_fixture() -> list[dict[str, Any]]:
     """WLAN data."""
     return []
+
 
 @pytest.fixture(name="traffic_rule_payload")
 def traffic_rule_data_fixture() -> list[dict[str, Any]]:

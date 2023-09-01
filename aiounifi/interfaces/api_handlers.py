@@ -104,8 +104,9 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def process_raw(self, raw: TypedApiResponse) -> None:
         """Process full raw response."""
-        for raw_item in raw["data"]:
-            self.process_item(raw_item)
+        if "data" in raw:
+            for raw_item in raw["data"]:
+                self.process_item(raw_item)
 
     @final
     def process_message(self, message: "Message") -> None:

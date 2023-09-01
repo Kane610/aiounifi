@@ -181,6 +181,6 @@ class Connectivity:
 
 def _raise_on_error(data: "TypedApiResponse") -> None:
     """Check response for error message."""
-    if "meta" in data and data["meta"]["rc"] == "error":
+    if "meta" in data and data["meta"] is not None and data["meta"]["rc"] == "error":
         LOGGER.error(data)
         raise_error(data["meta"]["msg"])
