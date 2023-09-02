@@ -76,8 +76,8 @@ async def mock_wsclient(
     unifi_controller: Controller,
 ) -> Callable[[dict[str, Any]], None]:
     """No real websocket allowed."""
-    with patch("aiounifi.controller.Connectivity.run_websocket") as ws_mock:
-        await unifi_controller.run_websocket()
+    with patch("aiounifi.controller.Connectivity.websocket") as ws_mock:
+        await unifi_controller.start_websocket()
 
         def new_ws_data_fn(data: dict[str, Any]) -> None:
             """Add and signal new websocket data."""

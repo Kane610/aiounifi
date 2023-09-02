@@ -153,7 +153,7 @@ class Connectivity:
         LOGGER.debug("data (from %s) %s", url, bytes_data)
         return res, bytes_data
 
-    async def run_websocket(self, callback: Callable[[dict[str, Any]], None]) -> None:
+    async def websocket(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Run websocket."""
         url = f"wss://{self.config.host}:{self.config.port}"
         url += "/proxy/network" if self.is_unifi_os else ""
