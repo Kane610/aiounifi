@@ -18,7 +18,6 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.websocket import WebsocketSignal
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
@@ -315,16 +314,6 @@ async def test_unifios_controller(
         "/proxy/network/api/s/default/rest/wlanconf",
         headers={"x-csrf-token": "123"},
     )
-
-
-async def test_no_websocket_callback(unifi_controller):
-    """Test asserts of no websocket callback."""
-    with pytest.raises(AssertionError):
-        unifi_controller.session_handler(WebsocketSignal.DATA)
-    with pytest.raises(AssertionError):
-        unifi_controller.session_handler(WebsocketSignal.CONNECTION_STATE)
-
-    assert not unifi_controller.stop_websocket()
 
 
 async def test_unifios_controller_no_csrf_token(

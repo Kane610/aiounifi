@@ -20,7 +20,6 @@ from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
-from .websocket import WebsocketSignal, WebsocketState, WSClient
 
 if TYPE_CHECKING:
     from .models.api import ApiRequest, TypedApiResponse
@@ -34,9 +33,6 @@ class Controller:
     def __init__(self, config: Configuration) -> None:
         """Session setup."""
         self.connectivity = Connectivity(config)
-
-        self.websocket: WSClient | None = None
-        self.ws_state_callback: Callable[[WebsocketState], None] | None = None
 
         self.messages = MessageHandler(self)
         self.events = EventHandler(self)
@@ -81,32 +77,3 @@ class Controller:
     async def run_websocket(self) -> None:
         """Start websocket session."""
         await self.connectivity.run_websocket(self.messages.handler)
-
-    def start_websocket(self) -> None:
-        """Start websession and websocket to UniFi."""
-        self.websocket = WSClient(
-            self.connectivity.config,
-            callback=self.session_handler,
-            is_unifi_os=self.connectivity.is_unifi_os,
-        )
-        self.websocket.start()
-
-    def stop_websocket(self) -> None:
-        """Close websession and websocket to UniFi."""
-        LOGGER.info("Shutting down connections to UniFi.")
-        if self.websocket:
-            self.websocket.stop()
-
-    def session_handler(self, signal: WebsocketSignal) -> None:
-        """Signalling from websocket.
-
-        data - new data available for processing.
-        state - network state has changed.
-        """
-        assert self.websocket
-
-        if signal == WebsocketSignal.DATA:
-            self.messages.handler(self.websocket.data)
-
-        elif signal == WebsocketSignal.CONNECTION_STATE and self.ws_state_callback:
-            self.ws_state_callback(self.websocket.state)
