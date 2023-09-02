@@ -86,7 +86,7 @@ async def main(
         return
 
     await controller.initialize()
-    ws_task = asyncio.create_task(controller.run_websocket())
+    ws_task = asyncio.create_task(controller.start_websocket())
 
     try:
         while True:
