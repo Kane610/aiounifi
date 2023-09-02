@@ -1,6 +1,6 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -152,6 +152,34 @@ class Connectivity:
 
         LOGGER.debug("data (from %s) %s", url, bytes_data)
         return res, bytes_data
+
+    async def run_websocket(self, callback: Callable[[dict[str, Any]], None]) -> None:
+        """Run websocket."""
+        url = f"wss://{self.config.host}:{self.config.port}"
+        url += "/proxy/network" if self.is_unifi_os else ""
+        url += f"/wss/s/{self.config.site}/events"
+
+        try:
+            async with self.config.session.ws_connect(
+                url, ssl=self.config.ssl_context, heartbeat=15
+            ) as websocket:
+                async for msg in websocket:
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        if LOGGER.isEnabledFor(logging.DEBUG):
+                            LOGGER.debug(msg.data)
+                        data = orjson.loads(msg.data)
+                        callback(data)
+
+                    elif msg.type == aiohttp.WSMsgType.CLOSED:
+                        LOGGER.warning("AIOHTTP websocket connection closed")
+                        break
+
+                    elif msg.type == aiohttp.WSMsgType.ERROR:
+                        LOGGER.error("AIOHTTP websocket error: '%s'", msg.data)
+                        break
+
+        except aiohttp.ClientConnectorError:
+            LOGGER.error("Client connection error")
 
 
 def _raise_on_error(data: "TypedApiResponse") -> None:

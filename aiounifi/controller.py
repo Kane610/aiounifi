@@ -78,6 +78,10 @@ class Controller:
         """Load UniFi parameters."""
         await asyncio.gather(*[update() for update in self.update_handlers])
 
+    async def run_websocket(self) -> None:
+        """Start websocket session."""
+        await self.connectivity.run_websocket(self.messages.handler)
+
     def start_websocket(self) -> None:
         """Start websession and websocket to UniFi."""
         self.websocket = WSClient(

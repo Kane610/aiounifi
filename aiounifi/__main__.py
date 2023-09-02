@@ -99,7 +99,7 @@ async def main(
         return
 
     await controller.initialize()
-    controller.start_websocket()
+    ws_task = asyncio.create_task(controller.run_websocket())
 
     try:
         while True:
@@ -109,7 +109,7 @@ async def main(
         pass
 
     finally:
-        controller.stop_websocket()
+        ws_task.cancel()
         await websession.close()
 
 
