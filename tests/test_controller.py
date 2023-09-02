@@ -18,7 +18,7 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.websocket import WebsocketSignal, WebsocketState
+from aiounifi.websocket import WebsocketSignal
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
@@ -271,12 +271,6 @@ async def test_controller(
     assert len(unifi_controller.system_information.items()) == 0
     assert len(unifi_controller.wlans.items()) == 0
 
-    assert unifi_controller.websocket.url == "wss://host:8443/wss/s/default/events"
-    assert unifi_controller.websocket.state == WebsocketState.STARTING
-
-    unifi_controller.stop_websocket()
-    assert unifi_controller.websocket.state == WebsocketState.STOPPED
-
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
@@ -320,10 +314,6 @@ async def test_unifios_controller(
         "get",
         "/proxy/network/api/s/default/rest/wlanconf",
         headers={"x-csrf-token": "123"},
-    )
-    assert (
-        unifi_controller.websocket.url
-        == "wss://host:8443/proxy/network/wss/s/default/events"
     )
 
 

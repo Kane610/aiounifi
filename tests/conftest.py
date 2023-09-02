@@ -10,7 +10,6 @@ import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
-from aiounifi.websocket import WebsocketSignal
 
 
 @pytest.fixture(name="mock_aioresponse")
@@ -77,14 +76,12 @@ async def mock_wsclient(
     unifi_controller: Controller,
 ) -> Callable[[dict[str, Any]], None]:
     """No real websocket allowed."""
-    with patch("aiounifi.websocket.WSClient.running"):
-        unifi_controller.start_websocket()
+    with patch("aiounifi.controller.Connectivity.run_websocket") as ws_mock:
+        await unifi_controller.run_websocket()
 
         def new_ws_data_fn(data: dict[str, Any]) -> None:
             """Add and signal new websocket data."""
-            assert unifi_controller.websocket
-            unifi_controller.websocket._data = data  # pylint: disable=protected-access
-            unifi_controller.session_handler(WebsocketSignal.DATA)
+            ws_mock.call_args[0][0](data)
 
         return new_ws_data_fn
 

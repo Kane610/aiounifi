@@ -179,7 +179,7 @@ class Connectivity:
                         break
 
         except aiohttp.ClientConnectorError:
-            LOGGER.error("Client connection error")
+            LOGGER.error("Websocket client connection error")
 
 
 def _raise_on_error(data: "TypedApiResponse") -> None:
