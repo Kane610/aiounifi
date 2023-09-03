@@ -1,6 +1,6 @@
 """Port forwarding in a UniFi network."""
 from dataclasses import dataclass
-from typing import Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -10,7 +10,7 @@ class TypedPortForward(TypedDict):
 
     _id: str
     dst_port: str
-    enabled: bool
+    enabled: NotRequired[bool]
     fwd_port: str
     fwd: str
     name: str
@@ -64,7 +64,7 @@ class PortForward(ApiItem):
     @property
     def enabled(self) -> bool:
         """Is port forward enabled."""
-        return self.raw["enabled"]
+        return self.raw.get("enabled", False)
 
     @property
     def forward_port(self) -> str:
