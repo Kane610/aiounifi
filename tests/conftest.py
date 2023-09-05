@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import aiohttp
 from aioresponses import aioresponses
+import orjson
 import pytest
 
 from aiounifi.controller import Controller
@@ -80,8 +81,8 @@ async def mock_wsclient(
         await unifi_controller.start_websocket()
 
         def new_ws_data_fn(data: dict[str, Any]) -> None:
-            """Add and signal new websocket data."""
-            ws_mock.call_args[0][0](data)
+            """Process new websocket data."""
+            ws_mock.call_args[0][0](orjson.dumps(data))
 
         return new_ws_data_fn
 

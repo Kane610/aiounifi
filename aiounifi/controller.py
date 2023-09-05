@@ -76,4 +76,4 @@ class Controller:
 
     async def start_websocket(self) -> None:
         """Start websocket session."""
-        await self.connectivity.websocket(self.messages.handler)
+        await self.connectivity.websocket(self.messages.new_data)

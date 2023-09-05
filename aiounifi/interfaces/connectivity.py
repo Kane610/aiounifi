@@ -61,8 +61,7 @@ class Connectivity:
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type == "application/json":
-            data = orjson.loads(bytes_data)
-            _raise_on_error(data)
+            _raise_on_error(orjson.loads(bytes_data))
 
         if (
             response.status == HTTPStatus.OK
@@ -85,8 +84,7 @@ class Connectivity:
             )
 
             if response.content_type == "application/json":
-                data = orjson.loads(bytes_data)
-                _raise_on_error(data)
+                _raise_on_error(data := orjson.loads(bytes_data))
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -153,7 +151,7 @@ class Connectivity:
         LOGGER.debug("data (from %s) %s", url, bytes_data)
         return res, bytes_data
 
-    async def websocket(self, callback: Callable[[dict[str, Any]], None]) -> None:
+    async def websocket(self, callback: Callable[[bytes], None]) -> None:
         """Run websocket."""
         url = f"wss://{self.config.host}:{self.config.port}"
         url += "/proxy/network" if self.is_unifi_os else ""
