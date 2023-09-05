@@ -1,7 +1,7 @@
 """Clients are devices on a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Self, TypedDict
+from typing import Self, TypedDict, cast
 
 from .api import ApiItem, ApiRequest
 
@@ -311,11 +311,9 @@ class Client(ApiItem):
         return self.raw.get("rx_bytes", 0)
 
     @property
-    def rx_bytes_r(self) -> int:
+    def rx_bytes_r(self) -> float:
         """Bytes recently received over wireless connection."""
-        value = self.raw.get("rx_bytes-r", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(float, self.raw.get("rx_bytes-r", 0.0))
 
     @property
     def tx_bytes(self) -> int:
@@ -323,11 +321,9 @@ class Client(ApiItem):
         return self.raw.get("tx_bytes", 0)
 
     @property
-    def tx_bytes_r(self) -> int:
+    def tx_bytes_r(self) -> float:
         """Bytes recently transferred over wireless connection."""
-        value = self.raw.get("tx_bytes-r", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(float, self.raw.get("tx_bytes-r", 0.0))
 
     @property
     def uptime(self) -> int:
@@ -357,27 +353,19 @@ class Client(ApiItem):
     @property
     def wired_rx_bytes(self) -> int:
         """Bytes received over wired connection."""
-        value = self.raw.get("wired-rx_bytes", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(int, self.raw.get("wired-rx_bytes", 0))
 
     @property
-    def wired_rx_bytes_r(self) -> int:
+    def wired_rx_bytes_r(self) -> float:
         """Bytes recently received over wired connection."""
-        value = self.raw.get("wired-rx_bytes-r", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(float, self.raw.get("wired-rx_bytes-r", 0.0))
 
     @property
     def wired_tx_bytes(self) -> int:
         """Bytes transferred over wired connection."""
-        value = self.raw.get("wired-tx_bytes", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(int, self.raw.get("wired-tx_bytes", 0))
 
     @property
-    def wired_tx_bytes_r(self) -> int:
+    def wired_tx_bytes_r(self) -> float:
         """Bytes recently transferred over wired connection."""
-        value = self.raw.get("wired-tx_bytes-r", 0)
-        assert isinstance(value, int)
-        return value
+        return cast(float, self.raw.get("wired-tx_bytes-r", 0.0))
