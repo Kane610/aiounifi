@@ -38,6 +38,7 @@ class MessageKey(enum.Enum):
     PORT_FORWARD_UPDATED = "portforward:sync"
     PORT_FORWARD_DELETED = "portforward:delete"
     SCHEDULE_TASK_ADDED = "scheduletask:add"
+    SESSION_METADATA = "session-metadata:sync"
     SETTING_UPDATED = "setting:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
