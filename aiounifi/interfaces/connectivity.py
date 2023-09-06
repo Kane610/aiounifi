@@ -165,7 +165,7 @@ class Connectivity:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         if LOGGER.isEnabledFor(logging.DEBUG):
                             LOGGER.debug(msg.data)
-                        callback(orjson.loads(msg.data))
+                        callback(msg.data)
 
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
                         LOGGER.warning("AIOHTTP websocket connection closed")
