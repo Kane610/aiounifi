@@ -388,7 +388,7 @@ class TypedDevice(TypedDict):
     inform_ip: str
     inform_url: str
     internet: bool
-    ip: str
+    ip: NotRequired[str]
     isolated: bool
     jumboframe_enabled: bool
     kernel_version: str
@@ -709,16 +709,6 @@ class Device(ApiItem):
         return self.raw.get("downlink_table", [])
 
     @property
-    def id(self) -> str:
-        """ID of device."""
-        return self.raw["device_id"]
-
-    @property
-    def ip(self) -> str:
-        """IP of device."""
-        return self.raw["ip"]
-
-    @property
     def fan_level(self) -> int | None:
         """Fan level of device."""
         return self.raw.get("fan_level")
@@ -737,6 +727,16 @@ class Device(ApiItem):
     def has_temperature(self) -> bool:
         """Do the device have a general temperature."""
         return self.raw.get("has_temperature", False)
+
+    @property
+    def id(self) -> str:
+        """ID of device."""
+        return self.raw["device_id"]
+
+    @property
+    def ip(self) -> str | None:
+        """IP of device."""
+        return self.raw.get("ip")
 
     @property
     def last_seen(self) -> int | None:
