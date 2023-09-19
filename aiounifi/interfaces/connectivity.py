@@ -160,19 +160,19 @@ class Connectivity:
         try:
             async with self.config.session.ws_connect(
                 url, ssl=self.config.ssl_context, heartbeat=15
-            ) as websocket:
-                async for msg in websocket:
-                    if msg.type == aiohttp.WSMsgType.TEXT:
+            ) as websocket_connection:
+                async for message in websocket_connection:
+                    if message.type == aiohttp.WSMsgType.TEXT:
                         if LOGGER.isEnabledFor(logging.DEBUG):
-                            LOGGER.debug(msg.data)
-                        callback(msg.data)
+                            LOGGER.debug(message.data)
+                        callback(message.data)
 
-                    elif msg.type == aiohttp.WSMsgType.CLOSED:
+                    elif message.type == aiohttp.WSMsgType.CLOSED:
                         LOGGER.warning("AIOHTTP websocket connection closed")
                         break
 
-                    elif msg.type == aiohttp.WSMsgType.ERROR:
-                        LOGGER.error("AIOHTTP websocket error: '%s'", msg.data)
+                    elif message.type == aiohttp.WSMsgType.ERROR:
+                        LOGGER.error("AIOHTTP websocket error: '%s'", message.data)
                         break
 
         except aiohttp.ClientConnectorError:
