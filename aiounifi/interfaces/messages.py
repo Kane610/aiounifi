@@ -3,6 +3,8 @@ from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Any
 
+import orjson
+
 from ..models.message import Message, MessageKey
 
 if TYPE_CHECKING:
@@ -49,8 +51,12 @@ class MessageHandler:
 
         return unsubscribe
 
+    def new_data(self, raw_bytes: bytes) -> None:
+        """Convert bytes data into parseable JSON data.."""
+        self.handler(orjson.loads(raw_bytes))
+
     def handler(self, raw: dict[str, Any]) -> None:
-        """Receive message from websocket and identifies where the message belong."""
+        """Process data and identify where the message belongs."""
         if "meta" not in raw or "data" not in raw:
             return
 

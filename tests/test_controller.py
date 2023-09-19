@@ -3,9 +3,11 @@
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
 
+import ssl
 
-from aiohttp import client_exceptions
+from aiohttp import ClientSession, client_exceptions, web
 import pytest
+import trustme
 
 from aiounifi import (
     BadGateway,
@@ -18,7 +20,8 @@ from aiounifi import (
     TwoFaTokenRequired,
     Unauthorized,
 )
-from aiounifi.websocket import WebsocketSignal, WebsocketState
+from aiounifi.controller import Controller
+from aiounifi.models.configuration import Configuration
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
@@ -271,12 +274,6 @@ async def test_controller(
     assert len(unifi_controller.system_information.items()) == 0
     assert len(unifi_controller.wlans.items()) == 0
 
-    assert unifi_controller.websocket.url == "wss://host:8443/wss/s/default/events"
-    assert unifi_controller.websocket.state == WebsocketState.STARTING
-
-    unifi_controller.stop_websocket()
-    assert unifi_controller.websocket.state == WebsocketState.STOPPED
-
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
 async def test_unifios_controller(
@@ -321,20 +318,6 @@ async def test_unifios_controller(
         "/proxy/network/api/s/default/rest/wlanconf",
         headers={"x-csrf-token": "123"},
     )
-    assert (
-        unifi_controller.websocket.url
-        == "wss://host:8443/proxy/network/wss/s/default/events"
-    )
-
-
-async def test_no_websocket_callback(unifi_controller):
-    """Test asserts of no websocket callback."""
-    with pytest.raises(AssertionError):
-        unifi_controller.session_handler(WebsocketSignal.DATA)
-    with pytest.raises(AssertionError):
-        unifi_controller.session_handler(WebsocketSignal.CONNECTION_STATE)
-
-    assert not unifi_controller.stop_websocket()
 
 
 async def test_unifios_controller_no_csrf_token(
@@ -409,9 +392,52 @@ async def test_handle_unsupported_events(
     unifi_controller, unsupported_message, _new_ws_data_fn
 ):
     """Test controller properly ignores unsupported events."""
-
     unifi_controller.ws_state_callback.reset_mock()
     _new_ws_data_fn({"meta": {"message": unsupported_message}})
     unifi_controller.ws_state_callback.assert_not_called()
 
     assert len(unifi_controller.clients.items()) == 0
+
+
+async def test_websocket(aiohttp_server) -> None:
+    """Test positive websocket."""
+
+    tls_certificate_authority = trustme.CA()
+    tls_certificate = tls_certificate_authority.issue_server_cert(
+        "localhost", "127.0.0.1", "::1"
+    )
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    tls_certificate.configure_cert(ssl_context)
+
+    async def handler(request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+
+        await ws.send_json({"meta": {"message": "device:update"}})
+        await ws.send_json(
+            {
+                "meta": {"rc": "ok", "message": "dpigroup:add"},
+                "data": [
+                    {
+                        "name": "dpi group",
+                        "site_id": "5f3edd27ba4cc806a19f2d9c",
+                        "_id": "61783dbdc1773a18c0c61ef6",
+                    }
+                ],
+            }
+        )
+
+        await ws.close()
+        return ws
+
+    app = web.Application()
+    app.router.add_get("/wss/s/default/events", handler)
+    await aiohttp_server(app, port=8443, ssl=ssl_context)
+
+    config = Configuration(
+        ClientSession(), "0.0.0.0", username="user", password="pass", ssl_context=False
+    )
+    controller = Controller(config)
+    await controller.start_websocket()
+
+    assert len(controller.dpi_groups.items()) == 1

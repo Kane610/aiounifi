@@ -1,6 +1,6 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -61,8 +61,7 @@ class Connectivity:
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type == "application/json":
-            data = orjson.loads(bytes_data)
-            _raise_on_error(data)
+            _raise_on_error(orjson.loads(bytes_data))
 
         if (
             response.status == HTTPStatus.OK
@@ -85,8 +84,7 @@ class Connectivity:
             )
 
             if response.content_type == "application/json":
-                data = orjson.loads(bytes_data)
-                _raise_on_error(data)
+                _raise_on_error(data := orjson.loads(bytes_data))
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -152,6 +150,33 @@ class Connectivity:
 
         LOGGER.debug("data (from %s) %s", url, bytes_data)
         return res, bytes_data
+
+    async def websocket(self, callback: Callable[[bytes], None]) -> None:
+        """Run websocket."""
+        url = f"wss://{self.config.host}:{self.config.port}"
+        url += "/proxy/network" if self.is_unifi_os else ""
+        url += f"/wss/s/{self.config.site}/events"
+
+        try:
+            async with self.config.session.ws_connect(
+                url, ssl=self.config.ssl_context, heartbeat=15
+            ) as websocket_connection:
+                async for message in websocket_connection:
+                    if message.type == aiohttp.WSMsgType.TEXT:
+                        if LOGGER.isEnabledFor(logging.DEBUG):
+                            LOGGER.debug(message.data)
+                        callback(message.data)
+
+                    elif message.type == aiohttp.WSMsgType.CLOSED:
+                        LOGGER.warning("AIOHTTP websocket connection closed")
+                        break
+
+                    elif message.type == aiohttp.WSMsgType.ERROR:
+                        LOGGER.error("AIOHTTP websocket error: '%s'", message.data)
+                        break
+
+        except aiohttp.ClientConnectorError:
+            LOGGER.error("Websocket client connection error")
 
 
 def _raise_on_error(data: "TypedApiResponse") -> None:

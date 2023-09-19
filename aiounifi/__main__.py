@@ -3,10 +3,8 @@
 import argparse
 import asyncio
 from asyncio.timeouts import timeout
-from collections.abc import Callable
 import logging
 from ssl import SSLContext
-from typing import TYPE_CHECKING
 
 import aiohttp
 
@@ -14,15 +12,7 @@ import aiounifi
 from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
 
-if TYPE_CHECKING:
-    from aiounifi.websocket import WebsocketState
-
 LOGGER = logging.getLogger(__name__)
-
-
-def signalling_callback(data: "WebsocketState") -> None:
-    """Receive and print events from websocket."""
-    LOGGER.info("%s", data)
 
 
 async def unifi_controller(
@@ -33,7 +23,6 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | bool,
-    callback: Callable[["WebsocketState"], None],
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -47,7 +36,6 @@ async def unifi_controller(
             ssl_context=ssl_context,
         )
     )
-    controller.ws_state_callback = callback
 
     try:
         async with timeout(10):
@@ -90,7 +78,6 @@ async def main(
         site=site,
         session=websession,
         ssl_context=ssl_context,
-        callback=signalling_callback,
     )
 
     if not controller:
@@ -99,7 +86,7 @@ async def main(
         return
 
     await controller.initialize()
-    controller.start_websocket()
+    ws_task = asyncio.create_task(controller.start_websocket())
 
     try:
         while True:
@@ -109,7 +96,7 @@ async def main(
         pass
 
     finally:
-        controller.stop_websocket()
+        ws_task.cancel()
         await websession.close()
 
 
