@@ -184,4 +184,3 @@ def _raise_on_error(data: "TypedApiResponse") -> None:
     if "meta" in data and data["meta"]["rc"] == "error":
         LOGGER.error(data)
         raise_error(data["meta"]["msg"])
-
