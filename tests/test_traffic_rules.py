@@ -46,7 +46,6 @@ async def test_no_traffic_rules(
     assert len(traffic_rules.values()) == 0
 
 
-@pytest.mark.parametrize("v2", [True])
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 async def test_traffic_rules(
     mock_aioresponse, unifi_controller, _mock_endpoints, unifi_called_with

@@ -99,14 +99,20 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     async def update(self) -> None:
         """Refresh data."""
         data = await self.controller.request(self.api_request)
-        self.process_raw(data)
+        self.process_typed_api_response(data)
 
     @final
-    def process_raw(self, raw: TypedApiResponse) -> None:
+    def process_typed_api_response(self, response: TypedApiResponse) -> None:
+        """Process full typed API response"""
+        if "data" in response:
+            for response_item in response["data"]:
+                self.process_item(response_item)
+
+    @final
+    def process_raw(self, raw: list[dict[str, Any]]) -> None:
         """Process full raw response."""
-        if "data" in raw:
-            for raw_item in raw["data"]:
-                self.process_item(raw_item)
+        for raw_item in raw:
+            self.process_item(raw_item)
 
     @final
     def process_message(self, message: "Message") -> None:

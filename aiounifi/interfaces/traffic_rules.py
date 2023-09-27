@@ -1,4 +1,4 @@
-"""WLANs as part of a UniFi network."""
+"""Traffic rules as part of a UniFi network."""
 
 from copy import deepcopy
 
@@ -33,5 +33,5 @@ class TrafficRules(APIHandler[TrafficRule]):
         traffic_rule_response = await self.controller.request(
             TrafficRuleEnableRequest.create(traffic_rule_dict, enable=state)
         )
-        self.controller.traffic_rules.process_raw(traffic_rule_response)
+        self.controller.traffic_rules.process_typed_api_response(traffic_rule_response)
         return traffic_rule_response

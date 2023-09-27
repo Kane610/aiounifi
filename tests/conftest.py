@@ -11,7 +11,6 @@ import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
-from aiounifi.websocket import WebsocketSignal
 
 
 @pytest.fixture(name="mock_aioresponse")
@@ -92,7 +91,6 @@ async def mock_wsclient(
 def endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
-    v2: bool,
     client_payload: list[dict[str, Any]],
     clients_all_payload: list[dict[str, Any]],
     device_payload: list[dict[str, Any]],
@@ -107,7 +105,7 @@ def endpoint_fixture(
     """Use fixtures to mock all endpoints."""
 
     def mock_get_request(
-        path: str, unifi_path: str, payload: list[dict[str, Any]]
+        path: str, unifi_path: str, payload: list[dict[str, Any]], v2: bool = False
     ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
@@ -158,32 +156,12 @@ def endpoint_fixture(
         "/v2/api/site/default/trafficrules",
         "/proxy/network/v2/api/site/default/trafficrules",
         traffic_rule_payload,
+        True,
     )
     mock_get_request(
         "/api/s/default/rest/wlanconf",
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
-    )
-
-
-@pytest.fixture(name="_mock_traffic_rule_endpoint")
-def endpoint_fixture(
-    mock_aioresponse: aioresponses,
-    is_unifi_os: bool,
-    traffic_rule_payload: list[dict[str, Any]],
-) -> None:
-    """Use fixtures to mock traffic rule endpoint."""
-
-    def mock_get_request(path: str, unifi_path: str, payload: dict[str, Any]) -> None:
-        """Register HTTP response mock."""
-        url = unifi_path if is_unifi_os else path
-        data = payload
-        mock_aioresponse.get(f"https://host:8443{url}", payload=data)
-
-    mock_get_request(
-        "/v2/api/site/default/trafficrules",
-        "/proxy/network/v2/api/site/default/trafficrules",
-        traffic_rule_payload,
     )
 
 

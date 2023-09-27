@@ -182,7 +182,6 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
 
     await unifi_controller.devices.update()
 
-
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
     """Test controller communicating with a UniFi OS controller with retries."""
     mock_aioresponse.get(

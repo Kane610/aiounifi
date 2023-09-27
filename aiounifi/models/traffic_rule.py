@@ -101,12 +101,19 @@ class TrafficRuleRequest(ApiRequest):
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
+        return_data["data"] = json_data
+        return return_data
 
-        if isinstance(json_data, dict):
-            return_data["data"] = [json_data]
-        if isinstance(json_data, list):
-            return_data["data"] = json_data
 
+@dataclass
+class TrafficRuleToggleRequest(TrafficRuleRequest):
+    """Data class with required properties of a traffic rule API request."""
+
+    def prepare_data(self, raw: bytes) -> TypedApiResponse:
+        """Put data, received from the unifi controller, into a TypedApiResponse."""
+        json_data = orjson.loads(raw)
+        return_data: TypedApiResponse = {}
+        return_data["data"] = [json_data]
         return return_data
 
 
@@ -121,7 +128,7 @@ class TrafficRuleListRequest(TrafficRuleRequest):
 
 
 @dataclass
-class TrafficRuleEnableRequest(TrafficRuleRequest):
+class TrafficRuleEnableRequest(TrafficRuleToggleRequest):
     """Request object for traffic rule enable."""
 
     @classmethod

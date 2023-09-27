@@ -31,12 +31,7 @@ class ApiRequest:
 
     def prepare_data(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
-        json_data = orjson.loads(raw)
-        return_data: TypedApiResponse = {}
-
-        return_data["meta"] = json_data.get("meta", None)
-        return_data["data"] = json_data.get("data", None)
-
+        return_data: TypedApiResponse = orjson.loads(raw)
         return return_data
 
 

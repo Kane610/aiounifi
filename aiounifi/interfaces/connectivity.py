@@ -84,7 +84,7 @@ class Connectivity:
             )
 
             if response.content_type == "application/json":
-                _raise_on_error(data := orjson.loads(bytes_data))
+                _raise_on_error(data := api_request.prepare_data(bytes_data))
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -181,6 +181,7 @@ class Connectivity:
 
 def _raise_on_error(data: "TypedApiResponse") -> None:
     """Check response for error message."""
-    if "meta" in data and data["meta"] is not None and data["meta"]["rc"] == "error":
+    if "meta" in data and data["meta"]["rc"] == "error":
         LOGGER.error(data)
         raise_error(data["meta"]["msg"])
+
