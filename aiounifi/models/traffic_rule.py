@@ -101,6 +101,12 @@ class TrafficRuleRequest(ApiRequest):
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
+
+        if "errorCode" in json_data:
+            meta = {"rc": "error", "msg": json_data["message"]}
+            return_data["meta"] = meta
+            return return_data
+
         return_data["data"] = json_data
         return return_data
 
@@ -113,6 +119,12 @@ class TrafficRuleToggleRequest(TrafficRuleRequest):
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
+
+        if "errorCode" in json_data:
+            meta = {"rc": "error", "msg": json_data["message"]}
+            return_data["meta"] = meta
+            return return_data
+
         return_data["data"] = [json_data]
         return return_data
 
