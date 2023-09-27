@@ -1,7 +1,7 @@
 """Traffic rules as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import NotRequired, Self, TypedDict
+from typing import Any, NotRequired, Self, TypedDict
 
 import orjson
 
@@ -97,16 +97,18 @@ class TrafficRuleRequest(ApiRequest):
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
 
+    def handle_error(self, json: dict[str, Any]) -> dict[str, Any]:
+        if "errorCode" in json:
+            meta = {"rc": "error", "msg": json["message"]}
+            return meta
+
+        return {"rc": "ok", "msg": ""}
+
     def prepare_data(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
-
-        if "errorCode" in json_data:
-            meta = {"rc": "error", "msg": json_data["message"]}
-            return_data["meta"] = meta
-            return return_data
-
+        return_data["meta"] = self.handle_error(json_data)
         return_data["data"] = json_data
         return return_data
 
@@ -119,12 +121,7 @@ class TrafficRuleToggleRequest(TrafficRuleRequest):
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         json_data = orjson.loads(raw)
         return_data: TypedApiResponse = {}
-
-        if "errorCode" in json_data:
-            meta = {"rc": "error", "msg": json_data["message"]}
-            return_data["meta"] = meta
-            return return_data
-
+        return_data["meta"] = self.handle_error(json_data)
         return_data["data"] = [json_data]
         return return_data
 
