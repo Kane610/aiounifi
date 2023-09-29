@@ -35,6 +35,31 @@ class ApiRequest:
         return return_data
 
 
+@dataclass
+class ApiRequestV2(ApiRequest):
+    """Data class with required properties of a V2 API request.
+    We need a way to indicate if, for our model, the v2 API must be called.
+    Therefore an intermediate dataclass 'ApiRequestV2' is made,
+    for passing the correct path and handling errors, so that it mimics v1.
+    This way, we do not need to alter any of the other classes that not
+    need to know about the version of the api used.
+    With the refactoring of the aiounifi-library, this is now possible.
+    """
+
+    def full_path(self, site: str, is_unifi_os: bool) -> str:
+        """Create url to work with a specific controller."""
+        if is_unifi_os:
+            return f"/proxy/network/v2/api/site/{site}{self.path}"
+        return f"/v2/api/site/{site}{self.path}"
+
+    def handle_error(self, json: dict[str, Any]) -> dict[str, Any]:
+        if "errorCode" in json:
+            meta = {"rc": "error", "msg": json["message"]}
+            return meta
+
+        return {"rc": "ok", "msg": ""}
+
+
 # @dataclass
 # class ApiItem(ABC):
 #     """Base class for all end points using APIItems class."""

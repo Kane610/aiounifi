@@ -5,7 +5,7 @@ from typing import Any, NotRequired, Self, TypedDict
 
 import orjson
 
-from .api import ApiItem, ApiRequest, TypedApiResponse
+from .api import ApiItem, ApiRequestV2, TypedApiResponse
 
 
 class BandwidthLimit(TypedDict):
@@ -81,28 +81,8 @@ class TypedTrafficRule(TypedDict):
 
 
 @dataclass
-class TrafficRuleRequest(ApiRequest):
+class TrafficRuleRequest(ApiRequestV2):
     """Data class with required properties of a traffic rule API request."""
-
-    """We need a way to indicate if, for our model, the v2 API must be called.
-    Therefore an intermediate dataclass 'TrafficRuleRequest' is made,
-    for passing the correct path. This way, we do not need to alter any of the
-    other classes that not need to know about the version of the api used.
-    With the refactoring of the aiounifi-library, this is now possible.
-    """
-
-    def full_path(self, site: str, is_unifi_os: bool) -> str:
-        """Create url to work with a specific controller."""
-        if is_unifi_os:
-            return f"/proxy/network/v2/api/site/{site}{self.path}"
-        return f"/v2/api/site/{site}{self.path}"
-
-    def handle_error(self, json: dict[str, Any]) -> dict[str, Any]:
-        if "errorCode" in json:
-            meta = {"rc": "error", "msg": json["message"]}
-            return meta
-
-        return {"rc": "ok", "msg": ""}
 
     def prepare_data(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
@@ -114,8 +94,8 @@ class TrafficRuleRequest(ApiRequest):
 
 
 @dataclass
-class TrafficRuleToggleRequest(TrafficRuleRequest):
-    """Data class with required properties of a traffic rule API request."""
+class TrafficRuleToggleRequest(ApiRequestV2):
+    """Data class with required properties of a traffic rule toggle API request."""
 
     def prepare_data(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
