@@ -39,10 +39,7 @@ async def test_handler_ports(unifi_controller):
     unsub_bad = outlets.subscribe(mock_subscribe_bad := Mock(), id_filter="bad")
 
     # Add outlets
-    test_data: TypedApiResponse = {}
-    test_data["data"] = [STRIP_UP6]
-
-    unifi_controller.devices.process_raw(test_data)
+    unifi_controller.devices.process_raw([STRIP_UP6])
     assert next(iter(outlets)) == "78:45:58:fc:16:7d_1"
     assert "78:45:58:fc:16:7d_2" in outlets
     assert isinstance(outlets.get("78:45:58:fc:16:7d_3"), Outlet)
@@ -57,7 +54,7 @@ async def test_handler_ports(unifi_controller):
     mock_subscribe_bad.assert_not_called()
 
     # Update outlets
-    unifi_controller.devices.process_raw(test_data)
+    unifi_controller.devices.process_raw([STRIP_UP6])
     assert len(outlets.values()) == 7
     assert mock_subscribe_all.call_count == 14
     mock_subscribe_all.assert_called_with(ItemEvent.CHANGED, "78:45:58:fc:16:7d_7")
@@ -91,11 +88,8 @@ async def test_handler_ports(unifi_controller):
 
 async def test_handler_process_device_no_index(unifi_controller):
     """Verify that device ports works."""
-    test_data: TypedApiResponse = {}
-    test_data["data"] = [{"mac": "1", "outlet_table": []}]
-
     ports = unifi_controller.ports
-    unifi_controller.devices.process_raw(test_data)
+    unifi_controller.devices.process_raw([{"mac": "1", "outlet_table": []}])
     assert len(ports.items()) == 0
 
 
