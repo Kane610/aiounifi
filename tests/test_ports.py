@@ -7,7 +7,6 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
-from aiounifi.models.api import TypedApiResponse
 from aiounifi.models.port import Port
 
 from .fixtures import SWITCH_16_PORT_POE
