@@ -29,7 +29,7 @@ class ApiRequest:
             return f"/proxy/network/api/s/{site}{self.path}"
         return f"/api/s/{site}{self.path}"
 
-    def prepare_data(self, raw: bytes) -> TypedApiResponse:
+    def decode(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         return_data: TypedApiResponse = orjson.loads(raw)
         return return_data
@@ -38,6 +38,7 @@ class ApiRequest:
 @dataclass
 class ApiRequestV2(ApiRequest):
     """Data class with required properties of a V2 API request.
+
     We need a way to indicate if, for our model, the v2 API must be called.
     Therefore an intermediate dataclass 'ApiRequestV2' is made,
     for passing the correct path and handling errors, so that it mimics v1.
@@ -53,11 +54,20 @@ class ApiRequestV2(ApiRequest):
         return f"/v2/api/site/{site}{self.path}"
 
     def handle_error(self, json: dict[str, Any]) -> dict[str, Any]:
+        """Handle errors in the response, if any, and put them in a common format."""
         if "errorCode" in json:
             meta = {"rc": "error", "msg": json["message"]}
             return meta
 
         return {"rc": "ok", "msg": ""}
+
+    def decode(self, raw: bytes) -> TypedApiResponse:
+        """Put data, received from the unifi controller, into a TypedApiResponse."""
+        json_data = orjson.loads(raw)
+        return_data: TypedApiResponse = {}
+        return_data["meta"] = self.handle_error(json_data)
+        return_data["data"] = json_data if isinstance(json_data, list) else [json_data]
+        return return_data
 
 
 # @dataclass

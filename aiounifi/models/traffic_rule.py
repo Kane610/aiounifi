@@ -1,11 +1,9 @@
 """Traffic rules as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Any, NotRequired, Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
-import orjson
-
-from .api import ApiItem, ApiRequestV2, TypedApiResponse
+from .api import ApiItem, ApiRequestV2
 
 
 class BandwidthLimit(TypedDict):
@@ -81,33 +79,7 @@ class TypedTrafficRule(TypedDict):
 
 
 @dataclass
-class TrafficRuleRequest(ApiRequestV2):
-    """Data class with required properties of a traffic rule API request."""
-
-    def prepare_data(self, raw: bytes) -> TypedApiResponse:
-        """Put data, received from the unifi controller, into a TypedApiResponse."""
-        json_data = orjson.loads(raw)
-        return_data: TypedApiResponse = {}
-        return_data["meta"] = self.handle_error(json_data)
-        return_data["data"] = json_data
-        return return_data
-
-
-@dataclass
-class TrafficRuleToggleRequest(ApiRequestV2):
-    """Data class with required properties of a traffic rule toggle API request."""
-
-    def prepare_data(self, raw: bytes) -> TypedApiResponse:
-        """Put data, received from the unifi controller, into a TypedApiResponse."""
-        json_data = orjson.loads(raw)
-        return_data: TypedApiResponse = {}
-        return_data["meta"] = self.handle_error(json_data)
-        return_data["data"] = [json_data]
-        return return_data
-
-
-@dataclass
-class TrafficRuleListRequest(TrafficRuleRequest):
+class TrafficRuleListRequest(ApiRequestV2):
     """Request object for traffic rule list."""
 
     @classmethod
@@ -117,7 +89,7 @@ class TrafficRuleListRequest(TrafficRuleRequest):
 
 
 @dataclass
-class TrafficRuleEnableRequest(TrafficRuleToggleRequest):
+class TrafficRuleEnableRequest(ApiRequestV2):
     """Request object for traffic rule enable."""
 
     @classmethod
