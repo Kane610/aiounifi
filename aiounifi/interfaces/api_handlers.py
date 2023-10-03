@@ -5,7 +5,7 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
 from typing import TYPE_CHECKING, Any, Generic, final
 
-from ..models.api import ApiItemT, ApiRequest, TypedApiResponse
+from ..models.api import ApiItemT, ApiRequest
 
 if TYPE_CHECKING:
     from ..controller import Controller
