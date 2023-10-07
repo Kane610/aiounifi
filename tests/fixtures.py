@@ -4571,7 +4571,7 @@ TRAFFIC_RULES = [
         },
         "description": "Test 1",
         "domains": [],
-        "enabled": False,
+        "enabled": True,
         "ip_addresses": [],
         "ip_ranges": [],
         "matching_target": "INTERNET",
