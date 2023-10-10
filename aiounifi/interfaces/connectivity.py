@@ -84,7 +84,7 @@ class Connectivity:
             )
 
             if response.content_type == "application/json":
-                _raise_on_error(data := orjson.loads(bytes_data))
+                _raise_on_error(data := api_request.decode(bytes_data))
 
         except LoginRequired:
             if not self.can_retry_login:

@@ -182,7 +182,6 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
 
     await unifi_controller.devices.update()
 
-
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
     """Test controller communicating with a UniFi OS controller with retries."""
     mock_aioresponse.get(
@@ -260,6 +259,7 @@ async def test_controller(
     assert unifi_called_with("get", "/api/s/default/rest/portforward")
     assert unifi_called_with("get", "/api/self/sites")
     assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
+    assert unifi_called_with("get", "/v2/api/site/default/trafficrules")
     assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
 
     assert len(unifi_controller.clients.items()) == 0
@@ -272,6 +272,7 @@ async def test_controller(
     assert len(unifi_controller.port_forwarding.items()) == 0
     assert len(unifi_controller.sites.items()) == 1
     assert len(unifi_controller.system_information.items()) == 0
+    assert len(unifi_controller.traffic_rules.items()) == 0
     assert len(unifi_controller.wlans.items()) == 0
 
 
@@ -311,6 +312,11 @@ async def test_unifios_controller(
     assert unifi_called_with(
         "get",
         "/proxy/network/api/self/sites",
+        headers={"x-csrf-token": "123"},
+    )
+    assert unifi_called_with(
+        "get",
+        "/proxy/network/v2/api/site/default/trafficrules",
         headers={"x-csrf-token": "123"},
     )
     assert unifi_called_with(
