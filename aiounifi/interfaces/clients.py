@@ -16,7 +16,6 @@ class Clients(APIHandler[Client]):
     """Represents client network devices."""
 
     obj_id_key = "mac"
-    path = ""
     item_cls = Client
     process_messages = (MessageKey.CLIENT,)
     remove_messages = (MessageKey.CLIENT_REMOVED,)

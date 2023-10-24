@@ -10,7 +10,6 @@ class Wlans(APIHandler[Wlan]):
     """Represents WLAN configurations."""
 
     obj_id_key = "_id"
-    path = "/rest/wlanconf"
     item_cls = Wlan
     process_messages = (MessageKey.WLAN_CONF_UPDATED,)
     api_request = WlanListRequest.create()
