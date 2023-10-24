@@ -109,7 +109,11 @@ def endpoint_fixture(
     ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
-        data = payload if path.startswith("/v2") else {"meta": {"rc": "OK"}, "data": payload}
+        data = (
+            payload
+            if path.startswith("/v2")
+            else {"meta": {"rc": "OK"}, "data": payload}
+        )
         mock_aioresponse.get(f"https://host:8443{url}", payload=data)
 
     mock_get_request(
