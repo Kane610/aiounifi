@@ -27,7 +27,7 @@ jobs:
           ruff check aiounifi tests
       - name: Format with Ruff
         run: |
-          ruff format --check aiounifi
+          ruff format --check aiounifi tests
       - name: Check typing with mypy
         run: |
           mypy aiounifi
