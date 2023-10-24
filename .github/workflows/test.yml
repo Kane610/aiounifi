@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install .[requirements] .[requirements_test]
-      - name: Checking lint with Ruff
+      - name: Check lint with Ruff
         run: |
           ruff check aiounifi tests
       - name: Check format with Ruff
