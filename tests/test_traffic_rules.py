@@ -74,13 +74,13 @@ async def test_traffic_rule_enable_disable(
     await traffic_rules.update()
 
     traffic_rule_id = TRAFFIC_RULES[0 if not enable else 1]["_id"]
+    traffic_rule_call = traffic_rules.disable if not enable else traffic_rules.enable
 
     mock_aioresponse.put(
         "https://host:8443/proxy/network/v2/api/site/default"
         + f"/trafficrules/{traffic_rule_id}",
         payload={},
     )
-    traffic_rule_call = traffic_rules.enable if enable else traffic_rules.disable
     await traffic_rule_call(traffic_rules[traffic_rule_id])
     traffic_rule = traffic_rules.get(traffic_rule_id)
     assert traffic_rule.enabled is enable
