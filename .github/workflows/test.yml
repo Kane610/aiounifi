@@ -25,9 +25,9 @@ jobs:
       - name: Lint with Ruff
         run: |
           ruff check aiounifi tests
-      - name: Check formatting with Black
+      - name: Format with Ruff
         run: |
-          black aiounifi --check
+          ruff format --check aiounifi
       - name: Check typing with mypy
         run: |
           mypy aiounifi
