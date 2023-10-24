@@ -59,8 +59,7 @@ async def test_traffic_rule_toggle(
         payload={},
     )
     await traffic_rules.toggle(traffic_rules[traffic_rule_id], enable)
-    traffic_rule = traffic_rules.get(traffic_rule_id)
-    assert traffic_rule.enabled is enable
+    assert traffic_rules[traffic_rule_id].enabled is enable
 
 
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
@@ -82,8 +81,7 @@ async def test_traffic_rule_enable_disable(
         payload={},
     )
     await traffic_rule_call(traffic_rules[traffic_rule_id])
-    traffic_rule = traffic_rules.get(traffic_rule_id)
-    assert traffic_rule.enabled is enable
+    assert traffic_rules[traffic_rule_id].enabled is enable
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
