@@ -13,7 +13,6 @@ class Devices(APIHandler[Device]):
     """Represents network devices."""
 
     obj_id_key = "mac"
-    path = ""
     item_cls = Device
     process_messages = (MessageKey.DEVICE,)
     api_request = DeviceListRequest.create()

@@ -15,7 +15,6 @@ class TrafficRules(APIHandler[TrafficRule]):
     """Represents TrafficRules configurations."""
 
     obj_id_key = "_id"
-    path = "/trafficrules"
     item_cls = TrafficRule
     api_request = TrafficRuleListRequest.create()
 
