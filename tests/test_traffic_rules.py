@@ -47,33 +47,20 @@ async def test_traffic_rule_enable_request(
 async def test_traffic_rule_toggle(
     mock_aioresponse, unifi_controller, _mock_endpoints, enable
 ):
-    """Test individual methods for enabled and disabled."""
+    """Test toggle method can enable and disable a traffic rule."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
 
-    traffic_rule_enabled_id = TRAFFIC_RULES[0]["_id"]
-    traffic_rule_disabled_id = TRAFFIC_RULES[1]["_id"]
-    traffic_rule_enabled = traffic_rules[traffic_rule_enabled_id]
-    traffic_rule_disabled = traffic_rules[traffic_rule_disabled_id]
+    traffic_rule_id = TRAFFIC_RULES[0 if not enable else 1]["_id"]
 
-    if enable:
-        mock_aioresponse.put(
-            "https://host:8443/proxy/network/v2/api/site/default"
-            + f"/trafficrules/{traffic_rule_disabled_id}",
-            payload={},
-        )
-        await traffic_rules.toggle(traffic_rule_disabled, enable)
-        traffic_rule = traffic_rules.get(traffic_rule_disabled_id)
-        assert traffic_rule.enabled is True
-    else:
-        mock_aioresponse.put(
-            "https://host:8443/proxy/network/v2/api/site/default"
-            + f"/default/trafficrules/{traffic_rule_enabled_id}",
-            payload={},
-        )
-        await traffic_rules.toggle(traffic_rule_enabled, enable)
-        traffic_rule = traffic_rules.get(traffic_rule_enabled_id)
-        assert traffic_rule.enabled is False
+    mock_aioresponse.put(
+        "https://host:8443/proxy/network/v2/api/site/default"
+        + f"/trafficrules/{traffic_rule_id}",
+        payload={},
+    )
+    await traffic_rules.toggle(traffic_rules[traffic_rule_id], enable)
+    traffic_rule = traffic_rules.get(traffic_rule_id)
+    assert traffic_rule.enabled is enable
 
 
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
@@ -85,30 +72,18 @@ async def test_traffic_rule_enable_disable(
     """Test individual methods for enabled and disabled."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
-    traffic_rule_enabled_id = TRAFFIC_RULES[0]["_id"]
-    traffic_rule_disabled_id = TRAFFIC_RULES[1]["_id"]
 
-    traffic_rule_enabled = traffic_rules[traffic_rule_enabled_id]
-    traffic_rule_disabled = traffic_rules[traffic_rule_disabled_id]
+    traffic_rule_id = TRAFFIC_RULES[0 if not enable else 1]["_id"]
 
-    if enable:
-        mock_aioresponse.put(
-            "https://host:8443/proxy/network/v2/api/site/default"
-            + f"/trafficrules/{traffic_rule_disabled_id}",
-            payload={},
-        )
-        await traffic_rules.enable(traffic_rule_disabled)
-        traffic_rule = traffic_rules.get(traffic_rule_disabled_id)
-        assert traffic_rule.enabled is True
-    else:
-        mock_aioresponse.put(
-            "https://host:8443/proxy/network/v2/api/site/default"
-            + f"/trafficrules/{traffic_rule_enabled_id}",
-            payload={},
-        )
-        await traffic_rules.disable(traffic_rule_enabled)
-        traffic_rule = traffic_rules.get(traffic_rule_enabled_id)
-        assert traffic_rule.enabled is False
+    mock_aioresponse.put(
+        "https://host:8443/proxy/network/v2/api/site/default"
+        + f"/trafficrules/{traffic_rule_id}",
+        payload={},
+    )
+    traffic_rule_call = traffic_rules.enable if enable else traffic_rules.disable
+    await traffic_rule_call(traffic_rules[traffic_rule_id])
+    traffic_rule = traffic_rules.get(traffic_rule_id)
+    assert traffic_rule.enabled is enable
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
