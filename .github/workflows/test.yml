@@ -22,12 +22,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install .[requirements] .[requirements_test]
-      - name: Lint with Ruff
+      - name: Check lint with Ruff
         run: |
           ruff check aiounifi tests
-      - name: Check formatting with Black
+      - name: Check format with Ruff
         run: |
-          black aiounifi --check
+          ruff format --check aiounifi tests
       - name: Check typing with mypy
         run: |
           mypy aiounifi
