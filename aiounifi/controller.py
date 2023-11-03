@@ -75,7 +75,10 @@ class Controller:
 
     async def initialize(self) -> None:
         """Load UniFi parameters."""
-        await asyncio.gather(*[update() for update in self.update_handlers])
+        await asyncio.gather(
+            *[update() for update in self.update_handlers],
+            return_exceptions=True,
+        )
 
     async def start_websocket(self) -> None:
         """Start websocket session."""
