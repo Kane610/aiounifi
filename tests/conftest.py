@@ -105,7 +105,7 @@ def endpoint_fixture(
     """Use fixtures to mock all endpoints."""
 
     def mock_get_request(
-        path: str, unifi_path: str, payload: list[dict[str, Any]]
+        path: str, unifi_path: str, payload: list[dict[str, Any]] | None
     ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
