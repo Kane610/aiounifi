@@ -45,17 +45,3 @@ class BadGateway(RequestError):
 
 class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
-
-
-ERRORS = {
-    "api.err.LoginRequired": LoginRequired,
-    "api.err.Invalid": Unauthorized,
-    "api.err.NoPermission": NoPermission,
-    "api.err.Ubic2faTokenRequired": TwoFaTokenRequired,
-}
-
-
-def raise_error(error: str) -> None:
-    """Raise error."""
-    cls = ERRORS.get(error, AiounifiException)
-    raise cls(error)
