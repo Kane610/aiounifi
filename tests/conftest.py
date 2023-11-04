@@ -101,12 +101,16 @@ def endpoint_fixture(
     system_information_payload: list[dict[str, Any]],
     traffic_route_payload: list[dict[str, Any]],
     traffic_rule_payload: list[dict[str, Any]],
+    traffic_rule_status: int,
     wlan_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 
     def mock_get_request(
-        path: str, unifi_path: str, payload: list[dict[str, Any]] | None
+        path: str,
+        unifi_path: str,
+        payload: list[dict[str, Any]],
+        status: int = 200,
     ) -> None:
         """Register HTTP response mock."""
         url = unifi_path if is_unifi_os else path
@@ -115,7 +119,7 @@ def endpoint_fixture(
             if path.startswith("/v2")
             else {"meta": {"rc": "OK"}, "data": payload}
         )
-        mock_aioresponse.get(f"https://host:8443{url}", payload=data)
+        mock_aioresponse.get(f"https://host:8443{url}", payload=data, status=status)
 
     mock_get_request(
         "/api/s/default/stat/sta",
@@ -166,6 +170,7 @@ def endpoint_fixture(
         "/v2/api/site/default/trafficrules",
         "/proxy/network/v2/api/site/default/trafficrules",
         traffic_rule_payload,
+        traffic_rule_status,
     )
     mock_get_request(
         "/api/s/default/rest/wlanconf",
@@ -228,9 +233,9 @@ def system_information_data_fixture() -> list[dict[str, Any]]:
     return []
 
 
-@pytest.fixture(name="wlan_payload")
-def wlan_data_fixture() -> list[dict[str, Any]]:
-    """WLAN data."""
+@pytest.fixture(name="traffic_route_payload")
+def traffic_route_data_fixture() -> list[dict[str, Any]]:
+    """Traffic route data."""
     return []
 
 
@@ -240,7 +245,13 @@ def traffic_rule_data_fixture() -> list[dict[str, Any]]:
     return []
 
 
-@pytest.fixture(name="traffic_route_payload")
-def traffic_route_data_fixture() -> list[dict[str, Any]]:
-    """Traffic route data."""
+@pytest.fixture(name="traffic_rule_status")
+def traffic_rule_status_fixture() -> int:
+    """Traffic rule status."""
+    return 200
+
+
+@pytest.fixture(name="wlan_payload")
+def wlan_data_fixture() -> list[dict[str, Any]]:
+    """WLAN data."""
     return []

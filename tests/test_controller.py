@@ -399,6 +399,12 @@ async def test_controller_raise_expected_exception(
         await unifi_controller.connectivity.login()
 
 
+@pytest.mark.parametrize("traffic_rule_status", [404])
+async def test_initialize_handles_404(unifi_controller, _mock_endpoints):
+    """Validate initialize does not abort on exception."""
+    await unifi_controller.initialize()
+
+
 @pytest.mark.parametrize(
     "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
 )

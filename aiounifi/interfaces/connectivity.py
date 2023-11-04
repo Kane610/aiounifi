@@ -47,10 +47,7 @@ class Connectivity:
 
     async def login(self) -> None:
         """Log in to controller."""
-        if self.is_unifi_os:
-            url = f"{self.config.url}/api/auth/login"
-        else:
-            url = f"{self.config.url}/api/login"
+        url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
         auth = {
             "username": self.config.username,
