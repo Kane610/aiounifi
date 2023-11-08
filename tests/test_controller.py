@@ -76,7 +76,11 @@ async def test_login(
             json={"username": "user", "password": "pass", "remember": True},
         )
     else:
-        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload={"meta": {"rc": "ok"}, "data": []},
+            content_type="application/json",
+        )
         await unifi_controller.connectivity.login()
         assert unifi_called_with(
             "post",
@@ -112,7 +116,10 @@ async def test_controller_login(
         mock_aioresponse.get(
             "https://host:8443", content_type="application/octet-stream", status=302
         )
-        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload={"meta": {"rc": "ok"}, "data": []},
+        )
         await unifi_controller.login()
         assert unifi_called_with(
             "post",
