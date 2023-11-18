@@ -4629,3 +4629,34 @@ TRAFFIC_RULES = [
         ],
     },
 ]
+
+TRAFFIC_ROUTES = [
+    {
+        "_id": "4547ede96a62654e72293728",
+        "description": "TEST 1",
+        "domains": [],
+        "enabled": False,
+        "ip_addresses": [],
+        "ip_ranges": [],
+        "matching_target": "INTERNET",
+        "network_id": "6547e87f6e34654e72293637",
+        "regions": [],
+        "target_devices": [
+            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"},
+            {"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"},
+        ],
+    },
+    {
+        "_id": "754e83e45e62654e722a65ad",
+        "description": "TEST 2",
+        "domains": [],
+        "enabled": True,
+        "ip_addresses": [],
+        "ip_ranges": [],
+        "matching_target": "INTERNET",
+        "network_id": "6547ef4e6e62654e7229376b",
+        "next_hop": "",
+        "regions": [],
+        "target_devices": [{"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"}],
+    },
+]

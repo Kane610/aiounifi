@@ -4,6 +4,15 @@ from dataclasses import dataclass
 from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
+
+
+class PortRange(TypedDict):
+    """Port range type definition."""
+
+    port_start: int
+    port_stop: int
+
+
 class IPAddress(TypedDict):
     """IP Address for which traffic route is applicable type definition."""
 
@@ -12,12 +21,15 @@ class IPAddress(TypedDict):
     port_ranges: list[PortRange]
     ports: list[int]
 
+
 class IPRange(TypedDict):
     """IP Range type definition."""
 
     ip_start: str
     ip_stop: str
     ip_version: str
+
+
 class TargetDevice(TypedDict):
     """Target device to which the traffic route applies."""
 
@@ -40,10 +52,7 @@ class TypedTrafficRoute(TypedDict):
     regions: list[str]
     target_devices: list[TargetDevice]
 
-class TypedTrafficRouteUpsert(TypedTrafficRoute):
-    """Traffic route Upsert type definition."""
 
-    next_hop: str
 @dataclass
 class TrafficRouteListRequest(ApiRequestV2):
     """Request object for traffic route list."""
@@ -59,7 +68,7 @@ class TrafficRouteEnableRequest(ApiRequestV2):
     """Request object for traffic route enable."""
 
     @classmethod
-    def create(cls, traffic_route: TypedTrafficRouteUpsert, enable: bool) -> Self:
+    def create(cls, traffic_route: TypedTrafficRoute, enable: bool) -> Self:
         """Create traffic route enable request."""
         traffic_route["enabled"] = enable
         return cls(
@@ -88,11 +97,6 @@ class TrafficRoute(ApiItem):
     def enabled(self) -> bool:
         """Is traffic route enabled."""
         return self.raw["enabled"]
-
-    @property
-    def action(self) -> str:
-        """What action is defined by this traffic route."""
-        return self.raw["action"]
 
     @property
     def matching_target(self) -> str:

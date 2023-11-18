@@ -18,8 +18,8 @@ from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
 from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
-from .interfaces.traffic_rules import TrafficRules
 from .interfaces.traffic_routes import TrafficRoutes
+from .interfaces.traffic_rules import TrafficRules
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
 
