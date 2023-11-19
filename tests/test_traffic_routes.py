@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.traffic_route tests/test_traffic
 
 import pytest
 
-from aiounifi.models.traffic_route import TrafficRouteEnableRequest
+from aiounifi.models.traffic_route import TrafficRouteSaveRequest
 
 from .fixtures import TRAFFIC_ROUTES, WIRELESS_CLIENT
 
@@ -30,7 +30,7 @@ async def test_traffic_route_enable_request(
     )
 
     await unifi_controller.request(
-        TrafficRouteEnableRequest.create(traffic_route, enable)
+        TrafficRouteSaveRequest.create(traffic_route, enable)
     )
 
     traffic_route["enabled"] = enable
@@ -44,10 +44,10 @@ async def test_traffic_route_enable_request(
 @pytest.mark.parametrize("traffic_route_payload", [TRAFFIC_ROUTES])
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
-async def test_traffic_route_toggle(
+async def test_traffic_route_save(
     mock_aioresponse, unifi_controller, _mock_endpoints, enable
 ):
-    """Test toggle method can enable and disable a traffic route."""
+    """Test save method can enable and disable a traffic route."""
     traffic_routes = unifi_controller.traffic_routes
     await traffic_routes.update()
 
@@ -58,7 +58,7 @@ async def test_traffic_route_toggle(
         + f"/trafficroutes/{traffic_route_id}",
         payload={},
     )
-    await traffic_routes.toggle(traffic_routes[traffic_route_id], enable)
+    await traffic_routes.save(traffic_routes[traffic_route_id], enable)
     assert traffic_routes[traffic_route_id].enabled is enable
 
 

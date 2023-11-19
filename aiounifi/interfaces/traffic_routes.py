@@ -5,8 +5,8 @@ from copy import deepcopy
 from ..models.api import TypedApiResponse
 from ..models.traffic_route import (
     TrafficRoute,
-    TrafficRouteEnableRequest,
     TrafficRouteListRequest,
+    TrafficRouteSaveRequest,
 )
 from .api_handlers import APIHandler
 
@@ -20,19 +20,19 @@ class TrafficRoutes(APIHandler[TrafficRoute]):
 
     async def enable(self, traffic_route: TrafficRoute) -> TypedApiResponse:
         """Enable traffic route defined in controller."""
-        return await self.toggle(traffic_route, state=True)
+        return await self.save(traffic_route, state=True)
 
     async def disable(self, traffic_route: TrafficRoute) -> TypedApiResponse:
         """Disable traffic route defined in controller."""
-        return await self.toggle(traffic_route, state=False)
+        return await self.save(traffic_route, state=False)
 
-    async def toggle(
-        self, traffic_route: TrafficRoute, state: bool
+    async def save(
+        self, traffic_route: TrafficRoute, state: bool | None = None
     ) -> TypedApiResponse:
         """Set traffic route - defined in controller - to the desired state."""
         traffic_route_dict = deepcopy(traffic_route.raw)
         traffic_route_response = await self.controller.request(
-            TrafficRouteEnableRequest.create(traffic_route_dict, enable=state)
+            TrafficRouteSaveRequest.create(traffic_route_dict, enable=state)
         )
         self.process_raw(traffic_route_response.get("data", []))
         return traffic_route_response

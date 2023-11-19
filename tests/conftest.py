@@ -173,6 +173,11 @@ def endpoint_fixture(
         traffic_rule_status,
     )
     mock_get_request(
+        "/v2/api/site/default/trafficroutes",
+        "/proxy/network/v2/api/site/default/trafficroutes",
+        traffic_route_payload,
+    )
+    mock_get_request(
         "/api/s/default/rest/wlanconf",
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
