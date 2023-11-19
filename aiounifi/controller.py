@@ -18,6 +18,7 @@ from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
 from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
+from .interfaces.traffic_routes import TrafficRoutes
 from .interfaces.traffic_rules import TrafficRules
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
@@ -49,6 +50,7 @@ class Controller:
         self.sites = Sites(self)
         self.system_information = SystemInformationHandler(self)
         self.traffic_rules = TrafficRules(self)
+        self.traffic_routes = TrafficRoutes(self)
         self.wlans = Wlans(self)
 
         self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
@@ -61,6 +63,7 @@ class Controller:
             self.sites.update,
             self.system_information.update,
             self.traffic_rules.update,
+            self.traffic_routes.update,
             self.wlans.update,
         )
 
