@@ -26,7 +26,9 @@ class TrafficRoutes(APIHandler[TrafficRoute]):
         """Disable traffic route defined in controller."""
         return await self.toggle(traffic_route, state=False)
 
-    async def toggle(self, traffic_route: TrafficRoute, state: bool) -> TypedApiResponse:
+    async def toggle(
+        self, traffic_route: TrafficRoute, state: bool
+    ) -> TypedApiResponse:
         """Set traffic route - defined in controller - to the desired state."""
         traffic_route_dict = deepcopy(traffic_route.raw)
         traffic_route_response = await self.controller.request(
