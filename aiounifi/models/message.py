@@ -40,6 +40,7 @@ class MessageKey(enum.Enum):
     SCHEDULE_TASK_ADDED = "scheduletask:add"
     SESSION_METADATA = "session-metadata:sync"
     SETTING_UPDATED = "setting:sync"
+    SETUP_SYNC = "setup:sync"
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
     UNIFI_DEVICE_ADD = "unifi-device:add"
