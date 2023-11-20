@@ -84,7 +84,7 @@ class Connectivity:
                 api_request.method, url, api_request.data
             )
 
-            if response.content_type == api_request.content_type:
+            if response.content_type == "application/json":
                 data = api_request.decode(bytes_data)
 
         except LoginRequired:

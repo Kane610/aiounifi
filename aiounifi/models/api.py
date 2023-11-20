@@ -16,8 +16,8 @@ from ..errors import (
 )
 
 ERRORS = {
-    "api.err.LoginRequired": LoginRequired,
     "api.err.Invalid": Unauthorized,
+    "api.err.LoginRequired": LoginRequired,
     "api.err.NoPermission": NoPermission,
     "api.err.Ubic2faTokenRequired": TwoFaTokenRequired,
 }
@@ -37,7 +37,6 @@ class ApiRequest:
     method: str
     path: str
     data: Mapping[str, Any] | None = None
-    content_type = "application/json"
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""
