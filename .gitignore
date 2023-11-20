@@ -70,3 +70,6 @@ venv.bak/
 .ruff_cache
 
 .vscode/settings.json
+
+#Jetbrains
+.idea
