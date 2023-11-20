@@ -89,6 +89,7 @@ class EventKey(enum.Enum):
 
     XG_AUTO_READOPTED = "EVT_XG_AutoReadopted"
     XG_CONNECTED = "EVT_XG_Connected"
+    XG_LOST_CONTACT = "EVT_XG_Lost_Contact"
     XG_OUTLET_POWER_CYCLE = "EVT_XG_OutletPowerCycle"
 
     IPS_ALERT = "EVT_IPS_IpsAlert"
