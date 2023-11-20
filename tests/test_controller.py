@@ -479,7 +479,7 @@ api_request_data = [
 
 
 @pytest.mark.parametrize(("api_request", "path", "input", "expected"), api_request_data)
-async def test_api_request(
+async def test_api_request_error_handling(
     mock_aioresponse,
     unifi_controller: Controller,
     api_request,
@@ -494,7 +494,7 @@ async def test_api_request(
 
 
 @pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
-async def test_api_request2(
+async def test_api_request_generic_error_handling(
     mock_aioresponse,
     unifi_controller: Controller,
     unwanted_behavior,
