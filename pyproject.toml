@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "aiounifi"
-version     = "65"
+version     = "66"
 license     = {text = "MIT"}
 description = "Python library for communicating with UniFi Network Controller API"
 readme      = "README.md"
