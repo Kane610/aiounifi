@@ -7,6 +7,21 @@ from typing import Any, TypedDict, TypeVar
 
 import orjson
 
+from ..errors import (
+    AiounifiException,
+    LoginRequired,
+    NoPermission,
+    TwoFaTokenRequired,
+    Unauthorized,
+)
+
+ERRORS = {
+    "api.err.Invalid": Unauthorized,
+    "api.err.LoginRequired": LoginRequired,
+    "api.err.NoPermission": NoPermission,
+    "api.err.Ubic2faTokenRequired": TwoFaTokenRequired,
+}
+
 
 class TypedApiResponse(TypedDict, total=False):
     """Common response."""
@@ -31,21 +46,17 @@ class ApiRequest:
 
     def decode(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
-        return_data: TypedApiResponse = orjson.loads(raw)
-        return return_data
+        data: TypedApiResponse = orjson.loads(raw)
+
+        if "meta" in data and data["meta"]["rc"] == "error":
+            raise ERRORS.get(data["meta"]["msg"], AiounifiException)(data)
+
+        return data
 
 
 @dataclass
 class ApiRequestV2(ApiRequest):
-    """Data class with required properties of a V2 API request.
-
-    We need a way to indicate if, for our model, the v2 API must be called.
-    Therefore an intermediate dataclass 'ApiRequestV2' is made,
-    for passing the correct path and handling errors, so that it mimics v1.
-    This way, we do not need to alter any of the other classes that not
-    need to know about the version of the api used.
-    With the refactoring of the aiounifi-library, this is now possible.
-    """
+    """Data class with required properties of a V2 API request."""
 
     def full_path(self, site: str, is_unifi_os: bool) -> str:
         """Create url to work with a specific controller."""
@@ -53,21 +64,17 @@ class ApiRequestV2(ApiRequest):
             return f"/proxy/network/v2/api/site/{site}{self.path}"
         return f"/v2/api/site/{site}{self.path}"
 
-    def handle_error(self, json: dict[str, Any]) -> dict[str, Any]:
-        """Handle errors in the response, if any, and put them in a common format."""
-        if "errorCode" in json:
-            meta = {"rc": "error", "msg": json["message"]}
-            return meta
-
-        return {"rc": "ok", "msg": ""}
-
     def decode(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
-        json_data = orjson.loads(raw)
-        return_data: TypedApiResponse = {}
-        return_data["meta"] = self.handle_error(json_data)
-        return_data["data"] = json_data if isinstance(json_data, list) else [json_data]
-        return return_data
+        data = orjson.loads(raw)
+
+        if "errorCode" in data:
+            raise ERRORS.get(data["message"], AiounifiException)(data)
+
+        return TypedApiResponse(
+            meta={"rc": "ok", "msg": ""},
+            data=data if isinstance(data, list) else [data],
+        )
 
 
 # @dataclass

@@ -10,6 +10,7 @@ import pytest
 import trustme
 
 from aiounifi import (
+    AiounifiException,
     BadGateway,
     Forbidden,
     LoginRequired,
@@ -21,6 +22,7 @@ from aiounifi import (
     Unauthorized,
 )
 from aiounifi.controller import Controller
+from aiounifi.models.api import ApiRequest, ApiRequestV2
 from aiounifi.models.configuration import Configuration
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
@@ -74,7 +76,11 @@ async def test_login(
             json={"username": "user", "password": "pass", "remember": True},
         )
     else:
-        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload={"meta": {"rc": "ok"}, "data": []},
+            content_type="application/json",
+        )
         await unifi_controller.connectivity.login()
         assert unifi_called_with(
             "post",
@@ -110,7 +116,10 @@ async def test_controller_login(
         mock_aioresponse.get(
             "https://host:8443", content_type="application/octet-stream", status=302
         )
-        mock_aioresponse.post("https://host:8443/api/login", payload="")
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload={"meta": {"rc": "ok"}, "data": []},
+        )
         await unifi_controller.login()
         assert unifi_called_with(
             "post",
@@ -397,6 +406,104 @@ async def test_controller_raise_expected_exception(
     mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
     with pytest.raises(expected_exception):
         await unifi_controller.connectivity.login()
+
+
+@pytest.mark.parametrize("traffic_rule_status", [404])
+async def test_initialize_handles_404(unifi_controller, _mock_endpoints):
+    """Validate initialize does not abort on exception."""
+    await unifi_controller.initialize()
+
+
+api_request_data = [
+    (
+        ApiRequest,
+        "/api/s/default",
+        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
+        LoginRequired,
+    ),
+    (
+        ApiRequest,
+        "/api/s/default",
+        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
+        Unauthorized,
+    ),
+    (
+        ApiRequest,
+        "/api/s/default",
+        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
+        NoPermission,
+    ),
+    (
+        ApiRequest,
+        "/api/s/default",
+        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
+        TwoFaTokenRequired,
+    ),
+    (
+        ApiRequest,
+        "/api/s/default",
+        {"payload": {"meta": {"msg": "api.err.OtherError", "rc": "error"}}},
+        AiounifiException,
+    ),
+    (
+        ApiRequestV2,
+        "/v2/api/site/default",
+        {"payload": {"errorCode": 1, "message": "api.err.LoginRequired"}},
+        LoginRequired,
+    ),
+    (
+        ApiRequestV2,
+        "/v2/api/site/default",
+        {"payload": {"errorCode": 2, "message": "api.err.Invalid"}},
+        Unauthorized,
+    ),
+    (
+        ApiRequestV2,
+        "/v2/api/site/default",
+        {"payload": {"errorCode": 3, "message": "api.err.NoPermission"}},
+        NoPermission,
+    ),
+    (
+        ApiRequestV2,
+        "/v2/api/site/default",
+        {"payload": {"errorCode": 4, "message": "api.err.Ubic2faTokenRequired"}},
+        TwoFaTokenRequired,
+    ),
+    (
+        ApiRequestV2,
+        "/v2/api/site/default",
+        {"payload": {"errorCode": 5, "message": "api.err.OtherError"}},
+        AiounifiException,
+    ),
+]
+
+
+@pytest.mark.parametrize(("api_request", "path", "input", "expected"), api_request_data)
+async def test_api_request_error_handling(
+    mock_aioresponse,
+    unifi_controller: Controller,
+    api_request,
+    path,
+    input,
+    expected,
+):
+    """Verify request raise login required on a 401."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", **input)
+    with pytest.raises(expected):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
+@pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
+async def test_api_request_generic_error_handling(
+    mock_aioresponse,
+    unifi_controller: Controller,
+    unwanted_behavior,
+    expected_exception,
+):
+    """Verify request raise login required on a 401."""
+    mock_aioresponse.get("https://host:8443/api/s/default/test", **unwanted_behavior)
+    with pytest.raises(expected_exception):
+        await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
 
 
 @pytest.mark.parametrize(

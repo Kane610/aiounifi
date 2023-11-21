@@ -10,14 +10,15 @@ from aiohttp import client_exceptions
 import orjson
 
 from ..errors import (
+    AiounifiException,
     BadGateway,
     Forbidden,
     LoginRequired,
     RequestError,
     ResponseError,
     ServiceUnavailable,
-    raise_error,
 )
+from ..models.api import ERRORS
 from ..models.configuration import Configuration
 
 if TYPE_CHECKING:
@@ -47,10 +48,7 @@ class Connectivity:
 
     async def login(self) -> None:
         """Log in to controller."""
-        if self.is_unifi_os:
-            url = f"{self.config.url}/api/auth/login"
-        else:
-            url = f"{self.config.url}/api/login"
+        url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
         auth = {
             "username": self.config.username,
@@ -61,7 +59,10 @@ class Connectivity:
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type == "application/json":
-            _raise_on_error(orjson.loads(bytes_data))
+            data: "TypedApiResponse" = orjson.loads(bytes_data)
+            if "meta" in data and data["meta"]["rc"] == "error":
+                LOGGER.error(data)
+                raise ERRORS.get(data["meta"]["msg"], AiounifiException)
 
         if (
             response.status == HTTPStatus.OK
@@ -84,7 +85,7 @@ class Connectivity:
             )
 
             if response.content_type == "application/json":
-                _raise_on_error(data := api_request.decode(bytes_data))
+                data = api_request.decode(bytes_data)
 
         except LoginRequired:
             if not self.can_retry_login:
@@ -177,10 +178,3 @@ class Connectivity:
 
         except aiohttp.ClientConnectorError:
             LOGGER.error("Websocket client connection error")
-
-
-def _raise_on_error(data: "TypedApiResponse") -> None:
-    """Check response for error message."""
-    if "meta" in data and data["meta"]["rc"] == "error":
-        LOGGER.error(data)
-        raise_error(data["meta"]["msg"])
