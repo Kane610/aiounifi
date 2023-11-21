@@ -58,7 +58,7 @@ class Connectivity:
 
         response, bytes_data = await self._request("post", url, json=auth)
 
-        if response.content_type.startswith("application/json"):
+        if response.content_type == "application/json":
             data: "TypedApiResponse" = orjson.loads(bytes_data)
             if "meta" in data and data["meta"]["rc"] == "error":
                 LOGGER.error(data)
