@@ -83,8 +83,11 @@ class Controller:
             return_exceptions=True,
         )
         for result in results:
-            if result is not None:
-                LOGGER.warning("Exception on update %s", result)
+            if result is None:
+                continue
+            if isinstance(result, BaseException):
+                raise result from None
+            LOGGER.warning("Exception on update %s", result)
 
     async def start_websocket(self) -> None:
         """Start websocket session."""
