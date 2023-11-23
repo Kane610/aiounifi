@@ -2,6 +2,7 @@
 
 from dataclasses import KW_ONLY, dataclass
 from ssl import SSLContext
+from typing import Literal
 
 from aiohttp import ClientSession
 
@@ -17,7 +18,7 @@ class Configuration:
     password: str
     port: int = 8443
     site: str = "default"
-    ssl_context: SSLContext | bool = False
+    ssl_context: SSLContext | Literal[False] = False
 
     @property
     def url(self) -> str:
