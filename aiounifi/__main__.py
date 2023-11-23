@@ -22,7 +22,7 @@ async def unifi_controller(
     port: int,
     site: str,
     session: aiohttp.ClientSession,
-    ssl_context: SSLContext | bool,
+    ssl_context: SSLContext | None = None,
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -33,7 +33,7 @@ async def unifi_controller(
             password=password,
             port=port,
             site=site,
-            ssl_context=ssl_context,
+            ssl_context=ssl_context if ssl_context is not None else False,
         )
     )
 
@@ -63,7 +63,7 @@ async def main(
     password: str,
     port: int,
     site: str,
-    ssl_context: SSLContext | bool = False,
+    ssl_context: SSLContext | None = None,
 ) -> None:
     """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
