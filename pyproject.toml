@@ -27,12 +27,12 @@ dependencies    = [
 
 [project.optional-dependencies]
 requirements = [
-    "aiohttp~=3.8.5",
+    "aiohttp~=3.9",
     "orjson~=3.9.5",
     "segno==1.5.3",
 ]
 requirements_test = [
-    "aioresponses==0.7.5",
+    "aioresponses==0.7.6",
     "mypy==1.7.0",
     "pytest==7.4.3",
     "pytest-aiohttp==1.0.5",
