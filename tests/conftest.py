@@ -162,11 +162,6 @@ def endpoint_fixture(
         system_information_payload,
     )
     mock_get_request(
-        "/v2/api/site/default/trafficroutes",
-        "/proxy/network/v2/api/site/default/trafficroutes",
-        traffic_route_payload,
-    )
-    mock_get_request(
         "/v2/api/site/default/trafficrules",
         "/proxy/network/v2/api/site/default/trafficrules",
         traffic_rule_payload,

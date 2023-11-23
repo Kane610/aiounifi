@@ -1,6 +1,3 @@
-"""Traffic route as part of a UniFi network."""
-
-from dataclasses import dataclass
 """Traffic routes as part of a UniFi network."""
 from dataclasses import dataclass
 from enum import StrEnum
