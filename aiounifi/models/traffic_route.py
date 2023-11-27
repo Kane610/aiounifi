@@ -59,8 +59,8 @@ class TypedTrafficRoute(TypedDict):
     """Traffic route type definition."""
 
     _id: str
-    description: str
     action: str
+    description: str
     domains: list[Domain]
     enabled: bool
     ip_addresses: list[IPAddress]
@@ -111,34 +111,14 @@ class TrafficRoute(ApiItem):
         return self.raw["_id"]
 
     @property
-    def description(self) -> str:
-        """Description given by user to traffic route."""
-        return self.raw["description"]
-
-    @property
-    def enabled(self) -> bool:
-        """Is traffic route enabled."""
-        return self.raw["enabled"]
-
-    @property
     def action(self) -> str:
         """What action is defined by this traffic route."""
         return self.raw["action"]
 
     @property
-    def matching_target(self) -> MatchingTarget:
-        """What target is matched by this traffic route."""
-        return self.raw["matching_target"]
-
-    @property
-    def target_devices(self) -> list[TargetDevice]:
-        """What target devices are affected by this traffic route."""
-        return self.raw["target_devices"]
-
-    @property
-    def ip_addresses(self) -> list[IPAddress]:
-        """What IP addresses are matched against by this traffic route."""
-        return self.raw["ip_addresses"]
+    def description(self) -> str:
+        """Description given by user to traffic route."""
+        return self.raw["description"]
 
     @property
     def domains(self) -> list[Domain]:
@@ -147,3 +127,43 @@ class TrafficRoute(ApiItem):
         Note: This requires clients to use the UniFi network devices as their DNS server.
         """
         return self.raw["domains"]
+
+    @property
+    def enabled(self) -> bool:
+        """Is traffic route enabled."""
+        return self.raw["enabled"]
+
+    @property
+    def ip_addresses(self) -> list[IPAddress]:
+        """What IP addresses are matched against by this traffic route."""
+        return self.raw["ip_addresses"]
+
+    @property
+    def ip_ranges(self) -> list[IPRange]:
+        """What IP addresses are matched against by this traffic route."""
+        return self.raw["ip_ranges"]
+
+    @property
+    def matching_target(self) -> MatchingTarget:
+        """What target is matched by this traffic route."""
+        return self.raw["matching_target"]
+
+    @property
+    def network_ids(self) -> list[str]:
+        """Network IDs that this rule applies to."""
+        return self.raw["network_ids"]
+
+    @property
+    def next_hop(self) -> str:
+        """Used for defining a static route."""
+        return self.raw["next_hop"]
+
+    @property
+    def regions(self) -> list[str]:
+        """Regions that the rule applies to."""
+        return self.raw["regions"]
+
+    @property
+    def target_devices(self) -> list[TargetDevice]:
+        """What target devices are affected by this traffic route."""
+        return self.raw["target_devices"]
