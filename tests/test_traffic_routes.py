@@ -43,7 +43,7 @@ async def test_traffic_route_enable_request(
 
 @pytest.mark.parametrize("traffic_route_payload", [TRAFFIC_ROUTES])
 @pytest.mark.parametrize("is_unifi_os", [True])
-@pytest.mark.parametrize("enable", [True, False])
+@pytest.mark.parametrize("enable", [True, False, None])
 async def test_traffic_route_save(
     mock_aioresponse, unifi_controller, _mock_endpoints, enable
 ):
@@ -52,6 +52,7 @@ async def test_traffic_route_save(
     await traffic_routes.update()
 
     traffic_route_id = TRAFFIC_ROUTES[0 if not enable else 1]["_id"]
+    originally_enabled = traffic_routes[traffic_route_id].enabled
 
     mock_aioresponse.put(
         "https://host:8443/proxy/network/v2/api/site/default"
@@ -59,7 +60,12 @@ async def test_traffic_route_save(
         payload={},
     )
     await traffic_routes.save(traffic_routes[traffic_route_id], enable)
-    assert traffic_routes[traffic_route_id].enabled is enable
+    if enable is not None:
+        # If setting enabled, verify it was set
+        assert traffic_routes[traffic_route_id].enabled is enable
+    else:
+        # Otherwise, verify it was not set
+        assert traffic_routes[traffic_route_id].enabled is originally_enabled
 
 
 @pytest.mark.parametrize("traffic_route_payload", [TRAFFIC_ROUTES])

@@ -84,7 +84,11 @@ class TrafficRouteListRequest(ApiRequestV2):
 
 @dataclass
 class TrafficRouteSaveRequest(ApiRequestV2):
-    """Request object for traffic route save."""
+    """Request object for saving a traffic route.
+
+    To modify a route, you must make sure the `raw` attribute of the TypedTrafficRoute is modified.
+    The properties provide convient access for reading, however do not provide means of setting values.
+    """
 
     @classmethod
     def create(
