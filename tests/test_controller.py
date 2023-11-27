@@ -328,12 +328,12 @@ async def test_unifios_controller(
     )
     assert unifi_called_with(
         "get",
-        "/proxy/network/v2/api/site/default/trafficrules",
+        "/proxy/network/v2/api/site/default/trafficroutes",
         headers={"x-csrf-token": "123"},
     )
     assert unifi_called_with(
         "get",
-        "/proxy/network/v2/api/site/default/trafficroutes",
+        "/proxy/network/v2/api/site/default/trafficrules",
         headers={"x-csrf-token": "123"},
     )
     assert unifi_called_with(
