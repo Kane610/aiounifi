@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.traffic_route tests/test_traffic
 
 import pytest
 
-from aiounifi.models.traffic_route import TrafficRouteSaveRequest
+from aiounifi.models.traffic_route import MatchingTarget, TrafficRouteSaveRequest
 
 from .fixtures import TRAFFIC_ROUTES, WIRELESS_CLIENT
 
@@ -110,8 +110,14 @@ async def test_traffic_routes(unifi_controller, _mock_endpoints, unifi_called_wi
     traffic_route = traffic_routes["4547ede96a62654e72293728"]
     assert traffic_route.id == "4547ede96a62654e72293728"
     assert traffic_route.description == "TEST 1"
+    assert traffic_route.domains == []
     assert traffic_route.enabled is False
-    assert traffic_route.matching_target == "INTERNET"
+    assert traffic_route.ip_addresses == []
+    assert traffic_route.ip_ranges == []
+    assert traffic_route.matching_target == MatchingTarget.INTERNET
+    assert traffic_route.network_id == "6547e87f6e34654e72293637"
+    assert traffic_route.next_hop == ""
+    assert traffic_route.regions == []
     assert traffic_route.target_devices == [
         {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"},
         {"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"},

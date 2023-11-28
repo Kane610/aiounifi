@@ -4640,6 +4640,7 @@ TRAFFIC_ROUTES = [
         "ip_ranges": [],
         "matching_target": "INTERNET",
         "network_id": "6547e87f6e34654e72293637",
+        "next_hop": "",
         "regions": [],
         "target_devices": [
             {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"},

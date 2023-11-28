@@ -59,14 +59,13 @@ class TypedTrafficRoute(TypedDict):
     """Traffic route type definition."""
 
     _id: str
-    action: str
     description: str
     domains: list[Domain]
     enabled: bool
     ip_addresses: list[IPAddress]
     ip_ranges: list[IPRange]
     matching_target: MatchingTarget
-    network_ids: list[str]
+    network_id: str
     next_hop: str
     regions: list[str]
     target_devices: list[TargetDevice]
@@ -115,11 +114,6 @@ class TrafficRoute(ApiItem):
         return self.raw["_id"]
 
     @property
-    def action(self) -> str:
-        """What action is defined by this traffic route."""
-        return self.raw["action"]
-
-    @property
     def description(self) -> str:
         """Description given by user to traffic route."""
         return self.raw["description"]
@@ -128,7 +122,7 @@ class TrafficRoute(ApiItem):
     def domains(self) -> list[Domain]:
         """What IP addresses are matched against by this traffic route.
 
-        Note: This requires clients to use the UniFi network devices as their DNS server.
+        Note: Domain matching requires the client devices to use the UniFi gateway as the DNS server.
         """
         return self.raw["domains"]
 
@@ -153,9 +147,9 @@ class TrafficRoute(ApiItem):
         return self.raw["matching_target"]
 
     @property
-    def network_ids(self) -> list[str]:
-        """Network IDs that this rule applies to."""
-        return self.raw["network_ids"]
+    def network_id(self) -> str:
+        """Network ID that this rule applies to."""
+        return self.raw["network_id"]
 
     @property
     def next_hop(self) -> str:
