@@ -1,9 +1,18 @@
-"""Traffic route as part of a UniFi network."""
-
+"""Traffic routes as part of a UniFi network."""
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
+
+
+class MatchingTarget(StrEnum):
+    """Possible matching targets for a traffic rule."""
+
+    DOMAIN = "DOMAIN"
+    IP = "IP"
+    INTERNET = "INTERNET"
+    REGION = "REGION"
 
 
 class PortRange(TypedDict):
@@ -38,17 +47,26 @@ class TargetDevice(TypedDict):
     type: str
 
 
+class Domain(TypedDict):
+    """A target domain for a traffic route."""
+
+    domain: str
+    port_ranges: list[PortRange]
+    ports: list[int]
+
+
 class TypedTrafficRoute(TypedDict):
     """Traffic route type definition."""
 
     _id: str
     description: str
-    domains: list[str]
+    domains: list[Domain]
     enabled: bool
     ip_addresses: list[IPAddress]
     ip_ranges: list[IPRange]
-    matching_target: str
+    matching_target: MatchingTarget
     network_id: str
+    next_hop: str
     regions: list[str]
     target_devices: list[TargetDevice]
 
@@ -64,13 +82,20 @@ class TrafficRouteListRequest(ApiRequestV2):
 
 
 @dataclass
-class TrafficRouteEnableRequest(ApiRequestV2):
-    """Request object for traffic route enable."""
+class TrafficRouteSaveRequest(ApiRequestV2):
+    """Request object for saving a traffic route.
+
+    To modify a route, you must make sure the `raw` attribute of the TypedTrafficRoute is modified.
+    The properties provide convient access for reading, however do not provide means of setting values.
+    """
 
     @classmethod
-    def create(cls, traffic_route: TypedTrafficRoute, enable: bool) -> Self:
-        """Create traffic route enable request."""
-        traffic_route["enabled"] = enable
+    def create(
+        cls, traffic_route: TypedTrafficRoute, enable: bool | None = None
+    ) -> Self:
+        """Create traffic route save request."""
+        if enable is not None:
+            traffic_route["enabled"] = enable
         return cls(
             method="put",
             path=f"/trafficroutes/{traffic_route['_id']}",
@@ -94,14 +119,47 @@ class TrafficRoute(ApiItem):
         return self.raw["description"]
 
     @property
+    def domains(self) -> list[Domain]:
+        """What IP addresses are matched against by this traffic route.
+
+        Note: Domain matching requires the client devices to use the UniFi gateway as the DNS server.
+        """
+        return self.raw["domains"]
+
+    @property
     def enabled(self) -> bool:
         """Is traffic route enabled."""
         return self.raw["enabled"]
 
     @property
-    def matching_target(self) -> str:
+    def ip_addresses(self) -> list[IPAddress]:
+        """What IP addresses are matched against by this traffic route."""
+        return self.raw["ip_addresses"]
+
+    @property
+    def ip_ranges(self) -> list[IPRange]:
+        """What IP addresses are matched against by this traffic route."""
+        return self.raw["ip_ranges"]
+
+    @property
+    def matching_target(self) -> MatchingTarget:
         """What target is matched by this traffic route."""
         return self.raw["matching_target"]
+
+    @property
+    def network_id(self) -> str:
+        """Network ID that this rule applies to."""
+        return self.raw["network_id"]
+
+    @property
+    def next_hop(self) -> str:
+        """Used for defining a static route."""
+        return self.raw["next_hop"]
+
+    @property
+    def regions(self) -> list[str]:
+        """Regions that the rule applies to."""
+        return self.raw["regions"]
 
     @property
     def target_devices(self) -> list[TargetDevice]:

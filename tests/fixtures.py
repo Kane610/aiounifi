@@ -4632,31 +4632,57 @@ TRAFFIC_RULES = [
 
 TRAFFIC_ROUTES = [
     {
-        "_id": "4547ede96a62654e72293728",
-        "description": "TEST 1",
+        "_id": "6468ecd4c1dd1932ad2f801c",
+        "description": "Test domain rule",
+        "domains": [
+            {"domain": "example.com", "port_ranges": [], "ports": []},
+        ],
+        "enabled": True,
+        "ip_addresses": [],
+        "ip_ranges": [],
+        "matching_target": "DOMAIN",
+        "network_id": "5a32aa4ee4b047ede36a85a8",
+        "next_hop": "",
+        "regions": [],
+        "target_devices": [
+            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"},
+        ],
+    },
+    {
+        "_id": "655565af1e1c2754a39388a4",
+        "description": "Test all internet rule",
         "domains": [],
         "enabled": False,
         "ip_addresses": [],
         "ip_ranges": [],
         "matching_target": "INTERNET",
-        "network_id": "6547e87f6e34654e72293637",
+        "network_id": "5a32aa4ee4b047ede36a85a8",
+        "next_hop": "",
         "regions": [],
         "target_devices": [
-            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"},
-            {"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"},
+            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"}
         ],
     },
     {
-        "_id": "754e83e45e62654e722a65ad",
-        "description": "TEST 2",
+        "_id": "655566f91e1c2754a393892c",
+        "description": "Test IP rule",
         "domains": [],
-        "enabled": True,
-        "ip_addresses": [],
+        "enabled": False,
+        "ip_addresses": [
+            {
+                "ip_or_subnet": "1.1.1.1",
+                "ip_version": "v4",
+                "port_ranges": [],
+                "ports": [],
+            },
+        ],
         "ip_ranges": [],
-        "matching_target": "INTERNET",
-        "network_id": "6547ef4e6e62654e7229376b",
+        "matching_target": "IP",
+        "network_id": "5a32aa4ee4b047ede36a85a8",
         "next_hop": "",
         "regions": [],
-        "target_devices": [{"client_mac": WIRELESS_CLIENT["mac"], "type": "CLIENT"}],
+        "target_devices": [
+            {"network_id": WIRELESS_CLIENT["network_id"], "type": "NETWORK"}
+        ],
     },
 ]
