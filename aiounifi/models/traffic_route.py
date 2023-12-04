@@ -9,7 +9,7 @@ from .api import ApiItem, ApiRequestV2
 class MatchingTarget(StrEnum):
     """Possible matching targets for a traffic rule."""
 
-    DOMAINS = "DOMAIN"
+    DOMAIN = "DOMAIN"
     IP = "IP"
     INTERNET = "INTERNET"
     REGION = "REGION"
