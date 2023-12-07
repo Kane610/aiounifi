@@ -71,6 +71,7 @@ class Connectivity:
             self.headers = {"x-csrf-token": csrf_token}
 
         self.can_retry_login = True
+        LOGGER.debug("Logged in to UniFi %s", url)
 
     async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
         """Make a request to the API, retry login on failure."""
@@ -145,9 +146,7 @@ class Connectivity:
                 bytes_data = await res.read()
 
         except client_exceptions.ClientError as err:
-            raise RequestError(
-                f"Error requesting data from {self.config.host}: {err}"
-            ) from None
+            raise RequestError(f"Error requesting data from {url}: {err}") from None
 
         LOGGER.debug("data (from %s) %s", url, bytes_data)
         return res, bytes_data
@@ -162,6 +161,8 @@ class Connectivity:
             async with self.config.session.ws_connect(
                 url, ssl=self.config.ssl_context, heartbeat=15
             ) as websocket_connection:
+                LOGGER.debug("Connected to UniFi websocket %s", url)
+
                 async for message in websocket_connection:
                     if message.type == aiohttp.WSMsgType.TEXT:
                         if LOGGER.isEnabledFor(logging.DEBUG):
@@ -169,12 +170,12 @@ class Connectivity:
                         callback(message.data)
 
                     elif message.type == aiohttp.WSMsgType.CLOSED:
-                        LOGGER.warning("AIOHTTP websocket connection closed")
+                        LOGGER.warning("Connection closed to UniFi websocket")
                         break
 
                     elif message.type == aiohttp.WSMsgType.ERROR:
-                        LOGGER.error("AIOHTTP websocket error: '%s'", message.data)
+                        LOGGER.error("UniFi websocket error: '%s'", message.data)
                         break
 
-        except aiohttp.ClientConnectorError:
-            LOGGER.error("Websocket client connection error")
+        except aiohttp.ClientConnectorError as err:
+            LOGGER.error("Error connecting to UniFi websocket: '%s'", err)
