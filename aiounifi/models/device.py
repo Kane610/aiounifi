@@ -4,6 +4,7 @@ Access points, Gateways, Switches.
 """
 from copy import deepcopy
 from dataclasses import dataclass
+from enum import IntEnum
 import logging
 from typing import Any, NotRequired, Self, TypedDict
 
@@ -491,6 +492,39 @@ class TypedDevice(TypedDict):
     x_inform_authkey: str
     x_ssh_hostkey_fingerprint: str
     x_vwirekey: str
+
+
+class DeviceState(IntEnum):
+    """Enum for device states."""
+
+    DISCONNECTED = 0
+    CONNECTED = 1
+    PENDING = 2
+    FIRMWARE_MISMATCH = 3
+    UPGRADING = 4
+    PROVISIONING = 5
+    HEARTBEAT_MISSED = 6
+    ADOPTING = 7
+    DELETING = 8
+    INFORM_ERROR = 9
+    ADOPTION_FALIED = 10
+    ISOLATED = 11
+
+
+DEVICE_STATES = {
+    DeviceState.DISCONNECTED: "Disconnected",
+    DeviceState.CONNECTED: "Connected",
+    DeviceState.PENDING: "Pending",
+    DeviceState.FIRMWARE_MISMATCH: "Firmware Mismatch",
+    DeviceState.UPGRADING: "Upgrading",
+    DeviceState.PROVISIONING: "Provisioning",
+    DeviceState.HEARTBEAT_MISSED: "Heartbeat Missed",
+    DeviceState.ADOPTING: "Adopting",
+    DeviceState.DELETING: "Deleting",
+    DeviceState.INFORM_ERROR: "Inform Error",
+    DeviceState.ADOPTION_FALIED: "Adoption Failed",
+    DeviceState.ISOLATED: "Isolated",
+}
 
 
 @dataclass
