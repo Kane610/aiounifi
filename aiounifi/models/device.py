@@ -510,21 +510,13 @@ class DeviceState(IntEnum):
     ADOPTION_FALIED = 10
     ISOLATED = 11
 
+    UNKNOWN = -1
 
-DEVICE_STATES = {
-    DeviceState.DISCONNECTED: "Disconnected",
-    DeviceState.CONNECTED: "Connected",
-    DeviceState.PENDING: "Pending",
-    DeviceState.FIRMWARE_MISMATCH: "Firmware Mismatch",
-    DeviceState.UPGRADING: "Upgrading",
-    DeviceState.PROVISIONING: "Provisioning",
-    DeviceState.HEARTBEAT_MISSED: "Heartbeat Missed",
-    DeviceState.ADOPTING: "Adopting",
-    DeviceState.DELETING: "Deleting",
-    DeviceState.INFORM_ERROR: "Inform Error",
-    DeviceState.ADOPTION_FALIED: "Adoption Failed",
-    DeviceState.ISOLATED: "Isolated",
-}
+    @classmethod
+    def _missing_(cls, value: object) -> "DeviceState":
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device state %s %s", value, cls)
+        return DeviceState.UNKNOWN
 
 
 @dataclass
@@ -843,7 +835,7 @@ class Device(ApiItem):
         return self.raw.get("port_table", [])
 
     @property
-    def state(self) -> int:
+    def state(self) -> DeviceState:
         """State of device."""
         return self.raw["state"]
 
