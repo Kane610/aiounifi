@@ -837,7 +837,7 @@ class Device(ApiItem):
     @property
     def state(self) -> DeviceState:
         """State of device."""
-        return self.raw["state"]
+        return DeviceState(self.raw["state"])
 
     @property
     def sys_stats(self) -> TypedDeviceSysStats:
