@@ -4,6 +4,7 @@ Access points, Gateways, Switches.
 """
 from copy import deepcopy
 from dataclasses import dataclass
+from enum import IntEnum
 import logging
 from typing import Any, NotRequired, Self, TypedDict
 
@@ -493,6 +494,31 @@ class TypedDevice(TypedDict):
     x_vwirekey: str
 
 
+class DeviceState(IntEnum):
+    """Enum for device states."""
+
+    DISCONNECTED = 0
+    CONNECTED = 1
+    PENDING = 2
+    FIRMWARE_MISMATCH = 3
+    UPGRADING = 4
+    PROVISIONING = 5
+    HEARTBEAT_MISSED = 6
+    ADOPTING = 7
+    DELETING = 8
+    INFORM_ERROR = 9
+    ADOPTION_FALIED = 10
+    ISOLATED = 11
+
+    UNKNOWN = -1
+
+    @classmethod
+    def _missing_(cls, value: object) -> "DeviceState":
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device state %s %s", value, cls)
+        return DeviceState.UNKNOWN
+
+
 @dataclass
 class DeviceListRequest(ApiRequest):
     """Request object for device list."""
@@ -809,9 +835,9 @@ class Device(ApiItem):
         return self.raw.get("port_table", [])
 
     @property
-    def state(self) -> int:
+    def state(self) -> DeviceState:
         """State of device."""
-        return self.raw["state"]
+        return DeviceState(self.raw["state"])
 
     @property
     def sys_stats(self) -> TypedDeviceSysStats:
