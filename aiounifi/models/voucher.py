@@ -2,10 +2,8 @@
 
 from dataclasses import dataclass
 import io
-from typing import NotRequired, Self, TypedDict
+from typing import Self, TypedDict
 from datetime import datetime, timedelta
-
-import segno.helpers
 
 from .api import ApiItem, ApiRequest
 
