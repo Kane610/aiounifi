@@ -26,7 +26,7 @@ class Vouchers(APIHandler[Voucher]):
             VoucherCreateRequest.create(
                 number=1,
                 quota=voucher.quota,
-                expire_number=voucher.duration,
+                expire_number=int(voucher.duration.total_seconds() / 60),
                 expire_unit=1,
                 usage_quota=voucher.qos_usage_quota,
                 rate_max_up=voucher.qos_rate_max_up,
