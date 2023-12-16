@@ -1,7 +1,6 @@
 """Hotspot vouchers as part of a UniFi network."""
 
 from dataclasses import dataclass
-import io
 from typing import Self, TypedDict
 from datetime import datetime, timedelta
 
