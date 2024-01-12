@@ -118,6 +118,7 @@ test_data = [
             "uptime": 3971869,
             "user_num_sta": 20,
             "wlan_overrides": [],
+            "speedtest_status": GATEWAY_USG3["speedtest-status"],
         },
     ),
     (
