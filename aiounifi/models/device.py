@@ -852,8 +852,7 @@ class Device(ApiItem):
     @property
     def speedtest_status(self) -> TypedDeviceSpeedtestStatus | None:
         """Speedtest status."""
-        value = self.raw.get("speedtest-status")
-        if value is None:
+        if (value := self.raw.get("speedtest-status")) is None:
             return None
         return cast(TypedDeviceSpeedtestStatus, value)
 
