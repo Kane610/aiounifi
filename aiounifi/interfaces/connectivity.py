@@ -165,8 +165,7 @@ class Connectivity:
 
                 async for message in websocket_connection:
                     if message.type == aiohttp.WSMsgType.TEXT:
-                        if LOGGER.isEnabledFor(logging.DEBUG):
-                            LOGGER.debug(message.data)
+                        LOGGER.debug("Websocket '%s'", message.data)
                         callback(message.data)
 
                     elif message.type == aiohttp.WSMsgType.CLOSED:
