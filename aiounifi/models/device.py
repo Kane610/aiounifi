@@ -740,9 +740,7 @@ class Device(ApiItem):
     @property
     def disabled(self) -> bool:
         """Is device disabled."""
-        if "disabled" in self.raw:
-            return self.raw["disabled"]
-        return False
+        return self.raw.get("disabled", False)
 
     @property
     def downlink_table(self) -> list[dict[str, Any]]:
@@ -852,9 +850,9 @@ class Device(ApiItem):
     @property
     def speedtest_status(self) -> TypedDeviceSpeedtestStatus | None:
         """Speedtest status."""
-        if (value := self.raw.get("speedtest-status")) is None:
-            return None
-        return cast(TypedDeviceSpeedtestStatus, value)
+        if value := self.raw.get("speedtest-status"):
+            return cast(TypedDeviceSpeedtestStatus, value)
+        return None
 
     @property
     def state(self) -> DeviceState:

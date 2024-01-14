@@ -40,9 +40,7 @@ class DPIRestrictionGroup(ApiItem):
     @property
     def attr_no_delete(self) -> bool | None:
         """Can be deleted."""
-        if "attr_no_delete" in self.raw:
-            return self.raw["attr_no_delete"]
-        return None
+        return self.raw.get("attr_no_delete")
 
     @property
     def attr_hidden_id(self) -> str:
@@ -62,6 +60,4 @@ class DPIRestrictionGroup(ApiItem):
     @property
     def dpiapp_ids(self) -> list[str] | None:
         """DPI app IDs belonging to group."""
-        if "dpiapp_ids" in self.raw:
-            return self.raw["dpiapp_ids"]
-        return None
+        return self.raw.get("dpiapp_ids")

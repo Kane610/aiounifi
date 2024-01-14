@@ -1,45 +1,8 @@
 """Device outlet implementation."""
 
-from dataclasses import dataclass
 
 from .api import ApiItem
 from .device import TypedDeviceOutletTable
-
-
-@dataclass
-class Outlet2:
-    """Power outlet representation."""
-
-    name: str
-    index: int
-    has_relay: bool | None
-    relay_state: bool
-    cycle_enabled: bool | None
-
-    # Metering capabilities of outlet
-    has_metering: bool | None
-    caps: int | None
-    voltage: str | None
-    current: str | None
-    power: str | None
-    power_factor: str | None
-
-    @classmethod
-    def from_dict(cls, data: TypedDeviceOutletTable) -> "Outlet2":
-        """Create data container instance from dict."""
-        return cls(
-            name=data["name"],
-            index=data["index"],
-            relay_state=data["relay_state"],
-            has_relay=data.get("has_relay"),
-            cycle_enabled=data.get("cycle_enabled"),
-            has_metering=data.get("has_metering"),
-            caps=data.get("outlet_caps"),
-            voltage=data.get("outlet_voltage"),
-            current=data.get("outlet_current"),
-            power=data.get("outlet_power"),
-            power_factor=data.get("outlet_power_factor"),
-        )
 
 
 class Outlet(ApiItem):
