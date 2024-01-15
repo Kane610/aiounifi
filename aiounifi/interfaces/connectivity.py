@@ -1,6 +1,7 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
 from collections.abc import Callable, Mapping
+import enum
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -17,6 +18,7 @@ from ..errors import (
     RequestError,
     ResponseError,
     ServiceUnavailable,
+    WebsocketError,
 )
 from ..models.api import ERRORS
 from ..models.configuration import Configuration
@@ -25,6 +27,15 @@ if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
 LOGGER = logging.getLogger(__name__)
+
+
+class WebsocketState(enum.Enum):
+    """Websocket state."""
+
+    DISCONNECTED = "disconnected"
+    RUNNING = "running"
+    STARTING = "starting"
+    STOPPED = "stopped"
 
 
 class Connectivity:
@@ -161,6 +172,7 @@ class Connectivity:
             async with self.config.session.ws_connect(
                 url, ssl=self.config.ssl_context, heartbeat=15
             ) as websocket_connection:
+                print("Connected to UniFi websocket %s", url)
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
@@ -174,7 +186,11 @@ class Connectivity:
 
                     elif message.type == aiohttp.WSMsgType.ERROR:
                         LOGGER.error("UniFi websocket error: '%s'", message.data)
-                        break
+                        raise WebsocketError(message.data)
+                print("NO WEBSOCKEt CONNECTION")
 
         except aiohttp.ClientConnectorError as err:
             LOGGER.error("Error connecting to UniFi websocket: '%s'", err)
+            err.add_note("Error connecting to UniFi websocket")
+            raise
+        print("EXIT WEBSOCKET")
