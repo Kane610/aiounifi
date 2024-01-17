@@ -1,7 +1,6 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
 from collections.abc import Callable, Mapping
-import enum
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -27,15 +26,6 @@ if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
 LOGGER = logging.getLogger(__name__)
-
-
-class WebsocketState(enum.Enum):
-    """Websocket state."""
-
-    DISCONNECTED = "disconnected"
-    RUNNING = "running"
-    STARTING = "starting"
-    STOPPED = "stopped"
 
 
 class Connectivity:
@@ -181,7 +171,9 @@ class Connectivity:
                         callback(message.data)
 
                     elif message.type == aiohttp.WSMsgType.CLOSED:
-                        LOGGER.warning("Connection closed to UniFi websocket")
+                        LOGGER.warning(
+                            "Connection closed to UniFi websocket '%s'", message.data
+                        )
                         break
 
                     elif message.type == aiohttp.WSMsgType.ERROR:
