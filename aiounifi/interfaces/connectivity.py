@@ -17,6 +17,7 @@ from ..errors import (
     RequestError,
     ResponseError,
     ServiceUnavailable,
+    WebsocketError,
 )
 from ..models.api import ERRORS
 from ..models.configuration import Configuration
@@ -48,6 +49,7 @@ class Connectivity:
 
     async def login(self) -> None:
         """Log in to controller."""
+        self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
         auth = {
@@ -61,14 +63,14 @@ class Connectivity:
         if response.content_type == "application/json":
             data: "TypedApiResponse" = orjson.loads(bytes_data)
             if "meta" in data and data["meta"]["rc"] == "error":
-                LOGGER.error(data)
+                LOGGER.error("Login failed '%s'", data)
                 raise ERRORS.get(data["meta"]["msg"], AiounifiException)
 
         if (
             response.status == HTTPStatus.OK
             and (csrf_token := response.headers.get("x-csrf-token")) is not None
         ):
-            self.headers = {"x-csrf-token": csrf_token}
+            self.headers["x-csrf-token"] = csrf_token
 
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
@@ -169,12 +171,30 @@ class Connectivity:
                         callback(message.data)
 
                     elif message.type == aiohttp.WSMsgType.CLOSED:
-                        LOGGER.warning("Connection closed to UniFi websocket")
+                        LOGGER.warning(
+                            "Connection closed to UniFi websocket '%s'", message.data
+                        )
                         break
 
                     elif message.type == aiohttp.WSMsgType.ERROR:
                         LOGGER.error("UniFi websocket error: '%s'", message.data)
-                        break
+                        raise WebsocketError(message.data)
+
+                    else:
+                        LOGGER.warning(
+                            "Unexpected websocket message type '%s' with data '%s'",
+                            message.type,
+                            message.data,
+                        )
 
         except aiohttp.ClientConnectorError as err:
             LOGGER.error("Error connecting to UniFi websocket: '%s'", err)
+            err.add_note("Error connecting to UniFi websocket")
+            raise
+
+        except WebsocketError:
+            raise
+
+        except Exception as err:
+            LOGGER.exception(err)
+            raise WebsocketError from err
