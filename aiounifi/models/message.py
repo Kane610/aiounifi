@@ -45,6 +45,7 @@ class MessageKey(enum.Enum):
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
     UNIFI_DEVICE_ADD = "unifi-device:add"
+    USER_GROUP_UPDATED = "usergroup:sync"
     VPN_CONNECTION_UPDATED = "vpn-connection:sync"
     WLAN_CONF_ADDED = "wlanconf:add"
     WLAN_CONF_UPDATED = "wlanconf:sync"
