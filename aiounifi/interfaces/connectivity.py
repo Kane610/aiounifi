@@ -1,6 +1,7 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
 from collections.abc import Callable, Mapping
+import datetime
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -38,6 +39,7 @@ class Connectivity:
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
+        self.ws_message_received: datetime.datetime | None = None
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
@@ -166,6 +168,8 @@ class Connectivity:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
+                    self.ws_message_received = datetime.datetime.now(datetime.UTC)
+
                     if message.type == aiohttp.WSMsgType.TEXT:
                         LOGGER.debug("Websocket '%s'", message.data)
                         callback(message.data)
