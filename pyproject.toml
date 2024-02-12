@@ -29,7 +29,7 @@ dependencies    = [
 requirements = [
     "aiohttp~=3.9",
     "orjson~=3.9.5",
-    "segno==1.6.0",
+    "segno==1.6.1",
 ]
 requirements_test = [
     "aioresponses==0.7.6",
