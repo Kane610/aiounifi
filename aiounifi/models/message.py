@@ -46,6 +46,8 @@ class MessageKey(enum.Enum):
     UNIFI_DEVICE = "unifi-device:sync"
     UNIFI_DEVICE_ADD = "unifi-device:add"
     USER_GROUP_UPDATED = "usergroup:sync"
+    VPN_CONNECT = "vpn:connect"
+    VPN_DISCONNECT = "vpn:disconnect"
     VPN_CONNECTION_UPDATED = "vpn-connection:sync"
     WLAN_CONF_ADDED = "wlanconf:add"
     WLAN_CONF_UPDATED = "wlanconf:sync"
