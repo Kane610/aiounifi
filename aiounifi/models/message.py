@@ -89,7 +89,7 @@ class Message:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create data container instance from dict."""
         meta = Meta.from_dict(data["meta"])
-        if meta.message == MessageKey.UNKNOWN:
+        if meta.message is MessageKey.UNKNOWN:
             LOGGER.warning("Unsupported message %s", data)
         return cls(
             meta=meta,

@@ -170,17 +170,17 @@ class Connectivity:
                 async for message in websocket_connection:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)
 
-                    if message.type == aiohttp.WSMsgType.TEXT:
+                    if message.type is aiohttp.WSMsgType.TEXT:
                         LOGGER.debug("Websocket '%s'", message.data)
                         callback(message.data)
 
-                    elif message.type == aiohttp.WSMsgType.CLOSED:
+                    elif message.type is aiohttp.WSMsgType.CLOSED:
                         LOGGER.warning(
                             "Connection closed to UniFi websocket '%s'", message.data
                         )
                         break
 
-                    elif message.type == aiohttp.WSMsgType.ERROR:
+                    elif message.type is aiohttp.WSMsgType.ERROR:
                         LOGGER.error("UniFi websocket error: '%s'", message.data)
                         raise WebsocketError(message.data)
 
