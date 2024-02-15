@@ -3,7 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.messages tests/test_messages.py
 """
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -58,3 +58,10 @@ async def test_unsupported_message_key():
         }
     )
     assert message.meta.message == MessageKey.UNKNOWN
+
+
+@patch("aiounifi.interfaces.messages.LOGGER")
+async def test_message_handler_bad_json_data(logger_mock):
+    """Verify message handler catches json error."""
+    MessageHandler(controller=Mock()).new_data(b"")
+    assert logger_mock.error.called
