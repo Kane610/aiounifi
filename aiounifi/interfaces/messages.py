@@ -53,7 +53,10 @@ class MessageHandler:
 
     def new_data(self, raw_bytes: bytes) -> None:
         """Convert bytes data into parseable JSON data.."""
-        self.handler(orjson.loads(raw_bytes))
+        try:
+            self.handler(orjson.loads(raw_bytes))
+        except orjson.JSONDecodeError:
+            LOGGER.error("Bad JSON data '%s'", raw_bytes)
 
     def handler(self, raw: dict[str, Any]) -> None:
         """Process data and identify where the message belongs."""
