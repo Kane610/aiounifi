@@ -1,8 +1,8 @@
 """Hotspot vouchers as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Self, TypedDict
 from datetime import datetime, timedelta
+from typing import Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -21,13 +21,13 @@ class TypedVoucher(TypedDict):
     qos_rate_max_up: int
     qos_rate_max_down: int
     used: int
-    create_time: datetime
+    create_time: int
     start_time: int
     end_time: int
     for_hotspot: bool
     admin_name: str
     status: str
-    status_expires: int
+    status_expires: float
 
 
 @dataclass
@@ -35,9 +35,7 @@ class VoucherListRequest(ApiRequest):
     """Request object for voucher list."""
 
     @classmethod
-    def create(
-        cls
-    ) -> Self:
+    def create(cls) -> Self:
         """Create voucher list request."""
         return cls(
             method="get",
@@ -51,15 +49,15 @@ class VoucherCreateRequest(ApiRequest):
 
     @classmethod
     def create(
-        cls,
-        number: int,
-        quota: int,
-        expire_number: int,
-        expire_unit: int = 1,
-        usage_quota: int | None = None,
-        rate_max_up: int | None = None,
-        rate_max_down: int | None = None,
-        note: str | None = None,
+            cls,
+            number: int,
+            quota: int,
+            expire_number: int,
+            expire_unit: int = 1,
+            usage_quota: int | None = None,
+            rate_max_up: int | None = None,
+            rate_max_down: int | None = None,
+            note: str | None = None,
     ) -> Self:
         """Create voucher create request.
 
@@ -101,8 +99,8 @@ class VoucherDeleteRequest(ApiRequest):
 
     @classmethod
     def create(
-        cls,
-        obj_id: str,
+            cls,
+            obj_id: str,
     ) -> Self:
         """Create voucher delete request."""
         data = {
@@ -140,7 +138,7 @@ class Voucher(ApiItem):
     def code(self) -> str:
         """Code."""
         if len(c := self.raw.get("code", "")) > 5:
-            return c[:5] + '-' + c[5:]
+            return c[:5] + "-" + c[5:]
         return c
 
     @property
@@ -151,9 +149,7 @@ class Voucher(ApiItem):
     @property
     def duration(self) -> timedelta:
         """Expiration of voucher."""
-        return timedelta(
-            minutes=self.raw.get("duration", 0)
-        )
+        return timedelta(minutes=self.raw.get("duration", 0))
 
     @property
     def qos_overwrite(self) -> bool:
@@ -190,14 +186,12 @@ class Voucher(ApiItem):
         """Start datetime."""
         if "start_time" in self.raw:
             return datetime.fromtimestamp(self.raw["start_time"])
-        return None
 
     @property
     def end_time(self) -> datetime | None:
         """End datetime."""
         if "end_time" in self.raw:
             return datetime.fromtimestamp(self.raw["end_time"])
-        return None
 
     @property
     def for_hotspot(self) -> bool:
@@ -217,8 +211,6 @@ class Voucher(ApiItem):
     @property
     def status_expires(self) -> timedelta | None:
         """Status expires."""
-        if self.raw.get("status_expires", 0) > 0:
-            return timedelta(
-                seconds=self.raw.get("status_expires")
-            )
+        if self.raw.get("status_expires", 0.0) > 0:
+            return timedelta(seconds=self.raw.get("status_expires", 0.0))
         return None
