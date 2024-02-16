@@ -49,15 +49,15 @@ class VoucherCreateRequest(ApiRequest):
 
     @classmethod
     def create(
-            cls,
-            number: int,
-            quota: int,
-            expire_number: int,
-            expire_unit: int = 1,
-            usage_quota: int | None = None,
-            rate_max_up: int | None = None,
-            rate_max_down: int | None = None,
-            note: str | None = None,
+        cls,
+        number: int,
+        quota: int,
+        expire_number: int,
+        expire_unit: int = 1,
+        usage_quota: int | None = None,
+        rate_max_up: int | None = None,
+        rate_max_down: int | None = None,
+        note: str | None = None,
     ) -> Self:
         """Create voucher create request.
 
@@ -99,8 +99,8 @@ class VoucherDeleteRequest(ApiRequest):
 
     @classmethod
     def create(
-            cls,
-            obj_id: str,
+        cls,
+        obj_id: str,
     ) -> Self:
         """Create voucher delete request."""
         data = {
@@ -138,7 +138,7 @@ class Voucher(ApiItem):
     def code(self) -> str:
         """Code."""
         if len(c := self.raw.get("code", "")) > 5:
-            return c[:5] + "-" + c[5:]
+            return f"{c[:5]} - {c[5:]}"
         return c
 
     @property
