@@ -15,15 +15,15 @@ class TypedVoucher(TypedDict):
     note: str
     code: str
     quota: int
-    duration: int
+    duration: float
     qos_overwrite: bool
     qos_usage_quota: str
     qos_rate_max_up: int
     qos_rate_max_down: int
     used: int
-    create_time: int
-    start_time: int
-    end_time: int
+    create_time: float
+    start_time: float
+    end_time: float
     for_hotspot: bool
     admin_name: str
     status: str
