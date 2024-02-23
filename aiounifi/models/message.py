@@ -34,6 +34,7 @@ class MessageKey(enum.Enum):
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
     NETWORK_CONF_UPDATED = "networkconf:sync"
+    NOTIFICATION_TOAST = "notification-toast"
     PING_TEST_UPDATE = "ping-test:update"
     PORT_FORWARD_ADDED = "portforward:add"
     PORT_FORWARD_UPDATED = "portforward:sync"
