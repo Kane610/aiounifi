@@ -41,6 +41,9 @@ class Connectivity:
         self.can_retry_login = False
         self.ws_message_received: datetime.datetime | None = None
 
+        if config.ssl_context:
+            LOGGER.warning("Using SSL context %s", config.ssl_context)
+
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
         response, _ = await self._request("get", self.config.url, allow_redirects=False)
