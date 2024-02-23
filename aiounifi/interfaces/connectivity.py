@@ -196,6 +196,13 @@ class Connectivity:
             err.add_note("Error connecting to UniFi websocket")
             raise
 
+        except aiohttp.WSServerHandshakeError as err:
+            LOGGER.error(
+                "Server handshake error connecting to UniFi websocket: '%s'", err
+            )
+            err.add_note("Server handshake error connecting to UniFi websocket")
+            raise
+
         except WebsocketError:
             raise
 
