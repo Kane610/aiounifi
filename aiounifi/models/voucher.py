@@ -1,8 +1,8 @@
 """Hotspot vouchers as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Self, TypedDict
 from datetime import datetime, timedelta
+from typing import Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -15,19 +15,19 @@ class TypedVoucher(TypedDict):
     note: str
     code: str
     quota: int
-    duration: int
+    duration: float
     qos_overwrite: bool
     qos_usage_quota: str
     qos_rate_max_up: int
     qos_rate_max_down: int
     used: int
-    create_time: datetime
-    start_time: int
-    end_time: int
+    create_time: float
+    start_time: float
+    end_time: float
     for_hotspot: bool
     admin_name: str
     status: str
-    status_expires: int
+    status_expires: float
 
 
 @dataclass
@@ -35,9 +35,7 @@ class VoucherListRequest(ApiRequest):
     """Request object for voucher list."""
 
     @classmethod
-    def create(
-        cls
-    ) -> Self:
+    def create(cls) -> Self:
         """Create voucher list request."""
         return cls(
             method="get",
@@ -140,7 +138,7 @@ class Voucher(ApiItem):
     def code(self) -> str:
         """Code."""
         if len(c := self.raw.get("code", "")) > 5:
-            return c[:5] + '-' + c[5:]
+            return f"{c[:5]} - {c[5:]}"
         return c
 
     @property
@@ -151,9 +149,7 @@ class Voucher(ApiItem):
     @property
     def duration(self) -> timedelta:
         """Expiration of voucher."""
-        return timedelta(
-            minutes=self.raw.get("duration", 0)
-        )
+        return timedelta(minutes=self.raw.get("duration", 0))
 
     @property
     def qos_overwrite(self) -> bool:
@@ -190,14 +186,12 @@ class Voucher(ApiItem):
         """Start datetime."""
         if "start_time" in self.raw:
             return datetime.fromtimestamp(self.raw["start_time"])
-        return None
 
     @property
     def end_time(self) -> datetime | None:
         """End datetime."""
         if "end_time" in self.raw:
             return datetime.fromtimestamp(self.raw["end_time"])
-        return None
 
     @property
     def for_hotspot(self) -> bool:
@@ -217,8 +211,6 @@ class Voucher(ApiItem):
     @property
     def status_expires(self) -> timedelta | None:
         """Status expires."""
-        if self.raw.get("status_expires", 0) > 0:
-            return timedelta(
-                seconds=self.raw.get("status_expires")
-            )
+        if self.raw.get("status_expires", 0.0) > 0:
+            return timedelta(seconds=self.raw.get("status_expires", 0.0))
         return None
