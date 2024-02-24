@@ -138,7 +138,7 @@ class Voucher(ApiItem):
     def code(self) -> str:
         """Code."""
         if len(c := self.raw.get("code", "")) > 5:
-            return f"{c[:5]} - {c[5:]}"
+            return f"{c[:5]}-{c[5:]}"
         return c
 
     @property
