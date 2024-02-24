@@ -16,6 +16,7 @@ from aiounifi.models.device import (
     DeviceSetOutletCycleEnabledRequest,
     DeviceSetOutletRelayRequest,
     DeviceSetPoePortModeRequest,
+    DeviceState,
     DeviceUpgradeRequest,
 )
 from aiounifi.models.message import MessageKey
@@ -51,6 +52,7 @@ test_data = [
             "overheating": False,
             "port_overrides": [],
             "port_table": ACCESS_POINT_AC_PRO["port_table"],
+            "speedtest_status": None,
             "state": 1,
             "sys_stats": {
                 "loadavg_1": "0.15",
@@ -118,6 +120,7 @@ test_data = [
             "uptime": 3971869,
             "user_num_sta": 20,
             "wlan_overrides": [],
+            "speedtest_status": GATEWAY_USG3["speedtest-status"],
         },
     ),
     (
@@ -991,3 +994,8 @@ async def test_device_websocket(
 
     unsub()
     assert len(unifi_controller.devices._subscribers["*"]) == 2
+
+
+def test_enum_unknowns() -> None:
+    """Validate enum unknown values."""
+    assert DeviceState(999) == DeviceState.UNKNOWN

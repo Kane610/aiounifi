@@ -34,6 +34,7 @@ class MessageKey(enum.Enum):
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
     NETWORK_CONF_UPDATED = "networkconf:sync"
+    NOTIFICATION_TOAST = "notification-toast"
     PING_TEST_UPDATE = "ping-test:update"
     PORT_FORWARD_ADDED = "portforward:add"
     PORT_FORWARD_UPDATED = "portforward:sync"
@@ -45,6 +46,9 @@ class MessageKey(enum.Enum):
     SPEED_TEST_UPDATE = "speed-test:update"
     UNIFI_DEVICE = "unifi-device:sync"
     UNIFI_DEVICE_ADD = "unifi-device:add"
+    USER_GROUP_UPDATED = "usergroup:sync"
+    VPN_CONNECT = "vpn:connect"
+    VPN_DISCONNECT = "vpn:disconnect"
     VPN_CONNECTION_UPDATED = "vpn-connection:sync"
     VOUCHER_CREATED = "voucher:create"
     VOUCHER_DELETED = "voucher:delete"
@@ -90,7 +94,7 @@ class Message:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create data container instance from dict."""
         meta = Meta.from_dict(data["meta"])
-        if meta.message == MessageKey.UNKNOWN:
+        if meta.message is MessageKey.UNKNOWN:
             LOGGER.warning("Unsupported message %s", data)
         return cls(
             meta=meta,

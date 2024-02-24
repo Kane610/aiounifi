@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import IntEnum
 import logging
-from typing import Any, NotRequired, Self, TypedDict
+from typing import Any, NotRequired, Self, TypedDict, cast
 
 from .api import ApiItem, ApiRequest
 
@@ -338,6 +338,20 @@ class TypedDeviceWlanOverrides(TypedDict):
     wlan_id: str
 
 
+class TypedDeviceSpeedtestStatus(TypedDict):
+    """Device speedtest status type definition."""
+
+    latency: int
+    rundate: int
+    runtime: int
+    status_download: int
+    status_ping: int
+    status_summary: int
+    status_upload: int
+    xput_download: float
+    xput_upload: float
+
+
 class TypedDevice(TypedDict):
     """Device type definition."""
 
@@ -448,6 +462,7 @@ class TypedDevice(TypedDict):
     serial: str
     site_id: str
     spectrum_scanning: bool
+    speedtest_status: TypedDeviceSpeedtestStatus | None
     ssh_session_table: list  # type: ignore[type-arg]
     start_connected_millis: int
     start_disconnected_millis: int
@@ -725,9 +740,7 @@ class Device(ApiItem):
     @property
     def disabled(self) -> bool:
         """Is device disabled."""
-        if "disabled" in self.raw:
-            return self.raw["disabled"]
-        return False
+        return self.raw.get("disabled", False)
 
     @property
     def downlink_table(self) -> list[dict[str, Any]]:
@@ -833,6 +846,13 @@ class Device(ApiItem):
     def port_table(self) -> list[TypedDevicePortTable]:
         """List of ports and data."""
         return self.raw.get("port_table", [])
+
+    @property
+    def speedtest_status(self) -> TypedDeviceSpeedtestStatus | None:
+        """Speedtest status."""
+        if value := self.raw.get("speedtest-status"):
+            return cast(TypedDeviceSpeedtestStatus, value)
+        return None
 
     @property
     def state(self) -> DeviceState:

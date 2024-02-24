@@ -1,6 +1,7 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
 from collections.abc import Callable, Mapping
+import datetime
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
@@ -17,6 +18,7 @@ from ..errors import (
     RequestError,
     ResponseError,
     ServiceUnavailable,
+    WebsocketError,
 )
 from ..models.api import ERRORS
 from ..models.configuration import Configuration
@@ -37,6 +39,10 @@ class Connectivity:
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
+        self.ws_message_received: datetime.datetime | None = None
+
+        if config.ssl_context:
+            LOGGER.warning("Using SSL context %s", config.ssl_context)
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
@@ -48,6 +54,7 @@ class Connectivity:
 
     async def login(self) -> None:
         """Log in to controller."""
+        self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
         auth = {
@@ -61,14 +68,14 @@ class Connectivity:
         if response.content_type == "application/json":
             data: "TypedApiResponse" = orjson.loads(bytes_data)
             if "meta" in data and data["meta"]["rc"] == "error":
-                LOGGER.error(data)
+                LOGGER.error("Login failed '%s'", data)
                 raise ERRORS.get(data["meta"]["msg"], AiounifiException)
 
         if (
             response.status == HTTPStatus.OK
             and (csrf_token := response.headers.get("x-csrf-token")) is not None
         ):
-            self.headers = {"x-csrf-token": csrf_token}
+            self.headers["x-csrf-token"] = csrf_token
 
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
@@ -164,18 +171,44 @@ class Connectivity:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
-                    if message.type == aiohttp.WSMsgType.TEXT:
-                        if LOGGER.isEnabledFor(logging.DEBUG):
-                            LOGGER.debug(message.data)
+                    self.ws_message_received = datetime.datetime.now(datetime.UTC)
+
+                    if message.type is aiohttp.WSMsgType.TEXT:
+                        LOGGER.debug("Websocket '%s'", message.data)
                         callback(message.data)
 
-                    elif message.type == aiohttp.WSMsgType.CLOSED:
-                        LOGGER.warning("Connection closed to UniFi websocket")
+                    elif message.type is aiohttp.WSMsgType.CLOSED:
+                        LOGGER.warning(
+                            "Connection closed to UniFi websocket '%s'", message.data
+                        )
                         break
 
-                    elif message.type == aiohttp.WSMsgType.ERROR:
+                    elif message.type is aiohttp.WSMsgType.ERROR:
                         LOGGER.error("UniFi websocket error: '%s'", message.data)
-                        break
+                        raise WebsocketError(message.data)
+
+                    else:
+                        LOGGER.warning(
+                            "Unexpected websocket message type '%s' with data '%s'",
+                            message.type,
+                            message.data,
+                        )
 
         except aiohttp.ClientConnectorError as err:
             LOGGER.error("Error connecting to UniFi websocket: '%s'", err)
+            err.add_note("Error connecting to UniFi websocket")
+            raise
+
+        except aiohttp.WSServerHandshakeError as err:
+            LOGGER.error(
+                "Server handshake error connecting to UniFi websocket: '%s'", err
+            )
+            err.add_note("Server handshake error connecting to UniFi websocket")
+            raise
+
+        except WebsocketError:
+            raise
+
+        except Exception as err:
+            LOGGER.exception(err)
+            raise WebsocketError from err

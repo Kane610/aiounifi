@@ -45,3 +45,7 @@ class BadGateway(RequestError):
 
 class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
+
+
+class WebsocketError(AiounifiException):
+    """Websocket error."""

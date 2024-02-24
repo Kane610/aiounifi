@@ -48,7 +48,7 @@ async def unifi_controller(
     except aiounifi.Unauthorized:
         LOGGER.warning("Connected to UniFi at %s but not registered", host)
 
-    except (asyncio.TimeoutError, aiounifi.RequestError):
+    except (TimeoutError, aiounifi.RequestError):
         LOGGER.exception("Error connecting to the UniFi controller at %s", host)
 
     except aiounifi.AiounifiException:
