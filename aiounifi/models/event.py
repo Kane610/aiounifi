@@ -1,6 +1,6 @@
 """Event messages on state changes."""
 
-#  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
+from __future__ import annotations
 
 import enum
 import logging
@@ -103,7 +103,7 @@ class EventKey(enum.Enum):
     UNKNOWN = "unknown"
 
     @classmethod
-    def _missing_(cls, value: object) -> "EventKey":
+    def _missing_(cls, value: object) -> EventKey:
         """Set default enum member if an unknown value is provided."""
         LOGGER.warning("Unsupported event key %s", value)
         return EventKey.UNKNOWN

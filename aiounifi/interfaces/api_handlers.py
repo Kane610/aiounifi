@@ -1,5 +1,7 @@
 """API management class and base class for the different end points."""
 
+from __future__ import annotations
+
 from abc import ABC
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
@@ -83,10 +85,10 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     obj_id_key: str
     item_cls: type[ApiItemT]
     api_request: ApiRequest
-    process_messages: tuple["MessageKey", ...] = ()
-    remove_messages: tuple["MessageKey", ...] = ()
+    process_messages: tuple[MessageKey, ...] = ()
+    remove_messages: tuple[MessageKey, ...] = ()
 
-    def __init__(self, controller: "Controller") -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize API handler."""
         super().__init__()
         self.controller = controller
@@ -108,7 +110,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
             self.process_item(raw_item)
 
     @final
-    def process_message(self, message: "Message") -> None:
+    def process_message(self, message: Message) -> None:
         """Process and forward websocket data."""
         if message.meta.message in self.process_messages:
             self.process_item(message.data)

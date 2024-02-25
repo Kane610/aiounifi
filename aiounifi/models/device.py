@@ -1,7 +1,7 @@
-"""UniFi devices are network infrastructure.
+"""UniFi devices are network infrastructure."""
 
-Access points, Gateways, Switches.
-"""
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass
 import enum
@@ -529,7 +529,7 @@ class DeviceState(enum.IntEnum):
     UNKNOWN = -1
 
     @classmethod
-    def _missing_(cls, value: object) -> "DeviceState":
+    def _missing_(cls, value: object) -> DeviceState:
         """Set default enum member if an unknown value is provided."""
         LOGGER.warning("Unsupported device state %s %s", value, cls)
         return DeviceState.UNKNOWN
@@ -612,7 +612,7 @@ class DeviceSetOutletRelayRequest(ApiRequest):
     """Request object for outlet relay state."""
 
     @classmethod
-    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
+    def create(cls, device: Device, outlet_idx: int, state: bool) -> Self:
         """Create device outlet relay state request.
 
         True:  outlet power output on.
@@ -647,7 +647,7 @@ class DeviceSetOutletCycleEnabledRequest(ApiRequest):
     """Request object for outlet cycle_enabled flag."""
 
     @classmethod
-    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
+    def create(cls, device: Device, outlet_idx: int, state: bool) -> Self:
         """Create device outlet outlet cycle_enabled flag request.
 
         True:  UniFi Network will power cycle this outlet if the internet goes down.
@@ -684,7 +684,7 @@ class DeviceSetPoePortModeRequest(ApiRequest):
     @classmethod
     def create(
         cls,
-        device: "Device",
+        device: Device,
         port_idx: int | None = None,
         mode: str | None = None,
         targets: list[tuple[int, str]] | None = None,
@@ -736,7 +736,7 @@ class DeviceSetLedStatus(ApiRequest):
     @classmethod
     def create(
         cls,
-        device: "Device",
+        device: Device,
         status: str = "on",
         brightness: int | None = None,
         color: str | None = None,
