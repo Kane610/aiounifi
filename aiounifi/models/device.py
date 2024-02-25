@@ -4,8 +4,9 @@ Access points, Gateways, Switches.
 """
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 import logging
+import re
 from typing import Any, NotRequired, Self, TypedDict, cast
 
 from .api import ApiItem, ApiRequest
@@ -419,7 +420,7 @@ class TypedDevice(TypedDict):
     lcm_tracker_enabled: bool
     led_override: str
     led_override_color: str
-    led_override_color_brightnes: int
+    led_override_color_brightness: int
     license_state: str
     lldp_table: list[TypedDeviceLldpTable]
     locating: bool
@@ -722,6 +723,53 @@ class DeviceSetPoePortModeRequest(ApiRequest):
         )
 
 
+@dataclass
+class DeviceSetLedStatus(ApiRequest):
+    """Request object for setting LED status of device."""
+
+    @classmethod
+    def create(
+        cls,
+        device: "Device",
+        status: str = "on",
+        brightness: int | None = None,
+        color: str | None = None,
+    ) -> Self:
+        """Set LED status of device."""
+
+        data: dict[str, int | str] = {"led_override": status}
+        if device.supports_led_ring:
+            # Validate brightness parameter
+            if brightness is not None:
+                if 0 <= brightness <= 100:
+                    data["led_override_color_brightness"] = brightness
+                else:
+                    raise AttributeError(
+                        "Brightness must be within the range [0, 100]."
+                    )
+
+            # Validate color parameter
+            if color is not None:
+                if re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
+                    data["led_override_color"] = color
+                else:
+                    raise AttributeError(
+                        "Color must be a valid hex color code (e.g., '#00FF00')."
+                    )
+
+        return cls(
+            method="put",
+            path=f"/rest/device/{device.id}",
+            data=data,
+        )
+
+
+class HardwareCapability(IntFlag):
+    """Enumeration representing hardware capabilities."""
+
+    LED_RING = 2
+
+
 class Device(ApiItem):
     """Represents a network device."""
 
@@ -916,6 +964,31 @@ class Device(ApiItem):
     def wlan_overrides(self) -> list[TypedDeviceWlanOverrides]:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    @property
+    def hw_caps(self) -> int:
+        """Hardware capabilities."""
+        return self.raw.get("hw_caps", 0)
+
+    @property
+    def supports_led_ring(self) -> bool:
+        """Check if the hardware supports an LED ring based on the second bit of `hw_caps`."""
+        return bool(self.hw_caps & HardwareCapability.LED_RING)
+
+    @property
+    def led_override(self) -> str | None:
+        """LED override."""
+        return self.raw.get("led_override")
+
+    @property
+    def led_override_color(self) -> str | None:
+        """LED override color."""
+        return self.raw.get("led_override_color")
+
+    @property
+    def led_override_color_brightness(self) -> int | None:
+        """LED override color brightness."""
+        return self.raw.get("led_override_color_brightness")
 
     def __repr__(self) -> str:
         """Return the representation."""
