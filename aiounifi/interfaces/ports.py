@@ -1,5 +1,7 @@
 """Device port handler."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from ..models.port import Port
@@ -14,7 +16,7 @@ class Ports(APIHandler[Port]):
 
     item_cls = Port
 
-    def __init__(self, controller: "Controller") -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize API handler."""
         super().__init__(controller)
         controller.devices.subscribe(self.process_device)

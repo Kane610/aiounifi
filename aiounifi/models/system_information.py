@@ -1,5 +1,7 @@
 """UniFi system information model."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TypedDict
 
@@ -59,7 +61,7 @@ class SystemInformationRequest(ApiRequest):
     """Request object for system information."""
 
     @classmethod
-    def create(cls) -> "SystemInformationRequest":
+    def create(cls) -> SystemInformationRequest:
         """Create system information request."""
         return cls(method="get", path="/stat/sysinfo")
 

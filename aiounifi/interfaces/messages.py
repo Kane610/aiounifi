@@ -1,4 +1,7 @@
 """Manage events from UniFi Network Controller."""
+
+from __future__ import annotations
+
 from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Any
@@ -21,7 +24,7 @@ UnsubscribeType = Callable[[], None]
 class MessageHandler:
     """Message handler class."""
 
-    def __init__(self, controller: "Controller") -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize message handler class."""
         self.controller = controller
         self._subscribers: list[SubscriptionType] = []
