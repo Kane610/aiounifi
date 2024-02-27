@@ -168,7 +168,7 @@ class Connectivity:
 
         try:
             async with self.config.session.ws_connect(
-                url, ssl=self.config.ssl_context, heartbeat=15
+                url, ssl=self.config.ssl_context, heartbeat=15, compress=9
             ) as websocket_connection:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 
