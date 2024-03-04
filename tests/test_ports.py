@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.ports tests/test_ports.py
 """
+
 from unittest.mock import Mock
 
 import pytest

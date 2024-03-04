@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.clients tests/test_clients.py
 """
+
 import pytest
 
 from aiounifi.controller import Controller

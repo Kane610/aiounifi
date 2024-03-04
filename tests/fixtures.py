@@ -1,6 +1,5 @@
 """Fixtures for different items from UniFi controller."""
 
-
 LOGIN_UNIFIOS_JSON_RESPONSE = {
     "unique_id": "868d288b-a642-4209-a768-8425498fa928",
     "username": "Testing1",

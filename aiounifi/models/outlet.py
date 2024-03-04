@@ -1,6 +1,5 @@
 """Device outlet implementation."""
 
-
 from .api import ApiItem
 from .device import TypedDeviceOutletTable
 
