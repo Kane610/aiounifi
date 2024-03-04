@@ -1,4 +1,5 @@
 """Traffic routes as part of a UniFi network."""
+
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import NotRequired, Self, TypedDict

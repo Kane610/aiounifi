@@ -1,4 +1,5 @@
 """Port forwarding in a UniFi network."""
+
 from dataclasses import dataclass
 from typing import NotRequired, Self, TypedDict
 

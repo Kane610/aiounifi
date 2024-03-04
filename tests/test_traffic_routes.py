@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.traffic_route tests/test_traffic_routes.py
 """
+
 from copy import deepcopy
 
 import pytest

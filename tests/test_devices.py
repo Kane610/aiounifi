@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
+
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import Mock
