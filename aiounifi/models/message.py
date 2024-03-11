@@ -1,6 +1,6 @@
 """Messages from websocket."""
 
-#  https://demo.ui.com/manage/locales/en/eventStrings.json?v=5.4.11.2
+from __future__ import annotations
 
 from dataclasses import dataclass
 import enum
@@ -59,7 +59,7 @@ class MessageKey(enum.Enum):
     UNKNOWN = "unknown"
 
     @classmethod
-    def _missing_(cls, value: object) -> "MessageKey":
+    def _missing_(cls, value: object) -> MessageKey:
         """Set default enum member if an unknown value is provided."""
         LOGGER.warning("Unsupported message key %s", value)
         return MessageKey.UNKNOWN

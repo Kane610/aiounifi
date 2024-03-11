@@ -1,6 +1,5 @@
 """Device port implementation."""
 
-
 from .api import ApiItem
 from .device import TypedDevicePortTable
 

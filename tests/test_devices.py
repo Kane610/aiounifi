@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
+
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import Mock
@@ -13,6 +14,7 @@ from aiounifi.controller import Controller
 from aiounifi.models.device import (
     DevicePowerCyclePortRequest,
     DeviceRestartRequest,
+    DeviceSetLedStatus,
     DeviceSetOutletCycleEnabledRequest,
     DeviceSetOutletRelayRequest,
     DeviceSetPoePortModeRequest,
@@ -44,6 +46,7 @@ test_data = [
             "fan_level": None,
             "has_fan": False,
             "last_seen": 1588175726,
+            "led_override": "on",
             "lldp_table": [],
             "mac": "80:2a:a8:00:01:02",
             "model": "U7PG2",
@@ -134,6 +137,9 @@ test_data = [
             "has_temperature": False,
             "general_temperature": None,
             "last_seen": 1642055273,
+            "led_override": "on",
+            "led_override_color": "#0000ff",
+            "led_override_color_brightness": 100,
             "lldp_table": [],
             "mac": "fc:ec:da:76:4f:5f",
             "model": "UP1",
@@ -999,3 +1005,133 @@ async def test_device_websocket(
 def test_enum_unknowns() -> None:
     """Validate enum unknown values."""
     assert DeviceState(999) == DeviceState.UNKNOWN
+
+
+@pytest.mark.parametrize(
+    ("device_payload", "data", "command"),
+    [
+        [
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "led_override": "on",
+                    "led_override_color": "#0060fd",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 2562,
+                }
+            ],
+            {"status": "off", "color": "#65e8a4", "brightness": 50},
+            {
+                "led_override": "off",
+                "led_override_color": "#65e8a4",
+                "led_override_color_brightness": 50,
+            },
+        ],
+        [
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "led_override": "on",
+                    "led_override_color": "#0060fd",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 2562,
+                }
+            ],
+            {"status": "off", "brightness": 0},
+            {
+                "led_override": "off",
+                "led_override_color_brightness": 0,
+            },
+        ],
+        [
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "led_override": "on",
+                    "led_override_color": "#0060fd",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 2562,
+                }
+            ],
+            {"color": "#ffffff"},
+            {
+                "led_override": "on",
+                "led_override_color": "#ffffff",
+            },
+        ],
+    ],
+)
+async def test_led_status_request(
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    _mock_endpoints: None,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    device_payload: list[dict[str, Any]],
+    data: dict[str, Any],
+    command: dict[str, Any],
+) -> None:
+    """Tests LED status requests."""
+    devices = unifi_controller.devices
+    await devices.update()
+    device = next(iter(devices.values()))
+    mock_aioresponse.put(
+        f"https://host:8443/api/s/default/rest/device/{device.id}", payload={}
+    )
+    api_request = DeviceSetLedStatus.create(device, **data)
+    await unifi_controller.request(api_request)
+    assert unifi_called_with(
+        "put", f"/api/s/default/rest/device/{device.id}", json=command
+    )
+
+
+@pytest.mark.parametrize(
+    ("device_payload", "data"),
+    [
+        [
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "led_override": "on",
+                    "led_override_color": "#0060fd",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 2562,
+                }
+            ],
+            {"status": "off", "color": "foobar", "brightness": 100},
+        ],
+        [
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "led_override": "on",
+                    "led_override_color": "#0060fd",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 2562,
+                }
+            ],
+            {"status": "off", "brightness": -99},
+        ],
+    ],
+)
+async def test_led_status_request_exception(
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    _mock_endpoints: None,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    device_payload: list[dict[str, Any]],
+    data: dict[str, Any],
+) -> None:
+    """Tests LED status requests raise AttributeError."""
+    devices = unifi_controller.devices
+    await devices.update()
+    device = next(iter(devices.values()))
+    mock_aioresponse.put(
+        f"https://host:8443/api/s/default/rest/device/{device.id}", payload={}
+    )
+    with pytest.raises(AttributeError):
+        DeviceSetLedStatus.create(device, **data)

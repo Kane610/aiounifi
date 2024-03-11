@@ -1,5 +1,7 @@
 """Python library to interact with UniFi controller."""
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable, Coroutine
 import logging
@@ -72,7 +74,7 @@ class Controller:
         await self.connectivity.check_unifi_os()
         await self.connectivity.login()
 
-    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
+    async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
         return await self.connectivity.request(api_request)
 

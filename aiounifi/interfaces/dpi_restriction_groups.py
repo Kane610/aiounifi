@@ -1,6 +1,5 @@
 """DPI Restrictions as part of a UniFi network."""
 
-
 from ..models.dpi_restriction_group import (
     DPIRestrictionGroup,
     DpiRestrictionGroupListRequest,

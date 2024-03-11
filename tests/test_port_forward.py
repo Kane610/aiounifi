@@ -1,4 +1,5 @@
 """Test port forwarding API."""
+
 import pytest
 
 from aiounifi.controller import Controller

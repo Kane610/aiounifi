@@ -1,11 +1,12 @@
-"""UniFi devices are network infrastructure.
+"""UniFi devices are network infrastructure."""
 
-Access points, Gateways, Switches.
-"""
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import IntEnum
+import enum
 import logging
+import re
 from typing import Any, NotRequired, Self, TypedDict, cast
 
 from .api import ApiItem, ApiRequest
@@ -419,7 +420,7 @@ class TypedDevice(TypedDict):
     lcm_tracker_enabled: bool
     led_override: str
     led_override_color: str
-    led_override_color_brightnes: int
+    led_override_color_brightness: int
     license_state: str
     lldp_table: list[TypedDeviceLldpTable]
     locating: bool
@@ -509,7 +510,7 @@ class TypedDevice(TypedDict):
     x_vwirekey: str
 
 
-class DeviceState(IntEnum):
+class DeviceState(enum.IntEnum):
     """Enum for device states."""
 
     DISCONNECTED = 0
@@ -528,10 +529,16 @@ class DeviceState(IntEnum):
     UNKNOWN = -1
 
     @classmethod
-    def _missing_(cls, value: object) -> "DeviceState":
+    def _missing_(cls, value: object) -> DeviceState:
         """Set default enum member if an unknown value is provided."""
         LOGGER.warning("Unsupported device state %s %s", value, cls)
         return DeviceState.UNKNOWN
+
+
+class HardwareCapability(enum.IntFlag):
+    """Enumeration representing hardware capabilities."""
+
+    LED_RING = 2
 
 
 @dataclass
@@ -605,7 +612,7 @@ class DeviceSetOutletRelayRequest(ApiRequest):
     """Request object for outlet relay state."""
 
     @classmethod
-    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
+    def create(cls, device: Device, outlet_idx: int, state: bool) -> Self:
         """Create device outlet relay state request.
 
         True:  outlet power output on.
@@ -640,7 +647,7 @@ class DeviceSetOutletCycleEnabledRequest(ApiRequest):
     """Request object for outlet cycle_enabled flag."""
 
     @classmethod
-    def create(cls, device: "Device", outlet_idx: int, state: bool) -> Self:
+    def create(cls, device: Device, outlet_idx: int, state: bool) -> Self:
         """Create device outlet outlet cycle_enabled flag request.
 
         True:  UniFi Network will power cycle this outlet if the internet goes down.
@@ -677,7 +684,7 @@ class DeviceSetPoePortModeRequest(ApiRequest):
     @classmethod
     def create(
         cls,
-        device: "Device",
+        device: Device,
         port_idx: int | None = None,
         mode: str | None = None,
         targets: list[tuple[int, str]] | None = None,
@@ -719,6 +726,45 @@ class DeviceSetPoePortModeRequest(ApiRequest):
             method="put",
             path=f"/rest/device/{device.id}",
             data={"port_overrides": port_overrides},
+        )
+
+
+@dataclass
+class DeviceSetLedStatus(ApiRequest):
+    """Request object for setting LED status of device."""
+
+    @classmethod
+    def create(
+        cls,
+        device: Device,
+        status: str = "on",
+        brightness: int | None = None,
+        color: str | None = None,
+    ) -> Self:
+        """Set LED status of device."""
+
+        data: dict[str, int | str] = {"led_override": status}
+        if device.supports_led_ring:
+            # Validate brightness parameter
+            if brightness is not None:
+                if not (0 <= brightness <= 100):
+                    raise AttributeError(
+                        "Brightness must be within the range [0, 100]."
+                    )
+                data["led_override_color_brightness"] = brightness
+
+            # Validate color parameter
+            if color is not None:
+                if not re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
+                    raise AttributeError(
+                        "Color must be a valid hex color code (e.g., '#00FF00')."
+                    )
+                data["led_override_color"] = color
+
+        return cls(
+            method="put",
+            path=f"/rest/device/{device.id}",
+            data=data,
         )
 
 
@@ -768,6 +814,11 @@ class Device(ApiItem):
         return self.raw.get("has_temperature", False)
 
     @property
+    def hw_caps(self) -> int:
+        """Hardware capabilities."""
+        return self.raw.get("hw_caps", 0)
+
+    @property
     def id(self) -> str:
         """ID of device."""
         return self.raw["device_id"]
@@ -781,6 +832,21 @@ class Device(ApiItem):
     def last_seen(self) -> int | None:
         """When was device last seen."""
         return self.raw.get("last_seen")
+
+    @property
+    def led_override(self) -> str | None:
+        """LED override."""
+        return self.raw.get("led_override")
+
+    @property
+    def led_override_color(self) -> str | None:
+        """LED override color."""
+        return self.raw.get("led_override_color")
+
+    @property
+    def led_override_color_brightness(self) -> int | None:
+        """LED override color brightness."""
+        return self.raw.get("led_override_color_brightness")
 
     @property
     def lldp_table(self) -> list[TypedDeviceLldpTable]:
@@ -916,6 +982,11 @@ class Device(ApiItem):
     def wlan_overrides(self) -> list[TypedDeviceWlanOverrides]:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    @property
+    def supports_led_ring(self) -> bool:
+        """Check if the hardware supports an LED ring based on the second bit of `hw_caps`."""
+        return bool(self.hw_caps & HardwareCapability.LED_RING)
 
     def __repr__(self) -> str:
         """Return the representation."""

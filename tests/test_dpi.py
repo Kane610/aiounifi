@@ -2,6 +2,7 @@
 
 pytest --cov-report term-missing --cov=aiounifi.dpi tests/test_dpi.py
 """
+
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import Mock

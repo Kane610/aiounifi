@@ -1,5 +1,7 @@
 """Python library to enable integration between Home Assistant and UniFi."""
 
+from __future__ import annotations
+
 from collections.abc import Callable, Mapping
 import datetime
 from http import HTTPStatus
@@ -66,7 +68,7 @@ class Connectivity:
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type == "application/json":
-            data: "TypedApiResponse" = orjson.loads(bytes_data)
+            data: TypedApiResponse = orjson.loads(bytes_data)
             if "meta" in data and data["meta"]["rc"] == "error":
                 LOGGER.error("Login failed '%s'", data)
                 raise ERRORS.get(data["meta"]["msg"], AiounifiException)
@@ -80,7 +82,7 @@ class Connectivity:
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
 
-    async def request(self, api_request: "ApiRequest") -> "TypedApiResponse":
+    async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
         url = self.config.url + api_request.full_path(
             self.config.site, self.is_unifi_os
@@ -166,7 +168,7 @@ class Connectivity:
 
         try:
             async with self.config.session.ws_connect(
-                url, ssl=self.config.ssl_context, heartbeat=15
+                url, ssl=self.config.ssl_context, heartbeat=15, compress=12
             ) as websocket_connection:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 

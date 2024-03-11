@@ -1,5 +1,7 @@
 """Device outlet handler."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from ..models.outlet import Outlet
@@ -14,7 +16,7 @@ class Outlets(APIHandler[Outlet]):
 
     item_cls = Outlet
 
-    def __init__(self, controller: "Controller") -> None:
+    def __init__(self, controller: Controller) -> None:
         """Initialize API handler."""
         super().__init__(controller)
         controller.devices.subscribe(self.process_device)

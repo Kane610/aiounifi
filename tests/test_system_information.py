@@ -1,4 +1,5 @@
 """Test system information API."""
+
 import pytest
 
 from aiounifi.controller import Controller

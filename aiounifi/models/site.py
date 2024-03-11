@@ -1,4 +1,5 @@
 """Site is a specific grouping in a UniFi network."""
+
 from dataclasses import dataclass
 from typing import Self, TypedDict
 
