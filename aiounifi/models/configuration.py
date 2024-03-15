@@ -23,4 +23,8 @@ class Configuration:
     @property
     def url(self) -> str:
         """Represent console path."""
-        return f"https://{self.host}:{self.port}"
+        return (
+            f"https://{self.host}:{self.port}"
+            if self.ssl_context
+            else f"http://{self.host}:{self.port}"
+        )
