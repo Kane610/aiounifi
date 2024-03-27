@@ -685,8 +685,9 @@ test_data = [
 
 
 @pytest.mark.parametrize(("device_payload", "reference_data"), test_data)
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_device(
-    unifi_controller: Controller, _mock_endpoints: None, reference_data: dict[str, Any]
+    unifi_controller: Controller, reference_data: dict[str, Any]
 ) -> None:
     """Test device class."""
     devices = unifi_controller.devices
@@ -701,7 +702,7 @@ async def test_device(
 
 @pytest.mark.parametrize(
     ("method", "mac", "command"),
-    [["upgrade", "0", {"mac": "0", "cmd": "upgrade"}]],
+    [("upgrade", "0", {"mac": "0", "cmd": "upgrade"})],
 )
 async def test_device_commands(
     mock_aioresponse: aioresponses,
@@ -721,26 +722,26 @@ async def test_device_commands(
 @pytest.mark.parametrize(
     ("api_request", "data", "command"),
     [
-        [
+        (
             DeviceRestartRequest,
             {"mac": "0", "soft": True},
             {"mac": "0", "cmd": "restart", "reboot_type": "soft"},
-        ],
-        [
+        ),
+        (
             DeviceRestartRequest,
             {"mac": "0", "soft": False},
             {"mac": "0", "cmd": "restart", "reboot_type": "hard"},
-        ],
-        [
+        ),
+        (
             DeviceUpgradeRequest,
             {"mac": "0"},
             {"mac": "0", "cmd": "upgrade"},
-        ],
-        [
+        ),
+        (
             DevicePowerCyclePortRequest,
             {"mac": "0", "port_idx": 1},
             {"mac": "0", "port_idx": 1, "cmd": "power-cycle"},
-        ],
+        ),
     ],
 )
 async def test_device_requests(
@@ -762,7 +763,7 @@ async def test_device_requests(
 @pytest.mark.parametrize(
     ("device_payload", "api_request", "data", "command"),
     [
-        [  # Outlet set relay without existing override
+        (  # Outlet set relay without existing override
             [
                 {
                     "device_id": "01",
@@ -786,8 +787,8 @@ async def test_device_requests(
                     {"index": 1, "name": "USB Outlet 1", "relay_state": True}
                 ]
             },
-        ],
-        [  # Outlet set relay with existing override
+        ),
+        (  # Outlet set relay with existing override
             [
                 {
                     "device_id": "01",
@@ -807,8 +808,8 @@ async def test_device_requests(
             DeviceSetOutletRelayRequest,
             {"outlet_idx": 2, "state": False},
             {"outlet_overrides": [{"index": 2, "relay_state": False}]},
-        ],
-        [  # Outlet outlet cycle without existing override
+        ),
+        (  # Outlet outlet cycle without existing override
             [
                 {
                     "device_id": "01",
@@ -832,8 +833,8 @@ async def test_device_requests(
                     {"index": 1, "name": "USB Outlet 1", "cycle_enabled": True}
                 ]
             },
-        ],
-        [  # Outlet outlet cycle with existing override
+        ),
+        (  # Outlet outlet cycle with existing override
             [
                 {
                     "device_id": "01",
@@ -853,8 +854,8 @@ async def test_device_requests(
             DeviceSetOutletCycleEnabledRequest,
             {"outlet_idx": 2, "state": False},
             {"outlet_overrides": [{"index": 2, "cycle_enabled": False}]},
-        ],
-        [  # PoE port mode without existing override
+        ),
+        (  # PoE port mode without existing override
             [
                 {
                     "device_id": "01",
@@ -872,8 +873,8 @@ async def test_device_requests(
             DeviceSetPoePortModeRequest,
             {"port_idx": 1, "mode": "off"},
             {"port_overrides": [{"port_idx": 1, "poe_mode": "off"}]},
-        ],
-        [  # PoE port mode with portconf_id without existing override
+        ),
+        (  # PoE port mode with portconf_id without existing override
             [
                 {
                     "device_id": "01",
@@ -896,8 +897,8 @@ async def test_device_requests(
                     {"port_idx": 1, "poe_mode": "off", "portconf_id": "123"}
                 ]
             },
-        ],
-        [  # PoE port mode with existing override
+        ),
+        (  # PoE port mode with existing override
             [
                 {
                     "device_id": "01",
@@ -915,8 +916,8 @@ async def test_device_requests(
             DeviceSetPoePortModeRequest,
             {"port_idx": 1, "mode": "off"},
             {"port_overrides": [{"port_idx": 1, "poe_mode": "off", "name": "Office"}]},
-        ],
-        [  # PoE multi target port mode with existing override
+        ),
+        (  # PoE multi target port mode with existing override
             [
                 {
                     "device_id": "01",
@@ -944,13 +945,13 @@ async def test_device_requests(
                     {"port_idx": 2, "poe_mode": "auto"},
                 ]
             },
-        ],
+        ),
     ],
 )
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_sub_device_requests(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
-    _mock_endpoints: None,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
     api_request: DeviceSetOutletRelayRequest
     | DeviceSetOutletCycleEnabledRequest
@@ -968,9 +969,8 @@ async def test_sub_device_requests(
 
 
 @pytest.mark.parametrize(("device_payload"), [[SWITCH_16_PORT_POE]])
-async def test_set_poe_request_raise_error(
-    unifi_controller: Controller, _mock_endpoints: None
-) -> None:
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_set_poe_request_raise_error(unifi_controller: Controller) -> None:
     """Test device class."""
     await unifi_controller.initialize()
     device = next(iter(unifi_controller.devices.values()))
@@ -979,7 +979,7 @@ async def test_set_poe_request_raise_error(
 
 
 async def test_device_websocket(
-    unifi_controller: Controller, _new_ws_data_fn: Callable[[dict[str, Any]], None]
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller managing devices."""
     assert len(unifi_controller.devices._subscribers["*"]) == 2
@@ -989,7 +989,7 @@ async def test_device_websocket(
     assert mock_callback.call_count == 0
 
     # Add client from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"message": MessageKey.DEVICE.value},
             "data": [SWITCH_16_PORT_POE],
@@ -1010,7 +1010,7 @@ def test_enum_unknowns() -> None:
 @pytest.mark.parametrize(
     ("device_payload", "data", "command"),
     [
-        [
+        (
             [
                 {
                     "device_id": "01",
@@ -1027,8 +1027,8 @@ def test_enum_unknowns() -> None:
                 "led_override_color": "#65e8a4",
                 "led_override_color_brightness": 50,
             },
-        ],
-        [
+        ),
+        (
             [
                 {
                     "device_id": "01",
@@ -1044,8 +1044,8 @@ def test_enum_unknowns() -> None:
                 "led_override": "off",
                 "led_override_color_brightness": 0,
             },
-        ],
-        [
+        ),
+        (
             [
                 {
                     "device_id": "01",
@@ -1061,13 +1061,13 @@ def test_enum_unknowns() -> None:
                 "led_override": "on",
                 "led_override_color": "#ffffff",
             },
-        ],
+        ),
     ],
 )
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_led_status_request(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
-    _mock_endpoints: None,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
     device_payload: list[dict[str, Any]],
     data: dict[str, Any],
@@ -1090,7 +1090,7 @@ async def test_led_status_request(
 @pytest.mark.parametrize(
     ("device_payload", "data"),
     [
-        [
+        (
             [
                 {
                     "device_id": "01",
@@ -1102,8 +1102,8 @@ async def test_led_status_request(
                 }
             ],
             {"status": "off", "color": "foobar", "brightness": 100},
-        ],
-        [
+        ),
+        (
             [
                 {
                     "device_id": "01",
@@ -1115,13 +1115,13 @@ async def test_led_status_request(
                 }
             ],
             {"status": "off", "brightness": -99},
-        ],
+        ),
     ],
 )
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_led_status_request_exception(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
-    _mock_endpoints: None,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
     device_payload: list[dict[str, Any]],
     data: dict[str, Any],

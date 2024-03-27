@@ -152,8 +152,9 @@ test_data = [
 
 
 @pytest.mark.parametrize(("client_payload", "reference_data"), test_data)
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_clients(
-    unifi_controller: Controller, _mock_endpoints: None, reference_data: dict[str, Any]
+    unifi_controller: Controller, reference_data: dict[str, Any]
 ) -> None:
     """Test clients class."""
     clients = unifi_controller.clients
@@ -168,10 +169,10 @@ async def test_clients(
 @pytest.mark.parametrize(
     ("method", "mac", "command"),
     [
-        ["block", "0", {"mac": "0", "cmd": "block-sta"}],
-        ["unblock", "0", {"mac": "0", "cmd": "unblock-sta"}],
-        ["reconnect", "0", {"mac": "0", "cmd": "kick-sta"}],
-        ["remove_clients", ["0"], {"macs": ["0"], "cmd": "forget-sta"}],
+        ("block", "0", {"mac": "0", "cmd": "block-sta"}),
+        ("unblock", "0", {"mac": "0", "cmd": "unblock-sta"}),
+        ("reconnect", "0", {"mac": "0", "cmd": "kick-sta"}),
+        ("remove_clients", ["0"], {"macs": ["0"], "cmd": "forget-sta"}),
     ],
 )
 async def test_client_commands(
@@ -190,7 +191,7 @@ async def test_client_commands(
 
 
 async def test_client_websocket(
-    unifi_controller: Controller, _new_ws_data_fn: Callable[[dict[str, Any]], None]
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller managing clients."""
     unsub = unifi_controller.clients.subscribe(mock_callback := Mock())
@@ -198,7 +199,7 @@ async def test_client_websocket(
     assert mock_callback.call_count == 0
 
     # Add client from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"message": MessageKey.CLIENT.value},
             "data": [WIRELESS_CLIENT],
@@ -213,14 +214,13 @@ async def test_client_websocket(
 
 
 @pytest.mark.parametrize("client_payload", [[WIRELESS_CLIENT]])
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_message_client_removed(
-    unifi_controller: Controller,
-    _mock_endpoints: None,
-    _new_ws_data_fn: Callable[[dict[str, Any]], None],
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller communicating client has been removed."""
     await unifi_controller.initialize()
     assert len(unifi_controller.clients.items()) == 1
 
-    _new_ws_data_fn(MESSAGE_WIRELESS_CLIENT_REMOVED)
+    new_ws_data_fn(MESSAGE_WIRELESS_CLIENT_REMOVED)
     assert len(unifi_controller.clients.items()) == 0

@@ -255,9 +255,8 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
 
 
 @pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
-async def test_controller(
-    unifi_controller, unifi_called_with, _mock_endpoints, _new_ws_data_fn
-):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
     """Test controller communicating with a non UniFiOS UniFi controller."""
     await unifi_controller.initialize()
 
@@ -289,12 +288,12 @@ async def test_controller(
 
 
 @pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_unifios_controller(
     mock_aioresponse,
     unifi_controller,
     unifi_called_with,
-    _mock_endpoints,
-    _new_ws_data_fn,
+    new_ws_data_fn,
 ):
     """Test controller communicating with a UniFi OS controller."""
     mock_aioresponse.post(
@@ -409,7 +408,8 @@ async def test_controller_raise_expected_exception(
 
 
 @pytest.mark.parametrize("traffic_rule_status", [404])
-async def test_initialize_handles_404(unifi_controller, _mock_endpoints):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_initialize_handles_404(unifi_controller):
     """Validate initialize does not abort on exception."""
     await unifi_controller.initialize()
 
@@ -510,11 +510,11 @@ async def test_api_request_generic_error_handling(
     "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
 )
 async def test_handle_unsupported_events(
-    unifi_controller, unsupported_message, _new_ws_data_fn
+    unifi_controller, unsupported_message, new_ws_data_fn
 ):
     """Test controller properly ignores unsupported events."""
     unifi_controller.ws_state_callback.reset_mock()
-    _new_ws_data_fn({"meta": {"message": unsupported_message}})
+    new_ws_data_fn({"meta": {"message": unsupported_message}})
     unifi_controller.ws_state_callback.assert_not_called()
 
     assert len(unifi_controller.clients.items()) == 0

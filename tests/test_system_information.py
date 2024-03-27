@@ -16,9 +16,8 @@ async def test_sys_info_request(mock_aioresponse, unifi_controller, unifi_called
 
 
 @pytest.mark.parametrize("system_information_payload", [[SYSTEM_INFORMATION]])
-async def test_system_information(
-    unifi_controller: Controller, _mock_endpoints: None
-) -> None:
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_system_information(unifi_controller: Controller) -> None:
     """Test port forwarding interface and model."""
     system_information = unifi_controller.system_information
     await system_information.update()
