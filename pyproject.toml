@@ -99,6 +99,7 @@ lint.select = [
     "B002",  # Python does not support the unary prefix increment
     "B007",  # Loop control variable {name} not used within loop body
     "B014",  # Exception handler with duplicate exception
+    "B018",  # Found useless attribute access. Either assign it to a variable or remove it.
     "B023",  # Function definition does not bind loop variable {name}
     "B026",  # Star-arg unpacking after a keyword argument is strongly discouraged
     "C",       # complexity
