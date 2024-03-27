@@ -119,6 +119,7 @@ lint.select = [
     "PLE",  # pylint
     "PLR",  # pylint
     "PLW",  # pylint
+    "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF006",  # Store a reference to the return value of asyncio.create_task
     "S307",    # No builtin eval() allowed
     "SIM105",  # Use contextlib.suppress({exception}) instead of try-except-pass
