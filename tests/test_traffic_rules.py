@@ -46,9 +46,8 @@ async def test_traffic_rule_enable_request(
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
-async def test_traffic_rule_toggle(
-    mock_aioresponse, unifi_controller, _mock_endpoints, enable
-):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_traffic_rule_toggle(mock_aioresponse, unifi_controller, enable):
     """Test toggle method can enable and disable a traffic rule."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
@@ -69,9 +68,8 @@ async def test_traffic_rule_toggle(
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
-async def test_traffic_rule_enable_disable(
-    mock_aioresponse, unifi_controller, _mock_endpoints, enable
-):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_traffic_rule_enable_disable(mock_aioresponse, unifi_controller, enable):
     """Test individual methods for enabled and disabled."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
@@ -91,7 +89,8 @@ async def test_traffic_rule_enable_disable(
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
-async def test_no_traffic_rules(unifi_controller, _mock_endpoints, unifi_called_with):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_no_traffic_rules(unifi_controller, unifi_called_with):
     """Test that no traffic rules also work."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
@@ -100,7 +99,8 @@ async def test_no_traffic_rules(unifi_controller, _mock_endpoints, unifi_called_
 
 
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
-async def test_traffic_rules(unifi_controller, _mock_endpoints, unifi_called_with):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_traffic_rules(unifi_controller, unifi_called_with):
     """Test that we get the expected traffic rule."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()

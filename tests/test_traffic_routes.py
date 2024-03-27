@@ -62,11 +62,11 @@ async def test_traffic_route_enable_request(
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("traffic_route_id", [route["_id"] for route in TRAFFIC_ROUTES])
 @pytest.mark.parametrize("enable", [True, False, None])
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_traffic_route_save(
     mock_aioresponse,
     unifi_controller,
     unifi_called_with,
-    _mock_endpoints,
     enable,
     traffic_route_id,
 ):
@@ -104,13 +104,9 @@ async def test_traffic_route_save(
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("traffic_route_id", [route["_id"] for route in TRAFFIC_ROUTES])
 @pytest.mark.parametrize("enable", [True, False])
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_traffic_route_enable_disable(
-    mock_aioresponse,
-    _mock_endpoints,
-    unifi_called_with,
-    unifi_controller,
-    enable,
-    traffic_route_id,
+    mock_aioresponse, unifi_called_with, unifi_controller, enable, traffic_route_id
 ):
     """Test individual methods for enabled and disabled."""
     traffic_routes = unifi_controller.traffic_routes
@@ -135,7 +131,8 @@ async def test_traffic_route_enable_disable(
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
-async def test_no_traffic_routes(unifi_controller, _mock_endpoints, unifi_called_with):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_no_traffic_routes(unifi_controller, unifi_called_with):
     """Test that no traffic routes also work."""
     traffic_routes = unifi_controller.traffic_routes
     await traffic_routes.update()
@@ -144,7 +141,8 @@ async def test_no_traffic_routes(unifi_controller, _mock_endpoints, unifi_called
 
 
 @pytest.mark.parametrize("traffic_route_payload", [TRAFFIC_ROUTES])
-async def test_traffic_routes(unifi_controller, _mock_endpoints, unifi_called_with):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_traffic_routes(unifi_controller, unifi_called_with):
     """Test that we get the expected traffic route."""
     traffic_routes = unifi_controller.traffic_routes
     await traffic_routes.update()

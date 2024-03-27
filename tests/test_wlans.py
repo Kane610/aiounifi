@@ -66,7 +66,8 @@ def test_wlan_qr_code():
     )
 
 
-async def test_no_wlans(unifi_controller, _mock_endpoints, unifi_called_with):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_no_wlans(unifi_controller, unifi_called_with):
     """Test that no ports also work."""
     wlans = unifi_controller.wlans
     await wlans.update()
@@ -76,9 +77,8 @@ async def test_no_wlans(unifi_controller, _mock_endpoints, unifi_called_with):
 
 
 @pytest.mark.parametrize("wlan_payload", [WLANS])
-async def test_wlans(
-    mock_aioresponse, unifi_controller, _mock_endpoints, unifi_called_with
-):
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
     await wlans.update()

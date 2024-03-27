@@ -23,7 +23,8 @@ from aiounifi.controller import Controller
         ]
     ],
 )
-async def test_sites(unifi_controller: Controller, _mock_endpoints: None) -> None:
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_sites(unifi_controller: Controller) -> None:
     """Test sites class."""
     sites = unifi_controller.sites
     await sites.update()

@@ -18,10 +18,10 @@ from .fixtures import DPI_APPS, DPI_GROUPS
 
 
 @pytest.mark.parametrize("dpi_app_payload", [DPI_APPS])
+@pytest.mark.usefixtures("_mock_endpoints")
 async def test_dpi_apps(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
-    _mock_endpoints: None,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
 ) -> None:
     """Test that dpi_apps can create an app."""
@@ -59,7 +59,8 @@ async def test_dpi_apps(
 
 
 @pytest.mark.parametrize("dpi_group_payload", [DPI_GROUPS])
-async def test_dpi_groups(unifi_controller: Controller, _mock_endpoints: None) -> None:
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_dpi_groups(unifi_controller: Controller) -> None:
     """Test that dpi_groups can create a group."""
     dpi_groups = unifi_controller.dpi_groups
     await dpi_groups.update()
@@ -75,13 +76,13 @@ async def test_dpi_groups(unifi_controller: Controller, _mock_endpoints: None) -
 
 
 async def test_dpi_apps_websocket(
-    unifi_controller: Controller, _new_ws_data_fn: Callable[[dict[str, Any]], None]
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller managing devices."""
     unifi_controller.dpi_apps.subscribe(mock_app_callback := Mock())
 
     # Add DPI app from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpiapp:add"},
             "data": [
@@ -104,7 +105,7 @@ async def test_dpi_apps_websocket(
     mock_app_callback.reset_mock()
 
     # DPI group is enabled with app from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpiapp:sync"},
             "data": [
@@ -127,7 +128,7 @@ async def test_dpi_apps_websocket(
     mock_app_callback.reset_mock()
 
     # Signal removal of app from apps
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpiapp:delete"},
             "data": [
@@ -149,13 +150,13 @@ async def test_dpi_apps_websocket(
 
 
 async def test_dpi_group_websocket(
-    unifi_controller: Controller, _new_ws_data_fn: Callable[[dict[str, Any]], None]
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller managing devices."""
     unifi_controller.dpi_groups.subscribe(mock_group_callback := Mock())
 
     # Add DPI group from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpigroup:add"},
             "data": [
@@ -174,7 +175,7 @@ async def test_dpi_group_websocket(
     mock_group_callback.reset_mock()
 
     # Update DPI group with app from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpigroup:sync"},
             "data": [
@@ -194,7 +195,7 @@ async def test_dpi_group_websocket(
     mock_group_callback.reset_mock()
 
     # Signal for group to remove app
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpigroup:sync"},
             "data": [
@@ -211,7 +212,7 @@ async def test_dpi_group_websocket(
     mock_group_callback.reset_mock()
 
     # Remove group from UniFI controller group from websocket
-    _new_ws_data_fn(
+    new_ws_data_fn(
         {
             "meta": {"rc": "ok", "message": "dpigroup:delete"},
             "data": [
