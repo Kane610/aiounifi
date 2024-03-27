@@ -97,6 +97,7 @@ target-version = "py311"
 
 lint.select = [
     "B002",  # Python does not support the unary prefix increment
+    "B005",  # Using .strip() with multi-character strings is misleading
     "B007",  # Loop control variable {name} not used within loop body
     "B014",  # Exception handler with duplicate exception
     "B018",  # Found useless attribute access. Either assign it to a variable or remove it.
