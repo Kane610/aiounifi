@@ -120,11 +120,7 @@ lint.select = [
     "PIE800",  # Unnecessary dictionary unpacking operators
     "PIE807",  # Prefer list/dict over useless lambda
     "PIE810",  # Call startswith/endswith once with a tuple
-    "PLC0414", # Useless import alias. Import alias does not rename original package.
-    "PLC",  # pylint
-    "PLE",  # pylint
-    "PLR",  # pylint
-    "PLW",  # pylint
+    "PL", # pylint
     "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF006",  # Store a reference to the return value of asyncio.create_task
     "S307",    # No builtin eval() allowed
