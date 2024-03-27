@@ -123,6 +123,7 @@ lint.select = [
     "PL", # pylint
     "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF006",  # Store a reference to the return value of asyncio.create_task
+    "RUF100",  # Unused `noqa` directive
     "S307",    # No builtin eval() allowed
     "SIM105",  # Use contextlib.suppress({exception}) instead of try-except-pass
     "SIM117",  # Merge with-statements that use the same scope
