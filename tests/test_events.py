@@ -95,10 +95,9 @@ async def test_client_event():
     assert client.event == "EVT_WU_Connected"
     assert client.key == EventKey.WIRELESS_CLIENT_CONNECTED
     assert client.datetime == "2020-04-24T18:37:36Z"
-    assert (
-        client.msg
-        == "User[00:00:00:00:00:01] has connected to AP[80:2a:a8:00:01:02] "
-        + 'with SSID "SSID" on "channel 44(na)"'
+    assert client.msg == (
+        "User[00:00:00:00:00:01] has connected to AP[80:2a:a8:00:01:02] "
+        'with SSID "SSID" on "channel 44(na)"'
     )
     assert client.time == 1587753456179
     assert client.mac == "00:00:00:00:00:01"

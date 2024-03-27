@@ -40,8 +40,10 @@ async def test_traffic_route_enable_request(
     assert traffic_route["enabled"] is not enable
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficroutes/{traffic_route_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficroutes/{traffic_route_id}"
+        ),
         payload={},
     )
 
@@ -75,8 +77,10 @@ async def test_traffic_route_save(
     traffic_route = traffic_routes[traffic_route_id]
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficroutes/{traffic_route_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficroutes/{traffic_route_id}"
+        ),
         payload={},
     )
     await traffic_routes.save(traffic_route, enable)
@@ -116,8 +120,10 @@ async def test_traffic_route_enable_disable(
     traffic_route_call = traffic_routes.disable if not enable else traffic_routes.enable
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficroutes/{traffic_route_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficroutes/{traffic_route_id}"
+        ),
         payload={},
     )
     await traffic_route_call(traffic_routes[traffic_route_id])

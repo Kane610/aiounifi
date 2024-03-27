@@ -24,8 +24,10 @@ async def test_traffic_rule_enable_request(
     traffic_rule_id = traffic_rule_disabled_id if enable else traffic_rule_enabled_id
     traffic_rule = traffic_rule_disabled if enable else traffic_rule_enabled
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficrules/{traffic_rule_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficrules/{traffic_rule_id}"
+        ),
         payload={},
     )
 
@@ -54,8 +56,10 @@ async def test_traffic_rule_toggle(
     traffic_rule_id = TRAFFIC_RULES[0 if not enable else 1]["_id"]
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficrules/{traffic_rule_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficrules/{traffic_rule_id}"
+        ),
         payload={},
     )
     await traffic_rules.toggle(traffic_rules[traffic_rule_id], enable)
@@ -76,8 +80,10 @@ async def test_traffic_rule_enable_disable(
     traffic_rule_call = traffic_rules.disable if not enable else traffic_rules.enable
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default"
-        + f"/trafficrules/{traffic_rule_id}",
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/trafficrules/{traffic_rule_id}"
+        ),
         payload={},
     )
     await traffic_rule_call(traffic_rules[traffic_rule_id])

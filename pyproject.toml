@@ -113,6 +113,7 @@ lint.select = [
     "G",  # flake8-logging-format
     "I",  # isort
     "ICN001",  # import concentions; {name} should be imported as {asname}
+    "ISC",     # flake8-implicit-str-concat
     "N804",    # First argument of a class method should be named cls
     "N805",    # First argument of a method should be named self
     "N815",    # Variable {name} in class scope should not be mixedCase
