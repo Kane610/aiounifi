@@ -20,15 +20,15 @@ classifiers = [
 ]
 requires-python = ">=3.11.0"
 dependencies    = [
-    "aiohttp>3.8",
+    "aiohttp>3.9",
     "orjson>3.9",
     "segno>=1.5.2",
 ]
 
 [project.optional-dependencies]
 requirements = [
-    "aiohttp~=3.9",
-    "orjson~=3.9.5",
+    "aiohttp==3.9.3",
+    "orjson==3.10.0",
     "segno==1.6.1",
 ]
 requirements_test = [
