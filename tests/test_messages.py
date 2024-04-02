@@ -64,4 +64,4 @@ async def test_unsupported_message_key():
 async def test_message_handler_bad_json_data(logger_mock):
     """Verify message handler catches json error."""
     MessageHandler(controller=Mock()).new_data(b"")
-    assert logger_mock.error.called
+    assert logger_mock.debug.called
