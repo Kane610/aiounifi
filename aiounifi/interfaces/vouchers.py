@@ -1,6 +1,5 @@
 """Hotspot vouchers as part of a UniFi network."""
 
-from .api_handlers import APIHandler
 from ..models.api import TypedApiResponse
 from ..models.message import MessageKey
 from ..models.voucher import (
@@ -9,6 +8,7 @@ from ..models.voucher import (
     VoucherDeleteRequest,
     VoucherListRequest,
 )
+from .api_handlers import APIHandler
 
 
 class Vouchers(APIHandler[Voucher]):
