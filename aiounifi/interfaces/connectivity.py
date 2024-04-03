@@ -48,6 +48,7 @@ class Connectivity:
 
     async def check_unifi_os(self) -> None:
         """Check if controller is running UniFi OS."""
+        self.is_unifi_os = False
         response, _ = await self._request("get", self.config.url, allow_redirects=False)
         if response.status == HTTPStatus.OK:
             self.is_unifi_os = True

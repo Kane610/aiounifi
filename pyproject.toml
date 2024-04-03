@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "aiounifi"
-version     = "72"
+version     = "74"
 license     = {text = "MIT"}
 description = "Python library for communicating with UniFi Network Controller API"
 readme      = "README.md"
@@ -15,20 +15,20 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Home Automation",
 ]
-requires-python = ">=3.11.0"
+requires-python = ">=3.12.0"
 dependencies    = [
-    "aiohttp>3.8",
+    "aiohttp>3.9",
     "orjson>3.9",
     "segno>=1.5.2",
 ]
 
 [project.optional-dependencies]
 requirements = [
-    "aiohttp~=3.9",
-    "orjson~=3.9.5",
+    "aiohttp==3.9.3",
+    "orjson==3.10.0",
     "segno==1.6.1",
 ]
 requirements_test = [
@@ -36,14 +36,14 @@ requirements_test = [
     "mypy==1.9.0",
     "pytest==8.1.1",
     "pytest-aiohttp==1.0.5",
-    "pytest-asyncio==0.23.5.post1",
-    "pytest-cov==4.1.0",
-    "ruff==0.3.2",
+    "pytest-asyncio==0.23.6",
+    "pytest-cov==5.0.0",
+    "ruff==0.3.5",
     "trustme==1.1.0",
     "types-orjson==3.6.2",
 ]
 requirements_dev = [
-    "pre-commit==3.6.2"
+    "pre-commit==3.7.0"
 ]
 
 [project.urls]
@@ -67,7 +67,7 @@ include = ["aiounifi*"]
 "aiounifi" = ["py.typed"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true
@@ -93,14 +93,18 @@ testpaths = ["tests"]
 
 [tool.ruff]
 src = ["aiounifi", "tests"]
-target-version = "py311"
+target-version = "py312"
 
 lint.select = [
     "B002",  # Python does not support the unary prefix increment
+    "B005",  # Using .strip() with multi-character strings is misleading
     "B007",  # Loop control variable {name} not used within loop body
     "B014",  # Exception handler with duplicate exception
+    "B015",  # Pointless comparison. Did you mean to assign a value? Otherwise, prepend assert or remove it.
+    "B018",  # Found useless attribute access. Either assign it to a variable or remove it.
     "B023",  # Function definition does not bind loop variable {name}
     "B026",  # Star-arg unpacking after a keyword argument is strongly discouraged
+    "B032",  # Possible unintentional type annotation (using :). Did you mean to assign (using =)?
     "C",       # complexity
     "COM818",  # Trailing comma on bare tuple prohibited
     "D",  # docstrings
@@ -109,25 +113,22 @@ lint.select = [
     "G",  # flake8-logging-format
     "I",  # isort
     "ICN001",  # import concentions; {name} should be imported as {asname}
+    "ISC",     # flake8-implicit-str-concat
+    "LOG",     # flake8-logging
     "N804",    # First argument of a class method should be named cls
     "N805",    # First argument of a method should be named self
     "N815",    # Variable {name} in class scope should not be mixedCase
-    "PGH004",   # Use specific rule codes when using noqa
-    "PLC0414",  # Useless import alias. Import alias does not rename original package.
-    "PLC",  # pylint
-    "PLE",  # pylint
-    "PLR",  # pylint
-    "PLW",  # pylint
+    "PERF",    # A Linter for performance anti-patterns
+    "PGH004",  # Use specific rule codes when using noqa
+    "PIE",  # flake8-pie
+    "PL",   # pylint
+    "PT",   # pytest
+    "RSE",  # flake8-raise
+    "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF006",  # Store a reference to the return value of asyncio.create_task
+    "RUF100",  # Unused `noqa` directive
     "S307",    # No builtin eval() allowed
-    "SIM105",  # Use contextlib.suppress({exception}) instead of try-except-pass
-    "SIM117",  # Merge with-statements that use the same scope
-    "SIM118",  # Use {key} in {dict} instead of {key} in {dict}.keys()
-    "SIM201",  # Use {left} != {right} instead of not {left} == {right}
-    "SIM208",  # Use {expr} instead of not (not {expr})
-    "SIM212",  # Use {a} if {a} else {b} instead of {b} if not {a} else {a}
-    "SIM300",  # Yoda conditions. Use 'age == 42' instead of '42 == age'.
-    "SIM401",  # Use get from dict with default instead of an if block
+    "SIM",   # flake8-simplify
     "T100",  # Trace found: {name} used
     "T20",   # flake8-print
     "UP",  # pyupgrade

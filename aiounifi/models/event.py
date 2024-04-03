@@ -56,6 +56,7 @@ class EventKey(enum.Enum):
     SWITCH_CONFIGURED = "EVT_SW_Configured"
     SWITCH_CONNECTED = "EVT_SW_Connected"
     SWITCH_DELETED = "EVT_SW_Deleted"
+    SWITCH_DETECT_ROGUE_DHCP = "EVT_SW_DetectRogueDHCP"
     SWITCH_DISCOVERED_PENDING = "EVT_SW_DiscoveredPending"
     SWITCH_LOST_CONTACT = "EVT_SW_Lost_Contact"
     SWITCH_OVERHEAT = "EVT_SW_Overheat"

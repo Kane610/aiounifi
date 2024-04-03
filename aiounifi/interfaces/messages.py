@@ -59,7 +59,7 @@ class MessageHandler:
         try:
             self.handler(orjson.loads(raw_bytes))
         except orjson.JSONDecodeError:
-            LOGGER.error("Bad JSON data '%s'", raw_bytes)
+            LOGGER.debug("Bad JSON data '%s'", raw_bytes)
 
     def handler(self, raw: dict[str, Any]) -> None:
         """Process data and identify where the message belongs."""

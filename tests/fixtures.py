@@ -3631,8 +3631,10 @@ PDU_PRO = {
     "connection_network_name": "Default LAN",
     "device_id": "61e4a1e60bbb2d53aeb430ea",
     "dhcp_server_table": [],
-    "disconnection_reason": "MISSED_INFORM, last_seen '1643657061', "
-    + "considered_lost '1643657117', state: 1",
+    "disconnection_reason": (
+        "MISSED_INFORM, last_seen '1643657061', "
+        "considered_lost '1643657117', state: 1"
+    ),
     "displayable_version": "5.76.7",
     "dot1x_portctrl_enabled": False,
     "downlink_table": [],
@@ -4379,10 +4381,12 @@ EVENT_WIRELESS_CLIENT_CONNECTED = {
             "datetime": "2020-04-24T18:37:36Z",
             "hostname": WIRELESS_CLIENT["hostname"],
             "key": "EVT_WU_Connected",
-            "msg": f'User[{WIRELESS_CLIENT["mac"]}] has connected '
-            + f'to AP[{WIRELESS_CLIENT["ap_mac"]}] with SSID '
-            + f'"{WIRELESS_CLIENT["essid"]}" on "channel '
-            + f'{WIRELESS_CLIENT["channel"]}({WIRELESS_CLIENT["radio"]})"',
+            "msg": (
+                f'User[{WIRELESS_CLIENT["mac"]}] has connected '
+                f'to AP[{WIRELESS_CLIENT["ap_mac"]}] with SSID '
+                f'"{WIRELESS_CLIENT["essid"]}" on "channel '
+                f'{WIRELESS_CLIENT["channel"]}({WIRELESS_CLIENT["radio"]})"'
+            ),
             "radio": WIRELESS_CLIENT["radio"],
             "site_id": WIRELESS_CLIENT["site_id"],
             "ssid": WIRELESS_CLIENT["essid"],
@@ -4404,9 +4408,11 @@ EVENT_WIRELESS_CLIENT_DISCONNECTED = {
             "duration": 467,
             "hostname": WIRELESS_CLIENT["hostname"],
             "key": "EVT_WU_Disconnected",
-            "msg": f'User[{WIRELESS_CLIENT["mac"]}] disconnected from '
-            + f'"{WIRELESS_CLIENT["essid"]}" (7m 47s connected, 448.28K bytes, '
-            + f'last AP[{WIRELESS_CLIENT["ap_mac"]}])',
+            "msg": (
+                f'User[{WIRELESS_CLIENT["mac"]}] disconnected from '
+                f'"{WIRELESS_CLIENT["essid"]}" (7m 47s connected, 448.28K bytes, '
+                f'last AP[{WIRELESS_CLIENT["ap_mac"]}])'
+            ),
             "site_id": WIRELESS_CLIENT["site_id"],
             "ssid": WIRELESS_CLIENT["essid"],
             "subsystem": "wlan",
@@ -4443,8 +4449,10 @@ EVENT_WIRELESS_CLIENT_WIRED_DISCONNECTED = {
             "duration": 5,
             "hostname": WIRELESS_CLIENT["hostname"],
             "key": "EVT_LU_Disconnected",
-            "msg": f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "LAN" '
-            + "(5s connected, 0.00 bytes)",
+            "msg": (
+                f'User{[WIRELESS_CLIENT["mac"]]} disconnected from "LAN" '
+                "(5s connected, 0.00 bytes)"
+            ),
             "network": "LAN",
             "site_id": WIRELESS_CLIENT["site_id"],
             "subsystem": "lan",
@@ -4512,8 +4520,10 @@ EVENT_SWITCH_16_UPGRADED = {
             "_id": "5eae7fe02ab79c00f9d38960",
             "datetime": "2020-05-09T20:06:37Z",
             "key": "EVT_SW_Upgraded",
-            "msg": f'Switch[{SWITCH_16_PORT_POE["mac"]}] was upgraded from '
-            + '"4.0.66.10832" to "4.3.13.11253"',
+            "msg": (
+                f'Switch[{SWITCH_16_PORT_POE["mac"]}] was upgraded from '
+                '"4.0.66.10832" to "4.3.13.11253"'
+            ),
             "site_id": SWITCH_16_PORT_POE["site_id"],
             "subsystem": "lan",
             "sw": SWITCH_16_PORT_POE["mac"],
@@ -4575,8 +4585,10 @@ SYSTEM_INFORMATION = {
     "previous_version": "7.4.156",
     "radius_disconnect_running": False,
     "sso_app_id": "90wa123b0Xg456yYl789M5x12390SabczyFbyo8v",
-    "sso_app_sec": "abcdefyPBsqYLsPX9LP123456789E6wV8cX6C6iIlRnLT4bvuuabcde1234q24TnR"
-    + "3nMW37mrNaOT0Z6SEapGo0123456789abcde8Mew0xWK7ozecSJm5VS87654321",
+    "sso_app_sec": (
+        "abcdefyPBsqYLsPX9LP123456789E6wV8cX6C6iIlRnLT4bvuuabcde1234q24TnR"
+        "3nMW37mrNaOT0Z6SEapGo0123456789abcde8Mew0xWK7ozecSJm5VS87654321"
+    ),
     "store_enabled": "super-only",
     "timezone": "Europe/Stockholm",
     "ubnt_device_type": "UDMPRO",

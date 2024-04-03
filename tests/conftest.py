@@ -72,7 +72,7 @@ async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
     await session.close()
 
 
-@pytest.fixture(name="_new_ws_data_fn")
+@pytest.fixture(name="new_ws_data_fn")
 async def mock_wsclient(
     unifi_controller: Controller,
 ) -> Callable[[dict[str, Any]], None]:
@@ -88,7 +88,7 @@ async def mock_wsclient(
 
 
 @pytest.fixture(name="_mock_endpoints")
-def endpoint_fixture(
+def _endpoint_fixture(
     mock_aioresponse: aioresponses,
     is_unifi_os: bool,
     client_payload: list[dict[str, Any]],
