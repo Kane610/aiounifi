@@ -93,7 +93,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 src = ["aiounifi", "tests"]
-target-version = "py311"
+target-version = "py312"
 
 lint.select = [
     "B002",  # Python does not support the unary prefix increment
