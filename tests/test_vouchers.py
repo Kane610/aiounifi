@@ -9,6 +9,7 @@ import pytest
 
 from aiounifi.models.voucher import (
     VoucherCreateRequest,
+    VoucherDeleteRequest,
 )
 
 from .fixtures import VOUCHERS
@@ -29,6 +30,24 @@ async def test_voucher_create(mock_aioresponse, unifi_controller, unifi_called_w
             "quota": 0,
             "expire_number": 3600,
             "expire_unit": 1,
+        },
+    )
+
+
+async def test_voucher_delete(mock_aioresponse, unifi_controller, unifi_called_with):
+    """Test create voucher."""
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/hotspot", payload={})
+
+    await unifi_controller.request(
+        VoucherDeleteRequest.create("657e370a4543a555901865c7")
+    )
+
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/hotspot",
+        json={
+            "cmd": "delete-voucher",
+            "_id": "657e370a4543a555901865c7",
         },
     )
 
