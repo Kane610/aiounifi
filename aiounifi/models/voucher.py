@@ -131,13 +131,14 @@ class Voucher(ApiItem):
 
     @property
     def note(self) -> str:
-        """Note."""
+        """Note describing voucher."""
         return self.raw.get("note") or ""
 
     @property
     def code(self) -> str:
-        """Code."""
+        """Code in known format 00000-00000."""
         if len(c := self.raw.get("code", "")) > 5:
+            # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
             return f"{c[:5]}-{c[5:]}"
         return c
 
@@ -164,12 +165,12 @@ class Voucher(ApiItem):
     @property
     def qos_rate_max_up(self) -> int:
         """Up speed allowed in kbps."""
-        return int(self.raw.get("qos_rate_max_up", 0))
+        return self.raw.get("qos_rate_max_up", 0)
 
     @property
     def qos_rate_max_down(self) -> int:
         """Down speed allowed in kbps."""
-        return int(self.raw.get("qos_rate_max_down", 0))
+        return self.raw.get("qos_rate_max_down", 0)
 
     @property
     def used(self) -> int:
