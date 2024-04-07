@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -17,13 +17,13 @@ class TypedVoucher(TypedDict):
     quota: int
     duration: float
     qos_overwrite: bool
-    qos_usage_quota: str
-    qos_rate_max_up: int
-    qos_rate_max_down: int
+    qos_usage_quota: NotRequired[str]
+    qos_rate_max_up: NotRequired[int]
+    qos_rate_max_down: NotRequired[int]
     used: int
     create_time: float
-    start_time: float
-    end_time: float
+    start_time: NotRequired[float]
+    end_time: NotRequired[float]
     for_hotspot: bool
     admin_name: str
     status: str
