@@ -88,4 +88,4 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.for_hotspot is False
     assert voucher.admin_name == "Admin"
     assert voucher.status == "VALID_ONE"
-    assert voucher.status_expires == 0
+    assert voucher.status_expires is None
