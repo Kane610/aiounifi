@@ -53,7 +53,7 @@ async def test_voucher_delete(mock_aioresponse, unifi_controller, unifi_called_w
 
 
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_no_vouchers(unifi_controller, _mock_endpoints, unifi_called_with):
+async def test_no_vouchers(unifi_controller, unifi_called_with):
     """Test that no ports also work."""
     vouchers = unifi_controller.vouchers
     await vouchers.update()
