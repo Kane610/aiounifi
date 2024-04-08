@@ -187,12 +187,14 @@ class Voucher(ApiItem):
         """Start datetime."""
         if "start_time" in self.raw:
             return datetime.fromtimestamp(self.raw["start_time"])
+        return None
 
     @property
     def end_time(self) -> datetime | None:
         """End datetime."""
         if "end_time" in self.raw:
             return datetime.fromtimestamp(self.raw["end_time"])
+        return None
 
     @property
     def for_hotspot(self) -> bool:
