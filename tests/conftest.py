@@ -103,7 +103,7 @@ def _endpoint_fixture(
     traffic_rule_payload: list[dict[str, Any]],
     traffic_rule_status: int,
     wlan_payload: list[dict[str, Any]],
-    vouchers_payload: list[dict[str, Any]],
+    voucher_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 
