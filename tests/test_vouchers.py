@@ -72,7 +72,7 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
 
     voucher = vouchers["657e370a4543a555901865c7"]
     assert voucher.id == "657e370a4543a555901865c7"
-    assert voucher.site_id == "5a32aa4ee4b0412345678910"
+    assert voucher.site_id == "657e370a4543a555901865c7"
     assert voucher.note == "auto-generated"
     assert voucher.code == "74700-75124"
     assert voucher.quota == 1
