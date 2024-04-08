@@ -4114,7 +4114,7 @@ VOUCHERS = [
     {
         "_id": "657e370a4543a555901865c7",
         "admin_name": "Admin",
-        "code": 7470075124,
+        "code": "7470075124",
         "create_time": 1702770442,
         "duration": 480,
         "for_hotspot": False,
@@ -4129,7 +4129,7 @@ VOUCHERS = [
     {
         "_id": "61facea3873fdb075ce28d71",
         "admin_name": "Admin",
-        "code": 4470374222,
+        "code": "4470374222",
         "create_time": 1643826851,
         "duration": 5184000,
         "for_hotspot": False,
