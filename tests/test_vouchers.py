@@ -65,7 +65,7 @@ async def test_no_vouchers(unifi_controller, _mock_endpoints, unifi_called_with)
 @pytest.mark.parametrize("voucher_payload", [VOUCHERS])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_vouchers(
-    mock_aioresponse, unifi_controller, _mock_endpoints, unifi_called_with
+    mock_aioresponse, unifi_controller, unifi_called_with
 ):
     """Test that different types of ports work."""
     vouchers = unifi_controller.vouchers
