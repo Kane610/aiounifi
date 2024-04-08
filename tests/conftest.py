@@ -264,6 +264,6 @@ def wlan_data_fixture() -> list[dict[str, Any]]:
 
 
 @pytest.fixture(name="vouchers_payload")
-def vouchers_data_fixture() -> list[dict[str, Any]]:
+def voucher_data_fixture() -> list[dict[str, Any]]:
     """Vouchers data."""
     return []
