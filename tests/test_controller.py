@@ -285,7 +285,7 @@ async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
     assert len(unifi_controller.system_information.items()) == 0
     assert len(unifi_controller.traffic_routes.items()) == 0
     assert len(unifi_controller.traffic_rules.items()) == 0
-    assert len(unifi_controller.voucher.items()) == 0
+    assert len(unifi_controller.vouchers.items()) == 0
     assert len(unifi_controller.wlans.items()) == 0
 
 
