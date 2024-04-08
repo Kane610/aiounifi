@@ -181,7 +181,7 @@ def _endpoint_fixture(
     mock_get_request(
         "/api/s/default/stat/voucher",
         "/proxy/network/api/s/default/stat/voucher",
-        vouchers_payload,
+        voucher_payload,
     )
 
 
