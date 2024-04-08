@@ -13,7 +13,7 @@ class TypedVoucher(TypedDict):
     _id: str
     site_id: str
     note: str
-    code: str
+    code: int | str
     quota: int
     duration: float
     qos_overwrite: bool
