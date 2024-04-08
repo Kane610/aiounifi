@@ -137,7 +137,7 @@ class Voucher(ApiItem):
     @property
     def code(self) -> str:
         """Code in known format 00000-00000."""
-        if len(c := self.raw.get("code", "")) > 5:
+        if len(c := str(self.raw.get("code", ""))) > 5:
             # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
             return f"{c[:5]}-{c[5:]}"
         return c
