@@ -12,11 +12,11 @@ class TypedVoucher(TypedDict):
 
     _id: str
     site_id: str
-    note: str
-    code: int | str
+    note: NotRequired[str]
+    code: str
     quota: int
     duration: float
-    qos_overwrite: bool
+    qos_overwrite: NotRequired[bool]
     qos_usage_quota: NotRequired[str]
     qos_rate_max_up: NotRequired[int]
     qos_rate_max_down: NotRequired[int]
@@ -24,7 +24,7 @@ class TypedVoucher(TypedDict):
     create_time: float
     start_time: NotRequired[float]
     end_time: NotRequired[float]
-    for_hotspot: bool
+    for_hotspot: NotRequired[bool]
     admin_name: str
     status: str
     status_expires: float
@@ -127,7 +127,7 @@ class Voucher(ApiItem):
     @property
     def site_id(self) -> str:
         """Site ID."""
-        return self.raw["_id"]
+        return self.raw["site_id"]
 
     @property
     def note(self) -> str:
@@ -137,24 +137,24 @@ class Voucher(ApiItem):
     @property
     def code(self) -> str:
         """Code in known format 00000-00000."""
-        if len(c := str(self.raw.get("code", ""))) > 5:
+        if len(c := self.raw.get("code", "")) > 5:
             # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
             return f"{c[:5]}-{c[5:]}"
         return c
 
     @property
     def quota(self) -> int:
-        """Number of uses."""
-        return self.raw.get("quota", 0)
+        """Allowed usages (0 = unlimited)."""
+        return self.raw["quota"]
 
     @property
     def duration(self) -> timedelta:
         """Expiration of voucher."""
-        return timedelta(minutes=self.raw.get("duration", 0))
+        return timedelta(minutes=self.raw["duration"])
 
     @property
     def qos_overwrite(self) -> bool:
-        """Used count."""
+        """QoS defaults overwritten."""
         return self.raw.get("qos_overwrite", False)
 
     @property
@@ -174,8 +174,8 @@ class Voucher(ApiItem):
 
     @property
     def used(self) -> int:
-        """Number of using; 0 = unlimited."""
-        return self.raw.get("used", 0)
+        """Number of usages."""
+        return self.raw["used"]
 
     @property
     def create_time(self) -> datetime:
@@ -184,14 +184,14 @@ class Voucher(ApiItem):
 
     @property
     def start_time(self) -> datetime | None:
-        """Start datetime."""
+        """Start datetime of first usage."""
         if "start_time" in self.raw:
             return datetime.fromtimestamp(self.raw["start_time"])
         return None
 
     @property
     def end_time(self) -> datetime | None:
-        """End datetime."""
+        """End datetime of latest usage."""
         if "end_time" in self.raw:
             return datetime.fromtimestamp(self.raw["end_time"])
         return None
@@ -204,16 +204,16 @@ class Voucher(ApiItem):
     @property
     def admin_name(self) -> str:
         """Admin name."""
-        return self.raw.get("admin_name", "")
+        return self.raw["admin_name"]
 
     @property
     def status(self) -> str:
         """Status."""
-        return self.raw.get("status", "")
+        return self.raw["status"]
 
     @property
     def status_expires(self) -> timedelta | None:
         """Status expires."""
-        if (status_expiry := self.raw.get("status_expires", 0.0)) > 0:
+        if (status_expiry := self.raw["status_expires"]) > 0:
             return timedelta(seconds=status_expiry)
         return None
