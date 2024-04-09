@@ -92,12 +92,6 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.status == "USED_MULTIPLE"
     assert voucher.status_expires == 244679302
 
-    mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/voucher",
-        payload={},
-        repeat=True,
-    )
-
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/hotspot",
         payload={},
