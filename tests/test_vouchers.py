@@ -103,7 +103,7 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.for_hotspot is False
     assert voucher.admin_name == "Admin"
     assert voucher.status == "USED_MULTIPLE"
-    assert voucher.status_expires == 244679302
+    assert voucher.status_expires == timedelta(seconds=244679302)
 
     voucher = vouchers["61facea3873fdb075ce28d71"]
     assert voucher.id == "61facea3873fdb075ce28d71"
@@ -123,7 +123,7 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.for_hotspot is False
     assert voucher.admin_name == "Admin"
     assert voucher.status == "VALID_ONE"
-    assert voucher.status_expires == 0
+    assert voucher.status_expires is None
 
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/hotspot",
