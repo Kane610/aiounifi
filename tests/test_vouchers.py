@@ -89,3 +89,32 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.admin_name == "Admin"
     assert voucher.status == "VALID_ONE"
     assert voucher.status_expires is None
+
+    mock_aioresponse.post(
+        "https://host:8443/api/s/default/cmd/hotspot",
+        payload={},
+        repeat=True,
+    )
+
+    await vouchers.create(voucher)
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/hotspot",
+        json={
+            "cmd": "create-voucher",
+            "n": 1,
+            "quota": 0,
+            "expire_number": 3600,
+            "expire_unit": 1,
+        },
+    )
+
+    await vouchers.delete(voucher)
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/hotspot",
+        json={
+            "cmd": "delete-voucher",
+            "_id": "657e370a4543a555901865c7",
+        },
+    )
