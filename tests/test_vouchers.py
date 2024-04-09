@@ -90,7 +90,7 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.site_id == "5a32aa4ee4b0412345678910"
     assert voucher.note == "auto-generated"
     assert voucher.code == "74700-75124"
-    assert voucher.quota == 1
+    assert voucher.quota == 0
     assert voucher.duration == timedelta(minutes=5184000)
     assert voucher.qos_overwrite is False
     assert voucher.qos_usage_quota == 0
@@ -100,12 +100,30 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.create_time == datetime.fromtimestamp(1638342818)
     assert voucher.start_time == datetime.fromtimestamp(1638342832)
     assert voucher.end_time == datetime.fromtimestamp(1949382832)
-    assert voucher.start_time is None
-    assert voucher.end_time is None
     assert voucher.for_hotspot is False
     assert voucher.admin_name == "Admin"
     assert voucher.status == "USED_MULTIPLE"
     assert voucher.status_expires == 244679302
+
+    voucher = vouchers["61facea3873fdb075ce28d71"]
+    assert voucher.id == "61facea3873fdb075ce28d71"
+    assert voucher.site_id == "5a32aa4ee4b0412345678910"
+    assert voucher.note is None
+    assert voucher.code == "44703"
+    assert voucher.quota == 1
+    assert voucher.duration == timedelta(minutes=480)
+    assert voucher.qos_overwrite is True
+    assert voucher.qos_usage_quota == 1000
+    assert voucher.qos_rate_max_up == 2000
+    assert voucher.qos_rate_max_down == 5000
+    assert voucher.used == 0
+    assert voucher.create_time == datetime.fromtimestamp(1643826851)
+    assert voucher.start_time is None
+    assert voucher.end_time is None
+    assert voucher.for_hotspot is False
+    assert voucher.admin_name == "Admin"
+    assert voucher.status == "VALID_ONE"
+    assert voucher.status_expires == 0
 
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/hotspot",
