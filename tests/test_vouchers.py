@@ -25,9 +25,9 @@ async def test_voucher_create(mock_aioresponse, unifi_controller, unifi_called_w
             quota=0,
             expire_number=3600,
             expire_unit=1,
-            usage_quota=10,
-            rate_max_up=5,
-            rate_max_down=2,
+            usage_quota=1000,
+            rate_max_up=5000,
+            rate_max_down=2000,
             note="Unit Testing",
         )
     )
@@ -41,9 +41,9 @@ async def test_voucher_create(mock_aioresponse, unifi_controller, unifi_called_w
             "quota": 0,
             "expire_number": 3600,
             "expire_unit": 1,
-            "usage_quota": 10,
-            "rate_max_up": 5,
-            "rate_max_down": 2,
+            "usage_quota": 1000,
+            "rate_max_up": 5000,
+            "rate_max_down": 2000,
             "note": "Unit Testing",
         },
     )
