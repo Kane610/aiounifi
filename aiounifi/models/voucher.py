@@ -213,7 +213,7 @@ class Voucher(ApiItem):
 
     @property
     def status_expires(self) -> timedelta | None:
-        """Status expires."""
+        """Status expires in seconds."""
         if (status_expiry := self.raw["status_expires"]) > 0:
             return timedelta(seconds=status_expiry)
         return None
