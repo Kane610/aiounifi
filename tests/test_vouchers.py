@@ -76,19 +76,27 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.note == "auto-generated"
     assert voucher.code == "74700-75124"
     assert voucher.quota == 1
-    assert voucher.duration == timedelta(minutes=480)
+    assert voucher.duration == timedelta(minutes=5184000)
     assert voucher.qos_overwrite is False
     assert voucher.qos_usage_quota == 0
     assert voucher.qos_rate_max_up == 0
     assert voucher.qos_rate_max_down == 0
-    assert voucher.used == 0
-    assert voucher.create_time == datetime.fromtimestamp(1702770442)
+    assert voucher.used == 2
+    assert voucher.create_time == datetime.fromtimestamp(1638342818)
+    assert voucher.start_time == datetime.fromtimestamp(1638342832)
+    assert voucher.end_time == datetime.fromtimestamp(1949382832)
     assert voucher.start_time is None
     assert voucher.end_time is None
     assert voucher.for_hotspot is False
     assert voucher.admin_name == "Admin"
-    assert voucher.status == "VALID_ONE"
-    assert voucher.status_expires is None
+    assert voucher.status == "USED_MULTIPLE"
+    assert voucher.status_expires == 244679302
+
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/voucher",
+        payload={},
+        repeat=True,
+    )
 
     mock_aioresponse.post(
         "https://host:8443/api/s/default/cmd/hotspot",
