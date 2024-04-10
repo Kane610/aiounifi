@@ -41,9 +41,9 @@ async def test_voucher_create(mock_aioresponse, unifi_controller, unifi_called_w
             "quota": 0,
             "expire_number": 3600,
             "expire_unit": 1,
-            "usage_quota": 1000,
-            "rate_max_up": 5000,
-            "rate_max_down": 2000,
+            "bytes": 1000,
+            "up": 5000,
+            "down": 2000,
             "note": "Unit Testing",
         },
     )
@@ -138,9 +138,12 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
         json={
             "cmd": "create-voucher",
             "n": 1,
-            "quota": 0,
-            "expire_number": 3600,
+            "quota": 1,
+            "expire_number": 480,
             "expire_unit": 1,
+            "bytes": 1000,
+            "up": 2000,
+            "down": 5000,
         },
     )
 
@@ -150,6 +153,6 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
         "/api/s/default/cmd/hotspot",
         json={
             "cmd": "delete-voucher",
-            "_id": "657e370a4543a555901865c7",
+            "_id": "61facea3873fdb075ce28d71",
         },
     )
