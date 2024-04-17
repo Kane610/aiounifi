@@ -84,8 +84,6 @@ class Connectivity:
         ):
             self.headers["x-csrf-token"] = csrf_token
 
-
-
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
 
