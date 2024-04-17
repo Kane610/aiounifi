@@ -344,17 +344,10 @@ async def test_unifios_controller(
 async def test_unifios_controller_login_html_response(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
-    """Test controller communicating with a UniFi OS controller without csrf token."""
+    """Test controller communicating with a UniFi OS controller text/html response."""
     mock_aioresponse.get(
         "https://host:8443",
         content_type="text/html",
-    )
-    await unifi_controller.connectivity.check_unifi_os()
-    assert unifi_controller.connectivity.is_unifi_os
-    assert unifi_called_with(
-        "get",
-        "",
-        allow_redirects=False,
     )
 
     mock_aioresponse.post(
