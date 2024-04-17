@@ -73,15 +73,17 @@ class Connectivity:
             if "meta" in data and data["meta"]["rc"] == "error":
                 LOGGER.error("Login failed '%s'", data)
                 raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+
+        elif response.content_type == "text/html":
+            LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
+            raise RequestError("Login Failed: Host starting up")
+
         if (
             response.status == HTTPStatus.OK
             and (csrf_token := response.headers.get("x-csrf-token")) is not None
         ):
             self.headers["x-csrf-token"] = csrf_token
 
-        elif response.content_type == "text/html":
-            LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
-            raise RequestError("Login Failed: Host starting up")
 
 
         self.can_retry_login = True
