@@ -74,7 +74,7 @@ class Connectivity:
                 LOGGER.error("Login failed '%s'", data)
                 raise ERRORS.get(data["meta"]["msg"], AiounifiException)
         else:
-            LOGGER.error("Login Failed not JSON: '%s'", bytes_data)
+            LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
             raise RequestError("Login Failed: Host starting up")
   
         if (
