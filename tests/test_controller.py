@@ -341,6 +341,7 @@ async def test_unifios_controller(
         headers={"x-csrf-token": "123"},
     )
 
+
 async def test_unifios_controller_login_html_response(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
@@ -358,6 +359,7 @@ async def test_unifios_controller_login_html_response(
     )
     with pytest.raises(RequestError):
         await unifi_controller.connectivity.login()
+
 
 async def test_unifios_controller_no_csrf_token(
     mock_aioresponse, unifi_controller, unifi_called_with
