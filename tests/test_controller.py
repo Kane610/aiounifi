@@ -349,6 +349,7 @@ async def test_unifios_controller_login_html_response(
         "https://host:8443",
         content_type="text/html",
     )
+    await unifi_controller.connectivity.check_unifi_os()
 
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
