@@ -342,6 +342,25 @@ async def test_unifios_controller(
     )
 
 
+async def test_unifios_controller_login_html_response(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """Test controller communicating with a UniFi OS controller text/html response."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        content_type="text/html",
+    )
+    await unifi_controller.connectivity.check_unifi_os()
+
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload="Login Failed: Host starting up",
+        content_type="text/html",
+    )
+    with pytest.raises(RequestError):
+        await unifi_controller.connectivity.login()
+
+
 async def test_unifios_controller_no_csrf_token(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
