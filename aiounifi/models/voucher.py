@@ -131,7 +131,7 @@ class Voucher(ApiItem):
 
     @property
     def note(self) -> str:
-        """Note describing voucher."""
+        """Note given by user to voucher."""
         return self.raw.get("note") or ""
 
     @property
@@ -144,7 +144,7 @@ class Voucher(ApiItem):
 
     @property
     def quota(self) -> int:
-        """Allowed usages (0 = unlimited)."""
+        """Allowed uses (0 = unlimited) of voucher."""
         return self.raw["quota"]
 
     @property
@@ -154,61 +154,69 @@ class Voucher(ApiItem):
 
     @property
     def qos_overwrite(self) -> bool:
-        """QoS defaults overwritten."""
+        """QoS defaults overwritten by the use of this voucher."""
         return self.raw.get("qos_overwrite", False)
 
     @property
     def qos_usage_quota(self) -> int:
-        """Quantity of bytes allowed in MB."""
+        """Quantity of bytes (in MB) allowed when using this voucher."""
         return int(self.raw.get("qos_usage_quota", 0))
 
     @property
     def qos_rate_max_up(self) -> int:
-        """Up speed allowed in kbps."""
+        """Up speed (in kbps) allowed when using this voucher."""
         return self.raw.get("qos_rate_max_up", 0)
 
     @property
     def qos_rate_max_down(self) -> int:
-        """Down speed allowed in kbps."""
+        """Down speed (in kbps) allowed when using this voucher."""
         return self.raw.get("qos_rate_max_down", 0)
 
     @property
     def used(self) -> int:
-        """Number of usages."""
+        """Number of uses of this voucher."""
         return self.raw["used"]
 
     @property
     def create_time(self) -> datetime:
-        """Create datetime."""
+        """Create datetime of voucher."""
         return datetime.fromtimestamp(self.raw["create_time"])
 
     @property
     def start_time(self) -> datetime | None:
-        """Start datetime of first usage."""
+        """Start datetime of first usage of voucher."""
         if "start_time" in self.raw:
             return datetime.fromtimestamp(self.raw["start_time"])
         return None
 
     @property
     def end_time(self) -> datetime | None:
-        """End datetime of latest usage."""
+        """End datetime of latest usage of voucher."""
         if "end_time" in self.raw:
             return datetime.fromtimestamp(self.raw["end_time"])
         return None
 
     @property
     def for_hotspot(self) -> bool:
-        """For hotspot."""
+        """For hotspot use.
+
+        False
+        """
         return self.raw.get("for_hotspot", False)
 
     @property
     def admin_name(self) -> str:
-        """Admin name."""
+        """Creator name of voucher."""
         return self.raw["admin_name"]
 
     @property
     def status(self) -> str:
-        """Status."""
+        """Status of voucher.
+
+        VALID_ONE
+        VALID_MULTI
+        USED_MULTIPLE
+        """
         return self.raw["status"]
 
     @property
