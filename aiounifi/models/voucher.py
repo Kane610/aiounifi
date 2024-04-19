@@ -131,12 +131,15 @@ class Voucher(ApiItem):
 
     @property
     def note(self) -> str:
-        """Note given by user to voucher."""
+        """Note given by creator to voucher."""
         return self.raw.get("note") or ""
 
     @property
     def code(self) -> str:
-        """Code in known format 00000-00000."""
+        """Code of voucher in best case in known format 00000-00000 but maybe not.
+
+        To enter the code on the hotspot page, the hyphen must be placed after the fifth digit.
+        """
         if len(c := self.raw.get("code", "")) > 5:
             # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
             return f"{c[:5]}-{c[5:]}"
