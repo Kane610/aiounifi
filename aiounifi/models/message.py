@@ -50,8 +50,6 @@ class MessageKey(enum.Enum):
     VPN_CONNECT = "vpn:connect"
     VPN_DISCONNECT = "vpn:disconnect"
     VPN_CONNECTION_UPDATED = "vpn-connection:sync"
-    VOUCHER_CREATED = "voucher:create"
-    VOUCHER_DELETED = "voucher:delete"
     WLAN_CONF_ADDED = "wlanconf:add"
     WLAN_CONF_UPDATED = "wlanconf:sync"
     WLAN_CONF_DELETED = "wlanconf:delete"
