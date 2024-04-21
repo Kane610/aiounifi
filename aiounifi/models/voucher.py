@@ -136,14 +136,13 @@ class Voucher(ApiItem):
 
     @property
     def code(self) -> str:
-        """Code of voucher in best case in known format 00000-00000 but maybe not.
+        """Code of voucher in known format 00000-00000.
 
-        To enter the code on the hotspot page, the hyphen must be placed after the fifth digit if the code is at least five characters long.
+        To enter the code on the captive portal, the hyphen must be placed after the fifth digit.
         """
-        if len(c := self.raw.get("code", "")) > 5:
-            # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
-            return f"{c[:5]}-{c[5:]}"
-        return c
+        c = self.raw.get("code", "")
+        # API returns the code without a hyphen. But this is necessary. Separate the API string after the fifth digit.
+        return f"{c[:5]}-{c[5:]}"
 
     @property
     def quota(self) -> int:
