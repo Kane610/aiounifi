@@ -2,9 +2,18 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import StrEnum
 from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
+
+
+class VoucherStatus(StrEnum):
+    """Voucher status."""
+
+    VALID_ONE = "VALID_ONE"
+    VALID_MULTI = "VALID_MULTI"
+    USED_MULTIPLE = "USED_MULTIPLE"
 
 
 class TypedVoucher(TypedDict):
@@ -26,7 +35,7 @@ class TypedVoucher(TypedDict):
     end_time: NotRequired[float]
     for_hotspot: NotRequired[bool]
     admin_name: str
-    status: str
+    status: VoucherStatus
     status_expires: float
 
 
@@ -50,10 +59,10 @@ class VoucherCreateRequest(ApiRequest):
     @classmethod
     def create(
         cls,
-        number: int,
-        quota: int,
         expire_number: int,
         expire_unit: int = 1,
+        number: int = 1,
+        quota: int = 0,
         usage_quota: int | None = None,
         rate_max_up: int | None = None,
         rate_max_down: int | None = None,
@@ -61,10 +70,10 @@ class VoucherCreateRequest(ApiRequest):
     ) -> Self:
         """Create voucher create request.
 
-        :param number: number of vouchers
-        :param quota: number of using; 0 = unlimited
         :param expire_number: expiration of voucher per expire_unit
         :param expire_unit: scale of expire_number, 1 = minute, 60 = hour, 3600 = day
+        :param number: number of vouchers
+        :param quota: number of using; 0 = unlimited
         :param usage_quota: quantity of bytes allowed in MB
         :param rate_max_up: up speed allowed in kbps
         :param rate_max_down: down speed allowed in kbps
@@ -200,10 +209,7 @@ class Voucher(ApiItem):
 
     @property
     def for_hotspot(self) -> bool:
-        """For hotspot use.
-
-        False
-        """
+        """For hotspot use."""
         return self.raw.get("for_hotspot", False)
 
     @property
@@ -212,13 +218,8 @@ class Voucher(ApiItem):
         return self.raw["admin_name"]
 
     @property
-    def status(self) -> str:
-        """Status of voucher.
-
-        VALID_ONE
-        VALID_MULTI
-        USED_MULTIPLE
-        """
+    def status(self) -> VoucherStatus:
+        """Status of voucher."""
         return self.raw["status"]
 
     @property
