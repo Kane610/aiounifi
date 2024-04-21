@@ -109,7 +109,7 @@ async def test_vouchers(mock_aioresponse, unifi_controller, unifi_called_with):
     assert voucher.id == "61facea3873fdb075ce28d71"
     assert voucher.site_id == "5a32aa4ee4b0412345678910"
     assert voucher.note == ""
-    assert voucher.code == "44703"
+    assert voucher.code == "44703-44703"
     assert voucher.quota == 1
     assert voucher.duration == timedelta(minutes=480)
     assert voucher.qos_overwrite is True
