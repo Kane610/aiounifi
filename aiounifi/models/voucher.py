@@ -60,9 +60,9 @@ class VoucherCreateRequest(ApiRequest):
     def create(
         cls,
         expire_number: int,
+        expire_unit: int = 1,
         number: int = 1,
         quota: int = 0,
-        expire_unit: int = 1,
         usage_quota: int | None = None,
         rate_max_up: int | None = None,
         rate_max_down: int | None = None,
@@ -70,10 +70,10 @@ class VoucherCreateRequest(ApiRequest):
     ) -> Self:
         """Create voucher create request.
 
-        :param number: number of vouchers
-        :param quota: number of using; 0 = unlimited
         :param expire_number: expiration of voucher per expire_unit
         :param expire_unit: scale of expire_number, 1 = minute, 60 = hour, 3600 = day
+        :param number: number of vouchers
+        :param quota: number of using; 0 = unlimited
         :param usage_quota: quantity of bytes allowed in MB
         :param rate_max_up: up speed allowed in kbps
         :param rate_max_down: down speed allowed in kbps
