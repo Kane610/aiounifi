@@ -1,5 +1,7 @@
 """Device port implementation."""
 
+from typing import cast
+
 from .api import ApiItem
 from .device import TypedDevicePortTable
 
@@ -75,6 +77,26 @@ class Port(ApiItem):
     def port_poe(self) -> bool | None:
         """Is PoE used."""
         return self.raw.get("port_poe")
+
+    @property
+    def rx_bytes(self) -> int:
+        """Bytes received."""
+        return self.raw.get("rx_bytes", 0)
+
+    @property
+    def rx_bytes_r(self) -> int:
+        """Bytes recently received."""
+        return cast(int, self.raw.get("rx_bytes-r", 0))
+
+    @property
+    def tx_bytes(self) -> int:
+        """Bytes transferred."""
+        return self.raw.get("tx_bytes", 0)
+
+    @property
+    def tx_bytes_r(self) -> int:
+        """Bytes recently transferred."""
+        return cast(int, self.raw.get("tx_bytes-r", 0))
 
     @property
     def up(self) -> bool | None:
