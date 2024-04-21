@@ -4110,6 +4110,44 @@ DPI_GROUPS = [
     },
 ]
 
+VOUCHERS = [
+    {
+        "_id": "657e370a4543a555901865c7",
+        "admin_name": "Admin",
+        "code": "7470075124",
+        "create_time": 1638342818,
+        "duration": 5184000,
+        "end_time": 1949382832,
+        "for_hotspot": False,
+        "note": "auto-generated",
+        "qos_overwrite": False,
+        "quota": 0,
+        "site_id": "5a32aa4ee4b0412345678910",
+        "start_time": 1638342832,
+        "status": "USED_MULTIPLE",
+        "status_expires": 244679302,
+        "used": 2,
+    },
+    {
+        "_id": "61facea3873fdb075ce28d71",
+        "admin_name": "Admin",
+        "code": "4470344703",
+        "create_time": 1643826851,
+        "duration": 480,
+        "for_hotspot": False,
+        "note": None,
+        "qos_overwrite": True,
+        "qos_rate_max_down": 5000,
+        "qos_rate_max_up": 2000,
+        "qos_usage_quota": 1000,
+        "quota": 1,
+        "site_id": "5a32aa4ee4b0412345678910",
+        "status": "VALID_ONE",
+        "status_expires": 0,
+        "used": 0,
+    },
+]
+
 WLANS = [
     {
         "_id": "012345678910111213141516",

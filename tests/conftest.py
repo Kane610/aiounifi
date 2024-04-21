@@ -103,6 +103,7 @@ def _endpoint_fixture(
     traffic_rule_payload: list[dict[str, Any]],
     traffic_rule_status: int,
     wlan_payload: list[dict[str, Any]],
+    voucher_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 
@@ -176,6 +177,11 @@ def _endpoint_fixture(
         "/api/s/default/rest/wlanconf",
         "/proxy/network/api/s/default/rest/wlanconf",
         wlan_payload,
+    )
+    mock_get_request(
+        "/api/s/default/stat/voucher",
+        "/proxy/network/api/s/default/stat/voucher",
+        voucher_payload,
     )
 
 
@@ -254,4 +260,10 @@ def traffic_rule_status_fixture() -> int:
 @pytest.fixture(name="wlan_payload")
 def wlan_data_fixture() -> list[dict[str, Any]]:
     """WLAN data."""
+    return []
+
+
+@pytest.fixture(name="voucher_payload")
+def voucher_data_fixture() -> list[dict[str, Any]]:
+    """Vouchers data."""
     return []
