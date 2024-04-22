@@ -85,7 +85,24 @@ async def main(
         await websession.close()
         return
 
-    await controller.initialize()
+    await asyncio.gather(
+        *(
+            controller.clients.update(),
+            controller.clients_all.update(),
+            controller.devices.update(),
+            controller.dpi_apps.update(),
+            controller.dpi_groups.update(),
+            controller.port_forwarding.update(),
+            controller.sites.update(),
+            controller.system_information.update(),
+            controller.traffic_rules.update(),
+            controller.traffic_routes.update(),
+            controller.vouchers.update(),
+            controller.wlans.update(),
+        ),
+        return_exceptions=True,
+    )
+
     ws_task = asyncio.create_task(controller.start_websocket())
 
     try:

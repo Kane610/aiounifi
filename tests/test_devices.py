@@ -972,7 +972,7 @@ async def test_sub_device_requests(
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_set_poe_request_raise_error(unifi_controller: Controller) -> None:
     """Test device class."""
-    await unifi_controller.initialize()
+    await unifi_controller.devices.update()
     device = next(iter(unifi_controller.devices.values()))
     with pytest.raises(AttributeError):
         DeviceSetPoePortModeRequest.create(device)

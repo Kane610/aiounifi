@@ -258,34 +258,54 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
     """Test controller communicating with a non UniFiOS UniFi controller."""
-    await unifi_controller.initialize()
-
+    await unifi_controller.clients.update()
     assert unifi_called_with("get", "/api/s/default/stat/sta")
-    assert unifi_called_with("get", "/api/s/default/rest/user")
-    assert unifi_called_with("get", "/api/s/default/stat/device")
-    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
-    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
-    assert unifi_called_with("get", "/api/s/default/rest/portforward")
-    assert unifi_called_with("get", "/api/self/sites")
-    assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
-    assert unifi_called_with("get", "/v2/api/site/default/trafficroutes")
-    assert unifi_called_with("get", "/v2/api/site/default/trafficrules")
-    assert unifi_called_with("get", "/api/s/default/stat/voucher")
-    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
-
     assert len(unifi_controller.clients.items()) == 0
+
+    await unifi_controller.clients_all.update()
+    assert unifi_called_with("get", "/api/s/default/rest/user")
     assert len(unifi_controller.clients_all.items()) == 0
+
+    await unifi_controller.devices.update()
+    assert unifi_called_with("get", "/api/s/default/stat/device")
     assert len(unifi_controller.devices.items()) == 0
     assert len(unifi_controller.outlets.items()) == 0
     assert len(unifi_controller.ports.items()) == 0
+
+    await unifi_controller.dpi_apps.update()
+    assert unifi_called_with("get", "/api/s/default/rest/dpiapp")
     assert len(unifi_controller.dpi_apps.items()) == 0
+
+    await unifi_controller.dpi_groups.update()
+    assert unifi_called_with("get", "/api/s/default/rest/dpigroup")
     assert len(unifi_controller.dpi_groups.items()) == 0
+
+    await unifi_controller.port_forwarding.update()
+    assert unifi_called_with("get", "/api/s/default/rest/portforward")
     assert len(unifi_controller.port_forwarding.items()) == 0
+
+    await unifi_controller.sites.update()
+    assert unifi_called_with("get", "/api/self/sites")
     assert len(unifi_controller.sites.items()) == 1
+
+    await unifi_controller.system_information.update()
+    assert unifi_called_with("get", "/api/s/default/stat/sysinfo")
     assert len(unifi_controller.system_information.items()) == 0
+
+    await unifi_controller.traffic_routes.update()
+    assert unifi_called_with("get", "/v2/api/site/default/trafficroutes")
     assert len(unifi_controller.traffic_routes.items()) == 0
+
+    await unifi_controller.traffic_rules.update()
+    assert unifi_called_with("get", "/v2/api/site/default/trafficrules")
     assert len(unifi_controller.traffic_rules.items()) == 0
+
+    await unifi_controller.vouchers.update()
+    assert unifi_called_with("get", "/api/s/default/stat/voucher")
     assert len(unifi_controller.vouchers.items()) == 0
+
+    await unifi_controller.wlans.update()
+    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
     assert len(unifi_controller.wlans.items()) == 0
 
 
@@ -305,43 +325,50 @@ async def test_unifios_controller(
         content_type="application/json",
     )
     await unifi_controller.connectivity.login()
-    await unifi_controller.initialize()
 
+    await unifi_controller.clients.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/stat/sta",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.devices.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/stat/device",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.clients_all.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/rest/user",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.sites.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/self/sites",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.traffic_routes.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/v2/api/site/default/trafficroutes",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.traffic_rules.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/v2/api/site/default/trafficrules",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.vouchers.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/stat/voucher",
         headers={"x-csrf-token": "123"},
     )
+    await unifi_controller.wlans.update()
     assert unifi_called_with(
         "get",
         "/proxy/network/api/s/default/rest/wlanconf",
@@ -431,13 +458,6 @@ async def test_controller_raise_expected_exception(
     mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
     with pytest.raises(expected_exception):
         await unifi_controller.connectivity.login()
-
-
-@pytest.mark.parametrize("traffic_rule_status", [404])
-@pytest.mark.usefixtures("_mock_endpoints")
-async def test_initialize_handles_404(unifi_controller):
-    """Validate initialize does not abort on exception."""
-    await unifi_controller.initialize()
 
 
 api_request_data = [
