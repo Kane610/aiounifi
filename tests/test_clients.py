@@ -219,7 +219,7 @@ async def test_message_client_removed(
     unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
 ) -> None:
     """Test controller communicating client has been removed."""
-    await unifi_controller.initialize()
+    await unifi_controller.clients.update()
     assert len(unifi_controller.clients.items()) == 1
 
     new_ws_data_fn(MESSAGE_WIRELESS_CLIENT_REMOVED)

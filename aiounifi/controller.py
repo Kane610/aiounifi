@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Callable, Coroutine
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .interfaces.clients import Clients
 from .interfaces.clients_all import ClientsAll
@@ -57,21 +55,6 @@ class Controller:
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
 
-        self.update_handlers: tuple[Callable[[], Coroutine[Any, Any, None]], ...] = (
-            self.clients.update,
-            self.clients_all.update,
-            self.devices.update,
-            self.dpi_apps.update,
-            self.dpi_groups.update,
-            self.port_forwarding.update,
-            self.sites.update,
-            self.system_information.update,
-            self.traffic_rules.update,
-            self.traffic_routes.update,
-            self.vouchers.update,
-            self.wlans.update,
-        )
-
     async def login(self) -> None:
         """Log in to controller."""
         await self.connectivity.check_unifi_os()
@@ -80,16 +63,6 @@ class Controller:
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
         return await self.connectivity.request(api_request)
-
-    async def initialize(self) -> None:
-        """Load UniFi parameters."""
-        results = await asyncio.gather(
-            *[update() for update in self.update_handlers],
-            return_exceptions=True,
-        )
-        for result in results:
-            if result is not None:
-                LOGGER.warning("Exception on update %s", result)
 
     async def start_websocket(self) -> None:
         """Start websocket session."""
