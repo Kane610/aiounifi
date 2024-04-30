@@ -160,6 +160,10 @@ class Connectivity:
             raise RequestError(f"Error requesting data from {url}: {err}") from None
 
         LOGGER.debug("data (from %s) %s", url, bytes_data)
+
+        if res.status == HTTPStatus.TOO_MANY_REQUESTS:
+            raise ResponseError(f"Call {url} received 429: {bytes_data!r}")
+
         return res, bytes_data
 
     async def websocket(self, callback: Callable[[bytes], None]) -> None:
