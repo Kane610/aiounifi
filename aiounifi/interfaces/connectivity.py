@@ -77,6 +77,9 @@ class Connectivity:
             if (csrf_token := response.headers.get("x-csrf-token")) is not None:
                 self.headers["x-csrf-token"] = csrf_token
 
+            if (cookie := response.headers.get("Set-Cookie")) is not None:
+                self.headers["Cookie"] = cookie
+
         else:
             LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
             raise RequestError("Login Failed: Host starting up")
@@ -174,7 +177,11 @@ class Connectivity:
 
         try:
             async with self.config.session.ws_connect(
-                url, ssl=self.config.ssl_context, heartbeat=15, compress=12
+                url,
+                headers=self.headers,
+                ssl=self.config.ssl_context,
+                heartbeat=15,
+                compress=12,
             ) as websocket_connection:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 

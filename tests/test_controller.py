@@ -103,7 +103,7 @@ async def test_controller_login(
         mock_aioresponse.post(
             "https://host:8443/api/auth/login",
             payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-            headers={"x-csrf-token": "123"},
+            headers={"x-csrf-token": "123", "Set-Cookie": "456"},
             content_type="application/json",
         )
         await unifi_controller.login()
