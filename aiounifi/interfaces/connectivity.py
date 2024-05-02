@@ -63,7 +63,7 @@ class Connectivity:
         auth = {
             "username": self.config.username,
             "password": self.config.password,
-            "remember": True,
+            "rememberMe": True,
         }
 
         response, bytes_data = await self._request("post", url, json=auth)

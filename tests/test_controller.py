@@ -73,7 +73,7 @@ async def test_login(
         assert unifi_called_with(
             "post",
             "/api/auth/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     else:
         mock_aioresponse.post(
@@ -85,7 +85,7 @@ async def test_login(
         assert unifi_called_with(
             "post",
             "/api/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
 
 
@@ -110,7 +110,7 @@ async def test_controller_login(
         assert unifi_called_with(
             "post",
             "/api/auth/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     else:
         mock_aioresponse.get(
@@ -124,7 +124,7 @@ async def test_controller_login(
         assert unifi_called_with(
             "post",
             "/api/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     assert unifi_called_with("get", "", allow_redirects=False)
 
@@ -420,7 +420,7 @@ async def test_unifios_controller_no_csrf_token(
     assert unifi_called_with(
         "post",
         "/api/auth/login",
-        json={"username": "user", "password": "pass", "remember": True},
+        json={"username": "user", "password": "pass", "rememberMe": True},
     )
 
 
