@@ -428,6 +428,7 @@ test_data = [
     ({"status": 401}, LoginRequired),
     ({"status": 403}, Forbidden),
     ({"status": 404}, ResponseError),
+    ({"status": 429}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
     ({"exception": client_exceptions.ClientError}, RequestError),
