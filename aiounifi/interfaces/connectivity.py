@@ -63,7 +63,7 @@ class Connectivity:
         auth = {
             "username": self.config.username,
             "password": self.config.password,
-            "remember": True,
+            "rememberMe": True,
         }
 
         response, bytes_data = await self._request("post", url, json=auth)
@@ -76,6 +76,9 @@ class Connectivity:
 
             if (csrf_token := response.headers.get("x-csrf-token")) is not None:
                 self.headers["x-csrf-token"] = csrf_token
+
+            if (cookie := response.headers.get("Set-Cookie")) is not None:
+                self.headers["Cookie"] = cookie
 
         else:
             LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
@@ -160,6 +163,10 @@ class Connectivity:
             raise RequestError(f"Error requesting data from {url}: {err}") from None
 
         LOGGER.debug("data (from %s) %s", url, bytes_data)
+
+        if res.status == HTTPStatus.TOO_MANY_REQUESTS:
+            raise ResponseError(f"Call {url} received 429: {bytes_data!r}")
+
         return res, bytes_data
 
     async def websocket(self, callback: Callable[[bytes], None]) -> None:
@@ -170,7 +177,11 @@ class Connectivity:
 
         try:
             async with self.config.session.ws_connect(
-                url, ssl=self.config.ssl_context, heartbeat=15, compress=12
+                url,
+                headers=self.headers,
+                ssl=self.config.ssl_context,
+                heartbeat=15,
+                compress=12,
             ) as websocket_connection:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 

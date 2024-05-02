@@ -73,7 +73,7 @@ async def test_login(
         assert unifi_called_with(
             "post",
             "/api/auth/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     else:
         mock_aioresponse.post(
@@ -85,7 +85,7 @@ async def test_login(
         assert unifi_called_with(
             "post",
             "/api/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
 
 
@@ -103,14 +103,14 @@ async def test_controller_login(
         mock_aioresponse.post(
             "https://host:8443/api/auth/login",
             payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-            headers={"x-csrf-token": "123"},
+            headers={"x-csrf-token": "123", "Set-Cookie": "456"},
             content_type="application/json",
         )
         await unifi_controller.login()
         assert unifi_called_with(
             "post",
             "/api/auth/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     else:
         mock_aioresponse.get(
@@ -124,7 +124,7 @@ async def test_controller_login(
         assert unifi_called_with(
             "post",
             "/api/login",
-            json={"username": "user", "password": "pass", "remember": True},
+            json={"username": "user", "password": "pass", "rememberMe": True},
         )
     assert unifi_called_with("get", "", allow_redirects=False)
 
@@ -420,7 +420,7 @@ async def test_unifios_controller_no_csrf_token(
     assert unifi_called_with(
         "post",
         "/api/auth/login",
-        json={"username": "user", "password": "pass", "remember": True},
+        json={"username": "user", "password": "pass", "rememberMe": True},
     )
 
 
@@ -428,6 +428,7 @@ test_data = [
     ({"status": 401}, LoginRequired),
     ({"status": 403}, Forbidden),
     ({"status": 404}, ResponseError),
+    ({"status": 429}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
     ({"exception": client_exceptions.ClientError}, RequestError),
