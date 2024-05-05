@@ -334,6 +334,8 @@ class TypedDeviceUpdtimeStats(TypedDict):
     """Device uptime stats type definition."""
 
     WAN: TypedDeviceUpdtimeStatsWan
+    WAN2: TypedDeviceUpdtimeStatsWan
+
 
 class TypedDeviceUpdtimeStatsWan(TypedDict):
     """Device uptime stats wan type definition."""
