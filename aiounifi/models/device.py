@@ -330,6 +330,16 @@ class TypedDeviceUplink(TypedDict):
     uplink_remote_port: int
 
 
+class TypedDeviceUpdtimeStats(TypedDict):
+    """Device uptime stats type definition."""
+
+    wan: TypedDeviceUpdtimeStatsWan
+
+class TypedDeviceUpdtimeStatsWan(TypedDict):
+    """Device uptime stats wan type definition."""
+
+    monitors: list[dict[str, Any]]
+
 class TypedDeviceWlanOverrides(TypedDict):
     """Device wlan overrides type definition."""
 
@@ -489,6 +499,7 @@ class TypedDevice(TypedDict):
     uplink_depth: int
     uplink_table: list  # type: ignore[type-arg]
     uptime: int
+    uptime_stats: TypedDeviceUpdtimeStats
     user_num_sta: int
     user_wlan_num_sta: int
     usg_caps: int
@@ -970,6 +981,11 @@ class Device(ApiItem):
     def uptime(self) -> int:
         """Uptime of device."""
         return self.raw.get("uptime", 0)
+
+    @property
+    def uptime_stats(self) -> TypedDeviceUpdtimeStats | None:
+        """Uptime statistics."""
+        data = self.raw["uptime_stats"]
 
     @property
     def user_num_sta(self) -> int:
