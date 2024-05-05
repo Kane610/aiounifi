@@ -333,12 +333,13 @@ class TypedDeviceUplink(TypedDict):
 class TypedDeviceUpdtimeStats(TypedDict):
     """Device uptime stats type definition."""
 
-    wan: TypedDeviceUpdtimeStatsWan
+    WAN: TypedDeviceUpdtimeStatsWan
 
 class TypedDeviceUpdtimeStatsWan(TypedDict):
     """Device uptime stats wan type definition."""
 
     monitors: list[dict[str, Any]]
+
 
 class TypedDeviceWlanOverrides(TypedDict):
     """Device wlan overrides type definition."""
