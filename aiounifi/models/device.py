@@ -330,10 +330,19 @@ class TypedDeviceUplink(TypedDict):
     uplink_remote_port: int
 
 
+class TypedDeviceUptimeStatsWanMonitor(TypedDict):
+    """Device uptime stats wan monitor type definition."""
+
+    availability: float
+    latency_average: int
+    target: str
+    type: str
+
+
 class TypedDeviceUptimeStatsWan(TypedDict):
     """Device uptime stats wan type definition."""
 
-    monitors: list[dict[str, Any]]
+    monitors: list[TypedDeviceUptimeStatsWanMonitor]
 
 
 class TypedDeviceUptimeStats(TypedDict):
