@@ -988,7 +988,7 @@ class Device(ApiItem):
     @property
     def uptime_stats(self) -> TypedDeviceUptimeStats | None:
         """Uptime statistics."""
-        data = self.raw["uptime_stats"]
+        return self.raw.get("uptime_stats")
 
     @property
     def user_num_sta(self) -> int:
