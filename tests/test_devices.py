@@ -121,6 +121,41 @@ test_data = [
             "uplink": GATEWAY_USG3["uplink"],
             "uplink_depth": None,
             "uptime": 3971869,
+            "uptime_stats": {
+                "WAN": {
+                    "monitors": [
+                        {
+                            "availability": 100.0,
+                            "latency_average": 5,
+                            "target": "www.microsoft.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 7,
+                            "target": "google.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 5,
+                            "target": "1.1.1.1",
+                            "type": "icmp",
+                        },
+                    ]
+                },
+                "WAN2": {
+                    "monitors": [
+                        {
+                            "availability": 0.0,
+                            "target": "www.microsoft.com",
+                            "type": "icmp",
+                        },
+                        {"availability": 0.0, "target": "google.com", "type": "icmp"},
+                        {"availability": 0.0, "target": "1.1.1.1", "type": "icmp"},
+                    ]
+                },
+            },
             "user_num_sta": 20,
             "wlan_overrides": [],
             "speedtest_status": GATEWAY_USG3["speedtest-status"],
