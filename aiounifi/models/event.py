@@ -68,6 +68,9 @@ class EventKey(enum.Enum):
     SWITCH_UPGRADE_SCHEDULED = "EVT_SW_UpgradeScheduled"
     SWITCH_UPGRADED = "EVT_SW_Upgraded"
 
+    VOUCHER_CREATED = "EVT_AD_VoucherCreated"
+    VOUCHER_DELETED = "EVT_AD_VoucherDeleted"
+
     WIRED_CLIENT_CONNECTED = "EVT_LU_Connected"
     WIRED_CLIENT_DISCONNECTED = "EVT_LU_Disconnected"
     WIRED_CLIENT_BLOCKED = "EVT_LC_Blocked"
