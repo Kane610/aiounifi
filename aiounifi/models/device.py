@@ -511,7 +511,7 @@ class TypedDevice(TypedDict):
     uplink_depth: int
     uplink_table: list  # type: ignore[type-arg]
     uptime: int
-    uptime_stats: TypedDeviceUptimeStats
+    uptime_stats: TypedDeviceUptimeStats | None
     user_num_sta: int
     user_wlan_num_sta: int
     usg_caps: int
