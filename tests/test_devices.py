@@ -1170,3 +1170,23 @@ async def test_led_status_request_exception(
     )
     with pytest.raises(AttributeError):
         DeviceSetLedStatus.create(device, **data)
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_update_stats(unifi_controller: Controller) -> None:
+    """Test device class uptime stats."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.uptime_stats is not None
+    assert len(device.uptime_stats["WAN"].get("monitors")) == 3
+    assert len(device.uptime_stats["WAN2"].get("monitors")) == 3
+
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("availability") == 100.0
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("latency_average") == 5
+    assert (
+        device.uptime_stats["WAN"].get("monitors")[0].get("target")
+        == "www.microsoft.com"
+    )
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("type") == "icmp"
