@@ -334,7 +334,7 @@ class TypedDeviceUptimeStatsWanMonitor(TypedDict):
     """Device uptime stats wan monitor type definition."""
 
     availability: float
-    latency_average: int
+    latency_average: NotRequired[int]
     target: str
     type: str
 
