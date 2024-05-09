@@ -121,6 +121,41 @@ test_data = [
             "uplink": GATEWAY_USG3["uplink"],
             "uplink_depth": None,
             "uptime": 3971869,
+            "uptime_stats": {
+                "WAN": {
+                    "monitors": [
+                        {
+                            "availability": 100.0,
+                            "latency_average": 5,
+                            "target": "www.microsoft.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 7,
+                            "target": "google.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 5,
+                            "target": "1.1.1.1",
+                            "type": "icmp",
+                        },
+                    ]
+                },
+                "WAN2": {
+                    "monitors": [
+                        {
+                            "availability": 0.0,
+                            "target": "www.microsoft.com",
+                            "type": "icmp",
+                        },
+                        {"availability": 0.0, "target": "google.com", "type": "icmp"},
+                        {"availability": 0.0, "target": "1.1.1.1", "type": "icmp"},
+                    ]
+                },
+            },
             "user_num_sta": 20,
             "wlan_overrides": [],
             "speedtest_status": GATEWAY_USG3["speedtest-status"],
@@ -1135,3 +1170,23 @@ async def test_led_status_request_exception(
     )
     with pytest.raises(AttributeError):
         DeviceSetLedStatus.create(device, **data)
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_update_stats(unifi_controller: Controller) -> None:
+    """Test device class uptime stats."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.uptime_stats is not None
+    assert len(device.uptime_stats["WAN"].get("monitors")) == 3
+    assert len(device.uptime_stats["WAN2"].get("monitors")) == 3
+
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("availability") == 100.0
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("latency_average") == 5
+    assert (
+        device.uptime_stats["WAN"].get("monitors")[0].get("target")
+        == "www.microsoft.com"
+    )
+    assert device.uptime_stats["WAN"].get("monitors")[0].get("type") == "icmp"
