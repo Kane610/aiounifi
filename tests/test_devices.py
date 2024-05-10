@@ -1199,7 +1199,7 @@ async def test_storage(unifi_controller: Controller) -> None:
     await unifi_controller.devices.update()
     device = next(iter(unifi_controller.devices.values()))
 
-    assert device.uptime_stats is not None
+    assert device.storage is not None
     assert len(device.storage) == 2
 
     assert device.storage[0].get("mount_point") == "/persistent"
