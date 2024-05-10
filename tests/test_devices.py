@@ -1202,8 +1202,8 @@ async def test_storage(unifi_controller: Controller) -> None:
     assert device.storage is not None
     assert len(device.storage) == 2
 
-    assert device.storage[0].get("mount_point") == "/persistent"
-    assert device.storage[0].get("name") == "Backup"
-    assert device.storage[0].get("size") == 2040373248
-    assert device.storage[0].get("type") == "eMMC"
-    assert device.storage[0].get("used") == 148353024
+    assert device.storage[0]["mount_point"] == "/persistent"
+    assert device.storage[0]["name"] == "Backup"
+    assert device.storage[0]["size"] == 2040373248
+    assert device.storage[0]["type"] == "eMMC"
+    assert device.storage[0]["used"] == 148353024
