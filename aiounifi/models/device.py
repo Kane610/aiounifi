@@ -375,6 +375,16 @@ class TypedDeviceSpeedtestStatus(TypedDict):
     xput_upload: float
 
 
+class TypedDeviceStorage(TypedDict):
+    """Device storage type definition."""
+
+    mount_point: str
+    name: str
+    size: int
+    type: str
+    used: int
+
+
 class TypedDevice(TypedDict):
     """Device type definition."""
 
@@ -491,6 +501,7 @@ class TypedDevice(TypedDict):
     start_disconnected_millis: int
     stat: dict  # type: ignore[type-arg]
     state: int
+    storage: list[TypedDeviceStorage] | None
     stp_priority: str
     stp_version: str
     switch_caps: TypedDeviceSwitchCaps
@@ -947,6 +958,11 @@ class Device(ApiItem):
     def state(self) -> DeviceState:
         """State of device."""
         return DeviceState(self.raw["state"])
+
+    @property
+    def storage(self) -> list[TypedDeviceStorage] | None:
+        """Device storage information."""
+        return self.raw.get("storage")
 
     @property
     def sys_stats(self) -> TypedDeviceSysStats:

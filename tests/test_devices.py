@@ -1190,3 +1190,20 @@ async def test_update_stats(unifi_controller: Controller) -> None:
         == "www.microsoft.com"
     )
     assert device.uptime_stats["WAN"].get("monitors")[0].get("type") == "icmp"
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_storage(unifi_controller: Controller) -> None:
+    """Test device class storage."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.storage is not None
+    assert len(device.storage) == 2
+
+    assert device.storage[0]["mount_point"] == "/persistent"
+    assert device.storage[0]["name"] == "Backup"
+    assert device.storage[0]["size"] == 2040373248
+    assert device.storage[0]["type"] == "eMMC"
+    assert device.storage[0]["used"] == 148353024

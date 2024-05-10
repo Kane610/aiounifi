@@ -1039,6 +1039,22 @@ GATEWAY_USG3 = {
         }
     },
     "state": 1,
+    "storage": [
+        {
+            "mount_point": "/persistent",
+            "name": "Backup",
+            "size": 2040373248,
+            "type": "eMMC",
+            "used": 148353024,
+        },
+        {
+            "mount_point": "/tmp",
+            "name": "Temporary",
+            "size": 1073741824,
+            "type": "other",
+            "used": 90112,
+        },
+    ],
     "sys_stats": {
         "loadavg_1": "0.03",
         "loadavg_15": "0.08",
