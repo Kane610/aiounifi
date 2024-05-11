@@ -1207,3 +1207,18 @@ async def test_storage(unifi_controller: Controller) -> None:
     assert device.storage[0]["size"] == 2040373248
     assert device.storage[0]["type"] == "eMMC"
     assert device.storage[0]["used"] == 148353024
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_temperatures(unifi_controller: Controller) -> None:
+    """Test device class temperatures."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.temperatures is not None
+    assert len(device.temperatures) == 3
+
+    assert device.temperatures[0]["name"] == "CPU"
+    assert device.temperatures[0]["type"] == "cpu"
+    assert device.temperatures[0]["value"] == 66.0

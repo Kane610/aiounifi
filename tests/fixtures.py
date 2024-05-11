@@ -1065,6 +1065,11 @@ GATEWAY_USG3 = {
     },
     "syslog_key": "3456789098098769876543",
     "system-stats": {"cpu": "0", "mem": "25", "uptime": "3971505"},
+    "temperatures": [
+        {"name": "CPU", "type": "cpu", "value": 66.0},
+        {"name": "Local", "type": "board", "value": 48.75},
+        {"name": "PHY", "type": "board", "value": 50.25},
+    ],
     "two_phase_adopt": False,
     "tx_bytes": 1107294012155,
     "type": "ugw",
