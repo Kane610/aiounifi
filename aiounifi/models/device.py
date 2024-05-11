@@ -300,6 +300,14 @@ class TypedDeviceSystemStats(TypedDict):
     uptime: str
 
 
+class TypedDeviceTemperature(TypedDict):
+    """Device temperature type definition."""
+
+    name: str
+    type: str
+    value: float
+
+
 class TypedDeviceUplink(TypedDict):
     """Device uplink type definition."""
 
@@ -509,6 +517,7 @@ class TypedDevice(TypedDict):
     sys_stats: TypedDeviceSysStats
     syslog_key: str
     system_stats: TypedDeviceSystemStats
+    temperatures: list[TypedDeviceTemperature] | None
     two_phase_adopt: bool
     tx_bytes: int
     tx_bytes_d: int
@@ -974,6 +983,11 @@ class Device(ApiItem):
         """System statistics."""
         data = self.raw["system-stats"]  # type: ignore [typeddict-item]
         return (data.get("cpu", ""), data.get("mem", ""), data.get("uptime", ""))
+
+    @property
+    def temperatures(self) -> list[TypedDeviceTemperature] | None:
+        """Device temperature sensors."""
+        return self.raw.get("temperatures")
 
     @property
     def type(self) -> str:
