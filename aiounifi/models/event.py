@@ -39,6 +39,7 @@ class EventKey(enum.Enum):
 
     DREAM_MACHINE_CONNECTED = "EVT_DM_Connected"
     DREAM_MACHINE_LOST_CONTACT = "EVT_DM_Lost_Contact"
+    DREAM_MACHINE_UPGRADED = "EVT_DM_Upgraded"
 
     GATEWAY_ADOPTED = "EVT_GW_Adopted"
     GATEWAY_AUTO_READOPTED = "EVT_GW_AutoReadopted"
