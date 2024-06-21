@@ -38,7 +38,7 @@ requirements_test = [
     "pytest-aiohttp==1.0.5",
     "pytest-asyncio==0.23.7",
     "pytest-cov==5.0.0",
-    "ruff==0.4.9",
+    "ruff==0.4.10",
     "trustme==1.1.0",
     "types-orjson==3.6.2",
 ]
