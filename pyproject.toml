@@ -43,7 +43,7 @@ requirements_test = [
     "types-orjson==3.6.2",
 ]
 requirements_dev = [
-    "pre-commit==3.7.1"
+    "pre-commit==3.8.0"
 ]
 
 [project.urls]
