@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 import datetime
 from http import HTTPStatus
 import logging
+import sys
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
@@ -24,6 +25,13 @@ from ..errors import (
 )
 from ..models.api import ERRORS
 from ..models.configuration import Configuration
+
+if sys.version_info[:2] < (3, 13):
+    from http import cookies
+
+    # See: https://github.com/python/cpython/issues/112713
+    cookies.Morsel._reserved["partitioned"] = "partitioned"  # type: ignore[attr-defined]
+    cookies.Morsel._flags.add("partitioned")  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
@@ -182,7 +190,12 @@ class Connectivity:
                 heartbeat=15,
                 compress=12,
             ) as websocket_connection:
-                LOGGER.debug("Connected to UniFi websocket %s", url)
+                LOGGER.debug(
+                    "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
+                    url,
+                    self.headers,
+                    self.config.session.cookie_jar._cookies,  # type: ignore[attr-defined]
+                )
 
                 async for message in websocket_connection:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)
