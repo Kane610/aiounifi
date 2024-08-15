@@ -124,10 +124,10 @@ class Connectivity:
         method: str,
         url: str,
         json: Mapping[str, Any] | None = None,
-        **kwargs: bool,
+        allow_redirects: bool = True,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
         """Make a request to the API."""
-        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, kwargs)
+        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, allow_redirects)
         bytes_data = b""
 
         try:
@@ -137,7 +137,7 @@ class Connectivity:
                 json=json,
                 ssl=self.config.ssl_context,
                 headers=self.headers,
-                **kwargs,
+                allow_redirects=allow_redirects,
             ) as res:
                 LOGGER.debug(
                     "received (from %s) %s %s %s",
@@ -194,7 +194,7 @@ class Connectivity:
                     "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
                     url,
                     self.headers,
-                    self.config.session.cookie_jar._cookies,  # type: ignore[attr-defined]
+                    self.config.session.cookie_jar._cookies,
                 )
 
                 async for message in websocket_connection:
