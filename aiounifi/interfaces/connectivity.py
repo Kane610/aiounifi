@@ -194,7 +194,7 @@ class Connectivity:
                     "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
                     url,
                     self.headers,
-                    self.config.session.cookie_jar._cookies,
+                    self.config.session.cookie_jar._cookies,  # type: ignore[attr-defined]
                 )
 
                 async for message in websocket_connection:
