@@ -10,5 +10,5 @@ repos:
     rev: v1.11.1
     hooks:
       - id: mypy
-        args: [--ignore-missing-imports]
+        additional_dependencies: ["aiohttp==3.10.3", "orjson==3.10.7", "segno==1.6.1"]
         exclude: ^tests/
