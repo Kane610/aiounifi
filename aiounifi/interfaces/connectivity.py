@@ -190,7 +190,12 @@ class Connectivity:
                 heartbeat=15,
                 compress=12,
             ) as websocket_connection:
-                LOGGER.debug("Connected to UniFi websocket %s", url)
+                LOGGER.debug(
+                    "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
+                    url,
+                    self.headers,
+                    self.config.session.cookie_jar._cookies,
+                )
 
                 async for message in websocket_connection:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)
