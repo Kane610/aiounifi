@@ -24,7 +24,12 @@ class Port(ApiItem):
     @property
     def name(self) -> str:
         """Port name."""
-        return self.raw["name"]
+        if (name := self.raw["name"]) == "":
+          # Unifi controller allows to set an empty port name, but it
+          # shows up as "Port N" consistently across UI. We mirror the
+          # behavior, as empty name is rarely visually helpful.
+          return f"Port {self.port_idx}"
+        return name
 
     @property
     def port_idx(self) -> int | None:
