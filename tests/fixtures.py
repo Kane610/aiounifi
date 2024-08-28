@@ -1333,7 +1333,7 @@ SWITCH_16_PORT_POE = {
             "lldp_table": [],
             "masked": False,
             "media": "GE",
-            "name": "Port 2",
+            "name": "",
             "op_mode": "switch",
             "poe_caps": 7,
             "poe_class": "Unknown",
