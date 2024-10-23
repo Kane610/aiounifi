@@ -118,3 +118,7 @@ async def test_port(unifi_controller):
     assert port.tx_bytes_r == 330
 
     assert repr(port) == "<Port 1: Poe False>"
+
+    unnamed_port = unifi_controller.ports["fc:ec:da:11:22:33_2"]
+    # Port name is unset, but we verify that it's correctly substituted.
+    assert unnamed_port.name == "Port 2"
