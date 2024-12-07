@@ -31,7 +31,7 @@ requirements = [
     "orjson==3.10.12",
     "segno==1.6.1",
 ]
-requirements_test = [
+requirements-test = [
     "aioresponses==0.7.7",
     "mypy==1.13.0",
     "pytest==8.3.4",
@@ -42,7 +42,7 @@ requirements_test = [
     "trustme==1.2.0",
     "types-orjson==3.6.2",
 ]
-requirements_dev = [
+requirements-dev = [
     "pre-commit==4.0.1"
 ]
 
