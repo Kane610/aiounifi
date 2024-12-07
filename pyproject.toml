@@ -27,7 +27,7 @@ dependencies    = [
 
 [project.optional-dependencies]
 requirements = [
-    "aiohttp==3.11.9",
+    "aiohttp==3.11.10",
     "orjson==3.10.12",
     "segno==1.6.1",
 ]
