@@ -71,6 +71,13 @@ class Connectivity:
             "rememberMe": True,
         }
 
+        # Voeg optionele parameters toe als deze door de gebruiker zijn opgegeven
+        if hasattr(self.config, "for_hotspot") and self.config.for_hotspot is not None:
+            auth["for_hotspot"] = self.config.for_hotspot
+
+        if hasattr(self.config, "site_name") and self.config.site_name is not None:
+            auth["site_name"] = self.config.site_name
+        
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type != "application/json":
