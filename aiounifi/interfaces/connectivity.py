@@ -71,6 +71,12 @@ class Connectivity:
             "rememberMe": True,
         }
 
+        if hasattr(self.config, "site") and self.config.site is not None:
+            auth["siteName"] = self.config.site
+
+        if hasattr(self.config, "for_hotspot") and self.config.for_hotspot is not None:
+            auth["forHotspot"] = self.config.for_hotspot
+        
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.content_type != "application/json":
