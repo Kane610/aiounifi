@@ -23,6 +23,7 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | None = None,
+    for_hotspot: bool | None = None, # New argument
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -33,6 +34,7 @@ async def unifi_controller(
             password=password,
             port=port,
             site=site,
+            for_hotspot=for_hotspot, # New argument
             ssl_context=ssl_context if ssl_context is not None else False,
         )
     )
