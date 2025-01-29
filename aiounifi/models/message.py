@@ -31,6 +31,7 @@ class MessageKey(enum.Enum):
     DPI_GROUP_ADDED = "dpigroup:add"
     DPI_GROUP_REMOVED = "dpigroup:delete"
     DPI_GROUP_UPDATED = "dpigroup:sync"
+    FIREWALL_GROUP_ADDED = "firewallgroup:add"
     FIREWALL_RULE_ADDED = "firewallrule:add"
     FIREWALL_RULE_UPDATED = "firewallrule:sync"
     NETWORK_CONF_UPDATED = "networkconf:sync"
