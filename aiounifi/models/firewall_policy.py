@@ -166,7 +166,7 @@ class FirewallPolicyListRequest(ApiRequestV2):
 
 @dataclass
 class FirewallPolicyUpdateRequest(ApiRequestV2):
-    """Request object for updating a firewall policy."""
+    """Request object for updating a firewall policy. Note: You can't update the default policies - only ones you've created."""
 
     @classmethod
     def create(cls, policy: TypedFirewallPolicy) -> Self:
