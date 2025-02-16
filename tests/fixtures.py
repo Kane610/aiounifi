@@ -4790,3 +4790,66 @@ TRAFFIC_ROUTES = [
         ],
     },
 ]
+
+FIREWALL_ZONES = [
+    {
+        "_id": "678ccc26e3849d2932432e26",
+        "name": "LAN",
+        "attr_no_edit": True,
+        "default_zone": True,
+        "network_ids": ["678ccc26e3849d2932432e20"],
+        "zone_key": "lan",
+    },
+    {
+        "_id": "678c63bc2d97692f08adcdfb",
+        "name": "WAN",
+        "attr_no_edit": True,
+        "default_zone": True,
+        "network_ids": ["678c63bc2d97692f08adcdf5"],
+        "zone_key": "wan",
+    },
+]
+
+FIREWALL_POLICIES = [
+    {
+        "_id": "678c4da12d97692f08ad6e98",
+        "name": "IOT to internet",
+        "enabled": True,
+        "match_action": "accept",
+        "match_src_networkconf_ids": ["678c4da12d97692f08ad6e93"],
+        "match_dst_networkconf_type": "WAN",
+        "match_dst_networkconf_ids": ["678c4da12d97692f08ad6e93"],
+        "match_custom_dst": "any",
+        "rules": [
+            {
+                "_id": "678c4da12d97692f08ad6e99",
+                "enabled": True,
+                "ruleset": "policy",
+                "rule_index": 2000,
+                "name": "allow default ports",
+                "action": "accept",
+                "protocol_match_excepted": False,
+                "logging": False,
+                "state_new": True,
+                "state_established": True,
+                "state_invalid": False,
+                "state_related": True,
+                "ipsec": "",
+                "src_networkconf_id": "678c4da12d97692f08ad6e93",
+                "src_networkconf_type": "NETv4",
+                "src_mac_address": "",
+                "dst_networkconf_type": "WAN",
+                "dst_address": "any",
+                "dst_networkconf_id": "678c4da12d97692f08ad6e93",
+                "src_address": "",
+                "src_firewallgroup_ids": [],
+                "dst_firewallgroup_ids": [],
+                "protocol": "all",
+                "icmp_typename": "",
+                "src_port": "",
+                "dst_port": "",
+                "raw": "",
+            }
+        ],
+    }
+]

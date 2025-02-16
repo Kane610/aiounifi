@@ -1,9 +1,6 @@
 """Firewall policies as part of a UniFi network."""
 
-from copy import deepcopy
-
-from ..models.api import TypedApiResponse
-from ..models.traffic_rule import FirewallPolicy, FirewallPolicyListRequest, FirewallPolicyUpdateRequest
+from ..models.firewall_policy import FirewallPolicy, FirewallPolicyListRequest
 from .api_handlers import APIHandler
 
 
