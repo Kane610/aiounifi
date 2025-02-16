@@ -20,6 +20,8 @@ from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.traffic_routes import TrafficRoutes
 from .interfaces.traffic_rules import TrafficRules
+from .interfaces.firewall_zones import FirewallZones
+from .interfaces.firewall_policies import FirewallPolicies
 from .interfaces.vouchers import Vouchers
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
@@ -52,6 +54,8 @@ class Controller:
         self.system_information = SystemInformationHandler(self)
         self.traffic_rules = TrafficRules(self)
         self.traffic_routes = TrafficRoutes(self)
+        self.firewall_zones = FirewallZones(self)
+        self.firewall_policies = FirewallPolicies(self)
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
 
