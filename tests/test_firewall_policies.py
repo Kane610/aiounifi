@@ -17,19 +17,18 @@ async def test_firewall_policies(unifi_controller, unifi_called_with):
     firewall_policies = unifi_controller.firewall_policies
     await firewall_policies.update()
     assert unifi_called_with("get", "/v2/api/site/default/firewall-policies")
-    assert len(firewall_policies.values()) == 2
+    assert len(firewall_policies.values()) == 1
 
-    policy = firewall_policies["678ccddae3849d2932432f46"]
-    assert policy.id == "678ccddae3849d2932432f46"
-    assert policy.name == "Block Internet Access"
-    assert policy.enabled is False
-    assert policy.action == "BLOCK"
+    policy = firewall_policies["678ceb9fe3849d293243405c"]
+    assert policy.id == "678ceb9fe3849d293243405c"
+    assert policy.name == "Allow internal to IoT"
+    assert policy.enabled is True
+    assert policy.action == "ALLOW"
     assert policy.predefined is False
-    assert policy.description == "Test policy"
     assert policy.protocol == "all"
     assert policy.ip_version == "BOTH"
-    assert policy.source["matching_target"] == "CLIENT"
-    assert policy.source["client_macs"] == ["18:8b:0e:e7:4f:30"]
+    assert policy.source["matching_target"] == "ANY"
+    assert policy.source["zone_id"] == "678c63bc2d97692f08adcdfa"
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
@@ -49,10 +48,11 @@ async def test_firewall_policy_update_request(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
     """Test that firewall policy can be updated."""
-    policy = FIREWALL_POLICIES[1]
+    policy = FIREWALL_POLICIES[0]
+    policy_id = policy["_id"]
 
     mock_aioresponse.put(
-        "https://host:8443/proxy/network/v2/api/site/default/firewall-policies/batch",
+        f"https://host:8443/proxy/network/v2/api/site/default/firewall-policies/{policy_id}",
         payload={},
     )
 
@@ -60,6 +60,6 @@ async def test_firewall_policy_update_request(
 
     assert unifi_called_with(
         "put",
-        "/proxy/network/v2/api/site/default/firewall-policies/batch",
-        json=[policy],
+        f"/proxy/network/v2/api/site/default/firewall-policies/{policy_id}",
+        json=policy,
     )
