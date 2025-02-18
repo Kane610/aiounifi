@@ -177,6 +177,6 @@ class FirewallPolicyUpdateRequest(ApiRequestV2):
         """Create firewall policy update request."""
         return cls(
             method="put",
-            path="/firewall-policies/batch",
-            data=json,
+            path=f"/firewall-policies/{policy['_id']}",
+            data=policy,
         )
