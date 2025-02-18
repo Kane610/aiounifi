@@ -76,7 +76,6 @@ class TypedTrafficRule(TypedDict):
     regions: list[str]
     schedule: Schedule
     target_devices: list[TargetDevice]
-    zone: NotRequired[str]
 
 
 @dataclass
@@ -87,48 +86,6 @@ class TrafficRuleListRequest(ApiRequestV2):
     def create(cls) -> Self:
         """Create traffic rule request."""
         return cls(method="get", path="/trafficrules", data=None)
-
-
-@dataclass
-class TrafficRuleCreateRequest(ApiRequestV2):
-    """Request object for traffic rule creation."""
-
-    @classmethod
-    def create(cls, traffic_rule: TypedTrafficRule) -> Self:
-        """Create traffic rule create request."""
-        return cls(
-            method="post",
-            path="/trafficrules",
-            data=traffic_rule,
-        )
-
-
-@dataclass
-class TrafficRuleUpdateRequest(ApiRequestV2):
-    """Request object for traffic rule update."""
-
-    @classmethod
-    def create(cls, traffic_rule: TypedTrafficRule) -> Self:
-        """Create traffic rule update request."""
-        return cls(
-            method="put",
-            path=f"/trafficrules/{traffic_rule['_id']}",
-            data=traffic_rule,
-        )
-
-
-@dataclass
-class TrafficRuleDeleteRequest(ApiRequestV2):
-    """Request object for traffic rule deletion."""
-
-    @classmethod
-    def create(cls, traffic_rule_id: str) -> Self:
-        """Create traffic rule delete request."""
-        return cls(
-            method="delete",
-            path=f"/trafficrules/{traffic_rule_id}",
-            data=None,
-        )
 
 
 @dataclass
@@ -180,8 +137,3 @@ class TrafficRule(ApiItem):
     def target_devices(self) -> list[TargetDevice]:
         """What target devices are affected by this traffic rule."""
         return self.raw["target_devices"]
-
-    @property
-    def zone(self) -> str | None:
-        """Zone for which this traffic rule applies."""
-        return self.raw.get("zone")
