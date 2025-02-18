@@ -24,6 +24,7 @@ class FirewallZone(ApiItem):
 
     @property
     def id(self) -> str:
+        """Unique ID of firewall zone."""
         return self.raw["_id"]
 
     @property

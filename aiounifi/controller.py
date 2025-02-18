@@ -12,6 +12,8 @@ from .interfaces.devices import Devices
 from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .interfaces.events import EventHandler
+from .interfaces.firewall_policies import FirewallPolicies
+from .interfaces.firewall_zones import FirewallZones
 from .interfaces.messages import MessageHandler
 from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
@@ -20,8 +22,6 @@ from .interfaces.sites import Sites
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.traffic_routes import TrafficRoutes
 from .interfaces.traffic_rules import TrafficRules
-from .interfaces.firewall_zones import FirewallZones
-from .interfaces.firewall_policies import FirewallPolicies
 from .interfaces.vouchers import Vouchers
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration

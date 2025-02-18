@@ -50,7 +50,6 @@ async def test_firewall_policy_update_request(
 ):
     """Test that firewall policy can be updated."""
     policy = FIREWALL_POLICIES[1]
-    policy_id = policy["_id"]
 
     mock_aioresponse.put(
         "https://host:8443/proxy/network/v2/api/site/default/firewall-policies/batch",
