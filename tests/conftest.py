@@ -96,6 +96,8 @@ def _endpoint_fixture(
     device_payload: list[dict[str, Any]],
     dpi_app_payload: list[dict[str, Any]],
     dpi_group_payload: list[dict[str, Any]],
+    firewall_policy_payload: list[dict[str, Any]],
+    firewall_zone_payload: list[dict[str, Any]],
     port_forward_payload: list[dict[str, Any]],
     site_payload: list[dict[str, Any]],
     system_information_payload: list[dict[str, Any]],
@@ -104,8 +106,6 @@ def _endpoint_fixture(
     traffic_rule_status: int,
     wlan_payload: list[dict[str, Any]],
     voucher_payload: list[dict[str, Any]],
-    firewall_policy_payload: list[dict[str, Any]],
-    firewall_zone_payload: list[dict[str, Any]],
 ) -> None:
     """Use fixtures to mock all endpoints."""
 

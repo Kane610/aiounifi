@@ -172,9 +172,6 @@ class FirewallPolicyUpdateRequest(ApiRequestV2):
     @classmethod
     def create(cls, policy: TypedFirewallPolicy) -> Self:
         """Create method for firewall policy update request."""
-        json = []
-        json.append(policy)
-        """Create firewall policy update request."""
         return cls(
             method="put",
             path=f"/firewall-policies/{policy['_id']}",

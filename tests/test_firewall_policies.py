@@ -21,14 +21,41 @@ async def test_firewall_policies(unifi_controller, unifi_called_with):
 
     policy = firewall_policies["678ceb9fe3849d293243405c"]
     assert policy.id == "678ceb9fe3849d293243405c"
-    assert policy.name == "Allow internal to IoT"
-    assert policy.enabled is True
     assert policy.action == "ALLOW"
+    assert policy.connection_state_type == "ALL"
+    assert policy.connection_states == []
+    assert policy.create_allow_respond is True
+    assert policy.description == ""
+    assert policy.destination == {
+        "match_opposite_ports": False,
+        "matching_target": "ANY",
+        "port_matching_type": "ANY",
+        "zone_id": "678ccc26e3849d2932432e26",
+    }
+    assert policy.enabled is True
+    assert policy.icmp_typename == "ANY"
+    assert policy.icmp_v6_typename == "ANY"
+    assert policy.index == 10000
+    assert policy.ip_version == "BOTH"
+    assert policy.logging is False
+    assert policy.match_ip_sec is False
+    assert policy.match_opposite_protocol is False
+    assert policy.name == "Allow internal to IoT"
     assert policy.predefined is False
     assert policy.protocol == "all"
-    assert policy.ip_version == "BOTH"
-    assert policy.source["matching_target"] == "ANY"
-    assert policy.source["zone_id"] == "678c63bc2d97692f08adcdfa"
+    assert policy.schedule == {
+        "mode": "EVERY_DAY",
+        "repeat_on_days": [],
+        "time_all_day": False,
+        "time_range_end": "12:00",
+        "time_range_start": "09:00",
+    }
+    assert policy.source == {
+        "match_opposite_ports": False,
+        "matching_target": "ANY",
+        "port_matching_type": "ANY",
+        "zone_id": "678c63bc2d97692f08adcdfa",
+    }
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
