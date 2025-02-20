@@ -12,6 +12,8 @@ from .interfaces.devices import Devices
 from .interfaces.dpi_restriction_apps import DPIRestrictionApps
 from .interfaces.dpi_restriction_groups import DPIRestrictionGroups
 from .interfaces.events import EventHandler
+from .interfaces.firewall_policies import FirewallPolicies
+from .interfaces.firewall_zones import FirewallZones
 from .interfaces.messages import MessageHandler
 from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
@@ -43,11 +45,13 @@ class Controller:
         self.clients = Clients(self)
         self.clients_all = ClientsAll(self)
         self.devices = Devices(self)
-        self.outlets = Outlets(self)
-        self.ports = Ports(self)
         self.dpi_apps = DPIRestrictionApps(self)
         self.dpi_groups = DPIRestrictionGroups(self)
+        self.firewall_zones = FirewallZones(self)
+        self.firewall_policies = FirewallPolicies(self)
+        self.outlets = Outlets(self)
         self.port_forwarding = PortForwarding(self)
+        self.ports = Ports(self)
         self.sites = Sites(self)
         self.system_information = SystemInformationHandler(self)
         self.traffic_rules = TrafficRules(self)

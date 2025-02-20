@@ -96,6 +96,8 @@ def _endpoint_fixture(
     device_payload: list[dict[str, Any]],
     dpi_app_payload: list[dict[str, Any]],
     dpi_group_payload: list[dict[str, Any]],
+    firewall_policy_payload: list[dict[str, Any]],
+    firewall_zone_payload: list[dict[str, Any]],
     port_forward_payload: list[dict[str, Any]],
     site_payload: list[dict[str, Any]],
     system_information_payload: list[dict[str, Any]],
@@ -183,6 +185,16 @@ def _endpoint_fixture(
         "/proxy/network/api/s/default/stat/voucher",
         voucher_payload,
     )
+    mock_get_request(
+        "/v2/api/site/default/firewall-policies",
+        "/proxy/network/v2/api/site/default/firewall-policies",
+        firewall_policy_payload,
+    )
+    mock_get_request(
+        "/v2/api/site/default/firewall/zone",
+        "/proxy/network/v2/api/site/default/firewall/zone",
+        firewall_zone_payload,
+    )
 
 
 @pytest.fixture(name="response_payload")
@@ -266,4 +278,16 @@ def wlan_data_fixture() -> list[dict[str, Any]]:
 @pytest.fixture(name="voucher_payload")
 def voucher_data_fixture() -> list[dict[str, Any]]:
     """Vouchers data."""
+    return []
+
+
+@pytest.fixture(name="firewall_policy_payload")
+def firewall_policy_data_fixture() -> list[dict[str, Any]]:
+    """Firewall policy data."""
+    return []
+
+
+@pytest.fixture(name="firewall_zone_payload")
+def firewall_zone_data_fixture() -> list[dict[str, Any]]:
+    """Firewall zone data."""
     return []

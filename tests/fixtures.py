@@ -4790,3 +4790,63 @@ TRAFFIC_ROUTES = [
         ],
     },
 ]
+
+FIREWALL_ZONES = [
+    {
+        "_id": "678ccc26e3849d2932432e26",
+        "name": "LAN",
+        "attr_no_edit": True,
+        "default_zone": True,
+        "network_ids": ["678ccc26e3849d2932432e20"],
+        "zone_key": "lan",
+    },
+    {
+        "_id": "678c63bc2d97692f08adcdfb",
+        "name": "WAN",
+        "attr_no_edit": True,
+        "default_zone": True,
+        "network_ids": ["678c63bc2d97692f08adcdf5"],
+        "zone_key": "wan",
+    },
+]
+
+FIREWALL_POLICIES = [
+    {
+        "_id": "678ceb9fe3849d293243405c",
+        "action": "ALLOW",
+        "connection_state_type": "ALL",
+        "connection_states": [],
+        "create_allow_respond": True,
+        "description": "",
+        "destination": {
+            "match_opposite_ports": False,
+            "matching_target": "ANY",
+            "port_matching_type": "ANY",
+            "zone_id": "678ccc26e3849d2932432e26",
+        },
+        "enabled": True,
+        "icmp_typename": "ANY",
+        "icmp_v6_typename": "ANY",
+        "index": 10000,
+        "ip_version": "BOTH",
+        "logging": False,
+        "match_ip_sec": False,
+        "match_opposite_protocol": False,
+        "name": "Allow internal to IoT",
+        "predefined": False,
+        "protocol": "all",
+        "schedule": {
+            "mode": "EVERY_DAY",
+            "repeat_on_days": [],
+            "time_all_day": False,
+            "time_range_end": "12:00",
+            "time_range_start": "09:00",
+        },
+        "source": {
+            "match_opposite_ports": False,
+            "matching_target": "ANY",
+            "port_matching_type": "ANY",
+            "zone_id": "678c63bc2d97692f08adcdfa",
+        },
+    }
+]
