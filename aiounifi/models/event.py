@@ -106,6 +106,8 @@ class EventKey(enum.Enum):
     HOT_SPOT_AUTHED_BY_PASSWORD = "EVT_HS_AuthedByPassword"
     HOT_SPOT_VOUCHER_USED = "EVT_HS_VoucherUsed"
 
+    USP_RPS_POWER_DENIED_BY_PSU_OVERLOAD = "EVT_USP_RpsPowerDeniedByPsuOverload"
+
     UNKNOWN = "unknown"
 
     @classmethod
