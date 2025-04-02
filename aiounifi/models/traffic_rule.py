@@ -66,7 +66,7 @@ class TypedTrafficRule(TypedDict):
     app_category_ids: list[str]
     app_ids: list[str]
     bandwidth_limit: BandwidthLimit
-    description: str
+    description: NotRequired[str]
     domains: list[str]
     enabled: bool
     ip_addresses: list[IPAddress]
@@ -116,7 +116,7 @@ class TrafficRule(ApiItem):
     @property
     def description(self) -> str:
         """Description given by user to traffic rule."""
-        return self.raw["description"]
+        return self.raw.get("description", "")
 
     @property
     def enabled(self) -> bool:
