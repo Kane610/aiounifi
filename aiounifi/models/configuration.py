@@ -18,6 +18,7 @@ class Configuration:
     password: str
     port: int = 8443
     site: str = "default"
+    for_hotspot: bool | None = None
     ssl_context: SSLContext | Literal[False] = False
 
     @property
