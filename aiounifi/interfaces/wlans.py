@@ -28,4 +28,4 @@ class Wlans(APIHandler[Wlan]):
 
     def generate_wlan_qr_code(self, wlan: Wlan) -> bytes:
         """Generate QR code based on WLAN properties."""
-        return wlan_qr_code(wlan.name, wlan.x_passphrase, hidden=wlan.hide_ssid if wlan.hide_ssid is not None else False)
+        return wlan_qr_code(wlan.name, wlan.x_passphrase, hidden=wlan.hide_ssid is True)

@@ -163,7 +163,7 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
 
     wlan = wlans["123456789101112161415160"]
     assert wlan.hide_ssid is True
-    
+
     assert wlans.generate_wlan_qr_code(wlan) == (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x94\x00\x00\x00\x94"
         b"\x01\x00\x00\x00\x00]G=y\x00\x00\x00\xfbIDATx\xda\xedV1\x8e\x041\x0cB"
@@ -179,4 +179,3 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
         b"\x05\xec\x07\x07[\xf55\xbb\xcc\x86\x8a\xff\x9ew\xe2\x97g\xbf\xb5'\x96\xf7"
         b"\xce\xe4\xc7\xe6\x00\x00\x00\x00IEND\xaeB`\x82"
     )
-

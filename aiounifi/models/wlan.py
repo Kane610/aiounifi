@@ -20,7 +20,7 @@ class TypedWlan(TypedDict):
     dtim_ng: int
     enabled: bool
     group_rekey: int
-    hide_ssid: bool
+    hide_ssid: NotRequired[bool]
     is_guest: NotRequired[bool]
     mac_filter_enabled: NotRequired[bool]
     mac_filter_list: list[str]
@@ -91,11 +91,17 @@ class WlanEnableRequest(ApiRequest):
 
 
 def wlan_qr_code(
-    name: str, password: str | None, kind: str = "png", scale: int = 4, hidden: bool = False
+    name: str,
+    password: str | None,
+    kind: str = "png",
+    scale: int = 4,
+    hidden: bool = False,
 ) -> bytes:
     """Generate WLAN QR code."""
     buffer = io.BytesIO()
-    qr_code = segno.helpers.make_wifi(ssid=name, password=password, security="WPA", hidden = hidden)
+    qr_code = segno.helpers.make_wifi(
+        ssid=name, password=password, security="WPA", hidden=hidden
+    )
     qr_code.save(out=buffer, kind=kind, scale=scale)
     return buffer.getvalue()
 
