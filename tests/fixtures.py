@@ -4249,6 +4249,7 @@ WLANS = [
         "enabled": False,
         "group_rekey": 3600,
         "is_guest": True,
+        "hide_ssid": True,
         "mac_filter_enabled": False,
         "mac_filter_list": [],
         "mac_filter_policy": "allow",
