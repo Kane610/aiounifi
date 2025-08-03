@@ -18,6 +18,7 @@ from aiounifi.models.device import (
     DeviceSetOutletCycleEnabledRequest,
     DeviceSetOutletRelayRequest,
     DeviceSetPoePortModeRequest,
+    DeviceSetPortEnabledRequest,
     DeviceState,
     DeviceUpgradeRequest,
 )
@@ -981,6 +982,97 @@ async def test_device_requests(
                 ]
             },
         ),
+        (  # Port enable without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [],
+                    "port_table": [
+                        {
+                            "enable": True,
+                            "name": "Port 1",
+                            "port_idx": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": False},
+            {"port_overrides": [{"port_idx": 1, "enable": False}]},
+        ),
+        (  # Port enable with portconf_id without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [],
+                    "port_table": [
+                        {
+                            "enable": True,
+                            "name": "Port 1",
+                            "port_idx": 1,
+                            "portconf_id": "123",
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": False},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "enable": False, "portconf_id": "123"}
+                ]
+            },
+        ),
+        (  # Port enable with existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [{"port_idx": 1, "name": "Office"}],
+                    "port_table": [
+                        {
+                            "enable": True,
+                            "name": "Office",
+                            "port_idx": 1,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": False},
+            {"port_overrides": [{"port_idx": 1, "name": "Office", "enable": False}]},
+        ),
+        (  # Port enable multiple ports
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [{"port_idx": 1, "name": "Office"}],
+                    "port_table": [
+                        {
+                            "enable": True,
+                            "name": "Office",
+                            "port_idx": 1,
+                        },
+                        {
+                            "enable": True,
+                            "name": "Hallway",
+                            "port_idx": 2,
+                        },
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"targets": [(1, False), (2, True)]},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "enable": False, "name": "Office"},
+                    {"port_idx": 2, "enable": True},
+                ]
+            },
+        ),
     ],
 )
 @pytest.mark.usefixtures("_mock_endpoints")
@@ -990,7 +1082,8 @@ async def test_sub_device_requests(
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
     api_request: DeviceSetOutletRelayRequest
     | DeviceSetOutletCycleEnabledRequest
-    | DeviceSetPoePortModeRequest,
+    | DeviceSetPoePortModeRequest
+    | DeviceSetPortEnabledRequest,
     data: dict[str, Any],
     command: dict[str, Any],
 ) -> None:
@@ -1011,6 +1104,16 @@ async def test_set_poe_request_raise_error(unifi_controller: Controller) -> None
     device = next(iter(unifi_controller.devices.values()))
     with pytest.raises(AttributeError):
         DeviceSetPoePortModeRequest.create(device)
+
+
+@pytest.mark.parametrize(("device_payload"), [[SWITCH_16_PORT_POE]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_set_port_enabled_request_raise_error(unifi_controller: Controller) -> None:
+    """Test device port enable request raises error without proper arguments."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+    with pytest.raises(AttributeError):
+        DeviceSetPortEnabledRequest.create(device)
 
 
 async def test_device_websocket(
