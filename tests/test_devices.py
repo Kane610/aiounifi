@@ -1108,7 +1108,9 @@ async def test_set_poe_request_raise_error(unifi_controller: Controller) -> None
 
 @pytest.mark.parametrize(("device_payload"), [[SWITCH_16_PORT_POE]])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_set_port_enabled_request_raise_error(unifi_controller: Controller) -> None:
+async def test_set_port_enabled_request_raise_error(
+    unifi_controller: Controller,
+) -> None:
     """Test device port enable request raises error without proper arguments."""
     await unifi_controller.devices.update()
     device = next(iter(unifi_controller.devices.values()))
