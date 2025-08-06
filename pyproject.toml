@@ -15,10 +15,10 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Home Automation",
 ]
-requires-python = ">=3.12.0"
+requires-python = ">=3.13.0"
 dependencies    = [
     "aiohttp>3.9",
     "orjson>3.9",
@@ -38,7 +38,7 @@ requirements-test = [
     "pytest-aiohttp==1.1.0",
     "pytest-asyncio==1.1.0",
     "pytest-cov==6.2.1",
-    "ruff==0.11.11",
+    "ruff==0.12.7",
     "trustme==1.2.1",
     "types-orjson==3.6.2",
 ]
@@ -67,7 +67,7 @@ include = ["aiounifi*"]
 "aiounifi" = ["py.typed"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true
@@ -93,7 +93,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 src = ["aiounifi", "tests"]
-target-version = "py312"
+target-version = "py313"
 
 lint.select = [
     "B002",  # Python does not support the unary prefix increment
@@ -145,6 +145,7 @@ lint.ignore = [
     "PLR0913",  # Too many arguments to function call ({c_args} > {max_args})
     "PLR0915",  # Too many statements ({statements} > {max_statements})
     "PLR2004",  # Magic value used in comparison, consider replacing {value} with a constant variable
+    "UP046",  # 82 | class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     "W191",  # Checks for indentation that uses tabs
 ]
 
