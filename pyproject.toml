@@ -93,7 +93,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 src = ["aiounifi", "tests"]
-target-version = "py312"
+target-version = "py313"
 
 lint.select = [
     "B002",  # Python does not support the unary prefix increment
@@ -145,6 +145,7 @@ lint.ignore = [
     "PLR0913",  # Too many arguments to function call ({c_args} > {max_args})
     "PLR0915",  # Too many statements ({statements} > {max_statements})
     "PLR2004",  # Magic value used in comparison, consider replacing {value} with a constant variable
+    "UP046",  # 82 | class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     "W191",  # Checks for indentation that uses tabs
 ]
 
