@@ -112,6 +112,7 @@ async def test_port(unifi_controller):
     assert port.portconf_id == "5a32aa4ee4babd4452422ddd22222"
     assert port.port_poe is True
     assert port.up is True
+    assert port.enable is True
     assert port.rx_bytes == 2027844548
     assert port.rx_bytes_r == 712
     assert port.tx_bytes == 1832127075

@@ -108,6 +108,11 @@ class Port(ApiItem):
         """Is port up."""
         return self.raw.get("up")
 
+    @property
+    def enable(self) -> bool | None:
+        """Is port enabled."""
+        return self.raw.get("enable")
+
     def __repr__(self) -> str:
         """Return the representation."""
         return f"<{self.name}: Poe {self.poe_enable}>"
