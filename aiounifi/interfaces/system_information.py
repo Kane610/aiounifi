@@ -1,12 +1,11 @@
 """System information of a UniFi network."""
 
 from ..models.system_information import SystemInformation, SystemInformationRequest
-from .api_handlers import APIHandler
+from .api_handlers import create_api_handler
 
-
-class SystemInformationHandler(APIHandler[SystemInformation]):
-    """Represents system information interface."""
-
-    obj_id_key = "anonymous_controller_id"
-    item_cls = SystemInformation
-    api_request = SystemInformationRequest.create()
+# Using the new factory approach for cleaner, less boilerplate code
+SystemInformationHandler = create_api_handler(
+    obj_id_key="anonymous_controller_id",
+    item_cls=SystemInformation,
+    api_request=SystemInformationRequest.create(),
+)
