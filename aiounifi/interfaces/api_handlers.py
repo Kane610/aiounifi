@@ -7,7 +7,7 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 from dataclasses import dataclass
 import enum
 import logging
-from typing import TYPE_CHECKING, Any, Generic, final
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
 
 from ..models.api import ApiItemT, ApiRequest
 
@@ -17,9 +17,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 @dataclass
-class APIHandlerConfig[T]:  # type: ignore[syntax]
+class APIHandlerConfig(Generic[T]):
     """Configuration for API handlers to reduce boilerplate."""
 
     obj_id_key: str
@@ -199,20 +201,20 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         return iter(self._items)
 
 
-def create_api_handler[T](  # type: ignore[syntax]
+def create_api_handler(
     obj_id_key: str,
-    item_cls: type[T],
+    item_cls: type[ApiItemT],
     api_request: ApiRequest,
     process_messages: tuple[MessageKey, ...] = (),
     remove_messages: tuple[MessageKey, ...] = (),
-) -> type[APIHandler[T]]:
+) -> type[APIHandler[ApiItemT]]:
     """Create simple API handlers without subclassing."""
 
-    class GeneratedAPIHandler(APIHandler[T]):
+    class GeneratedAPIHandler(APIHandler[ApiItemT]):
         """Dynamically generated API handler."""
 
         def __init__(self, controller: Controller) -> None:
-            config = APIHandlerConfig[T](
+            config = APIHandlerConfig[ApiItemT](
                 obj_id_key=obj_id_key,
                 item_cls=item_cls,
                 api_request=api_request,
