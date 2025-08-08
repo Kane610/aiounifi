@@ -7,9 +7,9 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 from dataclasses import dataclass
 import enum
 import logging
-from typing import TYPE_CHECKING, Any, Generic, final
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
 
-from ..models.api import ApiItemT, ApiRequest
+from ..models.api import ApiItem, ApiItemT, ApiRequest
 
 if TYPE_CHECKING:
     from ..controller import Controller
@@ -17,13 +17,15 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T", bound=ApiItem)
+
 
 @dataclass
-class APIHandlerConfig(Generic[ApiItemT]):
+class APIHandlerConfig(Generic[T]):
     """Configuration for API handlers to reduce boilerplate."""
 
     obj_id_key: str
-    item_cls: type[ApiItemT]
+    item_cls: type[T]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
     remove_messages: tuple[MessageKey, ...] = ()
