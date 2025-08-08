@@ -109,7 +109,7 @@ class Port(ApiItem):
         return self.raw.get("up")
 
     @property
-    def enable(self) -> bool | None:
+    def enabled(self) -> bool | None:
         """Is port enabled."""
         return self.raw.get("enable")
 
