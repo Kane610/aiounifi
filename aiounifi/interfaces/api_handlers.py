@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections import defaultdict
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
+import contextlib
+from dataclasses import dataclass
 import enum
+import logging
 from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models.api import ApiItemT, ApiRequest
@@ -12,6 +16,19 @@ from ..models.api import ApiItemT, ApiRequest
 if TYPE_CHECKING:
     from ..controller import Controller
     from ..models.message import Message, MessageKey
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class APIHandlerConfig:
+    """Configuration for API handlers to reduce boilerplate."""
+
+    obj_id_key: str
+    item_cls: type[Any]  # Will be properly typed in the handler
+    api_request: ApiRequest
+    process_messages: tuple[MessageKey, ...] = ()
+    remove_messages: tuple[MessageKey, ...] = ()
 
 
 class ItemEvent(enum.Enum):
@@ -34,112 +51,184 @@ class SubscriptionHandler(ABC):
 
     def __init__(self) -> None:
         """Initialize subscription handler."""
-        self._subscribers: dict[str, list[SubscriptionType]] = {ID_FILTER_ALL: []}
+        self._subscribers: defaultdict[str, list[SubscriptionType]] = defaultdict(list)
 
     def signal_subscribers(self, event: ItemEvent, obj_id: str) -> None:
         """Signal subscribers."""
-        subscribers: list[SubscriptionType] = (
-            self._subscribers.get(obj_id, []) + self._subscribers[ID_FILTER_ALL]
-        )
-        for callback, event_filter in subscribers:
-            if event_filter is not None and event not in event_filter:
-                continue
-            callback(event, obj_id)
+        # Check specific ID subscribers and wildcard subscribers
+        for subscription_list in [
+            self._subscribers[obj_id],
+            self._subscribers[ID_FILTER_ALL],
+        ]:
+            for callback, event_filter in subscription_list:
+                if event_filter is not None and event not in event_filter:
+                    continue
+                try:
+                    callback(event, obj_id)
+                except Exception as e:
+                    logger.error("Error in subscription callback: %s", e)
 
     def subscribe(
         self,
         callback: CallbackType,
         event_filter: tuple[ItemEvent, ...] | ItemEvent | None = None,
-        id_filter: tuple[str] | str | None = None,
+        id_filter: tuple[str, ...] | str | None = None,
     ) -> UnsubscribeType:
-        """Subscribe to added events."""
+        """Subscribe to events with simplified logic."""
         if isinstance(event_filter, ItemEvent):
             event_filter = (event_filter,)
+
         subscription = (callback, event_filter)
 
-        _id_filter: tuple[str]
+        # Normalize id_filter to tuple
+        id_filters: tuple[str, ...]
         if id_filter is None:
-            _id_filter = (ID_FILTER_ALL,)
+            id_filters = (ID_FILTER_ALL,)
         elif isinstance(id_filter, str):
-            _id_filter = (id_filter,)
+            id_filters = (id_filter,)
+        else:
+            id_filters = id_filter
 
-        for obj_id in _id_filter:
-            if obj_id not in self._subscribers:
-                self._subscribers[obj_id] = []
+        # Add subscription to all specified IDs
+        for obj_id in id_filters:
             self._subscribers[obj_id].append(subscription)
 
         def unsubscribe() -> None:
-            for obj_id in _id_filter:
-                if obj_id not in self._subscribers:
-                    continue
-                if subscription not in self._subscribers[obj_id]:
-                    continue
-                self._subscribers[obj_id].remove(subscription)
+            """Remove subscription from all IDs."""
+            for obj_id in id_filters:
+                with contextlib.suppress(ValueError):
+                    self._subscribers[obj_id].remove(subscription)
 
         return unsubscribe
 
 
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
-    """Base class for a map of API Items."""
+    """Base class for a map of API Items with simplified configuration."""
 
+    # These can be overridden in subclasses or set via config
     obj_id_key: str
     item_cls: type[ApiItemT]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
     remove_messages: tuple[MessageKey, ...] = ()
 
-    def __init__(self, controller: Controller) -> None:
-        """Initialize API handler."""
+    def __init__(
+        self, controller: Controller, config: APIHandlerConfig | None = None
+    ) -> None:
+        """Initialize API handler with optional configuration."""
         super().__init__()
         self.controller = controller
         self._items: dict[str, ApiItemT] = {}
 
+        # Apply configuration if provided
+        if config:
+            self.obj_id_key = config.obj_id_key
+            self.item_cls = config.item_cls
+            self.api_request = config.api_request
+            self.process_messages = config.process_messages
+            self.remove_messages = config.remove_messages
+
+        # Subscribe to messages if any are configured
         if message_filter := self.process_messages + self.remove_messages:
             controller.messages.subscribe(self.process_message, message_filter)
 
     @final
     async def update(self) -> None:
-        """Refresh data."""
-        raw = await self.controller.request(self.api_request)
-        self.process_raw(raw.get("data", []))
+        """Refresh data from API."""
+        try:
+            raw = await self.controller.request(self.api_request)
+            self.process_raw(raw.get("data", []))
+        except Exception as e:
+            logger.error("Failed to update %s: %s", self.__class__.__name__, e)
+            raise
 
     @final
     def process_raw(self, raw: list[dict[str, Any]]) -> None:
-        """Process full raw response."""
+        """Process full raw response with bulk updates."""
+        if not raw:
+            return
+
+        changes: list[tuple[str, ItemEvent]] = []
+
         for raw_item in raw:
-            self.process_item(raw_item)
+            if self.obj_id_key not in raw_item:
+                logger.warning(
+                    "Missing %s in raw data for %s",
+                    self.obj_id_key,
+                    self.__class__.__name__,
+                )
+                continue
+
+            try:
+                obj_id = raw_item[self.obj_id_key]
+                was_known = obj_id in self._items
+                self._items[obj_id] = self.item_cls(raw_item)
+                changes.append(
+                    (obj_id, ItemEvent.CHANGED if was_known else ItemEvent.ADDED)
+                )
+            except Exception as e:
+                logger.error(
+                    "Failed to process item in %s: %s", self.__class__.__name__, e
+                )
+
+        # Notify subscribers of all changes
+        for obj_id, event in changes:
+            self.signal_subscribers(event, obj_id)
 
     @final
     def process_message(self, message: Message) -> None:
         """Process and forward websocket data."""
-        if message.meta.message in self.process_messages:
-            self.process_item(message.data)
-
-        elif message.meta.message in self.remove_messages:
-            self.remove_item(message.data)
+        try:
+            if message.meta.message in self.process_messages:
+                self.process_item(message.data)
+            elif message.meta.message in self.remove_messages:
+                self.remove_item(message.data)
+        except Exception as e:
+            logger.error(
+                "Failed to process message in %s: %s", self.__class__.__name__, e
+            )
 
     @final
     def process_item(self, raw: dict[str, Any]) -> None:
-        """Process item data."""
+        """Process individual item data with validation."""
         if self.obj_id_key not in raw:
+            logger.warning(
+                "Missing %s in raw data for %s",
+                self.obj_id_key,
+                self.__class__.__name__,
+            )
             return
 
-        obj_id: str
-        obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
-        self._items[obj_id] = self.item_cls(raw)
+        try:
+            obj_id: str = raw[self.obj_id_key]
+            obj_is_known = obj_id in self._items
+            self._items[obj_id] = self.item_cls(raw)
 
-        self.signal_subscribers(
-            ItemEvent.CHANGED if obj_is_known else ItemEvent.ADDED,
-            obj_id,
-        )
+            self.signal_subscribers(
+                ItemEvent.CHANGED if obj_is_known else ItemEvent.ADDED,
+                obj_id,
+            )
+        except Exception as e:
+            logger.error("Failed to process item in %s: %s", self.__class__.__name__, e)
 
     @final
     def remove_item(self, raw: dict[str, Any]) -> None:
-        """Remove item."""
-        obj_id: str
-        if (obj_id := raw[self.obj_id_key]) in self._items:
-            self._items.pop(obj_id)
-            self.signal_subscribers(ItemEvent.DELETED, obj_id)
+        """Remove item with validation."""
+        if self.obj_id_key not in raw:
+            logger.warning(
+                "Missing %s in removal data for %s",
+                self.obj_id_key,
+                self.__class__.__name__,
+            )
+            return
+
+        try:
+            obj_id: str = raw[self.obj_id_key]
+            if obj_id in self._items:
+                self._items.pop(obj_id)
+                self.signal_subscribers(ItemEvent.DELETED, obj_id)
+        except Exception as e:
+            logger.error("Failed to remove item in %s: %s", self.__class__.__name__, e)
 
     @final
     def items(self) -> ItemsView[str, ApiItemT]:
@@ -170,3 +259,47 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def __iter__(self) -> Iterator[str]:
         """Allow iterate over items."""
         return iter(self._items)
+
+    def clear(self) -> None:
+        """Clear all items and notify subscribers."""
+        removed_ids = list(self._items.keys())
+        self._items.clear()
+        for obj_id in removed_ids:
+            self.signal_subscribers(ItemEvent.DELETED, obj_id)
+
+    def count(self) -> int:
+        """Return the number of items."""
+        return len(self._items)
+
+    def is_empty(self) -> bool:
+        """Check if handler has no items."""
+        return len(self._items) == 0
+
+
+def create_api_handler(
+    obj_id_key: str,
+    item_cls: type[ApiItemT],
+    api_request: ApiRequest,
+    process_messages: tuple[MessageKey, ...] = (),
+    remove_messages: tuple[MessageKey, ...] = (),
+) -> type[APIHandler[ApiItemT]]:
+    """Create simple API handlers without subclassing."""
+
+    class GeneratedAPIHandler(APIHandler[ApiItemT]):
+        """Dynamically generated API handler."""
+
+        def __init__(self, controller: Controller) -> None:
+            config = APIHandlerConfig(
+                obj_id_key=obj_id_key,
+                item_cls=item_cls,
+                api_request=api_request,
+                process_messages=process_messages,
+                remove_messages=remove_messages,
+            )
+            super().__init__(controller, config)
+
+    # Set a meaningful name for debugging
+    GeneratedAPIHandler.__name__ = f"{item_cls.__name__}Handler"
+    GeneratedAPIHandler.__qualname__ = f"{item_cls.__name__}Handler"
+
+    return GeneratedAPIHandler
