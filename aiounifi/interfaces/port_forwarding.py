@@ -2,14 +2,13 @@
 
 from ..models.message import MessageKey
 from ..models.port_forward import PortForward, PortForwardListRequest
-from .api_handlers import APIHandler
+from .api_handlers import create_api_handler
 
-
-class PortForwarding(APIHandler[PortForward]):
-    """Represents port forwarding."""
-
-    obj_id_key = "_id"
-    item_cls = PortForward
-    process_messages = (MessageKey.PORT_FORWARD_ADDED, MessageKey.PORT_FORWARD_UPDATED)
-    remove_messages = (MessageKey.PORT_FORWARD_DELETED,)
-    api_request = PortForwardListRequest.create()
+# Create PortForwarding using factory pattern
+PortForwarding = create_api_handler(
+    obj_id_key="_id",
+    item_cls=PortForward,
+    api_request=PortForwardListRequest.create(),
+    process_messages=(MessageKey.PORT_FORWARD_ADDED, MessageKey.PORT_FORWARD_UPDATED),
+    remove_messages=(MessageKey.PORT_FORWARD_DELETED,),
+)

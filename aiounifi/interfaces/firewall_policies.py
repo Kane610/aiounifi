@@ -1,12 +1,11 @@
 """Firewall policies as part of a UniFi network."""
 
 from ..models.firewall_policy import FirewallPolicy, FirewallPolicyListRequest
-from .api_handlers import APIHandler
+from .api_handlers import create_api_handler
 
-
-class FirewallPolicies(APIHandler[FirewallPolicy]):
-    """Represents FirewallPolicies configurations."""
-
-    obj_id_key = "_id"
-    item_cls = FirewallPolicy
-    api_request = FirewallPolicyListRequest.create()
+# Create FirewallPolicies using factory pattern
+FirewallPolicies = create_api_handler(
+    obj_id_key="_id",
+    item_cls=FirewallPolicy,
+    api_request=FirewallPolicyListRequest.create(),
+)

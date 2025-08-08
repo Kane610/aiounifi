@@ -1,12 +1,11 @@
 """Clients are devices on a UniFi network."""
 
 from ..models.client import AllClientListRequest, Client
-from .api_handlers import APIHandler
+from .api_handlers import create_api_handler
 
-
-class ClientsAll(APIHandler[Client]):
-    """Represents all client network devices."""
-
-    obj_id_key = "mac"
-    item_cls = Client
-    api_request = AllClientListRequest.create()
+# Create ClientsAll using factory pattern
+ClientsAll = create_api_handler(
+    obj_id_key="mac",
+    item_cls=Client,
+    api_request=AllClientListRequest.create(),
+)

@@ -5,14 +5,13 @@ from ..models.dpi_restriction_group import (
     DpiRestrictionGroupListRequest,
 )
 from ..models.message import MessageKey
-from .api_handlers import APIHandler
+from .api_handlers import create_api_handler
 
-
-class DPIRestrictionGroups(APIHandler[DPIRestrictionGroup]):
-    """Represents DPI Group configurations."""
-
-    obj_id_key = "_id"
-    item_cls = DPIRestrictionGroup
-    process_messages = (MessageKey.DPI_GROUP_ADDED, MessageKey.DPI_GROUP_UPDATED)
-    remove_messages = (MessageKey.DPI_GROUP_REMOVED,)
-    api_request = DpiRestrictionGroupListRequest.create()
+# Create DPIRestrictionGroups using factory pattern
+DPIRestrictionGroups = create_api_handler(
+    obj_id_key="_id",
+    item_cls=DPIRestrictionGroup,
+    api_request=DpiRestrictionGroupListRequest.create(),
+    process_messages=(MessageKey.DPI_GROUP_ADDED, MessageKey.DPI_GROUP_UPDATED),
+    remove_messages=(MessageKey.DPI_GROUP_REMOVED,),
+)
