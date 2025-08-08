@@ -45,7 +45,7 @@ ID_FILTER_ALL = "*"
 
 
 class SubscriptionHandler(ABC):
-    """Handler for subscriptions."""
+    """Manage subscription and notification to subscribers."""
 
     def __init__(self) -> None:
         """Initialize subscription handler."""
@@ -95,7 +95,7 @@ class SubscriptionHandler(ABC):
 
 
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
-    """Base class for a map of API Items with simplified configuration."""
+    """Base class for a map of API Items."""
 
     # These can be overridden in subclasses or set via config
     obj_id_key: str
@@ -107,7 +107,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def __init__(
         self, controller: Controller, config: APIHandlerConfig | None = None
     ) -> None:
-        """Initialize API handler with optional configuration."""
+        """Initialize API handler."""
         super().__init__()
         self.controller = controller
         self._items: dict[str, ApiItemT] = {}
