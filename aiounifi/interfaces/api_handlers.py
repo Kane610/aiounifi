@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class APIHandlerConfig:
+class APIHandlerConfig[T]:  # type: ignore[syntax]
     """Configuration for API handlers to reduce boilerplate."""
 
     obj_id_key: str
-    item_cls: type[Any]  # Will be properly typed in the handler
+    item_cls: type[T]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
     remove_messages: tuple[MessageKey, ...] = ()
@@ -105,7 +105,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     remove_messages: tuple[MessageKey, ...] = ()
 
     def __init__(
-        self, controller: Controller, config: APIHandlerConfig | None = None
+        self, controller: Controller, config: APIHandlerConfig[ApiItemT] | None = None
     ) -> None:
         """Initialize API handler."""
         super().__init__()
@@ -199,20 +199,20 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         return iter(self._items)
 
 
-def create_api_handler(
+def create_api_handler[T](  # type: ignore[syntax]
     obj_id_key: str,
-    item_cls: type[ApiItemT],
+    item_cls: type[T],
     api_request: ApiRequest,
     process_messages: tuple[MessageKey, ...] = (),
     remove_messages: tuple[MessageKey, ...] = (),
-) -> type[APIHandler[ApiItemT]]:
+) -> type[APIHandler[T]]:
     """Create simple API handlers without subclassing."""
 
-    class GeneratedAPIHandler(APIHandler[ApiItemT]):
+    class GeneratedAPIHandler(APIHandler[T]):
         """Dynamically generated API handler."""
 
         def __init__(self, controller: Controller) -> None:
-            config = APIHandlerConfig(
+            config = APIHandlerConfig[T](
                 obj_id_key=obj_id_key,
                 item_cls=item_cls,
                 api_request=api_request,
