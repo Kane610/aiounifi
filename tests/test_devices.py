@@ -1042,7 +1042,11 @@ async def test_device_requests(
             ],
             DeviceSetPortEnabledRequest,
             {"port_idx": 1, "enabled": False},
-            {"port_overrides": [{"port_idx": 1, "name": "Office", "port_security_enabled": True}]},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "name": "Office", "port_security_enabled": True}
+                ]
+            },
         ),
         (  # Port enable multiple ports
             [
