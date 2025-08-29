@@ -807,14 +807,14 @@ class DeviceSetPortEnabledRequest(ApiRequest):
             existing_override = False
             for port_override in port_overrides:
                 if port_idx == port_override.get("port_idx"):
-                    port_override["enable"] = enabled
+                    port_override["port_security_enabled"] = not enabled
                     existing_override = True
                     break
 
             if existing_override:
                 continue
 
-            port_override = {"port_idx": port_idx, "enable": enabled}
+            port_override = {"port_idx": port_idx, "port_security_enabled": not enabled}
             if portconf_id := device.port_table[port_idx - 1].get("portconf_id"):
                 port_override["portconf_id"] = portconf_id
             port_overrides.append(port_override)
