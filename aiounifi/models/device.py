@@ -134,9 +134,9 @@ class TypedDeviceOutletTable(TypedDict):
 class TypedDevicePortOverrides(TypedDict, total=False):
     """Device port overrides type definition."""
 
-    enable: bool
     poe_mode: str
     port_idx: int
+    port_security_enabled: bool
     portconf_id: str
 
 
