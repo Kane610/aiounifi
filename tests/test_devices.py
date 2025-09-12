@@ -999,7 +999,7 @@ async def test_device_requests(
             ],
             DeviceSetPortEnabledRequest,
             {"port_idx": 1, "enabled": False},
-            {"port_overrides": [{"port_idx": 1, "enable": False}]},
+            {"port_overrides": [{"port_idx": 1, "port_security_enabled": True}]},
         ),
         (  # Port enable with portconf_id without existing override
             [
@@ -1021,7 +1021,7 @@ async def test_device_requests(
             {"port_idx": 1, "enabled": False},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "enable": False, "portconf_id": "123"}
+                    {"port_idx": 1, "port_security_enabled": True, "portconf_id": "123"}
                 ]
             },
         ),
@@ -1042,7 +1042,11 @@ async def test_device_requests(
             ],
             DeviceSetPortEnabledRequest,
             {"port_idx": 1, "enabled": False},
-            {"port_overrides": [{"port_idx": 1, "name": "Office", "enable": False}]},
+            {
+                "port_overrides": [
+                    {"port_idx": 1, "name": "Office", "port_security_enabled": True}
+                ]
+            },
         ),
         (  # Port enable multiple ports
             [
@@ -1068,8 +1072,8 @@ async def test_device_requests(
             {"targets": [(1, False), (2, True)]},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "enable": False, "name": "Office"},
-                    {"port_idx": 2, "enable": True},
+                    {"port_idx": 1, "port_security_enabled": True, "name": "Office"},
+                    {"port_idx": 2, "port_security_enabled": False},
                 ]
             },
         ),
