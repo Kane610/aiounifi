@@ -412,6 +412,7 @@ class TypedDevice(TypedDict):
     config_network: TypedDeviceConfigNetwork
     connect_request_ip: str
     connect_request_port: str
+    connection_network_id: str
     considered_lost_at: int
     country_code: int
     countrycode_table: list  # type: ignore[type-arg]
@@ -807,14 +808,25 @@ class DeviceSetPortEnabledRequest(ApiRequest):
             existing_override = False
             for port_override in port_overrides:
                 if port_idx == port_override.get("port_idx"):
-                    port_override["port_security_enabled"] = not enabled
+                    port_override.update(
+                        {
+                            "port_security_enabled": not enabled,
+                            "tagged_vlan_mgmt": "auto" if enabled else "block_all",
+                            "native_networkconf_id": device.connection_network_id,
+                        }
+                    )
                     existing_override = True
                     break
 
             if existing_override:
                 continue
 
-            port_override = {"port_idx": port_idx, "port_security_enabled": not enabled}
+            port_override = {
+                "port_idx": port_idx,
+                "port_security_enabled": not enabled,
+                "tagged_vlan_mgmt": "auto" if enabled else "block_all",
+                "native_networkconf_id": device.connection_network_id,
+            }
             if portconf_id := device.port_table[port_idx - 1].get("portconf_id"):
                 port_override["portconf_id"] = portconf_id
             port_overrides.append(port_override)
@@ -874,6 +886,10 @@ class Device(ApiItem):
     def board_revision(self) -> int:
         """Board revision of device."""
         return self.raw.get("board_rev", 0)
+
+    @property
+    def connection_network_id(self) -> str:
+        return self.raw["connection_network_id"]
 
     @property
     def considered_lost_at(self) -> int:
