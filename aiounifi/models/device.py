@@ -138,6 +138,8 @@ class TypedDevicePortOverrides(TypedDict, total=False):
     port_idx: int
     port_security_enabled: bool
     portconf_id: str
+    tagged_vlan_mgmt: str
+    native_networkconf_id: str
 
 
 class TypedDevicePortTableLldpTable(TypedDict):
