@@ -1104,7 +1104,7 @@ async def test_device_requests(
                         "port_idx": 2,
                         "port_security_enabled": False,
                         "tagged_vlan_mgmt": "auto",
-                        "native_networkconf_id": "1337",
+                        "native_networkconf_id": "",
                     },
                 ]
             },
