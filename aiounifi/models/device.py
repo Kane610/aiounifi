@@ -892,7 +892,7 @@ class Device(ApiItem):
     @property
     def connection_network_id(self) -> str:
         """Native VLAN network ID."""
-        return self.raw["connection_network_id"]
+        return self.raw.get("connection_network_id", "")
 
     @property
     def considered_lost_at(self) -> int:
