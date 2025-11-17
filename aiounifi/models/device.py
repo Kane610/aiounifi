@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-from dataclasses import dataclass
 import enum
 import logging
 import re
+from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any, NotRequired, Self, TypedDict, cast
 
 from .api import ApiItem, ApiRequest
@@ -943,7 +943,8 @@ class Device(ApiItem):
     @property
     def led_override_color_brightness(self) -> int | None:
         """LED override color brightness."""
-        return self.raw.get("led_override_color_brightness")
+        # UniFi API has been observed to return string values for this field.
+        return int(self.raw.get("led_override_color_brightness"))
 
     @property
     def lldp_table(self) -> list[TypedDeviceLldpTable]:
