@@ -717,6 +717,27 @@ test_data = [
             "wlan_overrides": [],
         },
     ),
+    # UniFi API has been observed to return string values for led_override_color_brightness.
+    (
+        [
+            {
+                "mac": "00:11:22:33:44:55",
+                "model": "UP1",
+                "type": "uap",
+                "version": "1.0.0",
+                "led_override": "on",
+                "led_override_color": "#ff0000",
+                "led_override_color_brightness": "75",
+            }
+        ],
+        {
+            "mac": "00:11:22:33:44:55",
+            "model": "UP1",
+            "led_override": "on",
+            "led_override_color": "#ff0000",
+            "led_override_color_brightness": 75,
+        },
+    ),
 ]
 
 
