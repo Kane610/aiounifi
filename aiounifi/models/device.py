@@ -943,7 +943,10 @@ class Device(ApiItem):
     @property
     def led_override_color_brightness(self) -> int | None:
         """LED override color brightness."""
-        return self.raw.get("led_override_color_brightness")
+        if (value := self.raw.get("led_override_color_brightness")) is not None:
+            # UniFi API has been observed to return string values for this field.
+            return int(value)
+        return None
 
     @property
     def lldp_table(self) -> list[TypedDeviceLldpTable]:
