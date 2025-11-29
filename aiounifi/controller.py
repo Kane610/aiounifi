@@ -61,22 +61,11 @@ class Controller:
 
     async def login(self) -> None:
         """Log in to controller."""
-        api_key = getattr(self, "api_key", "") or self.connectivity.config.api_key
-        if api_key:
-            LOGGER.debug("Using API key authentication, skipping login")
-            # Ensure header is set for subsequent requests
-            self.connectivity.headers["X-API-Key"] = api_key
-            # Detect UniFi OS to set correct URL prefixes
-            await self.connectivity.check_unifi_os()
-            return
         await self.connectivity.check_unifi_os()
         await self.connectivity.login()
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
-        api_key = getattr(self, "api_key", "") or self.connectivity.config.api_key
-        if api_key:
-            self.connectivity.headers["X-API-Key"] = api_key
         return await self.connectivity.request(api_request)
 
     async def start_websocket(self) -> None:

@@ -61,8 +61,8 @@ async def connect_and_fetch(
     config = Configuration(
         session=session,
         host=host,
-        username=username,
-        password=password,
+        username=None if api_key else username,
+        password=None if api_key else password,
         port=port,
         site=site,
         ssl_context=ssl_context if ssl_context is not None else False,
@@ -71,15 +71,8 @@ async def connect_and_fetch(
 
     controller = Controller(config)
 
-    # No need to attach api_key attribute; it is supplied via Configuration.
-
     try:
-        # If not using API key, perform username/password login.
-        # If using API key, still detect UniFi OS so request paths are correct.
-        if not api_key:
-            await controller.login()
-        else:
-            await controller.connectivity.check_unifi_os()
+        await controller.login()
 
         # Always resolve the site list first to verify/normalize the provided site token.
         # Some environments require the hidden/site id (attr_hidden_id) for API paths.

@@ -254,6 +254,29 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         await unifi_controller.devices.update()
 
 
+async def test_controller_login_with_api_key(mock_aioresponse, unifi_called_with):
+    """API key authentication skips username/password login."""
+    session = ClientSession()
+    config = Configuration(session, "host", api_key="token")
+    controller = Controller(config)
+
+    try:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="application/octet-stream",
+            status=302,
+        )
+
+        await controller.login()
+
+        assert controller.connectivity.headers["X-API-Key"] == "token"
+        assert unifi_called_with("get", "", allow_redirects=False)
+        assert not unifi_called_with("post", "/api/auth/login")
+        assert not unifi_called_with("post", "/api/login")
+    finally:
+        await session.close()
+
+
 @pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):

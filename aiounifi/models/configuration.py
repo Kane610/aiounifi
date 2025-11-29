@@ -14,8 +14,8 @@ class Configuration:
     session: ClientSession
     host: str
     _: KW_ONLY
-    username: str
-    password: str
+    username: str | None = None
+    password: str | None = None
     port: int = 8443
     site: str = "default"
     ssl_context: SSLContext | Literal[False] = False
