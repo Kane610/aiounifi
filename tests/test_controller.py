@@ -277,6 +277,23 @@ async def test_controller_login_with_api_key(mock_aioresponse, unifi_called_with
         await session.close()
 
 
+async def test_configuration_rejects_mixed_auth():
+    """Providing both api_key and username/password is invalid."""
+    session = ClientSession()
+
+    try:
+        with pytest.raises(ValueError):
+            Configuration(
+                session,
+                "host",
+                username="user",
+                password="pass",
+                api_key="token",
+            )
+    finally:
+        await session.close()
+
+
 @pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
