@@ -12,6 +12,7 @@ import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.device import (
+    DeviceLocateRequest,
     DevicePowerCyclePortRequest,
     DeviceRestartRequest,
     DeviceSetLedStatus,
@@ -799,6 +800,16 @@ async def test_device_commands(
             {"mac": "0", "port_idx": 1},
             {"mac": "0", "port_idx": 1, "cmd": "power-cycle"},
         ),
+        (
+            DeviceLocateRequest,
+            {"mac": "0", "locate": True},
+            {"mac": "0", "cmd": "set-locate"},
+        ),
+        (
+            DeviceLocateRequest,
+            {"mac": "0", "locate": False},
+            {"mac": "0", "cmd": "unset-locate"},
+        ),
     ],
 )
 async def test_device_requests(
@@ -1300,6 +1311,43 @@ async def test_led_status_request_exception(
     )
     with pytest.raises(AttributeError):
         DeviceSetLedStatus.create(device, **data)
+
+
+@pytest.mark.parametrize(
+    ("device_payload"),
+    [
+        (
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "locating": False,
+                }
+            ]
+        )
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_locate_status_request(
+    mock_aioresponse: aioresponses,
+    unifi_controller: Controller,
+    unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
+    device_payload: list[dict[str, Any]],
+) -> None:
+    """Tests locate status requests and helpers."""
+    devices = unifi_controller.devices
+    await devices.update()
+    device = next(iter(devices.values()))
+    assert device.locating is False
+    assert device.supports_locating
+
+    mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
+    await unifi_controller.request(DeviceLocateRequest.create(device.mac, True))
+    assert unifi_called_with(
+        "post",
+        "/api/s/default/cmd/devmgr",
+        json={"cmd": "set-locate", "mac": device.mac},
+    )
 
 
 @pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
