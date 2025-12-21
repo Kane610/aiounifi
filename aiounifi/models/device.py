@@ -461,7 +461,7 @@ class TypedDevice(TypedDict):
     lcm_tracker_enabled: bool
     led_override: str
     led_override_color: str
-    led_override_color_brightness: int
+    led_override_color_brightness: NotRequired[int]
     license_state: str
     lldp_table: list[TypedDeviceLldpTable]
     locating: bool
