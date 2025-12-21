@@ -45,6 +45,9 @@ class Connectivity:
 
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
+        """ API Key endpoints always require the X-API-Key header, so setting it here, instead of login. """
+        if self.config.api_key:
+            self.headers["X-API-Key"] = self.config.api_key
         self.can_retry_login = False
         self.ws_message_received: datetime.datetime | None = None
 
@@ -62,6 +65,20 @@ class Connectivity:
 
     async def login(self) -> None:
         """Log in to controller."""
+        if self.config.api_key:
+            LOGGER.debug("Using API key authentication, skipping login")
+            """API Key endpoints always require the X-API-Key header,
+            and it was already set at __init__. But for safety one can
+            optionally set it here again."""
+            # self.headers = {"X-API-Key": self.config.api_key}
+            self.can_retry_login = False
+            return
+
+        if not self.config.username or not self.config.password:
+            raise LoginRequired(
+                "Username and password must be provided when api_key is not set"
+            )
+
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
