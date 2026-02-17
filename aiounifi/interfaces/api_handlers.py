@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections import defaultdict
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
+import contextlib
 import enum
+import logging
 from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models.api import ApiItemT, ApiRequest
@@ -12,6 +15,8 @@ from ..models.api import ApiItemT, ApiRequest
 if TYPE_CHECKING:
     from ..controller import Controller
     from ..models.message import Message, MessageKey
+
+logger = logging.getLogger(__name__)
 
 
 class ItemEvent(enum.Enum):
@@ -34,47 +39,53 @@ class SubscriptionHandler(ABC):
 
     def __init__(self) -> None:
         """Initialize subscription handler."""
-        self._subscribers: dict[str, list[SubscriptionType]] = {ID_FILTER_ALL: []}
+        self._subscribers: defaultdict[str, list[SubscriptionType]] = defaultdict(list)
 
     def signal_subscribers(self, event: ItemEvent, obj_id: str) -> None:
         """Signal subscribers."""
-        subscribers: list[SubscriptionType] = (
-            self._subscribers.get(obj_id, []) + self._subscribers[ID_FILTER_ALL]
-        )
-        for callback, event_filter in subscribers:
-            if event_filter is not None and event not in event_filter:
-                continue
-            callback(event, obj_id)
+        # Check specific ID subscribers and wildcard subscribers
+        for subscription_list in [
+            self._subscribers[obj_id],
+            self._subscribers[ID_FILTER_ALL],
+        ]:
+            for callback, event_filter in subscription_list:
+                if event_filter is not None and event not in event_filter:
+                    continue
+                try:
+                    callback(event, obj_id)
+                except Exception as e:
+                    logger.error("Error in subscription callback: %s", e)
 
     def subscribe(
         self,
         callback: CallbackType,
         event_filter: tuple[ItemEvent, ...] | ItemEvent | None = None,
-        id_filter: tuple[str] | str | None = None,
+        id_filter: tuple[str, ...] | str | None = None,
     ) -> UnsubscribeType:
-        """Subscribe to added events."""
+        """Subscribe to events with simplified logic."""
         if isinstance(event_filter, ItemEvent):
             event_filter = (event_filter,)
+
         subscription = (callback, event_filter)
 
-        _id_filter: tuple[str]
+        # Normalize id_filter to tuple
+        id_filters: tuple[str, ...]
         if id_filter is None:
-            _id_filter = (ID_FILTER_ALL,)
+            id_filters = (ID_FILTER_ALL,)
         elif isinstance(id_filter, str):
-            _id_filter = (id_filter,)
+            id_filters = (id_filter,)
+        else:
+            id_filters = id_filter
 
-        for obj_id in _id_filter:
-            if obj_id not in self._subscribers:
-                self._subscribers[obj_id] = []
+        # Add subscription to all specified IDs
+        for obj_id in id_filters:
             self._subscribers[obj_id].append(subscription)
 
         def unsubscribe() -> None:
-            for obj_id in _id_filter:
-                if obj_id not in self._subscribers:
-                    continue
-                if subscription not in self._subscribers[obj_id]:
-                    continue
-                self._subscribers[obj_id].remove(subscription)
+            """Remove subscription from all IDs."""
+            for obj_id in id_filters:
+                with contextlib.suppress(ValueError):
+                    self._subscribers[obj_id].remove(subscription)
 
         return unsubscribe
 
