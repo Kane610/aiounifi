@@ -384,6 +384,29 @@ class TypedDeviceSpeedtestStatus(TypedDict):
     xput_upload: float
 
 
+class TypedDeviceWanInterface(TypedDict, total=False):
+    """Device WAN interface type definition."""
+
+    ip: str
+    netmask: str
+    up: bool
+    speed: int
+    latency: int
+    availability: float
+    ifname: str
+    mac: str
+    type: str
+    gateway: str
+    dns: list[str]
+
+
+class TypedDeviceWanInterfaceSummary(TypedDict, total=False):
+    """Device WAN interface summary type definition."""
+
+    alive: bool
+    ip: str
+
+
 class TypedDeviceStorage(TypedDict):
     """Device storage type definition."""
 
@@ -552,6 +575,15 @@ class TypedDevice(TypedDict):
     x_inform_authkey: str
     x_ssh_hostkey_fingerprint: str
     x_vwirekey: str
+
+    wan1: NotRequired[TypedDeviceWanInterface]
+    wan2: NotRequired[TypedDeviceWanInterface]
+    wan3: NotRequired[TypedDeviceWanInterface]
+    wan4: NotRequired[TypedDeviceWanInterface]
+    wan5: NotRequired[TypedDeviceWanInterface]
+    last_wan_status: NotRequired[dict[str, str]]
+    last_wan_interfaces: NotRequired[dict[str, TypedDeviceWanInterfaceSummary]]
+    last_wan_ip: NotRequired[str]
 
 
 class DeviceState(enum.IntEnum):
@@ -1121,6 +1153,26 @@ class Device(ApiItem):
     def wlan_overrides(self) -> list[TypedDeviceWlanOverrides]:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    @property
+    def wan1(self) -> TypedDeviceWanInterface | None:
+        """WAN 1 interface data."""
+        return self.raw.get("wan1")
+
+    @property
+    def wan2(self) -> TypedDeviceWanInterface | None:
+        """WAN 2 interface data."""
+        return self.raw.get("wan2")
+
+    @property
+    def last_wan_status(self) -> dict[str, str] | None:
+        """Last WAN status (WAN/WAN2: online/offline)."""
+        return self.raw.get("last_wan_status")
+
+    @property
+    def last_wan_ip(self) -> str | None:
+        """Last WAN IP address."""
+        return self.raw.get("last_wan_ip")
 
     @property
     def supports_led_ring(self) -> bool:
