@@ -1165,6 +1165,21 @@ class Device(ApiItem):
         return self.raw.get("wan2")
 
     @property
+    def wan3(self) -> TypedDeviceWanInterface | None:
+        """WAN 3 interface data."""
+        return self.raw.get("wan3")
+
+    @property
+    def wan4(self) -> TypedDeviceWanInterface | None:
+        """WAN 4 interface data."""
+        return self.raw.get("wan4")
+
+    @property
+    def wan5(self) -> TypedDeviceWanInterface | None:
+        """WAN 5 interface data."""
+        return self.raw.get("wan5")
+
+    @property
     def last_wan_status(self) -> dict[str, str] | None:
         """Last WAN status (WAN/WAN2: online/offline)."""
         return self.raw.get("last_wan_status")
