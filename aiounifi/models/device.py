@@ -384,20 +384,23 @@ class TypedDeviceSpeedtestStatus(TypedDict):
     xput_upload: float
 
 
-class TypedDeviceWanInterface(TypedDict, total=False):
+class TypedDeviceWanInterface(TypedDict):
     """Device WAN interface type definition."""
 
     ip: str
     netmask: str
     up: bool
-    speed: int
-    latency: int
-    availability: float
     ifname: str
     mac: str
+    name: str
     type: str
-    gateway: str
-    dns: list[str]
+    enable: bool
+    speed: int
+    full_duplex: bool
+    latency: NotRequired[int]
+    availability: NotRequired[float]
+    gateway: NotRequired[str]
+    dns: NotRequired[list[str]]
 
 
 class TypedDeviceWanInterfaceSummary(TypedDict, total=False):
@@ -581,6 +584,7 @@ class TypedDevice(TypedDict):
     wan3: NotRequired[TypedDeviceWanInterface]
     wan4: NotRequired[TypedDeviceWanInterface]
     wan5: NotRequired[TypedDeviceWanInterface]
+    wan6: NotRequired[TypedDeviceWanInterface]
     last_wan_status: NotRequired[dict[str, str]]
     last_wan_interfaces: NotRequired[dict[str, TypedDeviceWanInterfaceSummary]]
     last_wan_ip: NotRequired[str]
@@ -1180,13 +1184,18 @@ class Device(ApiItem):
         return self.raw.get("wan5")
 
     @property
+    def wan6(self) -> TypedDeviceWanInterface | None:
+        """WAN 6 interface data."""
+        return self.raw.get("wan6")
+
+    @property
     def last_wan_status(self) -> dict[str, str] | None:
-        """Last WAN status (WAN/WAN2: online/offline)."""
+        """Status of all WAN interfaces, e.g. {"WAN": "online", "WAN2": "offline"}."""
         return self.raw.get("last_wan_status")
 
     @property
     def last_wan_ip(self) -> str | None:
-        """Last WAN IP address."""
+        """IP address of the currently active WAN interface."""
         return self.raw.get("last_wan_ip")
 
     @property
