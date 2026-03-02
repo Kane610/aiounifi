@@ -1400,3 +1400,56 @@ async def test_temperatures(unifi_controller: Controller) -> None:
     assert device.temperatures[0]["name"] == "CPU"
     assert device.temperatures[0]["type"] == "cpu"
     assert device.temperatures[0]["value"] == 66.0
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wan_interfaces(unifi_controller: Controller) -> None:
+    """Test device WAN interface properties."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.wan1 is not None
+    assert device.wan1["ip"] == "1.2.3.4"
+    assert device.wan1["mac"] == "78:8a:20:33:44:55"
+    assert device.wan1["ifname"] == "eth0"
+    assert device.wan1["up"] is True
+    assert device.wan1["speed"] == 1000
+
+    assert device.wan2 is not None
+    assert device.wan2["ip"] == "10.0.0.2"
+    assert device.wan2["mac"] == "78:8a:20:33:44:56"
+    assert device.wan2["ifname"] == "eth1"
+    assert device.wan2["up"] is True
+
+    assert device.wan3 is None
+    assert device.wan4 is None
+    assert device.wan5 is None
+    assert device.wan6 is None
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wan_status(unifi_controller: Controller) -> None:
+    """Test device WAN status and active WAN properties."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.last_wan_status is not None
+    assert device.last_wan_status["WAN"] == "online"
+    assert device.last_wan_status["WAN2"] == "online"
+
+    assert device.last_wan_ip == "1.2.3.4"
+
+
+@pytest.mark.parametrize(("device_payload"), [[ACCESS_POINT_AC_PRO]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wan_not_present(unifi_controller: Controller) -> None:
+    """Test WAN properties return None for non-gateway devices."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.wan1 is None
+    assert device.wan2 is None
+    assert device.last_wan_status is None
+    assert device.last_wan_ip is None

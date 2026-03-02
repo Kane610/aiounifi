@@ -384,6 +384,32 @@ class TypedDeviceSpeedtestStatus(TypedDict):
     xput_upload: float
 
 
+class TypedDeviceWanInterface(TypedDict):
+    """Device WAN interface type definition."""
+
+    ip: str
+    netmask: str
+    up: bool
+    ifname: str
+    mac: str
+    name: str
+    type: str
+    enable: bool
+    speed: int
+    full_duplex: bool
+    latency: NotRequired[int]
+    availability: NotRequired[float]
+    gateway: NotRequired[str]
+    dns: NotRequired[list[str]]
+
+
+class TypedDeviceWanInterfaceSummary(TypedDict, total=False):
+    """Device WAN interface summary type definition."""
+
+    alive: bool
+    ip: str
+
+
 class TypedDeviceStorage(TypedDict):
     """Device storage type definition."""
 
@@ -552,6 +578,16 @@ class TypedDevice(TypedDict):
     x_inform_authkey: str
     x_ssh_hostkey_fingerprint: str
     x_vwirekey: str
+
+    wan1: NotRequired[TypedDeviceWanInterface]
+    wan2: NotRequired[TypedDeviceWanInterface]
+    wan3: NotRequired[TypedDeviceWanInterface]
+    wan4: NotRequired[TypedDeviceWanInterface]
+    wan5: NotRequired[TypedDeviceWanInterface]
+    wan6: NotRequired[TypedDeviceWanInterface]
+    last_wan_status: NotRequired[dict[str, str]]
+    last_wan_interfaces: NotRequired[dict[str, TypedDeviceWanInterfaceSummary]]
+    last_wan_ip: NotRequired[str]
 
 
 class DeviceState(enum.IntEnum):
@@ -1121,6 +1157,46 @@ class Device(ApiItem):
     def wlan_overrides(self) -> list[TypedDeviceWlanOverrides]:
         """Wlan configuration override."""
         return self.raw.get("wlan_overrides", [])
+
+    @property
+    def wan1(self) -> TypedDeviceWanInterface | None:
+        """WAN 1 interface data."""
+        return self.raw.get("wan1")
+
+    @property
+    def wan2(self) -> TypedDeviceWanInterface | None:
+        """WAN 2 interface data."""
+        return self.raw.get("wan2")
+
+    @property
+    def wan3(self) -> TypedDeviceWanInterface | None:
+        """WAN 3 interface data."""
+        return self.raw.get("wan3")
+
+    @property
+    def wan4(self) -> TypedDeviceWanInterface | None:
+        """WAN 4 interface data."""
+        return self.raw.get("wan4")
+
+    @property
+    def wan5(self) -> TypedDeviceWanInterface | None:
+        """WAN 5 interface data."""
+        return self.raw.get("wan5")
+
+    @property
+    def wan6(self) -> TypedDeviceWanInterface | None:
+        """WAN 6 interface data."""
+        return self.raw.get("wan6")
+
+    @property
+    def last_wan_status(self) -> dict[str, str] | None:
+        """Status of all WAN interfaces, e.g. {"WAN": "online", "WAN2": "offline"}."""
+        return self.raw.get("last_wan_status")
+
+    @property
+    def last_wan_ip(self) -> str | None:
+        """IP address of the currently active WAN interface."""
+        return self.raw.get("last_wan_ip")
 
     @property
     def supports_led_ring(self) -> bool:
