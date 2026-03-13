@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 import aiohttp
 from aiohttp import client_exceptions
 import orjson
+import pyotp
 
 from ..errors import (
     AiounifiException,
@@ -20,6 +21,7 @@ from ..errors import (
     RequestError,
     ResponseError,
     ServiceUnavailable,
+    TwoFaTokenRequired,
     WebsocketError,
 )
 from ..models.api import ERRORS
@@ -34,6 +36,8 @@ if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
 LOGGER = logging.getLogger(__name__)
+
+HTTP_STATUS_MFA_REQUIRED = 499
 
 
 class Connectivity:
@@ -65,7 +69,7 @@ class Connectivity:
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
 
-        auth = {
+        auth: dict[str, Any] = {
             "username": self.config.username,
             "password": self.config.password,
             "rememberMe": True,
@@ -73,14 +77,35 @@ class Connectivity:
 
         response, bytes_data = await self._request("post", url, json=auth)
 
+        if response.status == HTTP_STATUS_MFA_REQUIRED:
+            if not self.config.totp_secret:
+                raise RequestError(
+                    "SSO MFA required but no totp_secret configured"
+                )
+            response, bytes_data = await self._login_sso_2fa(
+                url, auth, bytes_data, self.config.totp_secret
+            )
+
         if response.content_type != "application/json":
             LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
             raise RequestError("Login Failed: Host starting up")
 
         data: TypedApiResponse = orjson.loads(bytes_data)
         if data.get("meta", {}).get("rc") == "error":
-            LOGGER.error("Login failed '%s'", data)
-            raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+            error_msg = data["meta"]["msg"]
+            error_cls = ERRORS.get(error_msg, AiounifiException)
+
+            if error_cls is TwoFaTokenRequired and self.config.totp_secret:
+                response, bytes_data = await self._login_local_2fa(
+                    url, auth, self.config.totp_secret
+                )
+                data = orjson.loads(bytes_data)
+                if data.get("meta", {}).get("rc") == "error":
+                    LOGGER.error("Login with 2FA failed '%s'", data)
+                    raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+            else:
+                LOGGER.error("Login failed '%s'", data)
+                raise error_cls
 
         if (csrf_token := response.headers.get("x-csrf-token")) is not None:
             self.headers["x-csrf-token"] = csrf_token
@@ -90,6 +115,55 @@ class Connectivity:
 
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
+
+    async def _login_local_2fa(
+        self,
+        url: str,
+        auth: dict[str, Any],
+        totp_secret: str,
+    ) -> tuple[aiohttp.ClientResponse, bytes]:
+        """Retry login with local 2FA TOTP token.
+
+        Local accounts use the ``ubic_2fa_token`` field for TOTP verification.
+        """
+        LOGGER.debug("Local 2FA required, retrying with TOTP token")
+        token = pyotp.TOTP(totp_secret).now()
+        return await self._request(
+            "post", url, json={**auth, "ubic_2fa_token": token}
+        )
+
+    async def _login_sso_2fa(
+        self,
+        url: str,
+        auth: dict[str, Any],
+        mfa_response_data: bytes,
+        totp_secret: str,
+    ) -> tuple[aiohttp.ClientResponse, bytes]:
+        """Complete SSO two-step MFA login.
+
+        UniFi OS SSO accounts use a two-step flow:
+        1. Initial login returns HTTP 499 with an MFA cookie in the response body.
+        2. Set the cookie on the session and re-login with a TOTP ``token`` field.
+        """
+        LOGGER.debug("SSO MFA challenge received, performing two-step auth")
+
+        body = orjson.loads(mfa_response_data)
+        mfa_cookie_str: str = body.get("data", {}).get("mfaCookie", "")
+
+        if not mfa_cookie_str or "=" not in mfa_cookie_str:
+            raise RequestError(
+                "SSO MFA response missing valid mfaCookie"
+            )
+
+        cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
+        self.config.session.cookie_jar.update_cookies(
+            {cookie_name: cookie_val}
+        )
+
+        token = pyotp.TOTP(totp_secret).now()
+        return await self._request(
+            "post", url, json={**auth, "token": token}
+        )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
