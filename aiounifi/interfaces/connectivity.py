@@ -99,6 +99,9 @@ class Connectivity:
                 response, bytes_data = await self._login_local_2fa(
                     url, auth, self.config.totp_secret
                 )
+                if response.content_type != "application/json":
+                    LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
+                    raise RequestError("Login Failed: Host starting up")
                 data = orjson.loads(bytes_data)
                 if data.get("meta", {}).get("rc") == "error":
                     LOGGER.error("Login with 2FA failed '%s'", data)
@@ -147,7 +150,12 @@ class Connectivity:
         """
         LOGGER.debug("SSO MFA challenge received, performing two-step auth")
 
-        body = orjson.loads(mfa_response_data)
+        try:
+            body = orjson.loads(mfa_response_data)
+        except orjson.JSONDecodeError as err:
+            raise RequestError(
+                f"SSO MFA response is not valid JSON: {err}"
+            ) from err
         mfa_cookie_str: str = body.get("data", {}).get("mfaCookie", "")
 
         if not mfa_cookie_str or "=" not in mfa_cookie_str:

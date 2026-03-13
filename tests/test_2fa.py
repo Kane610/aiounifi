@@ -163,6 +163,42 @@ class TestLocal2fa:
         calls = requests[0]
         assert calls[1][1]["json"]["ubic_2fa_token"] == "123456"
 
+    async def test_local_2fa_non_unifi_os_path(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test non-UniFi OS controller uses /api/login path for local 2FA."""
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload=LOCAL_2FA_ERROR_RESPONSE,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload={"meta": {"rc": "ok"}, "data": []},
+            content_type="application/json",
+        )
+
+        await unifi_controller_2fa.connectivity.login()
+        assert unifi_controller_2fa.connectivity.can_retry_login
+
+    async def test_local_2fa_retry_non_json_response(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test local 2FA retry raises RequestError when response is not JSON."""
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload=LOCAL_2FA_ERROR_RESPONSE,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            body="<html>Error</html>",
+            content_type="text/html",
+        )
+
+        with pytest.raises(RequestError, match="Host starting up"):
+            await unifi_controller_2fa.connectivity.login()
+
 
 class TestSso2fa:
     """Test SSO two-step 2FA authentication."""
@@ -263,6 +299,22 @@ class TestSso2fa:
         with pytest.raises(RequestError, match="missing valid mfaCookie"):
             await unifi_controller_2fa.connectivity.login()
 
+    async def test_sso_2fa_non_json_mfa_response(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test SSO 2FA raises RequestError when 499 response body is not valid JSON."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            body=b"<html>not json</html>",
+            status=499,
+            content_type="text/html",
+        )
+
+        with pytest.raises(RequestError, match="not valid JSON"):
+            await unifi_controller_2fa.connectivity.login()
+
     async def test_sso_2fa_sets_cookie_on_session(
         self, mock_aioresponse, unifi_controller_2fa
     ):
@@ -316,24 +368,6 @@ class TestSso2fa:
         calls = requests[0]
         assert calls[1][1]["json"]["token"] == "654321"
 
-    async def test_sso_2fa_non_unifi_os(
-        self, mock_aioresponse, unifi_controller_2fa
-    ):
-        """Test non-UniFi OS controller uses /api/login path."""
-        # Non-UniFi OS, local 2FA flow
-        mock_aioresponse.post(
-            "https://host:8443/api/login",
-            payload=LOCAL_2FA_ERROR_RESPONSE,
-            content_type="application/json",
-        )
-        mock_aioresponse.post(
-            "https://host:8443/api/login",
-            payload={"meta": {"rc": "ok"}, "data": []},
-            content_type="application/json",
-        )
-
-        await unifi_controller_2fa.connectivity.login()
-        assert unifi_controller_2fa.connectivity.can_retry_login
 
 
 class TestConfigurationTotpSecret:
