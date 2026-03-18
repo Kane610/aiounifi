@@ -19,6 +19,7 @@ class Configuration:
     port: int = 8443
     site: str = "default"
     ssl_context: SSLContext | Literal[False] = False
+    totp_secret: str | None = None
 
     @property
     def url(self) -> str:
