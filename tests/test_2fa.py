@@ -93,9 +93,7 @@ class TestLocal2fa:
         assert second_call_json["password"] == "pass"
         assert second_call_json["rememberMe"] is True
 
-    async def test_local_2fa_raises_without_totp_secret(
-        self, mock_aioresponse
-    ):
+    async def test_local_2fa_raises_without_totp_secret(self, mock_aioresponse):
         """Test local 2FA raises TwoFaTokenRequired when no totp_secret."""
         session = aiohttp.ClientSession()
         config = Configuration(
@@ -203,9 +201,7 @@ class TestLocal2fa:
 class TestSso2fa:
     """Test SSO two-step 2FA authentication."""
 
-    async def test_sso_2fa_login_success(
-        self, mock_aioresponse, unifi_controller_2fa
-    ):
+    async def test_sso_2fa_login_success(self, mock_aioresponse, unifi_controller_2fa):
         """Test SSO 2FA login completes the two-step flow."""
         unifi_controller_2fa.connectivity.is_unifi_os = True
 
@@ -238,9 +234,7 @@ class TestSso2fa:
         assert second_call_json["username"] == "user"
         assert second_call_json["password"] == "pass"
 
-    async def test_sso_2fa_raises_without_totp_secret(
-        self, mock_aioresponse
-    ):
+    async def test_sso_2fa_raises_without_totp_secret(self, mock_aioresponse):
         """Test SSO MFA raises RequestError when no totp_secret configured."""
         session = aiohttp.ClientSession()
         config = Configuration(
@@ -336,7 +330,9 @@ class TestSso2fa:
 
         session = unifi_controller_2fa.connectivity.config.session
         with patch.object(
-            session.cookie_jar, "update_cookies", wraps=session.cookie_jar.update_cookies
+            session.cookie_jar,
+            "update_cookies",
+            wraps=session.cookie_jar.update_cookies,
         ) as mock_update:
             await unifi_controller_2fa.connectivity.login()
             mock_update.assert_called_once_with({"UBIC_2FA": "abc123def456"})
@@ -367,7 +363,6 @@ class TestSso2fa:
         requests = list(mock_aioresponse.requests.values())
         calls = requests[0]
         assert calls[1][1]["json"]["token"] == "654321"
-
 
 
 class TestConfigurationTotpSecret:

@@ -79,9 +79,7 @@ class Connectivity:
 
         if response.status == HTTP_STATUS_MFA_REQUIRED:
             if not self.config.totp_secret:
-                raise RequestError(
-                    "SSO MFA required but no totp_secret configured"
-                )
+                raise RequestError("SSO MFA required but no totp_secret configured")
             response, bytes_data = await self._login_sso_2fa(
                 url, auth, bytes_data, self.config.totp_secret
             )
@@ -131,9 +129,7 @@ class Connectivity:
         """
         LOGGER.debug("Local 2FA required, retrying with TOTP token")
         token = pyotp.TOTP(totp_secret).now()
-        return await self._request(
-            "post", url, json={**auth, "ubic_2fa_token": token}
-        )
+        return await self._request("post", url, json={**auth, "ubic_2fa_token": token})
 
     async def _login_sso_2fa(
         self,
@@ -153,25 +149,17 @@ class Connectivity:
         try:
             body = orjson.loads(mfa_response_data)
         except orjson.JSONDecodeError as err:
-            raise RequestError(
-                f"SSO MFA response is not valid JSON: {err}"
-            ) from err
+            raise RequestError(f"SSO MFA response is not valid JSON: {err}") from err
         mfa_cookie_str: str = body.get("data", {}).get("mfaCookie", "")
 
         if not mfa_cookie_str or "=" not in mfa_cookie_str:
-            raise RequestError(
-                "SSO MFA response missing valid mfaCookie"
-            )
+            raise RequestError("SSO MFA response missing valid mfaCookie")
 
         cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
-        self.config.session.cookie_jar.update_cookies(
-            {cookie_name: cookie_val}
-        )
+        self.config.session.cookie_jar.update_cookies({cookie_name: cookie_val})
 
         token = pyotp.TOTP(totp_secret).now()
-        return await self._request(
-            "post", url, json={**auth, "token": token}
-        )
+        return await self._request("post", url, json={**auth, "token": token})
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
