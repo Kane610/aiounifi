@@ -19,6 +19,7 @@ from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
 from .interfaces.sites import Sites
+from .interfaces.speedtest import SpeedtestHandler
 from .interfaces.system_information import SystemInformationHandler
 from .interfaces.traffic_routes import TrafficRoutes
 from .interfaces.traffic_rules import TrafficRules
@@ -53,6 +54,7 @@ class Controller:
         self.port_forwarding = PortForwarding(self)
         self.ports = Ports(self)
         self.sites = Sites(self)
+        self.speedtest = SpeedtestHandler(self)
         self.system_information = SystemInformationHandler(self)
         self.traffic_rules = TrafficRules(self)
         self.traffic_routes = TrafficRoutes(self)
