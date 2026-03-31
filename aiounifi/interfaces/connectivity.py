@@ -15,6 +15,7 @@ import pyotp
 
 from ..errors import (
     AiounifiException,
+    AuthenticationRateLimitError,
     BadGateway,
     Forbidden,
     LoginRequired,
@@ -239,6 +240,19 @@ class Connectivity:
         LOGGER.debug("data (from %s) %s", url, bytes_data)
 
         if res.status == HTTPStatus.TOO_MANY_REQUESTS:
+            # Try to parse the response for specific rate limit error
+            try:
+                data = orjson.loads(bytes_data)
+            except orjson.JSONDecodeError:
+                data = None
+            if (
+                isinstance(data, dict)
+                and data.get("code") == "AUTHENTICATION_FAILED_LIMIT_REACHED"
+            ):
+                raise AuthenticationRateLimitError(
+                    f"Call {url} received 429: {data.get('message', bytes_data)!r}"
+                )
+            # Fallback to old logic
             raise ResponseError(f"Call {url} received 429: {bytes_data!r}")
 
         return res, bytes_data
