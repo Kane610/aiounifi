@@ -43,6 +43,11 @@ class BadGateway(RequestError):
     """Invalid response from the upstream server."""
 
 
+# Raised when login attempt limit is reached (HTTP 429 AUTHENTICATION_FAILED_LIMIT_REACHED)
+class AuthenticationRateLimitError(AiounifiException):
+    """Raised when login attempt limit is reached (HTTP 429)."""
+
+
 class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
 

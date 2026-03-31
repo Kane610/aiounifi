@@ -22,6 +22,7 @@ from aiounifi import (
     Unauthorized,
 )
 from aiounifi.controller import Controller
+from aiounifi.errors import AuthenticationRateLimitError
 from aiounifi.models.api import ApiRequest, ApiRequestV2
 from aiounifi.models.configuration import Configuration
 
@@ -458,6 +459,22 @@ async def test_controller_raise_expected_exception(
     """Verify request raise login required on a 401."""
     mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
     with pytest.raises(expected_exception):
+        await unifi_controller.connectivity.login()
+
+
+async def test_controller_authentication_rate_limit_error(
+    mock_aioresponse, unifi_controller
+):
+    """Test that 429 AUTHENTICATION_FAILED_LIMIT_REACHED raises AuthenticationRateLimitError."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        status=429,
+        payload={
+            "message": "You've reached the login attempt limit",
+            "code": "AUTHENTICATION_FAILED_LIMIT_REACHED",
+        },
+    )
+    with pytest.raises(AuthenticationRateLimitError):
         await unifi_controller.connectivity.login()
 
 
