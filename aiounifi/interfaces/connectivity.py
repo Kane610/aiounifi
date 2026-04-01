@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping
 import datetime
 from http import HTTPStatus, cookies
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -69,54 +69,83 @@ class Connectivity:
         """Log in to controller."""
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
-
         auth: dict[str, Any] = {
             "username": self.config.username,
             "password": self.config.password,
             "rememberMe": True,
         }
-
         response, bytes_data = await self._request("post", url, json=auth)
 
         if response.status == HTTP_STATUS_MFA_REQUIRED:
-            if not self.config.totp_secret:
-                raise RequestError("SSO MFA required but no totp_secret configured")
-            response, bytes_data = await self._login_sso_2fa(
-                url, auth, bytes_data, self.config.totp_secret
-            )
+            response, bytes_data = await self._handle_sso_mfa(url, auth, bytes_data)
 
-        if response.content_type != "application/json":
+        if not self._is_json_response(response):
             LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
             raise RequestError("Login Failed: Host starting up")
 
-        data: TypedApiResponse = orjson.loads(bytes_data)
-        if data.get("meta", {}).get("rc") == "error":
-            error_msg = data["meta"]["msg"]
-            error_cls = ERRORS.get(error_msg, AiounifiException)
+        data = self._parse_json(bytes_data)
+        if self._is_error_response(data):
+            await self._handle_login_error(url, auth, response, bytes_data, data)
+        else:
+            self._update_login_headers(response)
+            self.can_retry_login = True
+            LOGGER.debug("Logged in to UniFi %s", url)
 
-            if error_cls is TwoFaTokenRequired and self.config.totp_secret:
-                response, bytes_data = await self._login_local_2fa(
-                    url, auth, self.config.totp_secret
-                )
-                if response.content_type != "application/json":
-                    LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
-                    raise RequestError("Login Failed: Host starting up")
-                data = orjson.loads(bytes_data)
-                if data.get("meta", {}).get("rc") == "error":
-                    LOGGER.error("Login with 2FA failed '%s'", data)
-                    raise ERRORS.get(data["meta"]["msg"], AiounifiException)
-            else:
-                LOGGER.error("Login failed '%s'", data)
-                raise error_cls
+    async def _handle_sso_mfa(
+        self, url: str, auth: dict[str, Any], mfa_response_data: bytes
+    ) -> tuple[aiohttp.ClientResponse, bytes]:
+        if not self.config.totp_secret:
+            raise RequestError("SSO MFA required but no totp_secret configured")
+        return await self._login_sso_2fa(
+            url, auth, mfa_response_data, self.config.totp_secret
+        )
 
+    async def _handle_login_error(
+        self,
+        url: str,
+        auth: dict[str, Any],
+        response: aiohttp.ClientResponse,
+        bytes_data: bytes,
+        data: TypedApiResponse,
+    ) -> None:
+        error_msg = data["meta"]["msg"]
+        error_cls = ERRORS.get(error_msg, AiounifiException)
+        if error_cls is TwoFaTokenRequired and self.config.totp_secret:
+            response, bytes_data = await self._login_local_2fa(
+                url, auth, self.config.totp_secret
+            )
+            if not self._is_json_response(response):
+                LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
+                raise RequestError("Login Failed: Host starting up")
+            data = self._parse_json(bytes_data)
+            if self._is_error_response(data):
+                LOGGER.error("Login with 2FA failed '%s'", data)
+                raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+            self._update_login_headers(response)
+            self.can_retry_login = True
+            LOGGER.debug("Logged in to UniFi %s", url)
+            return
+        LOGGER.error("Login failed '%s'", data)
+        raise error_cls
+
+    def _is_json_response(self, response: aiohttp.ClientResponse) -> bool:
+        return response.content_type == "application/json"
+
+    def _parse_json(self, bytes_data: bytes) -> TypedApiResponse:
+        try:
+            return cast("TypedApiResponse", orjson.loads(bytes_data))
+        except orjson.JSONDecodeError as err:
+            LOGGER.error("Failed to parse JSON: %s", err)
+            raise RequestError("Response is not valid JSON") from err
+
+    def _is_error_response(self, data: TypedApiResponse) -> bool:
+        return data.get("meta", {}).get("rc") == "error"
+
+    def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
         if (csrf_token := response.headers.get("x-csrf-token")) is not None:
             self.headers["x-csrf-token"] = csrf_token
-
         if (cookie := response.headers.get("Set-Cookie")) is not None:
             self.headers["Cookie"] = cookie
-
-        self.can_retry_login = True
-        LOGGER.debug("Logged in to UniFi %s", url)
 
     async def _login_local_2fa(
         self,

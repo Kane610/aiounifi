@@ -626,3 +626,80 @@ async def test_websocket(aiohttp_server) -> None:
     await controller.start_websocket()
 
     assert len(controller.dpi_groups.items()) == 1
+
+
+async def test_login_malformed_json(mock_aioresponse, unifi_controller):
+    """Test login with malformed JSON response raises RequestError."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        body="not json",
+        content_type="application/json",
+    )
+    with pytest.raises(RequestError):
+        await unifi_controller.connectivity.login()
+
+
+async def test_login_missing_csrf_and_cookie(mock_aioresponse, unifi_controller):
+    """Test login with missing csrf and cookie headers does not break."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        content_type="application/json",
+    )
+    await unifi_controller.connectivity.login()
+    # Headers should not be set
+    assert "x-csrf-token" not in unifi_controller.connectivity.headers
+    assert "Cookie" not in unifi_controller.connectivity.headers
+
+
+async def test_login_2fa_failure(mock_aioresponse, unifi_controller):
+    """Test login with repeated 2FA failure raises correct error."""
+    # First response triggers 2FA
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
+        content_type="application/json",
+    )
+    # Second response is also error
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
+        content_type="application/json",
+    )
+    with pytest.raises(TwoFaTokenRequired):
+        await unifi_controller.connectivity.login()
+
+
+async def test_login_2fa_success_after_error(mock_aioresponse, unifi_controller):
+    """Test login with correct 2FA after initial error succeeds and sets headers."""
+    # Ensure totp_secret is set for 2FA retry
+    unifi_controller.connectivity.config.totp_secret = "JBSWY3DPEHPK3PXP"
+    # First response triggers 2FA
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
+        content_type="application/json",
+    )
+    # Second response is success
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        content_type="application/json",
+        headers={"x-csrf-token": "token", "Set-Cookie": "cookie"},
+    )
+    await unifi_controller.connectivity.login()
+    assert unifi_controller.connectivity.headers["x-csrf-token"] == "token"
+    assert unifi_controller.connectivity.headers["Cookie"] == "cookie"
+
+
+async def test_login_sso_mfa_missing_totp_secret(mock_aioresponse, unifi_controller):
+    """Test login with SSO MFA but missing totp_secret raises RequestError."""
+    unifi_controller.connectivity.config.totp_secret = None
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        status=499,
+        payload={},
+        content_type="application/json",
+    )
+    with pytest.raises(RequestError):
+        await unifi_controller.connectivity.login()
