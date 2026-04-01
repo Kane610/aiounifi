@@ -590,6 +590,29 @@ class TypedDevice(TypedDict):
     last_wan_ip: NotRequired[str]
 
 
+class DeviceType(enum.StrEnum):
+    """Enum for UniFi device types."""
+
+    ACCESS_POINT = "uap"
+    APPLICATION_SERVER = "uas"
+    BUILDING_TO_BUILDING_BRIDGE = "ubb"
+    CLOUD_GATEWAY = "ucg"
+    CLOUD_KEY = "uck"
+    DREAM_MACHINE = "udm"
+    SECURITY_GATEWAY = "ugw"
+    PHONE = "uph"
+    SWITCH = "usw"
+    NEXTGEN_GATEWAY = "uxg"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DeviceType:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device type %s %s", value, cls)
+        return DeviceType.UNKNOWN
+
+
 class DeviceState(enum.IntEnum):
     """Enum for device states."""
 
@@ -1107,9 +1130,9 @@ class Device(ApiItem):
         return self.raw.get("temperatures")
 
     @property
-    def type(self) -> str:
+    def type(self) -> DeviceType:
         """Type of device."""
-        return self.raw["type"]
+        return DeviceType(self.raw.get("type", "unknown"))
 
     @property
     def version(self) -> str:
