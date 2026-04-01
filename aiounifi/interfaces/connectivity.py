@@ -411,7 +411,7 @@ class Connectivity:
 
         return res, bytes_data
 
-    async def websocket(self, callback: Callable[[bytes], None]) -> None:
+    async def websocket(self, callback: Callable[[str], None]) -> None:
         """Run the UniFi websocket connection and dispatch messages to a callback.
 
         Args:
