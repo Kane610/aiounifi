@@ -21,6 +21,7 @@ from aiounifi.models.device import (
     DeviceSetPoePortModeRequest,
     DeviceSetPortEnabledRequest,
     DeviceState,
+    DeviceType,
     DeviceUpgradeRequest,
 )
 from aiounifi.models.message import MessageKey
@@ -1181,6 +1182,14 @@ async def test_device_websocket(
 def test_enum_unknowns() -> None:
     """Validate enum unknown values."""
     assert DeviceState(999) == DeviceState.UNKNOWN
+    assert DeviceType("future-device-type") == DeviceType.UNKNOWN
+
+
+def test_device_type_enum() -> None:
+    """Validate DeviceType string enum behavior."""
+    assert DeviceType.ACCESS_POINT == "uap"
+    assert DeviceType.SWITCH == "usw"
+    assert str(DeviceType.SECURITY_GATEWAY) == "ugw"
 
 
 @pytest.mark.parametrize(
