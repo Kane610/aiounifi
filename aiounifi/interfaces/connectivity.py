@@ -412,7 +412,23 @@ class Connectivity:
         return res, bytes_data
 
     async def websocket(self, callback: Callable[[bytes], None]) -> None:
-        """Run websocket."""
+        """Run the UniFi websocket connection and dispatch messages to a callback.
+
+        Args:
+            callback (Callable[[str], None]): Function to call with each received text message.
+
+        Raises:
+            aiohttp.ClientConnectorError: If the websocket connection cannot be established.
+            aiohttp.WSServerHandshakeError: If the websocket handshake fails.
+            WebsocketError: For websocket protocol errors or unexpected exceptions.
+
+        Notes:
+            - Only TEXT, CLOSED, and ERROR message types are handled explicitly. Others are logged as warnings.
+            - The callback should be non-blocking and fast; slow callbacks may delay message processing.
+            - Reconnection logic is not handled here and should be implemented by the consumer.
+            - On disconnect or error, an exception is raised for the consumer to handle.
+
+        """
         url = f"wss://{self.config.host}:{self.config.port}"
         url += "/proxy/network" if self.is_unifi_os else ""
         url += f"/wss/s/{self.config.site}/events"
