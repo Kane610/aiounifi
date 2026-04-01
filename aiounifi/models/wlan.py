@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import io
-from typing import NotRequired, Self, TypedDict
+from typing import Any, NotRequired, Self, TypedDict
 
 import segno.helpers
 
@@ -96,13 +96,26 @@ def wlan_qr_code(
     kind: str = "png",
     scale: int = 4,
     hidden: bool = False,
+    dark: str | None = None,
+    light: str | None = None,
+    border: int | None = None,
 ) -> bytes:
-    """Generate WLAN QR code."""
+    """Generate WLAN QR code.
+
+    Optional styling parameters are passed to segno serializer.
+    """
     buffer = io.BytesIO()
     qr_code = segno.helpers.make_wifi(
         ssid=name, password=password, security="WPA", hidden=hidden
     )
-    qr_code.save(out=buffer, kind=kind, scale=scale)
+    save_kwargs: dict[str, Any] = {"kind": kind, "scale": scale}
+    if dark is not None:
+        save_kwargs["dark"] = dark
+    if light is not None:
+        save_kwargs["light"] = light
+    if border is not None:
+        save_kwargs["border"] = border
+    qr_code.save(out=buffer, **save_kwargs)
     return buffer.getvalue()
 
 
