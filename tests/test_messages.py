@@ -63,5 +63,5 @@ async def test_unsupported_message_key():
 @patch("aiounifi.interfaces.messages.LOGGER")
 async def test_message_handler_bad_json_data(logger_mock):
     """Verify message handler catches json error."""
-    MessageHandler(controller=Mock()).new_data(b"")
+    MessageHandler(controller=Mock()).new_data("")
     assert logger_mock.debug.called
