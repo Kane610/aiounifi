@@ -147,27 +147,27 @@ class Connectivity:
         error_msg = data["meta"]["msg"]
         error_cls = ERRORS.get(error_msg, AiounifiException)
         if error_cls is TwoFaTokenRequired and self.config.totp_secret:
-            await self._attempt_2fa_retry(url, auth)
+            await self._attempt_2fa_retry(url, auth, self.config.totp_secret)
             return
         LOGGER.error("Login failed '%s'", data)
         raise error_cls
 
-    async def _attempt_2fa_retry(self, url: str, auth: dict[str, Any]) -> None:
+    async def _attempt_2fa_retry(
+        self, url: str, auth: dict[str, Any], totp_secret: str
+    ) -> None:
         """Attempt login retry with local 2FA TOTP token.
 
         Args:
             url (str): The login URL.
             auth (dict): The authentication payload.
+            totp_secret (str): The TOTP secret, already confirmed non-None by the caller.
 
         Raises:
             RequestError: If the 2FA retry response is not valid JSON.
             AiounifiException: If the 2FA login fails due to authentication error.
 
         """
-        assert self.config.totp_secret is not None  # guaranteed by caller
-        response, bytes_data = await self._login_local_2fa(
-            url, auth, self.config.totp_secret
-        )
+        response, bytes_data = await self._login_local_2fa(url, auth, totp_secret)
         if not self._is_json_response(response):
             LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
             raise RequestError("Login Failed: Host starting up")
