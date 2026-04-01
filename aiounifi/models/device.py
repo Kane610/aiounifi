@@ -613,6 +613,22 @@ class DeviceType(enum.StrEnum):
         return DeviceType.UNKNOWN
 
 
+class WifiBand(enum.StrEnum):
+    """Enum for WiFi bands."""
+
+    BAND_2_4GHZ = "ng"  # 802.11n on 2.4GHz
+    BAND_5GHZ = "na"  # 802.11a/n/ac/ax on 5GHz
+    BAND_6GHZ = "6e"  # 802.11ax on 6GHz
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> WifiBand:
+        """Set default enum member if an unknown band is provided."""
+        LOGGER.warning("Unsupported WiFi band %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
 class DeviceState(enum.IntEnum):
     """Enum for device states."""
 
