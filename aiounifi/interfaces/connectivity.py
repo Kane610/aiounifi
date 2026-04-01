@@ -45,7 +45,12 @@ class Connectivity:
     """UniFi Network Application connectivity."""
 
     def __init__(self, config: Configuration) -> None:
-        """Session setup."""
+        """Initialize the Connectivity instance for UniFi Network Application.
+
+        Args:
+            config (Configuration): The configuration object containing connection details.
+
+        """
         self.config = config
 
         self.is_unifi_os = False
@@ -57,7 +62,11 @@ class Connectivity:
             LOGGER.warning("Using SSL context %s", config.ssl_context)
 
     async def check_unifi_os(self) -> None:
-        """Check if controller is running UniFi OS."""
+        """Check if the controller is running UniFi OS.
+
+        Sets self.is_unifi_os to True if UniFi OS is detected, otherwise False.
+        Clears the cookie jar for the host if UniFi OS is detected.
+        """
         self.is_unifi_os = False
         response, _ = await self._request("get", self.config.url, allow_redirects=False)
         if response.status == HTTPStatus.OK:
@@ -66,7 +75,11 @@ class Connectivity:
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
     async def login(self) -> None:
-        """Log in to controller."""
+        """Log in to the UniFi controller.
+
+        Handles SSO MFA, 2FA, and error responses. Updates headers on success.
+        Raises RequestError or other custom exceptions on failure.
+        """
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
         auth: dict[str, Any] = {
@@ -94,6 +107,20 @@ class Connectivity:
     async def _handle_sso_mfa(
         self, url: str, auth: dict[str, Any], mfa_response_data: bytes
     ) -> tuple[aiohttp.ClientResponse, bytes]:
+        """Handle SSO MFA challenge for UniFi OS accounts.
+
+        Args:
+            url (str): The login URL.
+            auth (dict): The authentication payload.
+            mfa_response_data (bytes): The response data from the initial login attempt.
+
+        Returns:
+            tuple[aiohttp.ClientResponse, bytes]: The response and data after completing SSO MFA.
+
+        Raises:
+            RequestError: If no TOTP secret is configured.
+
+        """
         if not self.config.totp_secret:
             raise RequestError("SSO MFA required but no totp_secret configured")
         return await self._login_sso_2fa(
@@ -108,6 +135,20 @@ class Connectivity:
         bytes_data: bytes,
         data: TypedApiResponse,
     ) -> None:
+        """Handle error responses during login, including 2FA retry logic.
+
+        Args:
+            url (str): The login URL.
+            auth (dict): The authentication payload.
+            response (aiohttp.ClientResponse): The HTTP response object.
+            bytes_data (bytes): The response body.
+            data (TypedApiResponse): The parsed response data.
+
+        Raises:
+            AiounifiException: For known error responses.
+            RequestError: For unexpected or malformed responses.
+
+        """
         error_msg = data["meta"]["msg"]
         error_cls = ERRORS.get(error_msg, AiounifiException)
         if error_cls is TwoFaTokenRequired and self.config.totp_secret:
@@ -129,9 +170,30 @@ class Connectivity:
         raise error_cls
 
     def _is_json_response(self, response: aiohttp.ClientResponse) -> bool:
+        """Check if the response has a JSON content type.
+
+        Args:
+            response (aiohttp.ClientResponse): The HTTP response object.
+
+        Returns:
+            bool: True if the response is JSON, False otherwise.
+
+        """
         return response.content_type == "application/json"
 
     def _parse_json(self, bytes_data: bytes) -> TypedApiResponse:
+        """Parse bytes data as JSON and cast to TypedApiResponse.
+
+        Args:
+            bytes_data (bytes): The response body as bytes.
+
+        Returns:
+            TypedApiResponse: The parsed and typed response data.
+
+        Raises:
+            RequestError: If the data is not valid JSON.
+
+        """
         try:
             return cast("TypedApiResponse", orjson.loads(bytes_data))
         except orjson.JSONDecodeError as err:
@@ -139,9 +201,24 @@ class Connectivity:
             raise RequestError("Response is not valid JSON") from err
 
     def _is_error_response(self, data: TypedApiResponse) -> bool:
+        """Check if the response data indicates an error.
+
+        Args:
+            data (TypedApiResponse): The parsed response data.
+
+        Returns:
+            bool: True if the response is an error, False otherwise.
+
+        """
         return data.get("meta", {}).get("rc") == "error"
 
     def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
+        """Update login headers from the response after successful authentication.
+
+        Args:
+            response (aiohttp.ClientResponse): The HTTP response object.
+
+        """
         if (csrf_token := response.headers.get("x-csrf-token")) is not None:
             self.headers["x-csrf-token"] = csrf_token
         if (cookie := response.headers.get("Set-Cookie")) is not None:
@@ -153,9 +230,16 @@ class Connectivity:
         auth: dict[str, Any],
         totp_secret: str,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
-        """Retry login with local 2FA TOTP token.
+        """Retry login with local 2FA TOTP token for local accounts.
 
-        Local accounts use the ``ubic_2fa_token`` field for TOTP verification.
+        Args:
+            url (str): The login URL.
+            auth (dict): The authentication payload.
+            totp_secret (str): The TOTP secret for generating the token.
+
+        Returns:
+            tuple[aiohttp.ClientResponse, bytes]: The response and data after retrying with 2FA.
+
         """
         LOGGER.debug("Local 2FA required, retrying with TOTP token")
         token = pyotp.TOTP(totp_secret).now()
@@ -168,11 +252,20 @@ class Connectivity:
         mfa_response_data: bytes,
         totp_secret: str,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
-        """Complete SSO two-step MFA login.
+        """Complete SSO two-step MFA login for UniFi OS accounts.
 
-        UniFi OS SSO accounts use a two-step flow:
-        1. Initial login returns HTTP 499 with an MFA cookie in the response body.
-        2. Set the cookie on the session and re-login with a TOTP ``token`` field.
+        Args:
+            url (str): The login URL.
+            auth (dict): The authentication payload.
+            mfa_response_data (bytes): The response data from the initial login attempt.
+            totp_secret (str): The TOTP secret for generating the token.
+
+        Returns:
+            tuple[aiohttp.ClientResponse, bytes]: The response and data after completing SSO MFA.
+
+        Raises:
+            RequestError: If the response is not valid JSON or missing required fields.
+
         """
         LOGGER.debug("SSO MFA challenge received, performing two-step auth")
 
@@ -192,7 +285,19 @@ class Connectivity:
         return await self._request("post", url, json={**auth, "token": token})
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
-        """Make a request to the API, retry login on failure."""
+        """Make a request to the API, retrying login on failure.
+
+        Args:
+            api_request (ApiRequest): The API request object containing method, path, and data.
+
+        Returns:
+            TypedApiResponse: The parsed response data from the API.
+
+        Raises:
+            LoginRequired: If login is required and cannot be retried.
+            RequestError: For network or response errors.
+
+        """
         url = self.config.url + api_request.full_path(
             self.config.site, self.is_unifi_os
         )
@@ -223,7 +328,27 @@ class Connectivity:
         json: Mapping[str, Any] | None = None,
         allow_redirects: bool = True,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
-        """Make a request to the API."""
+        """Make a raw HTTP request to the API.
+
+        Args:
+            method (str): The HTTP method (e.g., 'get', 'post').
+            url (str): The full request URL.
+            json (Mapping[str, Any] | None): The JSON payload for the request, if any.
+            allow_redirects (bool): Whether to allow redirects.
+
+        Returns:
+            tuple[aiohttp.ClientResponse, bytes]: The response object and response body as bytes.
+
+        Raises:
+            LoginRequired: If the response is 401 Unauthorized.
+            Forbidden: If the response is 403 Forbidden.
+            ResponseError: For 404, 429, or invalid responses.
+            BadGateway: For 502 Bad Gateway.
+            ServiceUnavailable: For 503 Service Unavailable.
+            RequestError: For network or client errors.
+            AuthenticationRateLimitError: For 429 rate limit errors with specific code.
+
+        """
         LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, allow_redirects)
         bytes_data = b""
 
