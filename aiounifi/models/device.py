@@ -1113,6 +1113,26 @@ class Device(ApiItem):
         return self.raw.get("port_table", [])
 
     @property
+    def radio_table(self) -> list[TypedDeviceRadioTable]:
+        """List of radios with band information."""
+        return self.raw.get("radio_table", [])
+
+    def get_radio_band(self, radio_name: str) -> WifiBand:
+        """Get the WiFi band for a radio by name.
+
+        Args:
+            radio_name: Name of the radio (e.g., 'wifi0', 'wifi1', 'wifi2')
+
+        Returns:
+            WifiBand enum member for the radio, or UNKNOWN if not found.
+
+        """
+        for radio in self.radio_table:
+            if radio.get("name") == radio_name:
+                return WifiBand(radio.get("radio", "unknown"))
+        return WifiBand.UNKNOWN
+
+    @property
     def speedtest_status(self) -> TypedDeviceSpeedtestStatus | None:
         """Speedtest status."""
         if value := self.raw.get("speedtest-status"):
