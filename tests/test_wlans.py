@@ -179,3 +179,32 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
         b"\x05\xec\x07\x07[\xf55\xbb\xcc\x86\x8a\xff\x9ew\xe2\x97g\xbf\xb5'\x96\xf7"
         b"\xce\xe4\xc7\xe6\x00\x00\x00\x00IEND\xaeB`\x82"
     )
+
+
+def test_wlan_qr_code_with_styling():
+    """Test WLAN QR code can be customized with dark/light and border."""
+    default_qr = wlan_qr_code("ssid", "passphrase")
+    inverted_qr = wlan_qr_code("ssid", "passphrase", dark="#ffffff", light="#000000")
+    no_border_qr = wlan_qr_code(
+        "ssid", "passphrase", dark="#ffffff", light=None, border=0
+    )
+
+    assert default_qr.startswith(b"\x89PNG")
+    assert inverted_qr.startswith(b"\x89PNG")
+    assert no_border_qr.startswith(b"\x89PNG")
+    assert default_qr != inverted_qr
+    assert default_qr != no_border_qr
+
+
+@pytest.mark.parametrize("wlan_payload", [WLANS])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_generate_wlan_qr_code_with_options(unifi_controller):
+    """Test interface QR generation with optional style parameters."""
+    wlans = unifi_controller.wlans
+    await wlans.update()
+    wlan = wlans["012345678910111213141516"]
+
+    qr_custom = wlans.generate_wlan_qr_code(
+        wlan, dark="#ffffff", light="#000000", border=0
+    )
+    assert qr_custom.startswith(b"\x89PNG")
