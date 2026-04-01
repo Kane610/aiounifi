@@ -1,9 +1,31 @@
 """Device port implementation."""
 
+from __future__ import annotations
+
+from enum import StrEnum
+import logging
 from typing import cast
 
 from .api import ApiItem
 from .device import TypedDevicePortTable
+
+LOGGER = logging.getLogger(__name__)
+
+
+class PortMedia(StrEnum):
+    """Enum for network port media types."""
+
+    GIGABIT = "GE"
+    FAST = "FE"
+    SFP = "SFP"
+    SFP_PLUS = "SFP+"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> PortMedia:
+        """Set default enum member if an unknown media type is provided."""
+        LOGGER.warning("Unsupported port media %s, using UNKNOWN", value)
+        return cls.UNKNOWN
 
 
 class Port(ApiItem):
@@ -17,9 +39,9 @@ class Port(ApiItem):
         return self.raw.get("ifname")
 
     @property
-    def media(self) -> str | None:
+    def media(self) -> PortMedia:
         """Media port is connected to."""
-        return self.raw.get("media")
+        return PortMedia(self.raw.get("media", "unknown"))
 
     @property
     def name(self) -> str:
