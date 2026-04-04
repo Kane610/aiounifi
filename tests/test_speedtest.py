@@ -1,11 +1,8 @@
 """Test speedtest API."""
 
 from collections.abc import Callable
-from typing import Any
 
 from aioresponses import aioresponses
-import pytest
-
 from aiounifi.controller import Controller
 from aiounifi.models.speedtest import (
     SpeedtestStatusLegacyRequest,
@@ -13,6 +10,7 @@ from aiounifi.models.speedtest import (
     SpeedtestTriggerLegacyRequest,
     SpeedtestTriggerRequest,
 )
+import pytest
 
 
 @pytest.mark.asyncio
@@ -22,7 +20,9 @@ async def test_speedtest_status_hardware_request(
     unifi_called_with: Callable[..., bool],
 ) -> None:
     """Test hardware speedtest status."""
-    mock_aioresponse.get("https://host:8443/proxy/network/v2/api/site/default/speedtest", payload=[])
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest", payload=[]
+    )
     unifi_controller.connectivity.is_unifi_os = True
     await unifi_controller.request(SpeedtestStatusRequest.create())
     assert unifi_called_with("get", "/v2/api/site/default/speedtest")
@@ -48,7 +48,9 @@ async def test_speedtest_trigger_hardware_request(
     unifi_called_with: Callable[..., bool],
 ) -> None:
     """Test hardware speedtest trigger."""
-    mock_aioresponse.post("https://host:8443/proxy/network/api/s/default/cmd/devmgr/speedtest", payload={})
+    mock_aioresponse.post(
+        "https://host:8443/proxy/network/api/s/default/cmd/devmgr/speedtest", payload={}
+    )
     unifi_controller.connectivity.is_unifi_os = True
     await unifi_controller.request(SpeedtestTriggerRequest.create())
     assert unifi_called_with("post", "/api/s/default/cmd/devmgr/speedtest")
@@ -64,7 +66,9 @@ async def test_speedtest_trigger_software_request(
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
     unifi_controller.connectivity.is_unifi_os = False
     await unifi_controller.request(SpeedtestTriggerLegacyRequest.create())
-    assert unifi_called_with("post", "/api/s/default/cmd/devmgr", json={"cmd": "speedtest"})
+    assert unifi_called_with(
+        "post", "/api/s/default/cmd/devmgr", json={"cmd": "speedtest"}
+    )
 
 
 @pytest.mark.asyncio
@@ -73,11 +77,23 @@ async def test_speedtest_handler_fetch_hardware(
 ) -> None:
     """Test hardware speedtest fetch returns most recent."""
     mock_aioresponse.get(
-        "https://host:8443/proxy/network/v2/api/site/default/speedtest", 
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest",
         payload=[
-            {"time": 100, "status": "completed", "download_mbps": 500, "upload_mbps": 100, "latency_ms": 10},
-            {"time": 150, "status": "failed", "download_mbps": 0, "upload_mbps": 0, "latency_ms": 0}
-        ]
+            {
+                "time": 100,
+                "status": "completed",
+                "download_mbps": 500,
+                "upload_mbps": 100,
+                "latency_ms": 10,
+            },
+            {
+                "time": 150,
+                "status": "failed",
+                "download_mbps": 0,
+                "upload_mbps": 0,
+                "latency_ms": 0,
+            },
+        ],
     )
     unifi_controller.connectivity.is_unifi_os = True
     status = await unifi_controller.speedtest.fetch()
@@ -90,11 +106,51 @@ async def test_speedtest_handler_fetch_hardware(
 
 
 @pytest.mark.asyncio
+async def test_speedtest_handler_fetch_hardware_implicit_status(
+    mock_aioresponse: aioresponses, unifi_controller: Controller
+) -> None:
+    """Test hardware speedtest fetch returns Completed when no explicit status is provided."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest",
+        payload=[
+            {
+                "time": 200,
+                "download_mbps": 1000,
+                "upload_mbps": 500,
+                "latency_ms": 20,
+            }
+        ],
+    )
+    unifi_controller.connectivity.is_unifi_os = True
+    status = await unifi_controller.speedtest.fetch()
+    assert status is not None
+    assert status.status == "Completed"
+    assert status.download == 1000
+
+
+@pytest.mark.asyncio
+async def test_speedtest_handler_fetch_hardware_implicit_unknown(
+    mock_aioresponse: aioresponses, unifi_controller: Controller
+) -> None:
+    """Test hardware speedtest fetch returns unknown when no speeds exist either."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest",
+        payload=[{"time": 200}],
+    )
+    unifi_controller.connectivity.is_unifi_os = True
+    status = await unifi_controller.speedtest.fetch()
+    assert status is not None
+    assert status.status == "unknown"
+
+
+@pytest.mark.asyncio
 async def test_speedtest_handler_fetch_hardware_empty(
     mock_aioresponse: aioresponses, unifi_controller: Controller
 ) -> None:
     """Test hardware speedtest fetch empty data."""
-    mock_aioresponse.get("https://host:8443/proxy/network/v2/api/site/default/speedtest", payload=[])
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest", payload=[]
+    )
     unifi_controller.connectivity.is_unifi_os = True
     status = await unifi_controller.speedtest.fetch()
     assert status is None
@@ -106,13 +162,20 @@ async def test_speedtest_handler_fetch_software(
 ) -> None:
     """Test software speedtest fetch returns www subsystem."""
     mock_aioresponse.get(
-        "https://host:8443/api/s/default/stat/health", 
+        "https://host:8443/api/s/default/stat/health",
         payload={
             "data": [
                 {"subsystem": "lan", "status": "ok"},
-                {"subsystem": "www", "speedtest_lastrun": 200, "speedtest_status": "completed", "xput_down": 400, "xput_up": 200, "speedtest_ping": 15}
+                {
+                    "subsystem": "www",
+                    "speedtest_lastrun": 200,
+                    "speedtest_status": "completed",
+                    "xput_down": 400,
+                    "xput_up": 200,
+                    "speedtest_ping": 15,
+                },
             ]
-        }
+        },
     )
     unifi_controller.connectivity.is_unifi_os = False
     status = await unifi_controller.speedtest.fetch()
@@ -129,7 +192,10 @@ async def test_speedtest_handler_fetch_software_empty(
     mock_aioresponse: aioresponses, unifi_controller: Controller
 ) -> None:
     """Test software speedtest fetch missing www subsystem."""
-    mock_aioresponse.get("https://host:8443/api/s/default/stat/health", payload={"data": [{"subsystem": "lan", "status": "ok"}]})
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/health",
+        payload={"data": [{"subsystem": "lan", "status": "ok"}]},
+    )
     unifi_controller.connectivity.is_unifi_os = False
     status = await unifi_controller.speedtest.fetch()
     assert status is None
@@ -142,7 +208,9 @@ async def test_speedtest_handler_trigger_hardware(
     unifi_called_with: Callable[..., bool],
 ) -> None:
     """Test hardware speedtest trigger function."""
-    mock_aioresponse.post("https://host:8443/proxy/network/api/s/default/cmd/devmgr/speedtest", payload={})
+    mock_aioresponse.post(
+        "https://host:8443/proxy/network/api/s/default/cmd/devmgr/speedtest", payload={}
+    )
     unifi_controller.connectivity.is_unifi_os = True
     await unifi_controller.speedtest.trigger()
     assert unifi_called_with("post", "/api/s/default/cmd/devmgr/speedtest")
@@ -158,4 +226,6 @@ async def test_speedtest_handler_trigger_software(
     mock_aioresponse.post("https://host:8443/api/s/default/cmd/devmgr", payload={})
     unifi_controller.connectivity.is_unifi_os = False
     await unifi_controller.speedtest.trigger()
-    assert unifi_called_with("post", "/api/s/default/cmd/devmgr", json={"cmd": "speedtest"})
+    assert unifi_called_with(
+        "post", "/api/s/default/cmd/devmgr", json={"cmd": "speedtest"}
+    )

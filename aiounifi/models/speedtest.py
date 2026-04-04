@@ -78,7 +78,15 @@ class SpeedtestStatus(ApiItem):
     @property
     def status(self) -> str:
         """Status of the speedtest."""
-        return str(self.raw.get("status_text", self.raw.get("status", self.raw.get("speedtest_status", "unknown"))))
+        val = self.raw.get(
+            "status_text", self.raw.get("status", self.raw.get("speedtest_status"))
+        )
+        if val is not None:
+            return str(val)
+        # V2 endpoints don't seem to return a status explicitly for completed historical runs
+        if "download_mbps" in self.raw or "xput_down" in self.raw:
+            return "Completed"
+        return "unknown"
 
     @property
     def download(self) -> float:
@@ -99,4 +107,3 @@ class SpeedtestStatus(ApiItem):
     def timestamp(self) -> int:
         """Timestamp of the test."""
         return int(self.raw.get("time", self.raw.get("speedtest_lastrun", 0)))
-
