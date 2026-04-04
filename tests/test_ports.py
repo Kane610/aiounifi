@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
-from aiounifi.models.port import Port
+from aiounifi.models.port import Port, PortMedia
 
 from .fixtures import SWITCH_16_PORT_POE
 
@@ -101,6 +101,9 @@ async def test_port(unifi_controller):
 
     assert port.ifname is None
     assert port.media == "GE"
+    assert port.media == PortMedia.GIGABIT
+    assert isinstance(port.media, PortMedia)
+    assert isinstance(port.media, str)
     assert port.name == "Port 1"
     assert port.port_idx == 1
     assert port.poe_class == "Unknown"
@@ -123,3 +126,27 @@ async def test_port(unifi_controller):
     unnamed_port = unifi_controller.ports["fc:ec:da:11:22:33_2"]
     # Port name is unset, but we verify that it's correctly substituted.
     assert unnamed_port.name == "Port 2"
+
+
+@pytest.mark.parametrize(
+    ("raw_media", "expected"),
+    [
+        ("GE", PortMedia.GIGABIT),
+        ("FE", PortMedia.FAST),
+        ("SFP", PortMedia.SFP),
+        ("SFP+", PortMedia.SFP_PLUS),
+    ],
+)
+def test_port_media_enum_mapping(raw_media: str, expected: PortMedia) -> None:
+    """Verify known media values map to enum members."""
+    port = Port({"media": raw_media})
+    assert port.media == expected
+    assert str(port.media) == raw_media
+
+
+def test_port_media_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
+    """Verify unknown media values map to UNKNOWN."""
+    port = Port({"media": "future_10GE"})
+    assert port.media == PortMedia.UNKNOWN
+    assert port.media == "unknown"
+    assert "Unsupported port media future_10GE" in caplog.text

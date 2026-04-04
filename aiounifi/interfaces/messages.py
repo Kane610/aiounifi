@@ -54,12 +54,12 @@ class MessageHandler:
 
         return unsubscribe
 
-    def new_data(self, raw_bytes: bytes) -> None:
-        """Convert bytes data into parseable JSON data.."""
+    def new_data(self, raw_string: str) -> None:
+        """Convert string data into parseable JSON data."""
         try:
-            self.handler(orjson.loads(raw_bytes))
+            self.handler(orjson.loads(raw_string))
         except orjson.JSONDecodeError:
-            LOGGER.debug("Bad JSON data '%s'", raw_bytes)
+            LOGGER.debug("Bad JSON data '%s'", raw_string)
 
     def handler(self, raw: dict[str, Any]) -> None:
         """Process data and identify where the message belongs."""
