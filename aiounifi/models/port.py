@@ -28,6 +28,21 @@ class PortMedia(StrEnum):
         return cls.UNKNOWN
 
 
+class PortPoEMode(StrEnum):
+    """Enum for Power over Ethernet modes."""
+
+    AUTO = "auto"
+    OFF = "off"
+    PASSTHROUGH = "passthrough"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> PortPoEMode:
+        """Set default enum member if an unknown PoE mode is provided."""
+        LOGGER.warning("Unsupported port PoE mode %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
 class Port(ApiItem):
     """Represents a network port."""
 
@@ -81,9 +96,9 @@ class Port(ApiItem):
         return self.raw.get("poe_enable")
 
     @property
-    def poe_mode(self) -> str | None:
-        """Is PoE auto, pasv24, passthrough, off or None."""
-        return self.raw.get("poe_mode")
+    def poe_mode(self) -> PortPoEMode:
+        """PoE mode (auto, passthrough, off, or unknown)."""
+        return PortPoEMode(self.raw.get("poe_mode", "unknown"))
 
     @property
     def poe_power(self) -> str | None:

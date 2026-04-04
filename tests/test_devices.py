@@ -12,6 +12,7 @@ import pytest
 
 from aiounifi.controller import Controller
 from aiounifi.models.device import (
+    Device,
     DeviceLocateRequest,
     DevicePowerCyclePortRequest,
     DeviceRestartRequest,
@@ -23,6 +24,7 @@ from aiounifi.models.device import (
     DeviceState,
     DeviceType,
     DeviceUpgradeRequest,
+    WifiBand,
 )
 from aiounifi.models.message import MessageKey
 
@@ -58,6 +60,7 @@ test_data = [
             "overheating": False,
             "port_overrides": [],
             "port_table": ACCESS_POINT_AC_PRO["port_table"],
+            "radio_table": ACCESS_POINT_AC_PRO["radio_table"],
             "speedtest_status": None,
             "state": 1,
             "sys_stats": {
@@ -1190,6 +1193,55 @@ def test_device_type_enum() -> None:
     assert DeviceType.ACCESS_POINT == "uap"
     assert DeviceType.SWITCH == "usw"
     assert str(DeviceType.SECURITY_GATEWAY) == "ugw"
+
+
+@pytest.mark.parametrize(
+    ("raw_band", "expected"),
+    [
+        ("ng", WifiBand.BAND_2_4GHZ),
+        ("na", WifiBand.BAND_5GHZ),
+        ("6e", WifiBand.BAND_6GHZ),
+    ],
+)
+def test_wifi_band_enum_mapping(raw_band: str, expected: WifiBand) -> None:
+    """Verify known WiFi band values map to enum members."""
+    band = WifiBand(raw_band)
+    assert band == expected
+    assert str(band) == raw_band
+
+
+def test_wifi_band_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
+    """Verify unknown WiFi band values map to UNKNOWN."""
+    band = WifiBand("future-band")
+    assert band == WifiBand.UNKNOWN
+    assert band == "unknown"
+    assert "Unsupported WiFi band future-band" in caplog.text
+
+
+def test_device_get_radio_band() -> None:
+    """Verify band lookup on Device radio table."""
+    device = Device(
+        {
+            "radio_table": [
+                {"name": "wifi0", "radio": "ng"},
+                {"name": "wifi1", "radio": "na"},
+                {"name": "wifi2", "radio": "6e"},
+                {"name": "wifi3", "radio": "future-band"},
+            ]
+        }
+    )
+
+    assert device.radio_table == [
+        {"name": "wifi0", "radio": "ng"},
+        {"name": "wifi1", "radio": "na"},
+        {"name": "wifi2", "radio": "6e"},
+        {"name": "wifi3", "radio": "future-band"},
+    ]
+    assert device.get_radio_band("wifi0") == WifiBand.BAND_2_4GHZ
+    assert device.get_radio_band("wifi1") == WifiBand.BAND_5GHZ
+    assert device.get_radio_band("wifi2") == WifiBand.BAND_6GHZ
+    assert device.get_radio_band("wifi3") == WifiBand.UNKNOWN
+    assert device.get_radio_band("wifi99") == WifiBand.UNKNOWN
 
 
 @pytest.mark.parametrize(

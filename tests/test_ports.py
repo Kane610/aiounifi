@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
-from aiounifi.models.port import Port, PortMedia
+from aiounifi.models.port import Port, PortMedia, PortPoEMode
 
 from .fixtures import SWITCH_16_PORT_POE
 
@@ -110,6 +110,9 @@ async def test_port(unifi_controller):
     assert port.poe_caps == 7
     assert port.poe_enable is False
     assert port.poe_mode == "auto"
+    assert port.poe_mode == PortPoEMode.AUTO
+    assert isinstance(port.poe_mode, PortPoEMode)
+    assert isinstance(port.poe_mode, str)
     assert port.poe_power == "0.00"
     assert port.poe_voltage == "0.00"
     assert port.portconf_id == "5a32aa4ee4babd4452422ddd22222"
@@ -150,3 +153,33 @@ def test_port_media_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
     assert port.media == PortMedia.UNKNOWN
     assert port.media == "unknown"
     assert "Unsupported port media future_10GE" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("raw_poe_mode", "expected"),
+    [
+        ("auto", PortPoEMode.AUTO),
+        ("off", PortPoEMode.OFF),
+        ("passthrough", PortPoEMode.PASSTHROUGH),
+    ],
+)
+def test_port_poe_mode_enum_mapping(raw_poe_mode: str, expected: PortPoEMode) -> None:
+    """Verify known PoE mode values map to enum members."""
+    port = Port({"poe_mode": raw_poe_mode})
+    assert port.poe_mode == expected
+    assert str(port.poe_mode) == raw_poe_mode
+
+
+def test_port_poe_mode_missing_fallback() -> None:
+    """Verify missing PoE mode returns UNKNOWN."""
+    port = Port({})
+    assert port.poe_mode == PortPoEMode.UNKNOWN
+    assert port.poe_mode == "unknown"
+
+
+def test_port_poe_mode_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
+    """Verify unknown PoE mode values map to UNKNOWN."""
+    port = Port({"poe_mode": "pasv24"})
+    assert port.poe_mode == PortPoEMode.UNKNOWN
+    assert port.poe_mode == "unknown"
+    assert "Unsupported port PoE mode pasv24" in caplog.text
