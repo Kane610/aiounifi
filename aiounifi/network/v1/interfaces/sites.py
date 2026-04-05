@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from ..models.site import Site, SitesRequest
+from ..models.site import Site, SiteData, SitesRequest
 
 if TYPE_CHECKING:
     from ..client import Client
@@ -32,4 +32,4 @@ class Sites:
         """List one page of local sites."""
         request = SitesRequest.create(offset, limit, filter_value)
         data = await self.client.request(request)
-        return [Site(item) for item in data.get("data", [])]
+        return [Site(cast(SiteData, item)) for item in data.get("data", [])]

@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TypedDict
 
 from .api import ApiRequest
+
+
+class SiteData(TypedDict):
+    """Typed payload for one site returned by the network API."""
+
+    id: str
+    internalReference: str
+    name: str
 
 
 @dataclass
@@ -32,21 +40,23 @@ class SitesRequest(ApiRequest):
 class Site:
     """Represent one site from network API data."""
 
-    def __init__(self, raw: dict[str, Any]) -> None:
+    raw: SiteData
+
+    def __init__(self, raw: SiteData) -> None:
         """Initialize site model."""
         self.raw = raw
 
     @property
     def site_id(self) -> str:
         """Site identifier used for further API calls."""
-        return str(self.raw.get("id", ""))
+        return self.raw["id"]
 
     @property
     def internal_reference(self) -> str:
         """Internal site reference returned by API."""
-        return str(self.raw.get("internalReference", ""))
+        return self.raw["internalReference"]
 
     @property
     def name(self) -> str:
         """Display name of the site."""
-        return str(self.raw.get("name", ""))
+        return self.raw["name"]

@@ -4,23 +4,23 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 import orjson
 
 from ....errors import ResponseError
 
 
-class ApiResponse(TypedDict, total=False):
+class ApiResponse(TypedDict):
     """Network API generic envelope."""
 
+    data: list[dict[str, Any]]
     offset: int
     limit: int
     count: int
     totalCount: int
-    data: list[dict[str, Any]]
-    traceId: str
-    httpStatusCode: int
+    traceId: NotRequired[str]
+    httpStatusCode: NotRequired[int]
 
 
 @dataclass
@@ -36,6 +36,11 @@ class ApiRequest:
         data: dict[str, Any] = orjson.loads(raw)
         if not isinstance(data, dict):
             raise ResponseError("Network API response is not an object")
-        if "data" not in data:
-            raise ResponseError("Network API response missing data field")
+        required_fields = ("offset", "limit", "count", "totalCount", "data")
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            missing = ", ".join(missing_fields)
+            raise ResponseError(
+                f"Network API response missing required field(s): {missing}"
+            )
         return cast(ApiResponse, data)

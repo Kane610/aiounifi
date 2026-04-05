@@ -97,13 +97,37 @@ async def test_network_sites_unauthorized(mock_aioresponse, network_client) -> N
 
 
 async def test_network_sites_missing_data(mock_aioresponse, network_client) -> None:
-    """Verify missing data envelope is rejected."""
+    """Verify missing response envelope fields are rejected."""
     mock_aioresponse.get(
         re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
-        payload={"offset": 0, "limit": 1},
+        payload={"offset": 0, "limit": 1, "count": 1, "totalCount": 1},
     )
 
     with pytest.raises(ResponseError):
+        await network_client.sites.list()
+
+
+async def test_network_sites_missing_required_metadata(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify missing required metadata fields are rejected."""
+    mock_aioresponse.get(
+        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        payload={
+            "limit": 25,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "id": "site-a",
+                    "internalReference": "ref-a",
+                    "name": "Alpha",
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(ResponseError, match="offset"):
         await network_client.sites.list()
 
 

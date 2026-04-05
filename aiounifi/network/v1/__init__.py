@@ -2,6 +2,6 @@
 
 from .client import Client
 from .interfaces import Sites
-from .models import Site, SitesRequest
+from .models import Site, SiteData, SitesRequest
 
-__all__ = ["Client", "Site", "Sites", "SitesRequest"]
+__all__ = ["Client", "Site", "SiteData", "Sites", "SitesRequest"]
