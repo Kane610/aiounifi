@@ -2,3 +2,4 @@
 
 from .controller import Controller  # noqa: F401
 from .errors import *  # noqa: F403
+from .official import OfficialClient  # noqa: F401

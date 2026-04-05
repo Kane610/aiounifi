@@ -20,6 +20,8 @@ class Configuration:
     site: str = "default"
     ssl_context: SSLContext | Literal[False] = False
     totp_secret: str | None = None
+    official_api_key: str | None = None
+    official_api_url: str = "https://api.ui.com"
 
     @property
     def url(self) -> str:
