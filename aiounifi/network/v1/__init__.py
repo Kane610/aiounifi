@@ -2,6 +2,13 @@
 
 from .client import Client
 from .interfaces import Sites
-from .models import Site, SiteData, SitesRequest
+from .models import ApiErrorResponse, Site, SiteData, SitesRequest
 
-__all__ = ["Client", "Site", "SiteData", "Sites", "SitesRequest"]
+__all__ = [
+    "ApiErrorResponse",
+    "Client",
+    "Site",
+    "SiteData",
+    "Sites",
+    "SitesRequest",
+]

@@ -1,5 +1,6 @@
 """Test Network API site information endpoint."""
 
+from collections.abc import AsyncGenerator
 import re
 
 import aiohttp
@@ -12,7 +13,7 @@ from aiounifi.models.configuration import Configuration
 
 
 @pytest.fixture(name="network_client")
-async def network_client_fixture() -> NetworkClient:
+async def network_client_fixture() -> AsyncGenerator[NetworkClient]:
     """Build network client for tests."""
     session = aiohttp.ClientSession()
     config = Configuration(
@@ -93,6 +94,72 @@ async def test_network_sites_unauthorized(mock_aioresponse, network_client) -> N
     )
 
     with pytest.raises(Unauthorized):
+        await network_client.sites.list()
+
+
+async def test_network_sites_structured_unauthorized_message(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify structured API error fields are included in raised messages."""
+    mock_aioresponse.get(
+        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        status=401,
+        payload={
+            "statusCode": 401,
+            "statusName": "UNAUTHORIZED",
+            "code": "api.authentication.missing-credentials",
+            "message": "Missing credentials",
+            "timestamp": "2024-11-27T08:13:46.966Z",
+            "requestPath": "/integration/v1/sites/123",
+            "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        },
+    )
+
+    with pytest.raises(
+        Unauthorized, match="api.authentication.missing-credentials"
+    ) as err:
+        await network_client.sites.list()
+
+    assert getattr(err.value, "status_code") == 401
+    assert getattr(err.value, "status_name") == "UNAUTHORIZED"
+    assert getattr(err.value, "code") == "api.authentication.missing-credentials"
+    assert getattr(err.value, "detail") == "Missing credentials"
+    assert getattr(err.value, "request_path") == "/integration/v1/sites/123"
+    assert getattr(err.value, "request_id") == "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+
+async def test_network_sites_semantic_error_overrides_http_status(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify structured error semantics can select a more specific exception."""
+    mock_aioresponse.get(
+        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        status=400,
+        payload={
+            "statusCode": 400,
+            "statusName": "UNAUTHORIZED",
+            "code": "api.authentication.missing-credentials",
+            "message": "Missing credentials",
+            "timestamp": "2024-11-27T08:13:46.966Z",
+            "requestPath": "/integration/v1/sites/123",
+            "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        },
+    )
+
+    with pytest.raises(Unauthorized):
+        await network_client.sites.list()
+
+
+async def test_network_sites_unknown_error_status(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify non-standard HTTP statuses still raise a normal aiounifi error."""
+    mock_aioresponse.get(
+        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        status=499,
+    )
+
+    with pytest.raises(ResponseError, match="received 499"):
         await network_client.sites.list()
 
 

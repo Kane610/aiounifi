@@ -23,6 +23,18 @@ class ApiResponse(TypedDict):
     httpStatusCode: NotRequired[int]
 
 
+class ApiErrorResponse(TypedDict):
+    """Network API standard error envelope."""
+
+    statusCode: int
+    statusName: str
+    code: str
+    message: str
+    timestamp: str
+    requestPath: str
+    requestId: str
+
+
 @dataclass
 class ApiRequest:
     """Data class with required properties for network API requests."""
