@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
 from aiohttp import client_exceptions
+from yarl import URL
 import orjson
 import pyotp
 
@@ -289,7 +290,7 @@ class Connectivity:
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
         cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
-        self.config.session.cookie_jar.update_cookies({cookie_name: cookie_val}, url)
+        self.config.session.cookie_jar.update_cookies({cookie_name: cookie_val}, URL(url))
 
         token = pyotp.TOTP(totp_secret).now()
         return await self._request("post", url, json={**auth, "token": token})
