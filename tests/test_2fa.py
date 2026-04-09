@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 
 import aiohttp
 from aioresponses import aioresponses
-from yarl import URL
 import pytest
+from yarl import URL
 
 from aiounifi.controller import Controller
 from aiounifi.errors import RequestError, TwoFaTokenRequired, Unauthorized
