@@ -613,6 +613,22 @@ class DeviceType(enum.StrEnum):
         return DeviceType.UNKNOWN
 
 
+class WifiBand(enum.StrEnum):
+    """Enum for WiFi bands."""
+
+    BAND_2_4GHZ = "ng"  # 802.11n on 2.4GHz
+    BAND_5GHZ = "na"  # 802.11a/n/ac/ax on 5GHz
+    BAND_6GHZ = "6e"  # 802.11ax on 6GHz
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> WifiBand:
+        """Set default enum member if an unknown band is provided."""
+        LOGGER.warning("Unsupported WiFi band %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
 class DeviceState(enum.IntEnum):
     """Enum for device states."""
 
@@ -1095,6 +1111,26 @@ class Device(ApiItem):
     def port_table(self) -> list[TypedDevicePortTable]:
         """List of ports and data."""
         return self.raw.get("port_table", [])
+
+    @property
+    def radio_table(self) -> list[TypedDeviceRadioTable]:
+        """List of radios with band information."""
+        return self.raw.get("radio_table", [])
+
+    def get_radio_band(self, radio_name: str) -> WifiBand:
+        """Get the WiFi band for a radio by name.
+
+        Args:
+            radio_name: Name of the radio (e.g., 'wifi0', 'wifi1', 'wifi2')
+
+        Returns:
+            WifiBand enum member for the radio, or UNKNOWN if not found.
+
+        """
+        for radio in self.radio_table:
+            if radio.get("name") == radio_name:
+                return WifiBand(radio.get("radio", "unknown"))
+        return WifiBand.UNKNOWN
 
     @property
     def speedtest_status(self) -> TypedDeviceSpeedtestStatus | None:

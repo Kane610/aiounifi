@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import aiohttp
 from aioresponses import aioresponses
 import pytest
+from yarl import URL
 
 from aiounifi.controller import Controller
 from aiounifi.errors import RequestError, TwoFaTokenRequired, Unauthorized
@@ -335,7 +336,9 @@ class TestSso2fa:
             wraps=session.cookie_jar.update_cookies,
         ) as mock_update:
             await unifi_controller_2fa.connectivity.login()
-            mock_update.assert_called_once_with({"UBIC_2FA": "abc123def456"})
+            mock_update.assert_called_once_with(
+                {"UBIC_2FA": "abc123def456"}, URL("https://host:8443/api/auth/login")
+            )
 
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa

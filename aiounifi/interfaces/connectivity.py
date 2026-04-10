@@ -12,6 +12,7 @@ import aiohttp
 from aiohttp import client_exceptions
 import orjson
 import pyotp
+from yarl import URL
 
 from ..errors import (
     AiounifiException,
@@ -289,7 +290,9 @@ class Connectivity:
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
         cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
-        self.config.session.cookie_jar.update_cookies({cookie_name: cookie_val})
+        self.config.session.cookie_jar.update_cookies(
+            {cookie_name: cookie_val}, URL(url)
+        )
 
         token = pyotp.TOTP(totp_secret).now()
         return await self._request("post", url, json={**auth, "token": token})
