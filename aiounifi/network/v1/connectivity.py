@@ -94,6 +94,12 @@ class Connectivity:
             "X-API-Key": self.config.network_api_key,
         }
 
+        # Prepare request body if data is present
+        json_data = None
+        if api_request.data:
+            json_data = orjson.dumps(api_request.data)
+            headers["Content-Type"] = "application/json"
+
         LOGGER.debug(
             "sending network request %s %s params=%s", api_request.method, url, params
         )
@@ -103,6 +109,7 @@ class Connectivity:
                 api_request.method,
                 url,
                 params=params,
+                data=json_data,
                 ssl=self.config.ssl_context,
                 headers=headers,
             ) as response:

@@ -42,6 +42,7 @@ class ApiRequest:
     method: str
     path: str
     params: Mapping[str, str | int] | None = None
+    data: Mapping[str, Any] | None = None
 
     def decode(self, raw: bytes) -> ApiResponse:
         """Decode network API envelope."""

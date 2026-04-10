@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ...models.configuration import Configuration
 from .connectivity import Connectivity
+from .interfaces.clients import Clients
 from .interfaces.sites import Sites
 
 if TYPE_CHECKING:
@@ -18,6 +19,7 @@ class Client:
     def __init__(self, config: Configuration) -> None:
         """Initialize Network API client interfaces."""
         self.connectivity = Connectivity(config)
+        self.clients = Clients(self)
         self.sites = Sites(self)
 
     async def request(self, api_request: ApiRequest) -> ApiResponse:
