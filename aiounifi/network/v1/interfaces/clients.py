@@ -14,7 +14,7 @@ from ..models.client import (
 )
 
 if TYPE_CHECKING:
-    from ..client import Client as ApiClient
+    from ..api_client import ApiClient
 
 ClientList = list[Client]
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast
 from ..models.site import Site, SiteData, SitesRequest
 
 if TYPE_CHECKING:
-    from ..client import Client
+    from ..api_client import ApiClient
 
 SiteList = list[Site]
 
@@ -15,7 +15,7 @@ SiteList = list[Site]
 class Sites:
     """Read site information from the Network API."""
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: ApiClient) -> None:
         """Initialize sites interface."""
         self.client = client
 

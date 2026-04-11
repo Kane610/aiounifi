@@ -1,6 +1,6 @@
 """Versioned UniFi Network API client package."""
 
 from . import v1
-from .v1 import Client as NetworkClient
+from .v1 import ApiClient
 
-__all__ = ["NetworkClient", "v1"]
+__all__ = ["ApiClient", "v1"]

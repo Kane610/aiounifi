@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .models.api import ApiRequest, ApiResponse
 
 
-class Client:
+class ApiClient:
     """Client for the UniFi Network API."""
 
     def __init__(self, config: Configuration) -> None:

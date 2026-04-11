@@ -7,13 +7,13 @@ import aiohttp
 import pytest
 from yarl import URL
 
-from aiounifi import NetworkClient
+from aiounifi import ApiClient
 from aiounifi.errors import Unauthorized
 from aiounifi.models.configuration import Configuration
 
 
 @pytest.fixture(name="network_client")
-async def network_client_fixture() -> AsyncGenerator[NetworkClient]:
+async def network_client_fixture() -> AsyncGenerator[ApiClient]:
     """Build network client for tests."""
     session = aiohttp.ClientSession()
     config = Configuration(
@@ -23,7 +23,7 @@ async def network_client_fixture() -> AsyncGenerator[NetworkClient]:
         password="pass",
         network_api_key="secret-key",
     )
-    client = NetworkClient(config)
+    client = ApiClient(config)
     yield client
     await session.close()
 
