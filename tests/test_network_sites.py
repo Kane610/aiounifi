@@ -10,6 +10,8 @@ from yarl import URL
 from aiounifi import ApiClient
 from aiounifi.errors import ResponseError, Unauthorized
 from aiounifi.models.configuration import Configuration
+from aiounifi.network.v1.models.api import ApiRequest
+from aiounifi.network.v1.models.site import Site
 
 
 @pytest.fixture(name="network_client")
@@ -223,3 +225,44 @@ async def test_network_sites_list_uses_default_page(
 
     assert len(sites) == 1
     assert sites[0].name == "Default"
+
+
+def test_network_sites_resolve_site_uuid_returns_none_without_sites(
+    network_client,
+) -> None:
+    """Verify site UUID resolution returns None when no site list is provided."""
+    assert network_client.sites.resolve_site_uuid("default") is None
+
+
+def test_network_sites_resolve_site_uuid_prefers_internal_reference(
+    network_client,
+) -> None:
+    """Verify site UUID resolution prefers internal_reference over name."""
+    sites = [
+        Site({"id": "site-a", "internalReference": "default", "name": "Alpha"}),
+        Site({"id": "site-b", "internalReference": "other", "name": "default"}),
+    ]
+
+    assert network_client.sites.resolve_site_uuid("default", sites) == "site-a"
+
+
+def test_network_sites_resolve_site_uuid_matches_name_and_id(
+    network_client,
+) -> None:
+    """Verify site UUID resolution falls back to matching by name and site ID."""
+    sites = [
+        Site({"id": "site-a", "internalReference": "ref-a", "name": "Alpha"}),
+        Site({"id": "site-b", "internalReference": "ref-b", "name": "Beta"}),
+    ]
+
+    assert network_client.sites.resolve_site_uuid("Beta", sites) == "site-b"
+    assert network_client.sites.resolve_site_uuid("site-a", sites) == "site-a"
+    assert network_client.sites.resolve_site_uuid("missing", sites) is None
+
+
+def test_network_api_request_decode_rejects_non_object() -> None:
+    """Verify network API decode rejects JSON payloads that are not objects."""
+    request = ApiRequest(method="get", path="/v1/sites")
+
+    with pytest.raises(ResponseError, match="not an object"):
+        request.decode(b"[]")
