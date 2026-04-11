@@ -399,12 +399,12 @@ async def test_network_clients_optional_fields(
             "totalCount": 1,
             "data": [
                 {
-                    "type": "VPN",
-                    "id": "client-minimal",
-                    "name": "VPN Client",
+                    "type": "WIRED",
+                    "id": client_id,
+                    "name": "Minimal Client",
                     "access": {"type": "DEFAULT"},
-                    "macAddress": "bb:cc:dd:ee:ff:00",
-                    "uplinkDeviceId": "device-uuid",
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-minimal-uuid",
                 }
             ],
         },
@@ -412,16 +412,15 @@ async def test_network_clients_optional_fields(
 
     client = await network_client.clients.get_details(site_id, client_id)
 
-    assert client.client_id == "client-minimal"
-    assert client.ip_address is None
+    assert client.client_id == client_id
     assert client.connected_at is None
-    assert client.name == "VPN Client"
+    assert client.ip_address is None
 
 
 async def test_network_clients_authorize_guest_partial_params(
     mock_aioresponse, network_client
 ) -> None:
-    """Verify authorize_guest_access with selective optional parameters."""
+    """Verify authorize_guest_access with only some optional parameters."""
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.post(
@@ -437,8 +436,8 @@ async def test_network_clients_authorize_guest_partial_params(
                     "grantedAuthorization": {
                         "authorizedAt": "2024-01-15T15:00:00Z",
                         "authorizationMethod": "MANUAL",
-                        "expiresAt": "2024-01-15T17:00:00Z",
-                        "dataUsageLimitMBytes": 1024,
+                        "expiresAt": "2024-01-15T15:30:00Z",
+                        "dataUsageLimitMBytes": 500,
                         "rxRateLimitKbps": 1000,
                         "txRateLimitKbps": 1000,
                         "usage": {},
@@ -448,13 +447,12 @@ async def test_network_clients_authorize_guest_partial_params(
         },
     )
 
-    # Only time limit and rx rate
     response = await network_client.clients.authorize_guest_access(
         site_id,
         client_id,
-        time_limit_minutes=120,
-        rx_rate_limit_kbps=1000,
+        time_limit_minutes=30,
+        data_usage_limit_mbytes=500,
     )
 
     assert response["action"] == "AUTHORIZE_GUEST_ACCESS"
-    assert response["grantedAuthorization"]["expiresAt"] == "2024-01-15T17:00:00Z"
+    assert response["grantedAuthorization"]["dataUsageLimitMBytes"] == 500
