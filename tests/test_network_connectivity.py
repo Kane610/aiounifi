@@ -1,0 +1,233 @@
+"""Unit tests for Network API connectivity helpers."""
+
+from collections.abc import AsyncGenerator
+import logging
+
+import aiohttp
+import pytest
+
+from aiounifi.errors import Forbidden, RequestError, ResponseError, Unauthorized
+from aiounifi.models.configuration import Configuration
+from aiounifi.network.v1.connectivity import Connectivity
+from aiounifi.network.v1.models.api import ApiRequest
+
+
+@pytest.fixture(name="network_connectivity")
+async def network_connectivity_fixture() -> AsyncGenerator[Connectivity]:
+    """Build connectivity helper for direct unit tests."""
+    session = aiohttp.ClientSession()
+    config = Configuration(
+        session,
+        "host",
+        username="user",
+        password="pass",
+        api_key="secret-key",
+    )
+    yield Connectivity(config)
+    await session.close()
+
+
+async def test_network_request_requires_api_key() -> None:
+    """Verify requests fail fast when no API key is configured."""
+    session = aiohttp.ClientSession()
+    config = Configuration(
+        session,
+        "host",
+        username="user",
+        password="pass",
+        api_key=None,
+    )
+    connectivity = Connectivity(config)
+
+    with pytest.raises(RequestError, match="api_key is required"):
+        await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+    await session.close()
+
+
+async def test_network_request_rejects_blank_api_key() -> None:
+    """Verify requests fail fast when the API key is blank after stripping."""
+    session = aiohttp.ClientSession()
+    config = Configuration(
+        session,
+        "host",
+        username="user",
+        password="pass",
+        api_key="   ",
+    )
+    connectivity = Connectivity(config)
+
+    with pytest.raises(RequestError, match="api_key must not be blank"):
+        await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+    await session.close()
+
+
+async def test_network_request_raises_structured_exception(
+    mock_aioresponse,
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify failed responses are mapped through structured API errors."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/integration/v1/sites",
+        status=401,
+        body=(
+            b'{"statusCode":401,"statusName":"UNAUTHORIZED",'
+            b'"code":"api.authentication.missing-credentials",'
+            b'"message":"Missing credentials",'
+            b'"timestamp":"2024-11-27T08:13:46.966Z",'
+            b'"requestPath":"/integration/v1/sites",'
+            b'"requestId":"3fa85f64-5717-4562-b3fc-2c963f66afa6"}'
+        ),
+    )
+
+    with pytest.raises(Unauthorized, match="Missing credentials"):
+        await network_connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+
+async def test_network_request_logs_non_json_success_response(
+    mock_aioresponse,
+    caplog: pytest.LogCaptureFixture,
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify non-JSON success bodies are logged and wrapped consistently."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/integration/v1/sites",
+        status=200,
+        body=b"<html>ok</html>",
+    )
+
+    with (
+        caplog.at_level(logging.DEBUG, logger="aiounifi.network.v1.connectivity"),
+        pytest.raises(ResponseError, match="returned a non-JSON response"),
+    ):
+        await network_connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+    assert "non-JSON response body" in caplog.text
+
+
+async def test_network_request_wraps_client_errors(
+    mock_aioresponse,
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify transport client errors are wrapped as RequestError."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/integration/v1/sites",
+        exception=aiohttp.ClientConnectionError("boom"),
+    )
+
+    with pytest.raises(RequestError, match="Error requesting data"):
+        await network_connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+
+def test_network_build_url_variants(network_connectivity: Connectivity) -> None:
+    """Verify URL builder handles v1, integration, and passthrough paths."""
+    assert (
+        network_connectivity._build_url("/v1/sites")
+        == "https://host:8443/proxy/network/integration/v1/sites"
+    )
+    assert (
+        network_connectivity._build_url("/integration/v1/sites")
+        == "https://host:8443/proxy/network/integration/v1/sites"
+    )
+    assert (
+        network_connectivity._build_url("custom/path")
+        == "https://host:8443/proxy/network/custom/path"
+    )
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        (b"not-json", None),
+        (b"[]", None),
+        (
+            b'{"statusCode":401,"statusName":"UNAUTHORIZED"}',
+            None,
+        ),
+    ],
+)
+def test_network_parse_error_response_invalid_payloads(
+    network_connectivity: Connectivity,
+    body: bytes,
+    expected: None,
+) -> None:
+    """Verify malformed structured error payloads are ignored."""
+    assert network_connectivity._parse_error_response(body) is expected
+
+
+def test_network_build_exception_parses_structured_body(
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify structured error details are attached even when error=None is passed."""
+    body = (
+        b'{"statusCode":401,"statusName":"UNAUTHORIZED",'
+        b'"code":"api.authentication.missing-credentials",'
+        b'"message":"Missing credentials",'
+        b'"timestamp":"2024-11-27T08:13:46.966Z",'
+        b'"requestPath":"/integration/v1/sites/123",'
+        b'"requestId":"3fa85f64-5717-4562-b3fc-2c963f66afa6"}'
+    )
+
+    error = network_connectivity._build_exception(
+        Unauthorized,
+        "https://host:8443/proxy/network/integration/v1/sites",
+        401,
+        body,
+        None,
+    )
+
+    assert getattr(error, "status_code") == 401
+    assert getattr(error, "status_name") == "UNAUTHORIZED"
+    assert getattr(error, "code") == "api.authentication.missing-credentials"
+    assert getattr(error, "detail") == "Missing credentials"
+    assert getattr(error, "request_path") == "/integration/v1/sites/123"
+    assert getattr(error, "request_id") == "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+
+def test_network_error_message_falls_back_to_default(
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify unstructured error bodies use the default message."""
+    url = "https://host:8443/proxy/network/integration/v1/sites"
+    assert network_connectivity._error_message(url, 500, b"not-json") == (
+        f"Call {url} received 500"
+    )
+
+
+def test_network_exception_type_resolution_order(
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify exception resolution uses code, then status name, then HTTP status."""
+    assert (
+        network_connectivity._exception_type(
+            400,
+            {
+                "statusCode": 400,
+                "statusName": "UNAUTHORIZED",
+                "code": "api.authentication.missing-credentials",
+                "message": "Missing credentials",
+                "timestamp": "2024-11-27T08:13:46.966Z",
+                "requestPath": "/integration/v1/sites/123",
+                "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            },
+        )
+        is Unauthorized
+    )
+    assert (
+        network_connectivity._exception_type(
+            400,
+            {
+                "statusCode": 400,
+                "statusName": "FORBIDDEN",
+                "code": "unknown-code",
+                "message": "Forbidden",
+                "timestamp": "2024-11-27T08:13:46.966Z",
+                "requestPath": "/integration/v1/sites/123",
+                "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            },
+        )
+        is Forbidden
+    )
+    assert network_connectivity._exception_type(401, None) is Unauthorized
+    assert network_connectivity._exception_type(418, None) is ResponseError
