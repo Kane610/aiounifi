@@ -31,7 +31,7 @@ async def network_client_fixture() -> AsyncGenerator[ApiClient]:
 async def test_network_sites_list_success(mock_aioresponse, network_client) -> None:
     """Verify network sites list returns parsed site models."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         payload={
             "offset": 0,
             "limit": 2,
@@ -62,13 +62,13 @@ async def test_network_sites_list_success(mock_aioresponse, network_client) -> N
     request = next(iter(mock_aioresponse.requests))
     assert request[0] == "get"
     assert isinstance(request[1], URL)
-    assert request[1].path == "/v1/sites"
+    assert request[1].path == "/proxy/network/integration/v1/sites"
 
 
 async def test_network_sites_list_filter(mock_aioresponse, network_client) -> None:
     """Verify filter parameter is accepted for one page request."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         payload={
             "offset": 10,
             "limit": 1,
@@ -89,7 +89,7 @@ async def test_network_sites_list_filter(mock_aioresponse, network_client) -> No
 async def test_network_sites_unauthorized(mock_aioresponse, network_client) -> None:
     """Verify unauthorized response is mapped to Unauthorized."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         status=401,
     )
 
@@ -102,7 +102,7 @@ async def test_network_sites_structured_unauthorized_message(
 ) -> None:
     """Verify structured API error fields are included in raised messages."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         status=401,
         payload={
             "statusCode": 401,
@@ -133,7 +133,7 @@ async def test_network_sites_semantic_error_overrides_http_status(
 ) -> None:
     """Verify structured error semantics can select a more specific exception."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         status=400,
         payload={
             "statusCode": 400,
@@ -155,7 +155,7 @@ async def test_network_sites_unknown_error_status(
 ) -> None:
     """Verify non-standard HTTP statuses still raise a normal aiounifi error."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         status=499,
     )
 
@@ -166,7 +166,7 @@ async def test_network_sites_unknown_error_status(
 async def test_network_sites_missing_data(mock_aioresponse, network_client) -> None:
     """Verify missing response envelope fields are rejected."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         payload={"offset": 0, "limit": 1, "count": 1, "totalCount": 1},
     )
 
@@ -179,7 +179,7 @@ async def test_network_sites_missing_required_metadata(
 ) -> None:
     """Verify missing required metadata fields are rejected."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         payload={
             "limit": 25,
             "count": 1,
@@ -203,7 +203,7 @@ async def test_network_sites_list_uses_default_page(
 ) -> None:
     """Verify list delegates to the default first page call."""
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites(?:\?.*)?$"),
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
         payload={
             "offset": 0,
             "limit": 25,

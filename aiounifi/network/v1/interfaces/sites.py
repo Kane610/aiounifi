@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, cast
 
 from ..models.site import Site, SiteData, SitesRequest
@@ -33,3 +34,22 @@ class Sites:
         request = SitesRequest.create(offset, limit, filter_value)
         data = await self.client.request(request)
         return [Site(cast(SiteData, item)) for item in data.get("data", [])]
+
+    def resolve_site_uuid(
+        self,
+        site: str,
+        sites: Sequence[Site] | None = None,
+    ) -> str | None:
+        """Resolve Network API site UUID from network site data."""
+        if sites is None:
+            return None
+
+        for network_site in sites:
+            if network_site.internal_reference == site:
+                return network_site.site_id
+
+        for network_site in sites:
+            if site in (network_site.name, network_site.site_id):
+                return network_site.site_id
+
+        return None

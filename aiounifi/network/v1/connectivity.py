@@ -20,6 +20,7 @@ from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, cast
 
+import aiohttp
 from aiohttp import client_exceptions
 import orjson
 
@@ -87,11 +88,15 @@ class Connectivity:
         if not self.config.network_api_key:
             raise RequestError("network_api_key is required for network API requests")
 
+        api_key = self.config.network_api_key.strip()
+        if not api_key:
+            raise RequestError("network_api_key must not be blank")
+
         url = self._build_url(api_request.path)
         params = api_request.params
         headers = {
             "Accept": "application/json",
-            "X-API-Key": self.config.network_api_key,
+            "X-API-KEY": api_key,
         }
 
         # Prepare request body if data is present
@@ -105,17 +110,27 @@ class Connectivity:
         )
 
         try:
-            async with self.config.session.request(
-                api_request.method,
-                url,
-                params=params,
-                data=json_data,
-                ssl=self.config.ssl_context,
-                headers=headers,
-            ) as response:
+            # Use a cookie-less session so API-key auth is not affected by
+            # controller login cookies from the legacy client flow.
+            async with (
+                aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar()) as session,
+                session.request(
+                    api_request.method,
+                    url,
+                    params=params,
+                    data=json_data,
+                    ssl=self.config.ssl_context,
+                    headers=headers,
+                ) as response,
+            ):
                 body = await response.read()
         except client_exceptions.ClientError as err:
             raise RequestError(f"Error requesting data from {url}: {err}") from None
+
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            body_text = body.decode("utf-8", errors="replace")
+            preview = body_text if len(body_text) <= 4000 else f"{body_text[:4000]}..."
+            LOGGER.debug("data (from %s) %s", url, preview)
 
         if response.status >= HTTPStatus.BAD_REQUEST:
             error = self._parse_error_response(body)
@@ -124,11 +139,26 @@ class Connectivity:
                 exception_type, url, response.status, body, error
             )
 
-        return api_request.decode(body)
+        try:
+            return api_request.decode(body)
+        except orjson.JSONDecodeError as err:
+            if LOGGER.isEnabledFor(logging.DEBUG):
+                body_preview = body.decode("utf-8", errors="replace")
+                LOGGER.debug("non-JSON response body from %s: %s", url, body_preview)
+            raise ResponseError(
+                f"Call {url} returned a non-JSON response for {api_request.path}"
+            ) from err
 
     def _build_url(self, path: str) -> str:
-        """Build direct Network API URL for a path."""
-        return f"{self.config.network_api_url.rstrip('/')}{path}"
+        """Build local controller integration URL for a network API path."""
+        normalized_path = path if path.startswith("/") else f"/{path}"
+        if normalized_path.startswith("/integration/"):
+            integration_path = normalized_path
+        elif normalized_path.startswith("/v1/"):
+            integration_path = f"/integration{normalized_path}"
+        else:
+            integration_path = normalized_path
+        return f"{self.config.url.rstrip('/')}/proxy/network{integration_path}"
 
     def _build_exception(
         self,

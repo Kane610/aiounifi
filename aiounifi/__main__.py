@@ -23,6 +23,7 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | None = None,
+    network_api_key: str | None = None,
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -34,6 +35,7 @@ async def unifi_controller(
             port=port,
             site=site,
             ssl_context=ssl_context if ssl_context is not None else False,
+            network_api_key=network_api_key,
         )
     )
 
@@ -64,6 +66,7 @@ async def main(
     port: int,
     site: str,
     ssl_context: SSLContext | None = None,
+    network_api_key: str | None = None,
 ) -> None:
     """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
@@ -78,6 +81,7 @@ async def main(
         site=site,
         session=websession,
         ssl_context=ssl_context,
+        network_api_key=network_api_key,
     )
 
     if not controller:
@@ -103,6 +107,30 @@ async def main(
         return_exceptions=True,
     )
 
+    if network_api_key:
+        try:
+            if not (site_uuid := controller.sites.resolve_site_uuid(site)):
+                network_sites = await controller.network.sites.list()
+                LOGGER.info("Network API sites: %s", [s.name for s in network_sites])
+                site_uuid = controller.network.sites.resolve_site_uuid(
+                    site, network_sites
+                )
+
+            if site_uuid:
+                network_clients = await controller.network.clients.list(site_uuid)
+                LOGGER.info(
+                    "Network API clients (%s): %s",
+                    site_uuid,
+                    [c.client_id for c in network_clients],
+                )
+            else:
+                LOGGER.warning(
+                    "No Network API site matched --site=%s; skipping Network API clients",
+                    site,
+                )
+        except aiounifi.AiounifiException as err:
+            LOGGER.warning("Network API request failed: %s", err)
+
     ws_task = asyncio.create_task(controller.start_websocket())
 
     try:
@@ -124,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("password", type=str)
     parser.add_argument("-p", "--port", type=int, default=8443)
     parser.add_argument("-s", "--site", type=str, default="default")
+    parser.add_argument("-k", "--network-api-key", type=str, default=None)
     parser.add_argument("-D", "--debug", action="store_true")
     args = parser.parse_args()
 
@@ -149,6 +178,7 @@ if __name__ == "__main__":
                 password=args.password,
                 port=args.port,
                 site=args.site,
+                network_api_key=args.network_api_key,
             )
         )
     except KeyboardInterrupt:

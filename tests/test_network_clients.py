@@ -32,7 +32,9 @@ async def test_network_clients_list_success(mock_aioresponse, network_client) ->
     """Verify network clients list returns parsed client models."""
     site_id = "site-uuid"
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites/site-uuid/clients(?:\?.*)?$"),
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
         payload={
             "offset": 0,
             "limit": 2,
@@ -85,7 +87,9 @@ async def test_network_clients_list_default_pagination(
     """Verify clients list uses default pagination parameters."""
     site_id = "site-uuid"
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites/site-uuid/clients(?:\?.*)?$"),
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
         payload={
             "offset": 0,
             "limit": 25,
@@ -110,14 +114,16 @@ async def test_network_clients_list_default_pagination(
     request = next(iter(mock_aioresponse.requests))
     assert request[0] == "get"
     assert isinstance(request[1], URL)
-    assert request[1].path == f"/v1/sites/{site_id}/clients"
+    assert request[1].path == f"/proxy/network/integration/v1/sites/{site_id}/clients"
 
 
 async def test_network_clients_list_filter(mock_aioresponse, network_client) -> None:
     """Verify filter parameter is accepted for clients list."""
     site_id = "site-uuid"
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites/site-uuid/clients(?:\?.*)?$"),
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
         payload={
             "offset": 0,
             "limit": 25,
@@ -151,7 +157,7 @@ async def test_network_clients_get_details_success(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.get(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}",
         payload={
             "offset": 0,
             "limit": 1,
@@ -190,7 +196,7 @@ async def test_network_clients_authorize_guest_access_minimal(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.post(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}/actions",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
         payload={
             "offset": 0,
             "limit": 1,
@@ -227,7 +233,7 @@ async def test_network_clients_authorize_guest_access_full_params(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.post(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}/actions",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
         payload={
             "offset": 0,
             "limit": 1,
@@ -279,7 +285,9 @@ async def test_network_clients_unauthorized(mock_aioresponse, network_client) ->
     """Verify unauthorized response is mapped to Unauthorized."""
     site_id = "site-uuid"
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites/site-uuid/clients(?:\?.*)?$"),
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
         status=401,
     )
 
@@ -294,7 +302,7 @@ async def test_network_clients_get_details_unauthorized(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.get(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}",
         status=401,
     )
 
@@ -309,7 +317,7 @@ async def test_network_clients_authorize_guest_structured_error(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.post(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}/actions",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
         status=401,
         payload={
             "statusCode": 401,
@@ -339,7 +347,9 @@ async def test_network_clients_list_client_properties(
     """Verify all client properties are correctly extracted from response."""
     site_id = "site-uuid"
     mock_aioresponse.get(
-        re.compile(r"^https://api\.ui\.com/v1/sites/site-uuid/clients(?:\?.*)?$"),
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
         payload={
             "offset": 0,
             "limit": 1,
@@ -381,7 +391,7 @@ async def test_network_clients_optional_fields(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.get(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}",
         payload={
             "offset": 0,
             "limit": 1,
@@ -415,7 +425,7 @@ async def test_network_clients_authorize_guest_partial_params(
     site_id = "site-uuid"
     client_id = "client-uuid"
     mock_aioresponse.post(
-        f"https://api.ui.com/v1/sites/{site_id}/clients/{client_id}/actions",
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
         payload={
             "offset": 0,
             "limit": 1,

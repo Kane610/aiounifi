@@ -21,7 +21,6 @@ class Configuration:
     ssl_context: SSLContext | Literal[False] = False
     totp_secret: str | None = None
     network_api_key: str | None = None
-    network_api_url: str = "https://api.ui.com"
 
     @property
     def url(self) -> str:
