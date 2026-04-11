@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TypedDict
 
+from ....models.api import ApiItem
 from .api import ApiRequest
 
 
@@ -37,14 +38,10 @@ class SitesRequest(ApiRequest):
         return cls(method="get", path="/v1/sites", params=params)
 
 
-class Site:
+class Site(ApiItem):
     """Represent one site from network API data."""
 
     raw: SiteData
-
-    def __init__(self, raw: SiteData) -> None:
-        """Initialize site model."""
-        self.raw = raw
 
     @property
     def site_id(self) -> str:

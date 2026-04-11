@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import NotRequired, TypedDict
 
+from ....models.api import ApiItem
 from .api import ApiRequest
 
 
@@ -176,14 +177,10 @@ class ExecuteClientActionRequest(ApiRequest):
         )
 
 
-class Client:
+class Client(ApiItem):
     """Represent one client from network API data."""
 
     raw: ClientData
-
-    def __init__(self, raw: ClientData) -> None:
-        """Initialize client model."""
-        self.raw = raw
 
     @property
     def client_id(self) -> str:
