@@ -20,7 +20,7 @@ class Configuration:
     site: str = "default"
     ssl_context: SSLContext | Literal[False] = False
     totp_secret: str | None = None
-    network_api_key: str | None = None
+    api_key: str | None = None
 
     @property
     def url(self) -> str:

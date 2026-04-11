@@ -85,12 +85,12 @@ class Connectivity:
         `_exception_type`, which applies the semantic-first resolution order
         documented in this module.
         """
-        if not self.config.network_api_key:
-            raise RequestError("network_api_key is required for network API requests")
+        if not self.config.api_key:
+            raise RequestError("api_key is required for network API requests")
 
-        api_key = self.config.network_api_key.strip()
+        api_key = self.config.api_key.strip()
         if not api_key:
-            raise RequestError("network_api_key must not be blank")
+            raise RequestError("api_key must not be blank")
 
         url = self._build_url(api_request.path)
         params = api_request.params

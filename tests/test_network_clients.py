@@ -21,7 +21,7 @@ async def network_client_fixture() -> AsyncGenerator[ApiClient]:
         "host",
         username="user",
         password="pass",
-        network_api_key="secret-key",
+        api_key="secret-key",
     )
     client = ApiClient(config)
     yield client
