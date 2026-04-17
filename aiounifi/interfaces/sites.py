@@ -1,7 +1,6 @@
 """UniFi sites of network infrastructure."""
 
 from collections.abc import Sequence
-from typing import Any, cast
 
 from ..models.site import Site, SiteListRequest
 from .api_handlers import APIHandler
@@ -28,8 +27,7 @@ class Sites(APIHandler[Site]):
             ):
                 continue
 
-            raw_site = cast("dict[str, Any]", primary_site.raw)
-            external_id = raw_site.get("external_id")
+            external_id = primary_site.raw.get("external_id")
             if isinstance(external_id, str) and external_id:
                 return external_id
 
