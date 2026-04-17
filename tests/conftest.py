@@ -26,6 +26,18 @@ def is_unifi_os_fixture() -> bool:
     return False
 
 
+@pytest.fixture(name="api_key")
+def api_key_fixture() -> str | None:
+    """Return API key used by tests requiring Network API auth."""
+    return None
+
+
+@pytest.fixture(name="site_uuid")
+def site_uuid_fixture() -> str | None:
+    """Network API site UUID used by tests needing direct site selection."""
+    return None
+
+
 @pytest.fixture
 def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], bool]:
     """Verify UniFi call was made with the expected parameters."""
@@ -61,10 +73,21 @@ def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], 
 
 
 @pytest.fixture(name="unifi_controller")
-async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
+async def unifi_controller_fixture(
+    is_unifi_os: bool,
+    api_key: str | None,
+    site_uuid: str | None,
+) -> Controller:
     """Provide a test-ready UniFi controller."""
     session = aiohttp.ClientSession()
-    config = Configuration(session, "host", username="user", password="pass")
+    config = Configuration(
+        session,
+        "host",
+        username="user",
+        password="pass",
+        api_key=api_key,
+        site_uuid=site_uuid,
+    )
     controller = Controller(config)
     controller.connectivity.is_unifi_os = is_unifi_os
     controller.ws_state_callback = Mock()

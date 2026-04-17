@@ -3,22 +3,24 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
+from ..api_handlers import APIHandler
 from ..models.site import Site, SiteData, SitesRequest
-
-if TYPE_CHECKING:
-    from ..api_client import ApiClient
 
 SiteList = list[Site]
 
 
-class Sites:
+class Sites(APIHandler[Site]):
     """Read site information from the Network API."""
 
-    def __init__(self, client: ApiClient) -> None:
-        """Initialize sites interface."""
-        self.client = client
+    item_cls = Site
+    obj_id_key = "id"
+
+    @property
+    def api_request(self) -> SitesRequest:
+        """Return the default sites list request."""
+        return SitesRequest.create()
 
     async def list(self, filter_value: str | None = None) -> SiteList:
         """List local sites using the default first-page request."""
@@ -32,7 +34,7 @@ class Sites:
     ) -> SiteList:
         """List one page of local sites."""
         request = SitesRequest.create(offset, limit, filter_value)
-        data = await self.client.request(request)
+        data = await self.api_client.request(request)
         return [Site(cast(SiteData, item)) for item in data.get("data", [])]
 
     def resolve_site_uuid(
@@ -41,14 +43,13 @@ class Sites:
         sites: Sequence[Site] | None = None,
     ) -> str | None:
         """Resolve Network API site UUID from network site data."""
-        if sites is None:
-            return None
+        resolved_sites = sites or list(self.values())
 
-        for network_site in sites:
+        for network_site in resolved_sites:
             if network_site.internal_reference == site:
                 return network_site.site_id
 
-        for network_site in sites:
+        for network_site in resolved_sites:
             if site in (network_site.name, network_site.site_id):
                 return network_site.site_id
 

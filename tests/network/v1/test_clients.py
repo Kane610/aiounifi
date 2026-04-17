@@ -1,36 +1,17 @@
 """Test Network API clients endpoint."""
 
-from collections.abc import AsyncGenerator
 import re
 
-import aiohttp
 import pytest
 from yarl import URL
 
-from aiounifi import ApiClient
 from aiounifi.errors import Unauthorized
-from aiounifi.models.configuration import Configuration
 
 
-@pytest.fixture(name="network_client")
-async def network_client_fixture() -> AsyncGenerator[ApiClient]:
-    """Build network client for tests."""
-    session = aiohttp.ClientSession()
-    config = Configuration(
-        session,
-        "host",
-        username="user",
-        password="pass",
-        api_key="secret-key",
-    )
-    client = ApiClient(config)
-    yield client
-    await session.close()
-
-
-async def test_network_clients_list_success(mock_aioresponse, network_client) -> None:
+async def test_network_clients_list_success(
+    mock_aioresponse, network_client_with_site
+) -> None:
     """Verify network clients list returns parsed client models."""
-    site_id = "site-uuid"
     mock_aioresponse.get(
         re.compile(
             r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
@@ -65,7 +46,7 @@ async def test_network_clients_list_success(mock_aioresponse, network_client) ->
         },
     )
 
-    clients = await network_client.clients.list_page(site_id, offset=0, limit=2)
+    clients = await network_client_with_site.clients.list_page(offset=0, limit=2)
 
     assert len(clients) == 2
     assert clients[0].client_id == "client-1"
@@ -82,7 +63,7 @@ async def test_network_clients_list_success(mock_aioresponse, network_client) ->
 
 
 async def test_network_clients_list_default_pagination(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify clients list uses default pagination parameters."""
     site_id = "site-uuid"
@@ -108,7 +89,7 @@ async def test_network_clients_list_default_pagination(
         },
     )
 
-    clients = await network_client.clients.list(site_id)
+    clients = await network_client_with_site.clients.list()
 
     assert len(clients) == 1
     request = next(iter(mock_aioresponse.requests))
@@ -117,9 +98,10 @@ async def test_network_clients_list_default_pagination(
     assert request[1].path == f"/proxy/network/integration/v1/sites/{site_id}/clients"
 
 
-async def test_network_clients_list_filter(mock_aioresponse, network_client) -> None:
+async def test_network_clients_list_filter(
+    mock_aioresponse, network_client_with_site
+) -> None:
     """Verify filter parameter is accepted for clients list."""
-    site_id = "site-uuid"
     mock_aioresponse.get(
         re.compile(
             r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
@@ -142,8 +124,8 @@ async def test_network_clients_list_filter(mock_aioresponse, network_client) -> 
         },
     )
 
-    clients = await network_client.clients.list(
-        site_id, filter_value="access.type.eq('GUEST')"
+    clients = await network_client_with_site.clients.list(
+        filter_value="access.type.eq('GUEST')"
     )
 
     assert len(clients) == 1
@@ -151,7 +133,7 @@ async def test_network_clients_list_filter(mock_aioresponse, network_client) -> 
 
 
 async def test_network_clients_get_details_success(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify get_details returns a single client with all information."""
     site_id = "site-uuid"
@@ -178,7 +160,7 @@ async def test_network_clients_get_details_success(
         },
     )
 
-    client = await network_client.clients.get_details(site_id, client_id)
+    client = await network_client_with_site.clients.get_details(client_id)
 
     assert client.client_id == "client-uuid"
     assert client.name == "Smartphone"
@@ -190,7 +172,7 @@ async def test_network_clients_get_details_success(
 
 
 async def test_network_clients_authorize_guest_access_minimal(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify authorize_guest_access with minimal parameters."""
     site_id = "site-uuid"
@@ -219,7 +201,7 @@ async def test_network_clients_authorize_guest_access_minimal(
         },
     )
 
-    response = await network_client.clients.authorize_guest_access(site_id, client_id)
+    response = await network_client_with_site.clients.authorize_guest_access(client_id)
 
     assert response["action"] == "AUTHORIZE_GUEST_ACCESS"
     assert response["grantedAuthorization"]["authorizedAt"] == "2024-01-15T15:00:00Z"
@@ -227,7 +209,7 @@ async def test_network_clients_authorize_guest_access_minimal(
 
 
 async def test_network_clients_authorize_guest_access_full_params(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify authorize_guest_access with all optional parameters."""
     site_id = "site-uuid"
@@ -265,8 +247,7 @@ async def test_network_clients_authorize_guest_access_full_params(
         },
     )
 
-    response = await network_client.clients.authorize_guest_access(
-        site_id,
+    response = await network_client_with_site.clients.authorize_guest_access(
         client_id,
         time_limit_minutes=120,
         data_usage_limit_mbytes=2048,
@@ -281,9 +262,10 @@ async def test_network_clients_authorize_guest_access_full_params(
     assert response["grantedAuthorization"]["rxRateLimitKbps"] == 5000
 
 
-async def test_network_clients_unauthorized(mock_aioresponse, network_client) -> None:
+async def test_network_clients_unauthorized(
+    mock_aioresponse, network_client_with_site
+) -> None:
     """Verify unauthorized response is mapped to Unauthorized."""
-    site_id = "site-uuid"
     mock_aioresponse.get(
         re.compile(
             r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
@@ -292,11 +274,11 @@ async def test_network_clients_unauthorized(mock_aioresponse, network_client) ->
     )
 
     with pytest.raises(Unauthorized):
-        await network_client.clients.list(site_id)
+        await network_client_with_site.clients.list()
 
 
 async def test_network_clients_get_details_unauthorized(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify unauthorized response on get_details."""
     site_id = "site-uuid"
@@ -307,11 +289,11 @@ async def test_network_clients_get_details_unauthorized(
     )
 
     with pytest.raises(Unauthorized):
-        await network_client.clients.get_details(site_id, client_id)
+        await network_client_with_site.clients.get_details(client_id)
 
 
 async def test_network_clients_authorize_guest_structured_error(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify structured API error fields are included in raised exceptions."""
     site_id = "site-uuid"
@@ -333,7 +315,7 @@ async def test_network_clients_authorize_guest_structured_error(
     with pytest.raises(
         Unauthorized, match="api.authentication.missing-credentials"
     ) as err:
-        await network_client.clients.authorize_guest_access(site_id, client_id)
+        await network_client_with_site.clients.authorize_guest_access(client_id)
 
     assert getattr(err.value, "status_code") == 401
     assert getattr(err.value, "status_name") == "UNAUTHORIZED"
@@ -342,10 +324,9 @@ async def test_network_clients_authorize_guest_structured_error(
 
 
 async def test_network_clients_list_client_properties(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify all client properties are correctly extracted from response."""
-    site_id = "site-uuid"
     mock_aioresponse.get(
         re.compile(
             r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
@@ -370,7 +351,7 @@ async def test_network_clients_list_client_properties(
         },
     )
 
-    clients = await network_client.clients.list(site_id)
+    clients = await network_client_with_site.clients.list()
 
     client = clients[0]
     assert client.client_id == "client-full"
@@ -385,7 +366,7 @@ async def test_network_clients_list_client_properties(
 
 
 async def test_network_clients_optional_fields(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify optional fields (connectedAt, ipAddress) can be missing."""
     site_id = "site-uuid"
@@ -410,7 +391,7 @@ async def test_network_clients_optional_fields(
         },
     )
 
-    client = await network_client.clients.get_details(site_id, client_id)
+    client = await network_client_with_site.clients.get_details(client_id)
 
     assert client.client_id == client_id
     assert client.connected_at is None
@@ -418,7 +399,7 @@ async def test_network_clients_optional_fields(
 
 
 async def test_network_clients_authorize_guest_partial_params(
-    mock_aioresponse, network_client
+    mock_aioresponse, network_client_with_site
 ) -> None:
     """Verify authorize_guest_access with only some optional parameters."""
     site_id = "site-uuid"
@@ -447,8 +428,7 @@ async def test_network_clients_authorize_guest_partial_params(
         },
     )
 
-    response = await network_client.clients.authorize_guest_access(
-        site_id,
+    response = await network_client_with_site.clients.authorize_guest_access(
         client_id,
         time_limit_minutes=30,
         data_usage_limit_mbytes=500,

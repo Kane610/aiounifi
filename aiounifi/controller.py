@@ -60,7 +60,7 @@ class Controller:
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
 
-        self.network = ApiClient(config)
+        self.network = ApiClient(self)
 
     async def login(self) -> None:
         """Log in to controller."""

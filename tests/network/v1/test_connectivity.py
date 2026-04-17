@@ -1,66 +1,31 @@
 """Unit tests for Network API connectivity helpers."""
 
-from collections.abc import AsyncGenerator
 import logging
 
 import aiohttp
 import pytest
 
 from aiounifi.errors import Forbidden, RequestError, ResponseError, Unauthorized
-from aiounifi.models.configuration import Configuration
 from aiounifi.network.v1.connectivity import Connectivity
 from aiounifi.network.v1.models.api import ApiRequest
 
 
-@pytest.fixture(name="network_connectivity")
-async def network_connectivity_fixture() -> AsyncGenerator[Connectivity]:
-    """Build connectivity helper for direct unit tests."""
-    session = aiohttp.ClientSession()
-    config = Configuration(
-        session,
-        "host",
-        username="user",
-        password="pass",
-        api_key="secret-key",
-    )
-    yield Connectivity(config)
-    await session.close()
-
-
-async def test_network_request_requires_api_key() -> None:
+async def test_network_request_requires_api_key(network_config) -> None:
     """Verify requests fail fast when no API key is configured."""
-    session = aiohttp.ClientSession()
-    config = Configuration(
-        session,
-        "host",
-        username="user",
-        password="pass",
-        api_key=None,
-    )
-    connectivity = Connectivity(config)
+    network_config.api_key = None
+    connectivity = Connectivity(network_config)
 
     with pytest.raises(RequestError, match="api_key is required"):
         await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
 
-    await session.close()
 
-
-async def test_network_request_rejects_blank_api_key() -> None:
+async def test_network_request_rejects_blank_api_key(network_config) -> None:
     """Verify requests fail fast when the API key is blank after stripping."""
-    session = aiohttp.ClientSession()
-    config = Configuration(
-        session,
-        "host",
-        username="user",
-        password="pass",
-        api_key="   ",
-    )
-    connectivity = Connectivity(config)
+    network_config.api_key = "   "
+    connectivity = Connectivity(network_config)
 
     with pytest.raises(RequestError, match="api_key must not be blank"):
         await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
-
-    await session.close()
 
 
 async def test_network_request_raises_structured_exception(

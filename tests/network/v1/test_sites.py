@@ -1,33 +1,13 @@
 """Test Network API site information endpoint."""
 
-from collections.abc import AsyncGenerator
 import re
 
-import aiohttp
 import pytest
 from yarl import URL
 
-from aiounifi import ApiClient
-from aiounifi.errors import ResponseError, Unauthorized
-from aiounifi.models.configuration import Configuration
+from aiounifi.errors import RequestError, ResponseError, Unauthorized
 from aiounifi.network.v1.models.api import ApiRequest
 from aiounifi.network.v1.models.site import Site
-
-
-@pytest.fixture(name="network_client")
-async def network_client_fixture() -> AsyncGenerator[ApiClient]:
-    """Build network client for tests."""
-    session = aiohttp.ClientSession()
-    config = Configuration(
-        session,
-        "host",
-        username="user",
-        password="pass",
-        api_key="secret-key",
-    )
-    client = ApiClient(config)
-    yield client
-    await session.close()
 
 
 async def test_network_sites_list_success(mock_aioresponse, network_client) -> None:
@@ -266,3 +246,113 @@ def test_network_api_request_decode_rejects_non_object() -> None:
 
     with pytest.raises(ResponseError, match="not an object"):
         request.decode(b"[]")
+
+
+async def test_network_assign_site_prefers_primary_resolver(network_client) -> None:
+    """Verify assign_site uses primary resolver before v1 fallback."""
+
+    class PrimarySitesStub:
+        """Primary site resolver stub."""
+
+        def resolve_site_uuid(self, site: str) -> str | None:
+            return "legacy-uuid" if site == "default" else None
+
+    class ControllerStub:
+        """Controller stub exposing legacy sites resolver."""
+
+        def __init__(self, existing_controller) -> None:
+            self.sites = PrimarySitesStub()
+            self.connectivity = existing_controller.connectivity
+
+    network_client.controller = ControllerStub(network_client.controller)
+
+    resolved = await network_client.assign_site("default")
+
+    assert resolved == "legacy-uuid"
+    assert network_client.site_id == "legacy-uuid"
+
+
+async def test_network_assign_site_prefers_configured_site_uuid(
+    network_client,
+) -> None:
+    """Verify configured site_uuid is preferred over resolver paths."""
+    network_client.controller.connectivity.config.site_uuid = "configured-uuid"
+
+    resolved = await network_client.assign_site("default")
+
+    assert resolved == "configured-uuid"
+    assert network_client.site_id == "configured-uuid"
+
+
+async def test_network_assign_site_whitespace_configured_uuid_is_used_as_is(
+    network_client,
+) -> None:
+    """Verify configured site_uuid is used as-is without trimming."""
+    network_client.controller.connectivity.config.site_uuid = "   "
+
+    resolved = await network_client.assign_site("default")
+
+    assert resolved == "   "
+    assert network_client.site_id == "   "
+
+
+async def test_network_assign_site_uses_cached_v1_sites(network_client) -> None:
+    """Verify assign_site resolves from v1 cached sites before doing API calls."""
+    network_client.sites.process_item(
+        {
+            "id": "site-cached",
+            "internalReference": "default",
+            "name": "Default",
+        }
+    )
+
+    resolved = await network_client.assign_site("default")
+
+    assert resolved == "site-cached"
+    assert network_client.site_id == "site-cached"
+
+
+async def test_network_assign_site_fetches_v1_sites_when_needed(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify assign_site fetches v1 sites when resolver caches are empty."""
+    mock_aioresponse.get(
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
+        payload={
+            "offset": 0,
+            "limit": 25,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "id": "site-fetched",
+                    "internalReference": "default",
+                    "name": "Default",
+                }
+            ],
+        },
+    )
+
+    resolved = await network_client.assign_site("default")
+
+    assert resolved == "site-fetched"
+    assert network_client.site_id == "site-fetched"
+
+
+async def test_network_assign_site_raises_when_unresolved(
+    mock_aioresponse, network_client
+) -> None:
+    """Verify assign_site raises RequestError when UUID cannot be resolved."""
+    mock_aioresponse.get(
+        re.compile(r"^https://host:8443/proxy/network/integration/v1/sites(?:\?.*)?$"),
+        payload={
+            "offset": 0,
+            "limit": 25,
+            "count": 1,
+            "totalCount": 1,
+            "data": [],
+        },
+    )
+
+    with pytest.raises(RequestError, match="Could not resolve Network API site UUID"):
+        await network_client.assign_site("missing-site")
