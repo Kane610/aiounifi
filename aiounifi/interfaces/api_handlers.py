@@ -6,7 +6,7 @@ from collections.abc import ItemsView, Iterator, ValuesView
 from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models.api import ApiItemT, ApiRequest
-from ..models.subscription import (
+from ..subscription import (
     ID_FILTER_ALL,
     CallbackType,
     ItemEvent,

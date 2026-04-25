@@ -7,7 +7,7 @@ from collections.abc import ItemsView, Iterator, ValuesView
 from typing import TYPE_CHECKING, Any, Generic, final
 
 from ...models.api import ApiItemT
-from ...models.subscription import ItemEvent, SubscriptionHandler
+from ...subscription import ItemEvent, SubscriptionHandler
 
 if TYPE_CHECKING:
     from .api_client import ApiClient

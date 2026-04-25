@@ -1,8 +1,7 @@
-"""Shared subscription primitives used by both legacy and Network API v1 handlers."""
+"""Subscription primitives shared by legacy and Network API v1 handlers."""
 
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Callable
 import enum
 
@@ -22,7 +21,7 @@ UnsubscribeType = Callable[[], None]
 ID_FILTER_ALL = "*"
 
 
-class SubscriptionHandler(ABC):
+class SubscriptionHandler:
     """Manage subscription and notification to subscribers."""
 
     def __init__(self) -> None:
@@ -43,18 +42,20 @@ class SubscriptionHandler(ABC):
         self,
         callback: CallbackType,
         event_filter: tuple[ItemEvent, ...] | ItemEvent | None = None,
-        id_filter: tuple[str] | str | None = None,
+        id_filter: tuple[str, ...] | str | None = None,
     ) -> UnsubscribeType:
         """Subscribe to item events."""
         if isinstance(event_filter, ItemEvent):
             event_filter = (event_filter,)
         subscription = (callback, event_filter)
 
-        _id_filter: tuple[str]
+        _id_filter: tuple[str, ...]
         if id_filter is None:
             _id_filter = (ID_FILTER_ALL,)
         elif isinstance(id_filter, str):
             _id_filter = (id_filter,)
+        else:
+            _id_filter = id_filter
 
         for obj_id in _id_filter:
             if obj_id not in self._subscribers:

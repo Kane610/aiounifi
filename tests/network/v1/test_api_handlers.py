@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from aiounifi.models.subscription import ItemEvent
 from aiounifi.network.v1.api_client import ApiClient
 from aiounifi.network.v1.interfaces.clients import ListClientsRequest
 from aiounifi.network.v1.models.site import SitesRequest
+from aiounifi.subscription import ItemEvent
 
 # ---------------------------------------------------------------------------
 # update() — exercising lines 41-42, 47-48 and the api_request property (line 23)
