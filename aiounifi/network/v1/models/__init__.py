@@ -12,6 +12,7 @@ from .client import (
     GuestAuthorizationDetails,
     ListClientsRequest,
     Usage,
+    normalize_mac,
 )
 from .site import Site, SiteData, SitesRequest
 
@@ -28,6 +29,7 @@ __all__ = [
     "GetClientDetailsRequest",
     "GuestAuthorizationDetails",
     "ListClientsRequest",
+    "normalize_mac",
     "Site",
     "SiteData",
     "SitesRequest",

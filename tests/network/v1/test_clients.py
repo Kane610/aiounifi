@@ -4,9 +4,39 @@ import re
 
 import pytest
 
-from aiounifi.errors import Unauthorized
+from aiounifi.errors import RequestError, Unauthorized
+from aiounifi.network.v1.models.client import normalize_mac
 
 from .helpers import assert_request_called_with
+
+
+def test_network_normalize_mac_colon_lowercase() -> None:
+    """Verify normalize_mac keeps canonical lowercase colon format."""
+    assert normalize_mac("aa:bb:cc:dd:ee:ff") == "aa:bb:cc:dd:ee:ff"
+
+
+def test_network_normalize_mac_uppercase() -> None:
+    """Verify normalize_mac lowercases uppercase colon format."""
+    assert normalize_mac("AA:BB:CC:DD:EE:FF") == "aa:bb:cc:dd:ee:ff"
+
+
+def test_network_normalize_mac_dash_delimited() -> None:
+    """Verify normalize_mac accepts dash-delimited input."""
+    assert normalize_mac("AA-BB-CC-DD-EE-FF") == "aa:bb:cc:dd:ee:ff"
+
+
+def test_network_normalize_mac_compact() -> None:
+    """Verify normalize_mac accepts compact 12-hex input."""
+    assert normalize_mac("AABBCCDDEEFF") == "aa:bb:cc:dd:ee:ff"
+
+
+@pytest.mark.parametrize(
+    "mac", ["", "aa:bb:cc:dd:ee", "zz:bb:cc:dd:ee:ff", "aabbccddeef"]
+)
+def test_network_normalize_mac_invalid(mac: str) -> None:
+    """Verify normalize_mac rejects malformed MAC addresses."""
+    with pytest.raises(ValueError, match="Invalid MAC address"):
+        normalize_mac(mac)
 
 
 async def test_network_clients_list_success(
@@ -478,4 +508,266 @@ async def test_network_clients_authorize_guest_partial_params(
             "timeLimitMinutes": 30,
             "dataUsageLimitMBytes": 500,
         },
+    )
+
+
+async def test_network_clients_update_indexes_by_mac(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify APIHandler storage for v1 clients is keyed by MAC address."""
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 25,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "type": "WIRED",
+                    "id": "client-uuid",
+                    "name": "Device",
+                    "access": {"type": "DEFAULT"},
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-uuid-1",
+                }
+            ],
+        },
+    )
+
+    await network_client_with_site.clients.update()
+
+    assert "aa:bb:cc:dd:ee:ff" in network_client_with_site.clients
+    assert (
+        network_client_with_site.clients["aa:bb:cc:dd:ee:ff"].client_id == "client-uuid"
+    )
+
+
+async def test_network_clients_get_by_mac_success(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify get_by_mac resolves via server-side filter with normalized MAC."""
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "type": "WIRED",
+                    "id": "client-uuid",
+                    "name": "Device",
+                    "access": {"type": "DEFAULT"},
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-uuid-1",
+                }
+            ],
+        },
+    )
+
+    client = await network_client_with_site.clients.get_by_mac("AA-BB-CC-DD-EE-FF")
+
+    assert client is not None
+    assert client.client_id == "client-uuid"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites/site-uuid/clients",
+        params={
+            "offset": 0,
+            "limit": 1,
+            "filter": "macAddress.eq('aa:bb:cc:dd:ee:ff')",
+        },
+    )
+
+
+async def test_network_clients_get_by_mac_not_found(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify get_by_mac returns None when no match is found."""
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 0,
+            "totalCount": 0,
+            "data": [],
+        },
+    )
+
+    assert (
+        await network_client_with_site.clients.get_by_mac("aa:bb:cc:dd:ee:ff") is None
+    )
+
+
+async def test_network_clients_require_by_mac_not_found(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify require_by_mac raises RequestError when no match exists."""
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 0,
+            "totalCount": 0,
+            "data": [],
+        },
+    )
+
+    with pytest.raises(RequestError, match="mac_address"):
+        await network_client_with_site.clients.require_by_mac("aa:bb:cc:dd:ee:ff")
+
+
+def test_network_clients_get_by_uuid_from_cache(network_client_with_site) -> None:
+    """Verify get_by_uuid resolves from cached handler state."""
+    network_client_with_site.clients._items = {
+        "aa:bb:cc:dd:ee:ff": network_client_with_site.clients.item_cls(
+            {
+                "type": "WIRED",
+                "id": "client-uuid",
+                "name": "Device",
+                "access": {"type": "DEFAULT"},
+                "macAddress": "aa:bb:cc:dd:ee:ff",
+                "uplinkDeviceId": "device-uuid-1",
+            }
+        )
+    }
+
+    client = network_client_with_site.clients.get_by_uuid("client-uuid")
+    assert client is not None
+    assert client.mac_address == "aa:bb:cc:dd:ee:ff"
+
+
+def test_network_clients_require_by_uuid_missing(network_client_with_site) -> None:
+    """Verify require_by_uuid raises RequestError when cache has no match."""
+    with pytest.raises(RequestError, match="client_id"):
+        network_client_with_site.clients.require_by_uuid("missing")
+
+
+async def test_network_clients_get_details_by_mac(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify get_details_by_mac resolves UUID via MAC filter then fetches details."""
+    site_id = "site-uuid"
+    client_id = "client-uuid"
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "type": "WIRELESS",
+                    "id": client_id,
+                    "name": "Client",
+                    "access": {"type": "DEFAULT"},
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-uuid-1",
+                }
+            ],
+        },
+    )
+    mock_aioresponse.get(
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}",
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "type": "WIRELESS",
+                    "id": client_id,
+                    "name": "Client",
+                    "access": {"type": "DEFAULT"},
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-uuid-1",
+                }
+            ],
+        },
+    )
+
+    client = await network_client_with_site.clients.get_details_by_mac(
+        "aa:bb:cc:dd:ee:ff"
+    )
+    assert client.client_id == client_id
+
+
+async def test_network_clients_authorize_guest_access_by_mac(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify authorize_guest_access_by_mac resolves UUID and sends action request."""
+    site_id = "site-uuid"
+    client_id = "client-uuid"
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "type": "WIRELESS",
+                    "id": client_id,
+                    "name": "Client",
+                    "access": {"type": "DEFAULT"},
+                    "macAddress": "aa:bb:cc:dd:ee:ff",
+                    "uplinkDeviceId": "device-uuid-1",
+                }
+            ],
+        },
+    )
+    mock_aioresponse.post(
+        f"https://host:8443/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [
+                {
+                    "action": "AUTHORIZE_GUEST_ACCESS",
+                    "grantedAuthorization": {
+                        "authorizedAt": "2024-01-15T15:00:00Z",
+                        "authorizationMethod": "MANUAL",
+                        "expiresAt": "2024-01-15T16:00:00Z",
+                        "dataUsageLimitMBytes": 1024,
+                        "rxRateLimitKbps": 1000,
+                        "txRateLimitKbps": 1000,
+                        "usage": {},
+                    },
+                }
+            ],
+        },
+    )
+
+    response = await network_client_with_site.clients.authorize_guest_access_by_mac(
+        "aa:bb:cc:dd:ee:ff", time_limit_minutes=60
+    )
+
+    assert response["action"] == "AUTHORIZE_GUEST_ACCESS"
+    assert_request_called_with(
+        mock_aioresponse,
+        "post",
+        f"/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
+        json_body={"action": "AUTHORIZE_GUEST_ACCESS", "timeLimitMinutes": 60},
     )

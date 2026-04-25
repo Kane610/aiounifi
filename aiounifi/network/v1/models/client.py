@@ -3,10 +3,42 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import NotRequired, TypedDict
 
 from ....models.api import ApiItem
 from .api import ApiRequest
+
+MAC_RE = re.compile(r"^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$")
+
+
+def normalize_mac(mac_address: str) -> str:
+    """Normalize MAC address to lowercase colon-delimited form.
+
+    Accepts the following input forms:
+    - aa:bb:cc:dd:ee:ff
+    - aa-bb-cc-dd-ee-ff
+    - aabbccddeeff
+
+    Returns:
+        Canonical lowercase colon-delimited MAC address.
+
+    Raises:
+        ValueError: If the MAC format is invalid.
+
+    """
+    cleaned = mac_address.strip().lower().replace("-", "").replace(":", "")
+    if len(cleaned) != 12 or any(ch not in "0123456789abcdef" for ch in cleaned):
+        raise ValueError(
+            f"Invalid MAC address {mac_address!r}. Expected 12 hex chars or xx:xx:xx:xx:xx:xx format."
+        )
+
+    normalized = ":".join(cleaned[idx : idx + 2] for idx in range(0, 12, 2))
+    if not MAC_RE.fullmatch(normalized):
+        raise ValueError(
+            f"Invalid MAC address {mac_address!r}. Expected xx:xx:xx:xx:xx:xx format."
+        )
+    return normalized
 
 
 class Usage(TypedDict):
