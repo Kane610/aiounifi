@@ -1,5 +1,8 @@
 """Connectivity for UniFi Network API calls.
 
+This module makes exactly one attempt per request. Retry on transient errors
+(503, 429, TCP) is the caller's responsibility.
+
 Error handling in this module intentionally uses a layered resolution strategy
 for non-success HTTP responses:
 
