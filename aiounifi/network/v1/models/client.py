@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import re
 from typing import NotRequired, TypedDict
 
 from ....models.api import ApiItem
-from .api import ApiRequest
-
-MAC_RE = re.compile(r"^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$")
+from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, MAX_PAGE_LIMIT, ApiRequest
 
 
 def normalize_mac(mac_address: str) -> str:
@@ -28,17 +25,19 @@ def normalize_mac(mac_address: str) -> str:
 
     """
     cleaned = mac_address.strip().lower().replace("-", "").replace(":", "")
-    if len(cleaned) != 12 or any(ch not in "0123456789abcdef" for ch in cleaned):
+    if len(cleaned) != 12:
         raise ValueError(
             f"Invalid MAC address {mac_address!r}. Expected 12 hex chars or xx:xx:xx:xx:xx:xx format."
         )
 
-    normalized = ":".join(cleaned[idx : idx + 2] for idx in range(0, 12, 2))
-    if not MAC_RE.fullmatch(normalized):
+    try:
+        bytes.fromhex(cleaned)
+    except ValueError as err:
         raise ValueError(
-            f"Invalid MAC address {mac_address!r}. Expected xx:xx:xx:xx:xx:xx format."
-        )
-    return normalized
+            f"Invalid MAC address {mac_address!r}. Expected 12 hex chars or xx:xx:xx:xx:xx:xx format."
+        ) from err
+
+    return ":".join(cleaned[idx : idx + 2] for idx in range(0, 12, 2))
 
 
 class Usage(TypedDict):
@@ -105,8 +104,8 @@ class ListClientsRequest(ApiRequest):
     def create(
         cls,
         site_id: str,
-        offset: int = 0,
-        limit: int = 25,
+        offset: int = DEFAULT_PAGE_OFFSET,
+        limit: int = DEFAULT_PAGE_LIMIT,
         filter_value: str | None = None,
     ) -> ListClientsRequest:
         """Construct a request for one clients page.
@@ -122,8 +121,8 @@ class ListClientsRequest(ApiRequest):
 
         """
         params: dict[str, str | int] = {
-            "offset": max(offset, 0),
-            "limit": max(min(limit, 200), 1),
+            "offset": max(offset, DEFAULT_PAGE_OFFSET),
+            "limit": max(min(limit, MAX_PAGE_LIMIT), 1),
         }
         if filter_value:
             params["filter"] = filter_value

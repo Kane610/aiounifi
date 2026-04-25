@@ -10,6 +10,10 @@ import orjson
 
 from ....errors import ResponseError
 
+DEFAULT_PAGE_OFFSET = 0
+DEFAULT_PAGE_LIMIT = 25
+MAX_PAGE_LIMIT = 200
+
 
 class ApiResponse(TypedDict):
     """Network API generic envelope."""

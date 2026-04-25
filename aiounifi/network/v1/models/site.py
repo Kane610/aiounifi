@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TypedDict
 
 from ....models.api import ApiItem
-from .api import ApiRequest
+from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest
 
 
 class SiteData(TypedDict):
@@ -24,13 +24,13 @@ class SitesRequest(ApiRequest):
     @classmethod
     def create(
         cls,
-        offset: int = 0,
-        limit: int = 25,
+        offset: int = DEFAULT_PAGE_OFFSET,
+        limit: int = DEFAULT_PAGE_LIMIT,
         filter_value: str | None = None,
     ) -> SitesRequest:
         """Construct a request for one sites page."""
         params: dict[str, str | int] = {
-            "offset": max(offset, 0),
+            "offset": max(offset, DEFAULT_PAGE_OFFSET),
             "limit": max(limit, 1),
         }
         if filter_value:
