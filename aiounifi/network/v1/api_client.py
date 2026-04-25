@@ -54,6 +54,8 @@ class ApiClient:
         5. Already-fetched v1 sites cache.
         6. Fresh v1 sites fetch.
         """
+        site = site.strip()
+
         if self._site_id is not None:
             return self._site_id
 
@@ -67,6 +69,8 @@ class ApiClient:
 
     async def _resolve_site(self, site: str) -> str:
         """Perform the four-step site UUID resolution and store the result."""
+        site = site.strip()
+
         if configured_site_id := self.controller.connectivity.config.site_uuid:
             self._site_id = configured_site_id
             return configured_site_id

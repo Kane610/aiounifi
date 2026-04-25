@@ -31,6 +31,10 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def api_request(self) -> ApiRequest:
         """Return the API request used to refresh this resource."""
 
+    def normalize_obj_id(self, obj_id: str) -> str:
+        """Normalize object IDs used for storage and lookup."""
+        return obj_id
+
     @final
     async def update(self) -> None:
         """Refresh data.
@@ -54,7 +58,9 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
             return
 
         obj_id: str
-        obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
+        obj_is_known = (
+            obj_id := self.normalize_obj_id(raw[self.obj_id_key])
+        ) in self._items
         self._items[obj_id] = self.item_cls(raw)
 
         self.signal_subscribers(
@@ -66,7 +72,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def remove_item(self, raw: dict[str, Any]) -> None:
         """Remove item."""
         obj_id: str
-        if (obj_id := raw[self.obj_id_key]) in self._items:
+        if (obj_id := self.normalize_obj_id(raw[self.obj_id_key])) in self._items:
             self._items.pop(obj_id)
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
 
@@ -83,17 +89,17 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def get(self, obj_id: str, default: Any | None = None) -> ApiItemT | None:
         """Get item value based on key, return default if no match."""
-        return self._items.get(obj_id, default)
+        return self._items.get(self.normalize_obj_id(obj_id), default)
 
     @final
     def __contains__(self, obj_id: str) -> bool:
         """Validate membership of item ID."""
-        return obj_id in self._items
+        return self.normalize_obj_id(obj_id) in self._items
 
     @final
     def __getitem__(self, obj_id: str) -> ApiItemT:
         """Get item value based on key."""
-        return self._items[obj_id]
+        return self._items[self.normalize_obj_id(obj_id)]
 
     @final
     def __iter__(self) -> Iterator[str]:

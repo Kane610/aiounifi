@@ -10,6 +10,20 @@ from aiounifi.network.v1.models.client import normalize_mac
 from .helpers import assert_request_called_with
 
 
+def _client_payload(**overrides):
+    """Build a default client payload for endpoint tests."""
+    payload = {
+        "type": "WIRED",
+        "id": "client-uuid",
+        "name": "Device",
+        "access": {"type": "DEFAULT"},
+        "macAddress": "aa:bb:cc:dd:ee:ff",
+        "uplinkDeviceId": "device-uuid-1",
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_network_normalize_mac_colon_lowercase() -> None:
     """Verify normalize_mac keeps canonical lowercase colon format."""
     assert normalize_mac("aa:bb:cc:dd:ee:ff") == "aa:bb:cc:dd:ee:ff"
@@ -524,16 +538,7 @@ async def test_network_clients_update_indexes_by_mac(
             "limit": 25,
             "count": 1,
             "totalCount": 1,
-            "data": [
-                {
-                    "type": "WIRED",
-                    "id": "client-uuid",
-                    "name": "Device",
-                    "access": {"type": "DEFAULT"},
-                    "macAddress": "aa:bb:cc:dd:ee:ff",
-                    "uplinkDeviceId": "device-uuid-1",
-                }
-            ],
+            "data": [_client_payload()],
         },
     )
 
@@ -543,6 +548,48 @@ async def test_network_clients_update_indexes_by_mac(
     assert (
         network_client_with_site.clients["aa:bb:cc:dd:ee:ff"].client_id == "client-uuid"
     )
+
+
+async def test_network_clients_update_normalizes_mac_keys(
+    mock_aioresponse, network_client_with_site
+) -> None:
+    """Verify cached client keys are canonical even for uppercase payload MACs."""
+    mock_aioresponse.get(
+        re.compile(
+            r"^https://host:8443/proxy/network/integration/v1/sites/site-uuid/clients(?:\?.*)?$"
+        ),
+        payload={
+            "offset": 0,
+            "limit": 25,
+            "count": 1,
+            "totalCount": 1,
+            "data": [_client_payload(macAddress="AA:BB:CC:DD:EE:FF")],
+        },
+    )
+
+    await network_client_with_site.clients.update()
+
+    assert "aa:bb:cc:dd:ee:ff" in network_client_with_site.clients
+    assert "AA:BB:CC:DD:EE:FF" in network_client_with_site.clients
+    assert (
+        network_client_with_site.clients["AA:BB:CC:DD:EE:FF"].client_id == "client-uuid"
+    )
+
+
+def test_network_clients_get_by_mac_cached_normalizes_input(
+    network_client_with_site,
+) -> None:
+    """Verify cached MAC lookups normalize user input before lookup."""
+    network_client_with_site.clients._items = {
+        "aa:bb:cc:dd:ee:ff": network_client_with_site.clients.item_cls(
+            _client_payload()
+        )
+    }
+
+    client = network_client_with_site.clients.get_by_mac_cached("AA-BB-CC-DD-EE-FF")
+
+    assert client is not None
+    assert client.client_id == "client-uuid"
 
 
 async def test_network_clients_get_by_mac_success(
@@ -558,16 +605,7 @@ async def test_network_clients_get_by_mac_success(
             "limit": 1,
             "count": 1,
             "totalCount": 1,
-            "data": [
-                {
-                    "type": "WIRED",
-                    "id": "client-uuid",
-                    "name": "Device",
-                    "access": {"type": "DEFAULT"},
-                    "macAddress": "aa:bb:cc:dd:ee:ff",
-                    "uplinkDeviceId": "device-uuid-1",
-                }
-            ],
+            "data": [_client_payload()],
         },
     )
 
@@ -634,14 +672,7 @@ def test_network_clients_get_by_uuid_from_cache(network_client_with_site) -> Non
     """Verify get_by_uuid resolves from cached handler state."""
     network_client_with_site.clients._items = {
         "aa:bb:cc:dd:ee:ff": network_client_with_site.clients.item_cls(
-            {
-                "type": "WIRED",
-                "id": "client-uuid",
-                "name": "Device",
-                "access": {"type": "DEFAULT"},
-                "macAddress": "aa:bb:cc:dd:ee:ff",
-                "uplinkDeviceId": "device-uuid-1",
-            }
+            _client_payload()
         )
     }
 
@@ -671,16 +702,7 @@ async def test_network_clients_get_details_by_mac(
             "limit": 1,
             "count": 1,
             "totalCount": 1,
-            "data": [
-                {
-                    "type": "WIRELESS",
-                    "id": client_id,
-                    "name": "Client",
-                    "access": {"type": "DEFAULT"},
-                    "macAddress": "aa:bb:cc:dd:ee:ff",
-                    "uplinkDeviceId": "device-uuid-1",
-                }
-            ],
+            "data": [_client_payload(type="WIRELESS", id=client_id, name="Client")],
         },
     )
     mock_aioresponse.get(
@@ -690,16 +712,7 @@ async def test_network_clients_get_details_by_mac(
             "limit": 1,
             "count": 1,
             "totalCount": 1,
-            "data": [
-                {
-                    "type": "WIRELESS",
-                    "id": client_id,
-                    "name": "Client",
-                    "access": {"type": "DEFAULT"},
-                    "macAddress": "aa:bb:cc:dd:ee:ff",
-                    "uplinkDeviceId": "device-uuid-1",
-                }
-            ],
+            "data": [_client_payload(type="WIRELESS", id=client_id, name="Client")],
         },
     )
 

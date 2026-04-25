@@ -254,6 +254,19 @@ def test_network_sites_resolve_site_uuid_matches_name_and_id(
     assert network_client.sites.resolve_site_uuid("missing", sites) is None
 
 
+def test_network_sites_resolve_site_uuid_ignores_surrounding_whitespace(
+    network_client,
+) -> None:
+    """Verify user-entered site names tolerate surrounding whitespace."""
+    sites = [
+        Site({"id": "site-a", "internalReference": "ref-a", "name": "Alpha"}),
+        Site({"id": "site-b", "internalReference": "default", "name": "Default"}),
+    ]
+
+    assert network_client.sites.resolve_site_uuid("  default  ", sites) == "site-b"
+    assert network_client.sites.resolve_site_uuid("  Alpha  ", sites) == "site-a"
+
+
 def test_network_api_request_decode_rejects_non_object() -> None:
     """Verify network API decode rejects JSON payloads that are not objects."""
     request = ApiRequest(method="get", path="/v1/sites")
@@ -284,6 +297,24 @@ async def test_network_assign_site_prefers_primary_resolver(network_client) -> N
 
     assert resolved == "legacy-uuid"
     assert network_client.site_id == "legacy-uuid"
+
+
+async def test_network_assign_site_ignores_surrounding_whitespace(
+    network_client,
+) -> None:
+    """Verify assign_site trims accidental whitespace around site names."""
+    network_client.sites.process_item(
+        {
+            "id": "site-cached",
+            "internalReference": "default",
+            "name": "Default",
+        }
+    )
+
+    resolved = await network_client.assign_site("  default  ")
+
+    assert resolved == "site-cached"
+    assert network_client.site_id == "site-cached"
 
 
 async def test_network_assign_site_prefers_configured_site_uuid(

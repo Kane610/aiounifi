@@ -44,13 +44,14 @@ class Sites(APIHandler[Site]):
     ) -> str | None:
         """Resolve Network API site UUID from network site data."""
         resolved_sites = sites or list(self.values())
+        site_token = site.strip()
 
         for network_site in resolved_sites:
-            if network_site.internal_reference == site:
+            if network_site.internal_reference == site_token:
                 return network_site.site_id
 
         for network_site in resolved_sites:
-            if site in (network_site.name, network_site.site_id):
+            if site_token in (network_site.name, network_site.site_id):
                 return network_site.site_id
 
         return None

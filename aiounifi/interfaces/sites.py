@@ -19,8 +19,10 @@ class Sites(APIHandler[Site]):
         sites: Sequence[Site] | None = None,
     ) -> str | None:
         """Resolve Network API site UUID from primary site data."""
+        site_token = site.strip()
+
         for primary_site in sites or self.values():
-            if site not in (
+            if site_token not in (
                 primary_site.hidden_id,
                 primary_site.name,
                 primary_site.site_id,

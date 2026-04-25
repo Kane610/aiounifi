@@ -9,6 +9,7 @@ from ..api_handlers import APIHandler
 from ..models.client import (
     Client,
     ClientDetailData,
+    ClientSummaryData,
     ExecuteClientActionRequest,
     ExecuteClientActionResponse,
     GetClientDetailsRequest,
@@ -24,6 +25,10 @@ class Clients(APIHandler[Client]):
 
     item_cls = Client
     obj_id_key = "macAddress"
+
+    def normalize_obj_id(self, obj_id: str) -> str:
+        """Canonicalize MAC identifiers for handler storage and lookups."""
+        return normalize_mac(obj_id)
 
     @property
     def api_request(self) -> ListClientsRequest:
@@ -66,7 +71,7 @@ class Clients(APIHandler[Client]):
             self.api_client.site_id, offset, limit, filter_value
         )
         data = await self.api_client.request(request)
-        return [Client(cast(ClientDetailData, item)) for item in data.get("data", [])]
+        return [Client(cast(ClientSummaryData, item)) for item in data.get("data", [])]
 
     async def get_details(
         self,
@@ -142,8 +147,11 @@ class Clients(APIHandler[Client]):
 
     def get_by_mac_cached(self, mac_address: str) -> Client | None:
         """Get a client by MAC from already-loaded handler state without I/O."""
-        normalized_mac = normalize_mac(mac_address)
-        return self.get(normalized_mac)
+        return self.get(mac_address)
+
+    async def _require_client_id_by_mac(self, mac_address: str) -> str:
+        """Resolve a client UUID from a MAC address or raise RequestError."""
+        return (await self.require_by_mac(mac_address)).client_id
 
     def get_by_uuid(self, client_id: str) -> Client | None:
         """Get a client by UUID from already-loaded handler state without I/O."""
@@ -160,8 +168,7 @@ class Clients(APIHandler[Client]):
 
     async def get_details_by_mac(self, mac_address: str) -> Client:
         """Get detailed client information by MAC address."""
-        client = await self.require_by_mac(mac_address)
-        return await self.get_details(client.client_id)
+        return await self.get_details(await self._require_client_id_by_mac(mac_address))
 
     async def authorize_guest_access_by_mac(
         self,
@@ -172,9 +179,8 @@ class Clients(APIHandler[Client]):
         tx_rate_limit_kbps: int | None = None,
     ) -> ExecuteClientActionResponse:
         """Authorize guest access for a client resolved by MAC address."""
-        client = await self.require_by_mac(mac_address)
         return await self.authorize_guest_access(
-            client.client_id,
+            await self._require_client_id_by_mac(mac_address),
             time_limit_minutes,
             data_usage_limit_mbytes,
             rx_rate_limit_kbps,
