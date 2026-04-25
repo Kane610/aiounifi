@@ -31,8 +31,8 @@ class Access(TypedDict):
     type: str
 
 
-class ClientData(TypedDict):
-    """Typed payload for a client returned by the network API."""
+class ClientDetailData(TypedDict):
+    """Typed payload for a client returned by single-item detail endpoint."""
 
     type: str
     id: str
@@ -44,8 +44,8 @@ class ClientData(TypedDict):
     uplinkDeviceId: str
 
 
-class ClientOverviewData(TypedDict):
-    """Typed payload for client overview in list response."""
+class ClientSummaryData(TypedDict):
+    """Typed payload for a client entry in the list-all response."""
 
     type: str
     id: str
@@ -180,7 +180,7 @@ class ExecuteClientActionRequest(ApiRequest):
 class Client(ApiItem):
     """Represent one client from network API data."""
 
-    raw: ClientData
+    raw: ClientDetailData
 
     @property
     def client_id(self) -> str:

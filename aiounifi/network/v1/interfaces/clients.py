@@ -7,7 +7,7 @@ from typing import cast
 from ..api_handlers import APIHandler
 from ..models.client import (
     Client,
-    ClientData,
+    ClientDetailData,
     ExecuteClientActionRequest,
     ExecuteClientActionResponse,
     GetClientDetailsRequest,
@@ -64,7 +64,7 @@ class Clients(APIHandler[Client]):
             self.api_client.site_id, offset, limit, filter_value
         )
         data = await self.api_client.request(request)
-        return [Client(cast(ClientData, item)) for item in data.get("data", [])]
+        return [Client(cast(ClientDetailData, item)) for item in data.get("data", [])]
 
     async def get_details(
         self,
@@ -81,7 +81,7 @@ class Clients(APIHandler[Client]):
         """
         request = GetClientDetailsRequest.create(self.api_client.site_id, client_id)
         data = await self.api_client.request(request)
-        client_data = cast(ClientData, data.get("data", [{}])[0])
+        client_data = cast(ClientDetailData, data.get("data", [{}])[0])
         return Client(client_data)
 
     async def authorize_guest_access(
