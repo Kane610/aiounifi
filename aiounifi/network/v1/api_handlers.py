@@ -33,7 +33,11 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
 
     @final
     async def update(self) -> None:
-        """Refresh data."""
+        """Refresh data.
+
+        For site-scoped handlers, ``ApiClient.assign_site()`` must be called
+        first so that the site ID is resolved before this method is invoked.
+        """
         raw = await self.api_client.request(self.api_request)
         self.process_raw(raw.get("data", []))
 
