@@ -6,8 +6,8 @@ from abc import abstractmethod
 from collections.abc import ItemsView, Iterator, ValuesView
 from typing import TYPE_CHECKING, Any, Generic, final
 
-from ...interfaces.api_handlers import ItemEvent, SubscriptionHandler
 from ...models.api import ApiItemT
+from ...models.subscription import ItemEvent, SubscriptionHandler
 
 if TYPE_CHECKING:
     from .api_client import ApiClient

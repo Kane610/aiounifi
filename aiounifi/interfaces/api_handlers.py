@@ -2,81 +2,32 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from collections.abc import Callable, ItemsView, Iterator, ValuesView
-import enum
+from collections.abc import ItemsView, Iterator, ValuesView
 from typing import TYPE_CHECKING, Any, Generic, final
 
 from ..models.api import ApiItemT, ApiRequest
+from ..models.subscription import (
+    ID_FILTER_ALL,
+    CallbackType,
+    ItemEvent,
+    SubscriptionHandler,
+    SubscriptionType,
+    UnsubscribeType,
+)
 
 if TYPE_CHECKING:
     from ..controller import Controller
     from ..models.message import Message, MessageKey
 
-
-class ItemEvent(enum.Enum):
-    """The event action of the item."""
-
-    ADDED = "added"
-    CHANGED = "changed"
-    DELETED = "deleted"
-
-
-CallbackType = Callable[[ItemEvent, str], None]
-SubscriptionType = tuple[CallbackType, tuple[ItemEvent, ...] | None]
-UnsubscribeType = Callable[[], None]
-
-ID_FILTER_ALL = "*"
-
-
-class SubscriptionHandler(ABC):
-    """Manage subscription and notification to subscribers."""
-
-    def __init__(self) -> None:
-        """Initialize subscription handler."""
-        self._subscribers: dict[str, list[SubscriptionType]] = {ID_FILTER_ALL: []}
-
-    def signal_subscribers(self, event: ItemEvent, obj_id: str) -> None:
-        """Signal subscribers."""
-        subscribers: list[SubscriptionType] = (
-            self._subscribers.get(obj_id, []) + self._subscribers[ID_FILTER_ALL]
-        )
-        for callback, event_filter in subscribers:
-            if event_filter is not None and event not in event_filter:
-                continue
-            callback(event, obj_id)
-
-    def subscribe(
-        self,
-        callback: CallbackType,
-        event_filter: tuple[ItemEvent, ...] | ItemEvent | None = None,
-        id_filter: tuple[str] | str | None = None,
-    ) -> UnsubscribeType:
-        """Subscribe to added events."""
-        if isinstance(event_filter, ItemEvent):
-            event_filter = (event_filter,)
-        subscription = (callback, event_filter)
-
-        _id_filter: tuple[str]
-        if id_filter is None:
-            _id_filter = (ID_FILTER_ALL,)
-        elif isinstance(id_filter, str):
-            _id_filter = (id_filter,)
-
-        for obj_id in _id_filter:
-            if obj_id not in self._subscribers:
-                self._subscribers[obj_id] = []
-            self._subscribers[obj_id].append(subscription)
-
-        def unsubscribe() -> None:
-            for obj_id in _id_filter:
-                if obj_id not in self._subscribers:
-                    continue
-                if subscription not in self._subscribers[obj_id]:
-                    continue
-                self._subscribers[obj_id].remove(subscription)
-
-        return unsubscribe
+__all__ = [
+    "ID_FILTER_ALL",
+    "APIHandler",
+    "CallbackType",
+    "ItemEvent",
+    "SubscriptionHandler",
+    "SubscriptionType",
+    "UnsubscribeType",
+]
 
 
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
