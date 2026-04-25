@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from ...errors import RequestError
@@ -24,6 +25,7 @@ class ApiClient:
         self.controller = controller
         configured_site_id = config.site_uuid
         self._site_id: str | None = configured_site_id or None
+        self._site_task: asyncio.Task[str] | None = None
         self.clients = Clients(self)
         self.sites = Sites(self)
 
@@ -39,12 +41,32 @@ class ApiClient:
     async def assign_site(self, site: str) -> str:
         """Resolve and assign active Network API site UUID from a site token.
 
+        Concurrent calls are safe without a lock: asyncio's single-threaded
+        cooperative model ensures the ``_site_task`` check and ``create_task``
+        assignment are atomic between awaits, so all concurrent callers share
+        a single in-flight resolution and avoid duplicate network fetches.
+
         Resolution order:
-        1. Configured network-site UUID.
-        2. Legacy/primary site resolver.
-        3. Already-fetched v1 sites cache.
-        4. Fresh v1 sites fetch.
+        1. Already-resolved ``_site_id`` (fast path).
+        2. In-flight resolution task (piggyback).
+        3. Configured network-site UUID.
+        4. Legacy/primary site resolver.
+        5. Already-fetched v1 sites cache.
+        6. Fresh v1 sites fetch.
         """
+        if self._site_id is not None:
+            return self._site_id
+
+        if self._site_task is not None:
+            await self._site_task
+            return self._site_id  # type: ignore[return-value]
+
+        self._site_task = asyncio.get_event_loop().create_task(self._resolve_site(site))
+        await self._site_task
+        return self._site_id  # type: ignore[return-value]
+
+    async def _resolve_site(self, site: str) -> str:
+        """Perform the four-step site UUID resolution and store the result."""
         if configured_site_id := self.controller.connectivity.config.site_uuid:
             self._site_id = configured_site_id
             return configured_site_id
