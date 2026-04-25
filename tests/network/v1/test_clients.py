@@ -3,9 +3,10 @@
 import re
 
 import pytest
-from yarl import URL
 
 from aiounifi.errors import Unauthorized
+
+from .helpers import assert_request_called_with
 
 
 async def test_network_clients_list_success(
@@ -60,6 +61,12 @@ async def test_network_clients_list_success(
     assert clients[1].name == "Laptop"
     assert clients[1].type == "WIRELESS"
     assert clients[1].access_type == "GUEST"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites/site-uuid/clients",
+        params={"offset": 0, "limit": 2},
+    )
 
 
 async def test_network_clients_list_default_pagination(
@@ -92,10 +99,12 @@ async def test_network_clients_list_default_pagination(
     clients = await network_client_with_site.clients.list()
 
     assert len(clients) == 1
-    request = next(iter(mock_aioresponse.requests))
-    assert request[0] == "get"
-    assert isinstance(request[1], URL)
-    assert request[1].path == f"/proxy/network/integration/v1/sites/{site_id}/clients"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        f"/proxy/network/integration/v1/sites/{site_id}/clients",
+        params={"offset": 0, "limit": 25},
+    )
 
 
 async def test_network_clients_list_filter(
@@ -130,6 +139,12 @@ async def test_network_clients_list_filter(
 
     assert len(clients) == 1
     assert clients[0].access_type == "GUEST"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites/site-uuid/clients",
+        params={"offset": 0, "limit": 25, "filter": "access.type.eq('GUEST')"},
+    )
 
 
 async def test_network_clients_get_details_success(
@@ -206,6 +221,12 @@ async def test_network_clients_authorize_guest_access_minimal(
     assert response["action"] == "AUTHORIZE_GUEST_ACCESS"
     assert response["grantedAuthorization"]["authorizedAt"] == "2024-01-15T15:00:00Z"
     assert response["grantedAuthorization"]["dataUsageLimitMBytes"] == 1024
+    assert_request_called_with(
+        mock_aioresponse,
+        "post",
+        f"/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
+        json_body={"action": "AUTHORIZE_GUEST_ACCESS"},
+    )
 
 
 async def test_network_clients_authorize_guest_access_full_params(
@@ -260,6 +281,18 @@ async def test_network_clients_authorize_guest_access_full_params(
     assert response["revokedAuthorization"]["dataUsageLimitMBytes"] == 512
     assert response["grantedAuthorization"]["dataUsageLimitMBytes"] == 2048
     assert response["grantedAuthorization"]["rxRateLimitKbps"] == 5000
+    assert_request_called_with(
+        mock_aioresponse,
+        "post",
+        f"/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
+        json_body={
+            "action": "AUTHORIZE_GUEST_ACCESS",
+            "timeLimitMinutes": 120,
+            "dataUsageLimitMBytes": 2048,
+            "rxRateLimitKbps": 5000,
+            "txRateLimitKbps": 5000,
+        },
+    )
 
 
 async def test_network_clients_unauthorized(
@@ -436,3 +469,13 @@ async def test_network_clients_authorize_guest_partial_params(
 
     assert response["action"] == "AUTHORIZE_GUEST_ACCESS"
     assert response["grantedAuthorization"]["dataUsageLimitMBytes"] == 500
+    assert_request_called_with(
+        mock_aioresponse,
+        "post",
+        f"/proxy/network/integration/v1/sites/{site_id}/clients/{client_id}/actions",
+        json_body={
+            "action": "AUTHORIZE_GUEST_ACCESS",
+            "timeLimitMinutes": 30,
+            "dataUsageLimitMBytes": 500,
+        },
+    )

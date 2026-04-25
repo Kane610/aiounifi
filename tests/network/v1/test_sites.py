@@ -3,11 +3,12 @@
 import re
 
 import pytest
-from yarl import URL
 
 from aiounifi.errors import RequestError, ResponseError, Unauthorized
 from aiounifi.network.v1.models.api import ApiRequest
 from aiounifi.network.v1.models.site import Site
+
+from .helpers import assert_request_called_with
 
 
 async def test_network_sites_list_success(mock_aioresponse, network_client) -> None:
@@ -40,11 +41,12 @@ async def test_network_sites_list_success(mock_aioresponse, network_client) -> N
     assert sites[0].site_id == "site-a"
     assert sites[0].internal_reference == "ref-a"
     assert sites[0].name == "Alpha"
-
-    request = next(iter(mock_aioresponse.requests))
-    assert request[0] == "get"
-    assert isinstance(request[1], URL)
-    assert request[1].path == "/proxy/network/integration/v1/sites"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites",
+        params={"offset": 0, "limit": 2},
+    )
 
 
 async def test_network_sites_list_filter(mock_aioresponse, network_client) -> None:
@@ -66,6 +68,12 @@ async def test_network_sites_list_filter(mock_aioresponse, network_client) -> No
 
     assert len(sites) == 1
     assert sites[0].name == "Zulu"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites",
+        params={"offset": 10, "limit": 1, "filter": "name=='Zulu'"},
+    )
 
 
 async def test_network_sites_unauthorized(mock_aioresponse, network_client) -> None:
@@ -205,6 +213,12 @@ async def test_network_sites_list_uses_default_page(
 
     assert len(sites) == 1
     assert sites[0].name == "Default"
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/integration/v1/sites",
+        params={"offset": 0, "limit": 25},
+    )
 
 
 def test_network_sites_resolve_site_uuid_returns_none_without_sites(
