@@ -24,14 +24,16 @@ from aiohttp import client_exceptions
 import orjson
 
 from ...errors import (
-    AiounifiException,
-    AuthenticationRateLimitError,
-    BadGateway,
-    Forbidden,
+    NetworkApiError,
     RequestError,
-    ResponseError,
-    ServiceUnavailable,
-    Unauthorized,
+)
+from .errors import (
+    V1AuthenticationRateLimitError,
+    V1BadGateway,
+    V1Forbidden,
+    V1ResponseError,
+    V1ServiceUnavailable,
+    V1Unauthorized,
 )
 
 if TYPE_CHECKING:
@@ -40,26 +42,26 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-STATUS_EXCEPTION_MAP: dict[int, type[AiounifiException]] = {
-    HTTPStatus.UNAUTHORIZED: Unauthorized,
-    HTTPStatus.FORBIDDEN: Forbidden,
-    HTTPStatus.NOT_FOUND: ResponseError,
-    HTTPStatus.TOO_MANY_REQUESTS: ResponseError,
-    HTTPStatus.BAD_GATEWAY: BadGateway,
-    HTTPStatus.SERVICE_UNAVAILABLE: ServiceUnavailable,
+STATUS_EXCEPTION_MAP: dict[int, type[NetworkApiError]] = {
+    HTTPStatus.UNAUTHORIZED: V1Unauthorized,
+    HTTPStatus.FORBIDDEN: V1Forbidden,
+    HTTPStatus.NOT_FOUND: V1ResponseError,
+    HTTPStatus.TOO_MANY_REQUESTS: V1ResponseError,
+    HTTPStatus.BAD_GATEWAY: V1BadGateway,
+    HTTPStatus.SERVICE_UNAVAILABLE: V1ServiceUnavailable,
 }
 
-STATUS_NAME_EXCEPTION_MAP: dict[str, type[AiounifiException]] = {
-    "UNAUTHORIZED": Unauthorized,
-    "FORBIDDEN": Forbidden,
-    "BAD_GATEWAY": BadGateway,
-    "SERVICE_UNAVAILABLE": ServiceUnavailable,
+STATUS_NAME_EXCEPTION_MAP: dict[str, type[NetworkApiError]] = {
+    "UNAUTHORIZED": V1Unauthorized,
+    "FORBIDDEN": V1Forbidden,
+    "BAD_GATEWAY": V1BadGateway,
+    "SERVICE_UNAVAILABLE": V1ServiceUnavailable,
 }
 
-ERROR_CODE_EXCEPTION_MAP: dict[str, type[AiounifiException]] = {
-    "api.authentication.failed-limit-reached": AuthenticationRateLimitError,
-    "api.authentication.invalid-credentials": Unauthorized,
-    "api.authentication.missing-credentials": Unauthorized,
+ERROR_CODE_EXCEPTION_MAP: dict[str, type[NetworkApiError]] = {
+    "api.authentication.failed-limit-reached": V1AuthenticationRateLimitError,
+    "api.authentication.invalid-credentials": V1Unauthorized,
+    "api.authentication.missing-credentials": V1Unauthorized,
 }
 
 
@@ -68,9 +70,10 @@ class Connectivity:
 
     For error responses, this class resolves exception types in a deterministic
     order from most specific semantics to broad transport fallback. Raised
-    exceptions may include structured metadata attributes (`status_code`,
-    `status_name`, `code`, `detail`, `timestamp`, `request_path`, `request_id`)
-    when the response body matches the API error envelope.
+    exceptions are `NetworkApiError` subclasses and carry typed metadata
+    attributes (`status_code`, `status_name`, `code`, `detail`, `timestamp`,
+    `request_path`, `request_id`) when the response body matches the API error
+    envelope.
     """
 
     def __init__(self, config: Configuration) -> None:
@@ -140,7 +143,7 @@ class Connectivity:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 body_preview = body.decode("utf-8", errors="replace")
                 LOGGER.debug("non-JSON response body from %s: %s", url, body_preview)
-            raise ResponseError(
+            raise V1ResponseError(
                 f"Call {url} returned a non-JSON response for {api_request.path}"
             ) from err
 
@@ -157,30 +160,23 @@ class Connectivity:
 
     def _build_exception(
         self,
-        exception_type: type[AiounifiException],
+        exception_type: type[NetworkApiError],
         url: str,
         status: int,
         body: bytes,
-        error: ApiErrorResponse | None = None,
-    ) -> AiounifiException:
-        """Build an exception and attach structured error fields when available."""
+        error: ApiErrorResponse | None,
+    ) -> NetworkApiError:
+        """Build a NetworkApiError and populate structured fields when available."""
         message = self._error_message(url, status, body, error)
         exc = exception_type(message)
-
-        # Always include HTTP status for programmatic handling.
-        setattr(exc, "status_code", status)
-
-        if error is None:
-            error = self._parse_error_response(body)
-
+        exc.status_code = status
         if error:
-            setattr(exc, "status_name", error["statusName"])
-            setattr(exc, "code", error["code"])
-            setattr(exc, "detail", error["message"])
-            setattr(exc, "timestamp", error["timestamp"])
-            setattr(exc, "request_path", error["requestPath"])
-            setattr(exc, "request_id", error["requestId"])
-
+            exc.status_name = error["statusName"]
+            exc.code = error["code"]
+            exc.detail = error["message"]
+            exc.timestamp = error["timestamp"]
+            exc.request_path = error["requestPath"]
+            exc.request_id = error["requestId"]
         return exc
 
     def _error_message(
@@ -232,7 +228,7 @@ class Connectivity:
 
     def _exception_type(
         self, status: int, error: ApiErrorResponse | None
-    ) -> type[AiounifiException]:
+    ) -> type[NetworkApiError]:
         """Resolve the most specific exception type for a failed response.
 
         Resolution order:
@@ -251,4 +247,4 @@ class Connectivity:
             if exception_type := STATUS_NAME_EXCEPTION_MAP.get(error["statusName"]):
                 return exception_type
 
-        return STATUS_EXCEPTION_MAP.get(status, ResponseError)
+        return STATUS_EXCEPTION_MAP.get(status, V1ResponseError)

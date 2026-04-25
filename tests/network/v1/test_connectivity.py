@@ -5,8 +5,13 @@ import logging
 import aiohttp
 import pytest
 
-from aiounifi.errors import Forbidden, RequestError, ResponseError, Unauthorized
+from aiounifi.errors import RequestError, ResponseError, Unauthorized
 from aiounifi.network.v1.connectivity import Connectivity
+from aiounifi.network.v1.errors import (
+    V1Forbidden,
+    V1ResponseError,
+    V1Unauthorized,
+)
 from aiounifi.network.v1.models.api import ApiRequest
 
 
@@ -124,7 +129,7 @@ def test_network_parse_error_response_invalid_payloads(
 def test_network_build_exception_parses_structured_body(
     network_connectivity: Connectivity,
 ) -> None:
-    """Verify structured error details are attached even when error=None is passed."""
+    """Verify structured error details are attached to a NetworkApiError subclass."""
     body = (
         b'{"statusCode":401,"statusName":"UNAUTHORIZED",'
         b'"code":"api.authentication.missing-credentials",'
@@ -133,21 +138,23 @@ def test_network_build_exception_parses_structured_body(
         b'"requestPath":"/integration/v1/sites/123",'
         b'"requestId":"3fa85f64-5717-4562-b3fc-2c963f66afa6"}'
     )
+    parsed_error = network_connectivity._parse_error_response(body)
+    assert parsed_error is not None
 
     error = network_connectivity._build_exception(
-        Unauthorized,
+        V1Unauthorized,
         "https://host:8443/proxy/network/integration/v1/sites",
         401,
         body,
-        None,
+        parsed_error,
     )
 
-    assert getattr(error, "status_code") == 401
-    assert getattr(error, "status_name") == "UNAUTHORIZED"
-    assert getattr(error, "code") == "api.authentication.missing-credentials"
-    assert getattr(error, "detail") == "Missing credentials"
-    assert getattr(error, "request_path") == "/integration/v1/sites/123"
-    assert getattr(error, "request_id") == "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    assert error.status_code == 401
+    assert error.status_name == "UNAUTHORIZED"
+    assert error.code == "api.authentication.missing-credentials"
+    assert error.detail == "Missing credentials"
+    assert error.request_path == "/integration/v1/sites/123"
+    assert error.request_id == "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 
 
 def test_network_error_message_falls_back_to_default(
@@ -177,7 +184,7 @@ def test_network_exception_type_resolution_order(
                 "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             },
         )
-        is Unauthorized
+        is V1Unauthorized
     )
     assert (
         network_connectivity._exception_type(
@@ -192,7 +199,7 @@ def test_network_exception_type_resolution_order(
                 "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             },
         )
-        is Forbidden
+        is V1Forbidden
     )
-    assert network_connectivity._exception_type(401, None) is Unauthorized
-    assert network_connectivity._exception_type(418, None) is ResponseError
+    assert network_connectivity._exception_type(401, None) is V1Unauthorized
+    assert network_connectivity._exception_type(418, None) is V1ResponseError
