@@ -102,6 +102,15 @@ def test_network_build_url(network_connectivity: Connectivity) -> None:
     )
 
 
+def test_api_request_rejects_non_v1_path() -> None:
+    """Verify ApiRequest raises ValueError when path does not start with /v1/."""
+    with pytest.raises(ValueError, match="/v1/"):
+        ApiRequest(method="get", path="/integration/v1/sites")
+
+    with pytest.raises(ValueError, match="/v1/"):
+        ApiRequest(method="get", path="v1/sites")
+
+
 @pytest.mark.parametrize(
     ("body", "expected"),
     [
