@@ -149,14 +149,7 @@ class Connectivity:
 
     def _build_url(self, path: str) -> str:
         """Build local controller integration URL for a network API path."""
-        normalized_path = path if path.startswith("/") else f"/{path}"
-        if normalized_path.startswith("/integration/"):
-            integration_path = normalized_path
-        elif normalized_path.startswith("/v1/"):
-            integration_path = f"/integration{normalized_path}"
-        else:
-            integration_path = normalized_path
-        return f"{self.config.url.rstrip('/')}/proxy/network{integration_path}"
+        return f"{self.config.url.rstrip('/')}/proxy/network/integration{path}"
 
     def _build_exception(
         self,

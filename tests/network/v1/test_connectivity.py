@@ -90,19 +90,15 @@ async def test_network_request_wraps_client_errors(
         await network_connectivity.request(ApiRequest(method="get", path="/v1/sites"))
 
 
-def test_network_build_url_variants(network_connectivity: Connectivity) -> None:
-    """Verify URL builder handles v1, integration, and passthrough paths."""
+def test_network_build_url(network_connectivity: Connectivity) -> None:
+    """Verify URL builder prefixes /proxy/network/integration unconditionally."""
     assert (
         network_connectivity._build_url("/v1/sites")
         == "https://host:8443/proxy/network/integration/v1/sites"
     )
     assert (
-        network_connectivity._build_url("/integration/v1/sites")
-        == "https://host:8443/proxy/network/integration/v1/sites"
-    )
-    assert (
-        network_connectivity._build_url("custom/path")
-        == "https://host:8443/proxy/network/custom/path"
+        network_connectivity._build_url("/v1/sites/abc/clients")
+        == "https://host:8443/proxy/network/integration/v1/sites/abc/clients"
     )
 
 

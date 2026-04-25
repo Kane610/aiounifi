@@ -44,6 +44,13 @@ class ApiRequest:
     params: Mapping[str, str | int] | None = None
     data: Mapping[str, Any] | None = None
 
+    def __post_init__(self) -> None:
+        """Validate that path starts with /v1/."""
+        if not self.path.startswith("/v1/"):
+            raise ValueError(
+                f"ApiRequest.path must start with '/v1/', got {self.path!r}"
+            )
+
     def decode(self, raw: bytes) -> ApiResponse:
         """Decode network API envelope."""
         data: dict[str, Any] = orjson.loads(raw)
