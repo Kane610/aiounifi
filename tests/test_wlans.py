@@ -13,10 +13,10 @@ from aiounifi.models.wlan import (
 
 from .fixtures import WLANS
 
+from tests.helpers.request_assertions import assert_request_called_with
 
-async def test_wlan_password_change(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
+
+async def test_wlan_password_change(mock_aioresponse, unifi_controller):
     """Test changing Wlan password."""
     mock_aioresponse.put(
         "https://host:8443/api/s/default/rest/wlanconf/123", payload={}
@@ -24,17 +24,16 @@ async def test_wlan_password_change(
 
     await unifi_controller.request(WlanChangePasswordRequest.create("123", "456"))
 
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         "/api/s/default/rest/wlanconf/123",
-        json={"x_passphrase": "456"},
+        json_body={"x_passphrase": "456"},
     )
 
 
 @pytest.mark.parametrize("enable", [True, False])
-async def test_wlan_enable(
-    mock_aioresponse, unifi_controller, unifi_called_with, enable
-):
+async def test_wlan_enable(mock_aioresponse, unifi_controller, enable):
     """Test that wlan can be enabled and disabled."""
     mock_aioresponse.put(
         "https://host:8443/api/s/default/rest/wlanconf/123", payload={}
@@ -42,10 +41,11 @@ async def test_wlan_enable(
 
     await unifi_controller.request(WlanEnableRequest.create("123", enable))
 
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         "/api/s/default/rest/wlanconf/123",
-        json={"enabled": enable},
+        json_body={"enabled": enable},
     )
 
 
@@ -67,18 +67,18 @@ def test_wlan_qr_code():
 
 
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_no_wlans(unifi_controller, unifi_called_with):
+async def test_no_wlans(mock_aioresponse, unifi_controller):
     """Test that no ports also work."""
     wlans = unifi_controller.wlans
     await wlans.update()
 
-    assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
+    assert_request_called_with(mock_aioresponse, "get", "/api/s/default/rest/wlanconf")
     assert len(wlans.values()) == 0
 
 
 @pytest.mark.parametrize("wlan_payload", [WLANS])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
+async def test_wlans(mock_aioresponse, unifi_controller):
     """Test that different types of ports work."""
     wlans = unifi_controller.wlans
     await wlans.update()
@@ -131,17 +131,19 @@ async def test_wlans(mock_aioresponse, unifi_controller, unifi_called_with):
     )
 
     await wlans.enable(wlan)
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         "/api/s/default/rest/wlanconf/012345678910111213141516",
-        json={"enabled": True},
+        json_body={"enabled": True},
     )
 
     await wlans.disable(wlan)
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         "/api/s/default/rest/wlanconf/012345678910111213141516",
-        json={"enabled": False},
+        json_body={"enabled": False},
     )
 
     assert wlans.generate_wlan_qr_code(wlan) == (
