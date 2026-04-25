@@ -158,7 +158,7 @@ def test_network_error_message_falls_back_to_default(
 ) -> None:
     """Verify unstructured error bodies use the default message."""
     url = "https://host:8443/proxy/network/integration/v1/sites"
-    assert network_connectivity._error_message(url, 500, b"not-json") == (
+    assert network_connectivity._error_message(url, 500, b"not-json", None) == (
         f"Call {url} received 500"
     )
 

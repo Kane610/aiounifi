@@ -180,13 +180,10 @@ class Connectivity:
         url: str,
         status: int,
         body: bytes,
-        error: ApiErrorResponse | None = None,
+        error: ApiErrorResponse | None,
     ) -> str:
         """Build a detailed error message from a structured API error payload."""
         default_message = f"Call {url} received {status}"
-
-        if error is None:
-            error = self._parse_error_response(body)
 
         if error:
             details = (
