@@ -20,7 +20,6 @@ from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, cast
 
-import aiohttp
 from aiohttp import client_exceptions
 import orjson
 
@@ -77,6 +76,7 @@ class Connectivity:
     def __init__(self, config: Configuration) -> None:
         """Initialize Network API connectivity."""
         self.config = config
+        self._session = config.api_session or config.session
 
     async def request(self, api_request: ApiRequest) -> ApiResponse:
         """Perform one request to the Network API and decode the response.
@@ -110,19 +110,14 @@ class Connectivity:
         )
 
         try:
-            # Use a cookie-less session so API-key auth is not affected by
-            # controller login cookies from the legacy client flow.
-            async with (
-                aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar()) as session,
-                session.request(
-                    api_request.method,
-                    url,
-                    params=params,
-                    data=json_data,
-                    ssl=self.config.ssl_context,
-                    headers=headers,
-                ) as response,
-            ):
+            async with self._session.request(
+                api_request.method,
+                url,
+                params=params,
+                data=json_data,
+                ssl=self.config.ssl_context,
+                headers=headers,
+            ) as response:
                 body = await response.read()
         except client_exceptions.ClientError as err:
             raise RequestError(f"Error requesting data from {url}: {err}") from None

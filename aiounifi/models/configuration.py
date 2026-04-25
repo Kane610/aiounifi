@@ -22,6 +22,7 @@ class Configuration:
     totp_secret: str | None = None
     api_key: str | None = None
     site_uuid: str | None = None
+    api_session: ClientSession | None = None
 
     @property
     def url(self) -> str:
