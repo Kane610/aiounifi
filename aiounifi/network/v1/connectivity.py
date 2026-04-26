@@ -41,7 +41,8 @@ from .errors import (
 
 if TYPE_CHECKING:
     from ...models.configuration import Configuration
-    from .models.api import ApiErrorResponse, ApiRequest, ApiResponse
+    from ...request_contracts import V1RequestProtocol
+    from .models.api import ApiErrorResponse, ApiResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class Connectivity:
         self.config = config
         self._session = config.api_session or config.session
 
-    async def request(self, api_request: ApiRequest) -> ApiResponse:
+    async def request(self, api_request: V1RequestProtocol[ApiResponse]) -> ApiResponse:
         """Perform one request to the Network API and decode the response.
 
         On HTTP error responses (>= 400), exception selection is delegated to
