@@ -9,7 +9,16 @@ There are two completely separate API clients. Never mix their types.
 | Legacy REST | `Controller` | `aiounifi/interfaces/` | UniFi Controller REST API (stable, websocket-driven) |
 | Network API v1 | `controller.network` (`ApiClient`) | `aiounifi/network/v1/` | Official UniFi Network API (paginated, site-scoped) |
 
-`controller.network` is a `cached_property` — it is created on first access and shares the same `Configuration` as the legacy tree.
+`controller.network` is a `cached_property` — it is created on first access and shares the same `Configuration` and session as the legacy tree.
+
+**v1 transport differences vs legacy:**
+- URL prefix: `{config.url}/proxy/network/integration` (legacy uses `/api/s/{site}/`)
+- Auth: `X-API-KEY` header (legacy uses session cookies)
+- Response envelope: `{"offset": ..., "limit": ..., "count": ..., "totalCount": ..., "data": [...]}` (legacy uses `{"meta": {...}, "data": [...]}`)
+- Request type: `aiounifi.network.v1.models.api.ApiRequest`; response type: `ApiResponse` (not the legacy `TypedApiResponse`)
+- v1 requests support a `params: Mapping[str, str | int] | None` field for query-string parameters (e.g. pagination). Legacy requests do not.
+
+**v1 site UUID requirement:** `ApiClient._site_id` is `None` until `await controller.network.assign_site(site_token)` is called. Accessing `api_client.site_id` (or calling any handler method) before that raises `RequestError`. Call `assign_site` once after login.
 
 ## Layer Contracts
 
@@ -26,14 +35,14 @@ There are two completely separate API clients. Never mix their types.
 
 ### Adding a new legacy endpoint
 1. Create `aiounifi/models/<resource>.py` — TypedDict for the item, `@dataclass ApiRequest` subclass.
-2. Create `aiounifi/interfaces/<resource>.py` — subclass `APIHandler[YourModel]`, set `obj_id_key`, `item_cls`, `api_request`.
+2. Create `aiounifi/interfaces/<resource>.py` — subclass `APIHandler[YourModel]`, set `obj_id_key`, `item_cls`, and `api_request` **as a class attribute**: `api_request = YourRequest.create()`.
 3. Register it in `aiounifi/controller.py` (`self.<resource> = YourHandler(self)`).
 4. Add the HTTP mock to `tests/conftest.py` `_mock_endpoints` fixture.
 5. Add `<resource>_payload` fixture to `tests/conftest.py` defaulting to `[]`.
 
 ### Adding a new v1 endpoint
 1. Create `aiounifi/network/v1/models/<resource>.py` — TypedDict + `@dataclass ApiRequest` (path must start with `/v1/`).
-2. Create `aiounifi/network/v1/interfaces/<resource>.py` — subclass `network/v1/api_handlers.APIHandler[YourModel]`.
+2. Create `aiounifi/network/v1/interfaces/<resource>.py` — subclass `network/v1/api_handlers.APIHandler[YourModel]`. Set `api_request` as a **`@property`** (not a class attribute) because it needs to access `self.api_client.site_id` at call time.
 3. Export from `aiounifi/network/v1/interfaces/__init__.py` and `aiounifi/network/v1/__init__.py`.
 4. Attach to `ApiClient.__init__` in `aiounifi/network/v1/api_client.py`.
 5. Write tests under `tests/network/v1/`.
@@ -44,6 +53,7 @@ Override in a handler subclass to canonicalize item storage keys before they are
 def normalize_obj_id(self, obj_id: str) -> str:
     return normalize_mac(obj_id)  # e.g. Clients uses MAC as canonical key
 ```
+**Important**: The function must be idempotent — applying it twice to the same input must return the same result, because it is called both on storage and on lookup.
 
 ### Subscription pattern
 `SubscriptionHandler.subscribe(callback, event_filter, id_filter)` returns an `UnsubscribeType` callable.
@@ -74,13 +84,17 @@ async def test_wlans(unifi_controller):
 from tests.helpers.request_assertions import assert_request_called_with
 assert_request_called_with(mock_aioresponse, "put", "/api/s/default/...", json_body={...})
 ```
+Two helpers exist:
+- `assert_request_called_with(mock, method, path, *, params=None, json_body=None)` — raises `AssertionError` with diagnostics on mismatch. Recommended for new tests.
+- `unifi_called_with` — legacy fixture returning a `Callable[[str, str, dict], bool]` used in older tests. Prefer `assert_request_called_with` instead.
 
 ### Payload builder pattern (v1 tests)
 Define a `_<resource>_payload(**overrides)` helper at the top of the test file that merges defaults with overrides, to keep test data DRY.
 
 ## Type Checking
-- mypy strict: `disallow_untyped_defs`, `no_implicit_reexport`, `warn_return_any`, etc.
+- mypy strict: `disallow_untyped_defs`, `no_implicit_reexport`, `warn_return_any`, etc. (configured in `pyproject.toml`).
 - All public symbols must be in `__all__` — `no_implicit_reexport = true` is enforced.
+- This means: every new handler or model must be exported from its module's `__all__`, from the package `__init__.py`, and from any parent `__init__.py` that re-exports it. Forgetting `__all__` at any level causes import failures for consumers.
 - `TYPE_CHECKING` guards are used for circular-import-safe type annotations.
 
 ## Request Contract
@@ -98,5 +112,5 @@ Define a `_<resource>_payload(**overrides)` helper at the top of the test file t
 ## Naming Conventions
 - Request dataclasses: `<Resource>Request` with a `create(...)` classmethod.
 - Response TypedDicts: `<Resource>Data` (raw API shape) + `<Resource>` (handler-facing wrapper if needed).
-- Handler classes: `<Resources>` (plural) for collection handlers.
+- Handler classes: `<Resources>` (plural) for collection handlers (e.g. `Clients`, `Devices`, `Wlans`). Service-level handlers may use different names (e.g. `EventHandler`, `MessageHandler`) — check existing handlers for precedent.
 - Test fixtures: `<resource>_payload` for data, `test_<resource>_<scenario>` for tests.
