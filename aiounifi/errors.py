@@ -1,5 +1,21 @@
 """Aiounifi errors."""
 
+__all__ = [
+    "AiounifiException",
+    "AuthenticationRateLimitError",
+    "BadGateway",
+    "Forbidden",
+    "LoginRequired",
+    "NetworkApiError",
+    "NoPermission",
+    "RequestError",
+    "ResponseError",
+    "ServiceUnavailable",
+    "TwoFaTokenRequired",
+    "Unauthorized",
+    "WebsocketError",
+]
+
 
 class AiounifiException(Exception):
     """Base error for aiounifi."""
