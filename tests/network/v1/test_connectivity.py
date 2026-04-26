@@ -1,6 +1,8 @@
 """Unit tests for Network API connectivity helpers."""
 
+from dataclasses import dataclass
 import logging
+from typing import Any
 
 import aiohttp
 import pytest
@@ -15,6 +17,26 @@ from aiounifi.network.v1.errors import (
 from aiounifi.network.v1.models.api import ApiRequest
 
 
+@dataclass
+class _V1RequestStub:
+    """Request-like stub validating v1 connectivity duck-typing behavior."""
+
+    method: str = "get"
+    path: str = "/v1/sites"
+    params: dict[str, str | int] | None = None
+    data: dict[str, Any] | None = None
+
+    def decode(self, raw: bytes) -> dict[str, Any]:
+        """Return a valid v1 envelope for compatibility checks."""
+        return {
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [{"_id": "site-1"}],
+        }
+
+
 async def test_network_request_requires_api_key(network_config) -> None:
     """Verify requests fail fast when no API key is configured."""
     network_config.api_key = None
@@ -22,6 +44,27 @@ async def test_network_request_requires_api_key(network_config) -> None:
 
     with pytest.raises(RequestError, match="api_key is required"):
         await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+
+
+async def test_network_request_accepts_request_like_object(
+    mock_aioresponse,
+    network_connectivity: Connectivity,
+) -> None:
+    """Verify v1 connectivity works with structural request objects."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/integration/v1/sites",
+        payload={
+            "offset": 0,
+            "limit": 1,
+            "count": 1,
+            "totalCount": 1,
+            "data": [{"_id": "site-1"}],
+        },
+    )
+
+    response = await network_connectivity.request(_V1RequestStub())
+
+    assert response["data"][0]["_id"] == "site-1"
 
 
 async def test_network_request_rejects_blank_api_key(network_config) -> None:
