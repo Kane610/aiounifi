@@ -28,7 +28,7 @@ from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
 
 if TYPE_CHECKING:
-    from .models.api import ApiRequest, TypedApiResponse
+    from .models.api import ApiRequest as LegacyApiRequest, TypedApiResponse
     from .network.v1.api_client import ApiClient
 
 LOGGER = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class Controller:
         await self.connectivity.check_unifi_os()
         await self.connectivity.login()
 
-    async def request(self, api_request: ApiRequest) -> TypedApiResponse:
+    async def request(self, api_request: LegacyApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
         return await self.connectivity.request(api_request)
 

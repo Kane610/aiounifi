@@ -12,7 +12,7 @@ from .interfaces.sites import Sites
 
 if TYPE_CHECKING:
     from ...controller import Controller
-    from .models.api import ApiRequest, ApiResponse
+    from .models.api import ApiRequest as NetworkApiRequest, ApiResponse
 
 
 class ApiClient:
@@ -90,6 +90,6 @@ class ApiClient:
 
         raise RequestError(f"Could not resolve Network API site UUID for site={site!r}")
 
-    async def request(self, api_request: ApiRequest) -> ApiResponse:
+    async def request(self, api_request: NetworkApiRequest) -> ApiResponse:
         """Perform a typed Network API request."""
         return await self.connectivity.request(api_request)
