@@ -83,6 +83,12 @@ Define a `_<resource>_payload(**overrides)` helper at the top of the test file t
 - All public symbols must be in `__all__` — `no_implicit_reexport = true` is enforced.
 - `TYPE_CHECKING` guards are used for circular-import-safe type annotations.
 
+## Request Contract
+- Shared typing contracts live in `aiounifi/request_contracts.py`.
+- Use Protocols for typing (`LegacyRequestProtocol`, `V1RequestProtocol`) instead of trying to unify runtime request classes.
+- Do not merge, move, or rename existing request classes: `aiounifi.models.api.ApiRequest`, `aiounifi.models.api.ApiRequestV2`, and `aiounifi.network.v1.models.api.ApiRequest`.
+- Legacy and v1 tracks intentionally keep separate runtime request implementations and decode semantics.
+
 ## Pre-commit Workflow
 1. `git add` your changes.
 2. `git commit` → pre-commit runs ruff + ruff format + mypy automatically.
