@@ -34,7 +34,8 @@ if "partitioned" not in cookies.Morsel._reserved:  # type: ignore[attr-defined]
     cookies.Morsel._flags.add("partitioned")  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
-    from ..models.api import ApiRequest, TypedApiResponse
+    from ..models.api import TypedApiResponse
+    from ..request_contracts import LegacyRequestProtocol
 
 LOGGER = logging.getLogger(__name__)
 
@@ -294,11 +295,13 @@ class Connectivity:
         token = pyotp.TOTP(totp_secret).now()
         return await self._request("post", url, json={**auth, "token": token})
 
-    async def request(self, api_request: ApiRequest) -> TypedApiResponse:
+    async def request(
+        self, api_request: LegacyRequestProtocol[TypedApiResponse]
+    ) -> TypedApiResponse:
         """Make a request to the API, retrying login on failure.
 
         Args:
-            api_request (ApiRequest): The API request object containing method, path, and data.
+            api_request (LegacyRequestProtocol[TypedApiResponse]): The API request object containing method, path, and data.
 
         Returns:
             TypedApiResponse: The parsed response data from the API.

@@ -19,6 +19,13 @@ class RequestProtocol(Protocol[ResponseT_co]):
         """Decode the raw response payload into a typed response object."""
 
 
+class LegacyRequestProtocol(RequestProtocol[ResponseT_co], Protocol[ResponseT_co]):
+    """Request contract for legacy and v2 requests requiring site expansion."""
+
+    def full_path(self, site: str, is_unifi_os: bool) -> str:
+        """Build the endpoint path for a specific site and deployment."""
+
+
 class V1RequestProtocol(RequestProtocol[ResponseT_co], Protocol[ResponseT_co]):
     """Request contract for Network API v1 requests supporting query params."""
 
