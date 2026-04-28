@@ -9,14 +9,20 @@ from aiounifi.models.firewall_policy import FirewallPolicyUpdateRequest
 
 from .fixtures import FIREWALL_POLICIES
 
+from tests.helpers.request_assertions import assert_request_called_with
+
 
 @pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_firewall_policies(unifi_controller, unifi_called_with):
+async def test_firewall_policies(mock_aioresponse, unifi_controller):
     """Test that we get the expected firewall policies."""
     firewall_policies = unifi_controller.firewall_policies
     await firewall_policies.update()
-    assert unifi_called_with("get", "/v2/api/site/default/firewall-policies")
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/v2/api/site/default/firewall-policies",
+    )
     assert len(firewall_policies.values()) == 1
 
     policy = firewall_policies["678ceb9fe3849d293243405c"]
@@ -60,20 +66,18 @@ async def test_firewall_policies(unifi_controller, unifi_called_with):
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_no_firewall_policies(unifi_controller, unifi_called_with):
+async def test_no_firewall_policies(mock_aioresponse, unifi_controller):
     """Test that no firewall policies also work."""
     firewall_policies = unifi_controller.firewall_policies
     await firewall_policies.update()
-    assert unifi_called_with(
-        "get", "/proxy/network/v2/api/site/default/firewall-policies"
+    assert_request_called_with(
+        mock_aioresponse, "get", "/proxy/network/v2/api/site/default/firewall-policies"
     )
     assert len(firewall_policies.values()) == 0
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
-async def test_firewall_policy_update_request(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
+async def test_firewall_policy_update_request(mock_aioresponse, unifi_controller):
     """Test that firewall policy can be updated."""
     policy = FIREWALL_POLICIES[0]
     policy_id = policy["_id"]
@@ -85,8 +89,9 @@ async def test_firewall_policy_update_request(
 
     await unifi_controller.request(FirewallPolicyUpdateRequest.create(policy))
 
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         f"/proxy/network/v2/api/site/default/firewall-policies/{policy_id}",
-        json=policy,
+        json_body=policy,
     )

@@ -23,6 +23,8 @@ async def unifi_controller(
     site: str,
     session: aiohttp.ClientSession,
     ssl_context: SSLContext | None = None,
+    api_key: str | None = None,
+    site_uuid: str | None = None,
 ) -> Controller | None:
     """Set up UniFi controller and verify credentials."""
     controller = Controller(
@@ -34,6 +36,8 @@ async def unifi_controller(
             port=port,
             site=site,
             ssl_context=ssl_context if ssl_context is not None else False,
+            api_key=api_key,
+            site_uuid=site_uuid,
         )
     )
 
@@ -64,6 +68,8 @@ async def main(
     port: int,
     site: str,
     ssl_context: SSLContext | None = None,
+    api_key: str | None = None,
+    site_uuid: str | None = None,
 ) -> None:
     """CLI method for library."""
     LOGGER.info("Starting aioUniFi")
@@ -78,6 +84,8 @@ async def main(
         site=site,
         session=websession,
         ssl_context=ssl_context,
+        api_key=api_key,
+        site_uuid=site_uuid,
     )
 
     if not controller:
@@ -103,6 +111,18 @@ async def main(
         return_exceptions=True,
     )
 
+    if api_key:
+        try:
+            site_uuid = await controller.network.assign_site(site)
+            network_clients = await controller.network.clients.list()
+            LOGGER.info(
+                "Network API clients (%s): %s",
+                site_uuid,
+                [c.client_id for c in network_clients],
+            )
+        except aiounifi.AiounifiException as err:
+            LOGGER.warning("Network API request failed: %s", err)
+
     ws_task = asyncio.create_task(controller.start_websocket())
 
     try:
@@ -124,6 +144,8 @@ if __name__ == "__main__":
     parser.add_argument("password", type=str)
     parser.add_argument("-p", "--port", type=int, default=8443)
     parser.add_argument("-s", "--site", type=str, default="default")
+    parser.add_argument("-k", "--api-key", type=str, default=None)
+    parser.add_argument("--site-uuid", type=str, default=None)
     parser.add_argument("-D", "--debug", action="store_true")
     args = parser.parse_args()
 
@@ -149,6 +171,8 @@ if __name__ == "__main__":
                 password=args.password,
                 port=args.port,
                 site=args.site,
+                api_key=args.api_key,
+                site_uuid=args.site_uuid,
             )
         )
     except KeyboardInterrupt:

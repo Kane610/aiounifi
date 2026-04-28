@@ -1,0 +1,70 @@
+"""Request and response typing for UniFi Network API."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, NotRequired, TypedDict, cast
+
+import orjson
+
+from ....errors import ResponseError
+
+DEFAULT_PAGE_OFFSET = 0
+DEFAULT_PAGE_LIMIT = 25
+MAX_PAGE_LIMIT = 200
+
+
+class ApiResponse(TypedDict):
+    """Network API generic envelope."""
+
+    data: list[dict[str, Any]]
+    offset: int
+    limit: int
+    count: int
+    totalCount: int
+    traceId: NotRequired[str]
+    httpStatusCode: NotRequired[int]
+
+
+class ApiErrorResponse(TypedDict):
+    """Network API standard error envelope."""
+
+    statusCode: int
+    statusName: str
+    code: str
+    message: str
+    timestamp: str
+    requestPath: str
+    requestId: str
+
+
+@dataclass
+class ApiRequest:
+    """Data class with required properties for network API requests."""
+
+    method: str
+    path: str
+    params: Mapping[str, str | int] | None = None
+    data: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        """Validate that path starts with /v1/."""
+        if not self.path.startswith("/v1/"):
+            raise ValueError(
+                f"ApiRequest.path must start with '/v1/', got {self.path!r}"
+            )
+
+    def decode(self, raw: bytes) -> ApiResponse:
+        """Decode network API envelope."""
+        data: dict[str, Any] = orjson.loads(raw)
+        if not isinstance(data, dict):
+            raise ResponseError("Network API response is not an object")
+        required_fields = ("offset", "limit", "count", "totalCount", "data")
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            missing = ", ".join(missing_fields)
+            raise ResponseError(
+                f"Network API response missing required field(s): {missing}"
+            )
+        return cast(ApiResponse, data)

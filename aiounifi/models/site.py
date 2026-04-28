@@ -1,7 +1,7 @@
 """Site is a specific grouping in a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequest
 
@@ -15,6 +15,7 @@ class TypedSite(TypedDict):
     desc: str
     name: str
     role: str
+    external_id: NotRequired[str]
 
 
 @dataclass

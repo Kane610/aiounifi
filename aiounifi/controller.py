@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 import logging
 from typing import TYPE_CHECKING
 
@@ -27,7 +28,8 @@ from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
 
 if TYPE_CHECKING:
-    from .models.api import ApiRequest, TypedApiResponse
+    from .models.api import ApiRequest as LegacyApiRequest, TypedApiResponse
+    from .network.v1.api_client import ApiClient
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,12 +61,19 @@ class Controller:
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
 
+    @cached_property
+    def network(self) -> ApiClient:
+        """Return the Network API v1 client (created on first access)."""
+        from .network.v1.api_client import ApiClient  # noqa: PLC0415
+
+        return ApiClient(self)
+
     async def login(self) -> None:
         """Log in to controller."""
         await self.connectivity.check_unifi_os()
         await self.connectivity.login()
 
-    async def request(self, api_request: ApiRequest) -> TypedApiResponse:
+    async def request(self, api_request: LegacyApiRequest) -> TypedApiResponse:
         """Make a request to the API, retry login on failure."""
         return await self.connectivity.request(api_request)
 
