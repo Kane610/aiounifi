@@ -3,23 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from .api import ApiItem, ApiRequest, ApiRequestV2, TypedApiResponse
 
 
-class TypedSpeedtestStatus(TypedDict, total=False):
+class TypedSpeedtestStatus(TypedDict):
     """Speedtest status type definition."""
 
-    status: str
-    status_text: str
     download_mbps: float
     upload_mbps: float
     latency_ms: float
     time: int
-    id: str
-    interface_name: str
-    wan_networkgroup: str
+    id: NotRequired[str]
+    interface_name: NotRequired[str]
+    wan_networkgroup: NotRequired[str]
 
 
 @dataclass
@@ -35,8 +33,18 @@ class SpeedtestStatusRequest(ApiRequestV2):
         """Decode response and extract nested data if present."""
         data = super().decode(raw)
 
-        if "data" in data and data["data"] and "data" in data["data"][0]:
-            data["data"] = data["data"][0]["data"]
+        if data.get("data"):
+            latest_by_interface: dict[str, dict[str, Any]] = {}
+            for result in data["data"]:
+                interface = result.get("interface_name", "default")
+                result["interface_name"] = interface
+
+                if interface not in latest_by_interface or result.get(
+                    "time", 0
+                ) >= latest_by_interface[interface].get("time", 0):
+                    latest_by_interface[interface] = result
+
+            data["data"] = list(latest_by_interface.values())
 
         return data
 
@@ -55,17 +63,6 @@ class SpeedtestStatus(ApiItem):
     """Represents a speedtest status."""
 
     raw: TypedSpeedtestStatus
-
-    @property
-    def status(self) -> str:
-        """Status of the speedtest."""
-        val = self.raw.get("status_text", self.raw.get("status"))
-        if val is not None:
-            return str(val)
-        # V2 endpoints don't seem to return a status explicitly for completed historical runs
-        if "download_mbps" in self.raw:
-            return "Completed"
-        return "unknown"
 
     @property
     def download(self) -> float:

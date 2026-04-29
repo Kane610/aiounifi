@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 class SpeedtestHandler(APIHandler[SpeedtestStatus]):
     """Represents the speedtest interface."""
 
-    obj_id_key = "id"
+    obj_id_key = "interface_name"
     item_cls = SpeedtestStatus
     api_request = SpeedtestStatusRequest.create()
 
