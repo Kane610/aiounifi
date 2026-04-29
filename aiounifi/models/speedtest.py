@@ -34,6 +34,9 @@ class SpeedtestStatusRequest(ApiRequestV2):
         data = super().decode(raw)
 
         if data.get("data"):
+            if "data" in data["data"][0]:
+                data["data"] = data["data"][0]["data"]
+
             latest_by_interface: dict[str, dict[str, Any]] = {}
             for result in data["data"]:
                 interface = result.get("interface_name", "default")
