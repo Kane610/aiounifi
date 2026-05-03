@@ -200,3 +200,37 @@ async def test_object_oriented_network_config_optional_sections(unifi_controller
     assert config.secure["enabled"] is False
     assert config.qos["enabled"] is False
     assert config.route["enabled"] is False
+
+
+@pytest.mark.parametrize(
+    "object_oriented_network_config_payload",
+    [
+        [
+            {
+                "id": "69f6b0a5e0e3ee2d4614cb5c",
+                "enabled": True,
+                "name": "Nintendo Switch - Block Internet",
+                "target_type": "CLIENTS",
+                "targets": [{"type": "MAC", "value": "98:b6:e9:b4:4c:29"}],
+                "secure": {
+                    "enabled": True,
+                    "internet": {
+                        "mode": "TURN_OFF_INTERNET",
+                        "schedule": {"mode": "ALWAYS"},
+                    },
+                },
+                "qos": {"enabled": False},
+                "route": {"enabled": False},
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_object_oriented_network_config_id_alias(unifi_controller):
+    """Test configs that use id instead of _id."""
+    configs = unifi_controller.object_oriented_network_configs
+    await configs.update()
+
+    config = configs["69f6b0a5e0e3ee2d4614cb5c"]
+    assert config.id == "69f6b0a5e0e3ee2d4614cb5c"
+    assert config.raw["_id"] == "69f6b0a5e0e3ee2d4614cb5c"

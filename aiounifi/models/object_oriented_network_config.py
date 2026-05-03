@@ -36,11 +36,12 @@ class ObjectOrientedNetworkRoute(TypedDict):
 class TypedObjectOrientedNetworkConfig(TypedDict):
     """Object-oriented network configuration type definition."""
 
-    _id: str
+    _id: NotRequired[str]
+    id: NotRequired[str]
     enabled: bool
     name: str
     target_type: NotRequired[str]
-    targets: NotRequired[list[str]]
+    targets: NotRequired[list[Any]]
     qos: NotRequired[ObjectOrientedNetworkQos]
     route: NotRequired[ObjectOrientedNetworkRoute]
     secure: NotRequired[ObjectOrientedNetworkSecure]
@@ -69,7 +70,7 @@ class ObjectOrientedNetworkConfigUpdateRequest(ApiRequestV2):
             config["enabled"] = enable
         return cls(
             method="put",
-            path=f"/object-oriented-network-config/{config['_id']}",
+            path=f"/object-oriented-network-config/{config.get('_id') or config['id']}",
             data=config,
         )
 
@@ -82,7 +83,7 @@ class ObjectOrientedNetworkConfig(ApiItem):
     @property
     def id(self) -> str:
         """ID of object-oriented network configuration."""
-        return self.raw["_id"]
+        return self.raw.get("_id") or self.raw["id"]
 
     @property
     def name(self) -> str:
@@ -100,7 +101,7 @@ class ObjectOrientedNetworkConfig(ApiItem):
         return self.raw.get("target_type", "CLIENTS")
 
     @property
-    def targets(self) -> list[str]:
+    def targets(self) -> list[Any]:
         """Targets affected by object-oriented network configuration."""
         return self.raw.get("targets", [])
 

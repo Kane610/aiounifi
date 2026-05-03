@@ -83,6 +83,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """Base class for a map of API Items."""
 
     obj_id_key: str
+    alt_obj_id_key: str | None = None
     item_cls: type[ApiItemT]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
@@ -121,11 +122,17 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def process_item(self, raw: dict[str, Any]) -> None:
         """Process item data."""
+        obj_id_key = self.obj_id_key
+        if obj_id_key not in raw:
+            if self.alt_obj_id_key is None or self.alt_obj_id_key not in raw:
+                return
+            obj_id_key = self.alt_obj_id_key
+
         if self.obj_id_key not in raw:
-            return
+            raw[self.obj_id_key] = raw[obj_id_key]
 
         obj_id: str
-        obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
+        obj_is_known = (obj_id := raw[obj_id_key]) in self._items
         self._items[obj_id] = self.item_cls(raw)
 
         self.signal_subscribers(
