@@ -1,6 +1,6 @@
 """Test object-oriented network configuration API.
 
-pytest --cov-report term-missing --cov=aiounifi.object_oriented_network_config tests/test_object_oriented_network_configs.py
+pytest --cov-report term-missing --cov=aiounifi.models.object_oriented_network_config tests/test_object_oriented_network_configs.py
 """
 
 from copy import deepcopy
