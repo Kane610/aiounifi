@@ -15,6 +15,7 @@ from .interfaces.events import EventHandler
 from .interfaces.firewall_policies import FirewallPolicies
 from .interfaces.firewall_zones import FirewallZones
 from .interfaces.messages import MessageHandler
+from .interfaces.object_oriented_network_configs import ObjectOrientedNetworkConfigs
 from .interfaces.outlets import Outlets
 from .interfaces.port_forwarding import PortForwarding
 from .interfaces.ports import Ports
@@ -49,6 +50,7 @@ class Controller:
         self.dpi_groups = DPIRestrictionGroups(self)
         self.firewall_zones = FirewallZones(self)
         self.firewall_policies = FirewallPolicies(self)
+        self.object_oriented_network_configs = ObjectOrientedNetworkConfigs(self)
         self.outlets = Outlets(self)
         self.port_forwarding = PortForwarding(self)
         self.ports = Ports(self)
