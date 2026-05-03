@@ -10,26 +10,26 @@ class ObjectOrientedNetworkInternet(TypedDict):
     """Internet access configuration."""
 
     mode: str
-    schedule: dict[str, Any]
+    schedule: NotRequired[dict[str, Any]]
 
 
 class ObjectOrientedNetworkSecure(TypedDict):
     """Security configuration."""
 
-    enabled: bool
-    internet: ObjectOrientedNetworkInternet
+    enabled: NotRequired[bool]
+    internet: NotRequired[ObjectOrientedNetworkInternet]
 
 
 class ObjectOrientedNetworkQos(TypedDict):
     """QoS configuration."""
 
-    enabled: bool
+    enabled: NotRequired[bool]
 
 
 class ObjectOrientedNetworkRoute(TypedDict):
     """Routing configuration."""
 
-    enabled: bool
+    enabled: NotRequired[bool]
     kill_switch: NotRequired[bool]
 
 
@@ -39,11 +39,11 @@ class TypedObjectOrientedNetworkConfig(TypedDict):
     _id: str
     enabled: bool
     name: str
-    target_type: str
-    targets: list[str]
-    qos: ObjectOrientedNetworkQos
-    route: ObjectOrientedNetworkRoute
-    secure: ObjectOrientedNetworkSecure
+    target_type: NotRequired[str]
+    targets: NotRequired[list[str]]
+    qos: NotRequired[ObjectOrientedNetworkQos]
+    route: NotRequired[ObjectOrientedNetworkRoute]
+    secure: NotRequired[ObjectOrientedNetworkSecure]
 
 
 @dataclass
@@ -97,24 +97,24 @@ class ObjectOrientedNetworkConfig(ApiItem):
     @property
     def target_type(self) -> str:
         """Target type for object-oriented network configuration."""
-        return self.raw["target_type"]
+        return self.raw.get("target_type", "CLIENTS")
 
     @property
     def targets(self) -> list[str]:
         """Targets affected by object-oriented network configuration."""
-        return self.raw["targets"]
+        return self.raw.get("targets", [])
 
     @property
     def secure(self) -> ObjectOrientedNetworkSecure:
         """Security configuration."""
-        return self.raw["secure"]
+        return self.raw.get("secure", {"enabled": False})
 
     @property
     def qos(self) -> ObjectOrientedNetworkQos:
         """QoS configuration."""
-        return self.raw["qos"]
+        return self.raw.get("qos", {"enabled": False})
 
     @property
     def route(self) -> ObjectOrientedNetworkRoute:
         """Routing configuration."""
-        return self.raw["route"]
+        return self.raw.get("route", {"enabled": False})
