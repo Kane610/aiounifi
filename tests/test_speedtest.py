@@ -71,6 +71,14 @@ async def test_speedtest_handler_update(
                 "upload_mbps": 200,
                 "latency_ms": 15,
             },
+            {
+                "id": "4",
+                "interface_name": "eth2",
+                "time": 50,
+                "download_mbps": 100,
+                "upload_mbps": 50,
+                "latency_ms": 20,
+            },
         ],
     )
     unifi_controller.connectivity.is_unifi_os = True
@@ -134,3 +142,37 @@ async def test_speedtest_handler_trigger(
     unifi_controller.connectivity.is_unifi_os = True
     await unifi_controller.speedtest.trigger()
     assert unifi_called_with("post", "/api/s/default/cmd/devmgr/speedtest")
+
+
+@pytest.mark.asyncio
+async def test_speedtest_handler_update_nested_data(
+    mock_aioresponse: aioresponses, unifi_controller: Controller
+) -> None:
+    """Test speedtest update with nested data structure."""
+    mock_aioresponse.get(
+        "https://host:8443/proxy/network/v2/api/site/default/speedtest",
+        payload=[
+            {
+                "data": [
+                    {
+                        "id": "1",
+                        "interface_name": "eth0",
+                        "time": 300,
+                        "download_mbps": 900,
+                        "upload_mbps": 300,
+                        "latency_ms": 5,
+                    }
+                ]
+            }
+        ],
+    )
+    unifi_controller.connectivity.is_unifi_os = True
+    await unifi_controller.speedtest.update()
+
+    assert len(unifi_controller.speedtest.values()) == 1
+
+    status = unifi_controller.speedtest["eth0"]
+    assert status.timestamp == 300
+    assert status.download == 900
+    assert status.upload == 300
+    assert status.ping == 5
