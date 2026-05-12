@@ -1,7 +1,7 @@
 """Object-oriented network configurations as part of a UniFi network."""
 
 from dataclasses import dataclass
-from typing import Any, NotRequired, Self, TypedDict
+from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
 
@@ -10,7 +10,14 @@ class ObjectOrientedNetworkInternet(TypedDict):
     """Internet access configuration."""
 
     mode: str
-    schedule: NotRequired[dict[str, Any]]
+    schedule: NotRequired[dict[str, str]]
+
+
+class ObjectOrientedNetworkTarget(TypedDict):
+    """Target affected by object-oriented network configuration."""
+
+    type: str
+    value: str
 
 
 class ObjectOrientedNetworkSecure(TypedDict):
@@ -41,7 +48,7 @@ class TypedObjectOrientedNetworkConfig(TypedDict):
     enabled: bool
     name: str
     target_type: NotRequired[str]
-    targets: NotRequired[list[Any]]
+    targets: NotRequired[list[str | ObjectOrientedNetworkTarget]]
     qos: NotRequired[ObjectOrientedNetworkQos]
     route: NotRequired[ObjectOrientedNetworkRoute]
     secure: NotRequired[ObjectOrientedNetworkSecure]
@@ -96,12 +103,12 @@ class ObjectOrientedNetworkConfig(ApiItem):
         return self.raw["enabled"]
 
     @property
-    def target_type(self) -> str:
+    def target_type(self) -> str | None:
         """Target type for object-oriented network configuration."""
-        return self.raw.get("target_type", "CLIENTS")
+        return self.raw.get("target_type")
 
     @property
-    def targets(self) -> list[Any]:
+    def targets(self) -> list[str | ObjectOrientedNetworkTarget]:
         """Targets affected by object-oriented network configuration."""
         return self.raw.get("targets", [])
 

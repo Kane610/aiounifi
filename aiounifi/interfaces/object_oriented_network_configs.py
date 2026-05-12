@@ -14,8 +14,7 @@ from .api_handlers import APIHandler
 class ObjectOrientedNetworkConfigs(APIHandler[ObjectOrientedNetworkConfig]):
     """Represents object-oriented network configurations."""
 
-    obj_id_key = "_id"
-    alt_obj_id_key = "id"
+    obj_id_key = ("_id", "id")
     item_cls = ObjectOrientedNetworkConfig
     api_request = ObjectOrientedNetworkConfigListRequest.create()
 

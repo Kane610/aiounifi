@@ -82,8 +82,7 @@ class SubscriptionHandler(ABC):
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """Base class for a map of API Items."""
 
-    obj_id_key: str
-    alt_obj_id_key: str | None = None
+    obj_id_key: str | tuple[str, ...]
     item_cls: type[ApiItemT]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
@@ -112,14 +111,15 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
 
     def _obj_id_from_raw(self, raw: dict[str, Any]) -> str | None:
         """Return object ID from raw data."""
-        if self.obj_id_key in raw:
-            return cast(str, raw[self.obj_id_key])
+        obj_id_keys = (
+            (self.obj_id_key,) if isinstance(self.obj_id_key, str) else self.obj_id_key
+        )
+        obj_id_key = next((key for key in obj_id_keys if key in raw), None)
 
-        if self.alt_obj_id_key is None or self.alt_obj_id_key not in raw:
+        if obj_id_key is None:
             return None
 
-        raw[self.obj_id_key] = raw[self.alt_obj_id_key]
-        return cast(str, raw[self.obj_id_key])
+        return cast(str, raw[obj_id_key])
 
     @final
     def process_message(self, message: Message) -> None:

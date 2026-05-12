@@ -205,7 +205,7 @@ async def test_object_oriented_network_config_optional_section_defaults(
     await configs.update()
 
     config = configs["69f6b0a5e0e3ee2d4614cb5c"]
-    assert config.target_type == "CLIENTS"
+    assert config.target_type is None
     assert config.targets == []
     assert config.secure["enabled"] is False
     assert config.secure["internet"]["mode"] == "TURN_OFF_INTERNET"
@@ -245,4 +245,4 @@ async def test_object_oriented_network_config_id_alias(unifi_controller):
 
     config = configs["69f6b0a5e0e3ee2d4614cb5c"]
     assert config.id == "69f6b0a5e0e3ee2d4614cb5c"
-    assert config.raw["_id"] == "69f6b0a5e0e3ee2d4614cb5c"
+    assert config.raw["id"] == "69f6b0a5e0e3ee2d4614cb5c"

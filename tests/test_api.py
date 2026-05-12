@@ -128,11 +128,10 @@ async def test_api_handler_subscriptions_id_filter():
     unsub()
 
 
-async def test_api_handler_alt_obj_id_key_remove_item():
-    """Test process and remove item with alternate object ID key."""
+async def test_api_handler_tuple_obj_id_key_remove_item():
+    """Test process and remove item with tuple object ID keys."""
     handler = APIHandler(Mock())
-    handler.obj_id_key = "key"
-    handler.alt_obj_id_key = "id"
+    handler.obj_id_key = ("key", "id")
     handler.item_cls = Mock()
 
     handler.subscribe(mock_subscribe_cb := Mock())
@@ -140,13 +139,13 @@ async def test_api_handler_alt_obj_id_key_remove_item():
     raw = {"id": "1"}
     handler.process_item(raw)
     mock_subscribe_cb.assert_called_with(ItemEvent.ADDED, "1")
-    assert raw["key"] == "1"
+    assert "key" not in raw
     assert "1" in handler
 
     remove_raw = {"id": "1"}
     handler.remove_item(remove_raw)
     mock_subscribe_cb.assert_called_with(ItemEvent.DELETED, "1")
-    assert remove_raw["key"] == "1"
+    assert "key" not in remove_raw
     assert "1" not in handler
 
     handler.remove_item({"id": "2"})
