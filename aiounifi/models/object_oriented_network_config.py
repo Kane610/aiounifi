@@ -109,16 +109,16 @@ class ObjectOrientedNetworkConfig(ApiItem):
     def secure(self) -> ObjectOrientedNetworkSecure:
         """Security configuration."""
         default: ObjectOrientedNetworkSecure = {"enabled": False}
-        return self.raw.get("secure", default)
+        return default | self.raw.get("secure", {})
 
     @property
     def qos(self) -> ObjectOrientedNetworkQos:
         """QoS configuration."""
         default: ObjectOrientedNetworkQos = {"enabled": False}
-        return self.raw.get("qos", default)
+        return default | self.raw.get("qos", {})
 
     @property
     def route(self) -> ObjectOrientedNetworkRoute:
         """Routing configuration."""
         default: ObjectOrientedNetworkRoute = {"enabled": False}
-        return self.raw.get("route", default)
+        return default | self.raw.get("route", {})

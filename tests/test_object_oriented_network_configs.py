@@ -184,12 +184,22 @@ async def test_object_oriented_network_configs(unifi_controller, unifi_called_wi
                 "_id": "69f6b0a5e0e3ee2d4614cb5c",
                 "enabled": True,
                 "name": "Nintendo Switch - Block Internet",
+                "secure": {
+                    "internet": {
+                        "mode": "TURN_OFF_INTERNET",
+                        "schedule": {"mode": "ALWAYS"},
+                    },
+                },
+                "qos": {},
+                "route": {"kill_switch": True},
             }
         ]
     ],
 )
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_object_oriented_network_config_optional_sections(unifi_controller):
+async def test_object_oriented_network_config_optional_section_defaults(
+    unifi_controller,
+):
     """Test optional object-oriented network configuration sections."""
     configs = unifi_controller.object_oriented_network_configs
     await configs.update()
@@ -198,8 +208,10 @@ async def test_object_oriented_network_config_optional_sections(unifi_controller
     assert config.target_type == "CLIENTS"
     assert config.targets == []
     assert config.secure["enabled"] is False
+    assert config.secure["internet"]["mode"] == "TURN_OFF_INTERNET"
     assert config.qos["enabled"] is False
     assert config.route["enabled"] is False
+    assert config.route["kill_switch"] is True
 
 
 @pytest.mark.parametrize(
