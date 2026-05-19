@@ -1,5 +1,21 @@
 """Aiounifi errors."""
 
+__all__ = [
+    "AiounifiException",
+    "AuthenticationRateLimitError",
+    "BadGateway",
+    "Forbidden",
+    "LoginRequired",
+    "NetworkApiError",
+    "NoPermission",
+    "RequestError",
+    "ResponseError",
+    "ServiceUnavailable",
+    "TwoFaTokenRequired",
+    "Unauthorized",
+    "WebsocketError",
+]
+
 
 class AiounifiException(Exception):
     """Base error for aiounifi."""
@@ -50,6 +66,23 @@ class AuthenticationRateLimitError(AiounifiException):
 
 class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
+
+
+class NetworkApiError(AiounifiException):
+    """Structured error from the UniFi Network API v1.
+
+    Attributes are populated from the API error envelope when available,
+    allowing callers to inspect error details programmatically without
+    parsing exception message strings.
+    """
+
+    status_code: int = 0
+    status_name: str = ""
+    code: str = ""
+    detail: str = ""
+    timestamp: str = ""
+    request_path: str = ""
+    request_id: str = ""
 
 
 class WebsocketError(AiounifiException):

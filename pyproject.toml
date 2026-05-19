@@ -92,6 +92,9 @@ asyncio_mode = "auto"
 log_cli = false
 log_cli_level = "DEBUG"
 testpaths = ["tests"]
+markers = [
+    "_mock_endpoints: register HTTP mocks for all legacy REST endpoints using current *_payload fixture values",
+]
 
 [tool.ruff]
 src = ["aiounifi", "tests"]

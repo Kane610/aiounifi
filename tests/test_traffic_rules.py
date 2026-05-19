@@ -9,12 +9,12 @@ from aiounifi.models.traffic_rule import TrafficRuleEnableRequest
 
 from .fixtures import TRAFFIC_RULES, WIRELESS_CLIENT
 
+from tests.helpers.request_assertions import assert_request_called_with
+
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
-async def test_traffic_rule_enable_request(
-    mock_aioresponse, unifi_controller, unifi_called_with, enable
-):
+async def test_traffic_rule_enable_request(mock_aioresponse, unifi_controller, enable):
     """Test that traffic rule can be enabled and disabled."""
     traffic_rule_enabled = TRAFFIC_RULES[0]
     traffic_rule_enabled_id = traffic_rule_enabled["_id"]
@@ -36,10 +36,11 @@ async def test_traffic_rule_enable_request(
     )
 
     traffic_rule["enabled"] = enable
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         f"/proxy/network/v2/api/site/default/trafficrules/{traffic_rule_id}",
-        json=traffic_rule,
+        json_body=traffic_rule,
     )
 
 
@@ -90,21 +91,27 @@ async def test_traffic_rule_enable_disable(mock_aioresponse, unifi_controller, e
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_no_traffic_rules(unifi_controller, unifi_called_with):
+async def test_no_traffic_rules(mock_aioresponse, unifi_controller):
     """Test that no traffic rules also work."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
-    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficrules")
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/v2/api/site/default/trafficrules",
+    )
     assert len(traffic_rules.values()) == 0
 
 
 @pytest.mark.parametrize("traffic_rule_payload", [TRAFFIC_RULES])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_traffic_rules(unifi_controller, unifi_called_with):
+async def test_traffic_rules(mock_aioresponse, unifi_controller):
     """Test that we get the expected traffic rule."""
     traffic_rules = unifi_controller.traffic_rules
     await traffic_rules.update()
-    assert unifi_called_with("get", "/v2/api/site/default/trafficrules")
+    assert_request_called_with(
+        mock_aioresponse, "get", "/v2/api/site/default/trafficrules"
+    )
     assert len(traffic_rules.values()) == 2
 
     traffic_rule = traffic_rules["6452cd9b859d5b11aa002ea1"]

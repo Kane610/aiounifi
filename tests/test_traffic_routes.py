@@ -16,12 +16,12 @@ from aiounifi.models.traffic_route import (
 
 from .fixtures import TRAFFIC_ROUTES, WIRELESS_CLIENT
 
+from tests.helpers.request_assertions import assert_request_called_with
+
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("enable", [True, False])
-async def test_traffic_route_enable_request(
-    mock_aioresponse, unifi_controller, unifi_called_with, enable
-):
+async def test_traffic_route_enable_request(mock_aioresponse, unifi_controller, enable):
     """Test that traffic route can be enabled and disabled."""
     # Use a copy so we don't modify our fixture (this should probably be a real fixture)
     traffic_routes = deepcopy(TRAFFIC_ROUTES)
@@ -51,10 +51,11 @@ async def test_traffic_route_enable_request(
         TrafficRouteSaveRequest.create(traffic_route, enable)
     )
 
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         f"/proxy/network/v2/api/site/default/trafficroutes/{traffic_route_id}",
-        json=traffic_route | {"enabled": enable},
+        json_body=traffic_route | {"enabled": enable},
     )
 
 
@@ -66,7 +67,6 @@ async def test_traffic_route_enable_request(
 async def test_traffic_route_save(
     mock_aioresponse,
     unifi_controller,
-    unifi_called_with,
     enable,
     traffic_route_id,
 ):
@@ -86,17 +86,19 @@ async def test_traffic_route_save(
     await traffic_routes.save(traffic_route, enable)
     if enable is not None:
         # If setting enabled, verify it was set
-        assert unifi_called_with(
+        assert_request_called_with(
+            mock_aioresponse,
             "put",
             f"/proxy/network/v2/api/site/default/trafficroutes/{traffic_route_id}",
-            json=traffic_route.raw | {"enabled": enable},
+            json_body=traffic_route.raw | {"enabled": enable},
         )
     else:
         # Otherwise, verify it was not set
-        assert unifi_called_with(
+        assert_request_called_with(
+            mock_aioresponse,
             "put",
             f"/proxy/network/v2/api/site/default/trafficroutes/{traffic_route_id}",
-            json=traffic_route.raw,
+            json_body=traffic_route.raw,
         )
 
 
@@ -106,7 +108,7 @@ async def test_traffic_route_save(
 @pytest.mark.parametrize("enable", [True, False])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_traffic_route_enable_disable(
-    mock_aioresponse, unifi_called_with, unifi_controller, enable, traffic_route_id
+    mock_aioresponse, unifi_controller, enable, traffic_route_id
 ):
     """Test individual methods for enabled and disabled."""
     traffic_routes = unifi_controller.traffic_routes
@@ -123,30 +125,37 @@ async def test_traffic_route_enable_disable(
         payload={},
     )
     await traffic_route_call(traffic_routes[traffic_route_id])
-    assert unifi_called_with(
+    assert_request_called_with(
+        mock_aioresponse,
         "put",
         f"/proxy/network/v2/api/site/default/trafficroutes/{traffic_route_id}",
-        json=traffic_route.raw | {"enabled": enable},
+        json_body=traffic_route.raw | {"enabled": enable},
     )
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_no_traffic_routes(unifi_controller, unifi_called_with):
+async def test_no_traffic_routes(mock_aioresponse, unifi_controller):
     """Test that no traffic routes also work."""
     traffic_routes = unifi_controller.traffic_routes
     await traffic_routes.update()
-    assert unifi_called_with("get", "/proxy/network/v2/api/site/default/trafficroutes")
+    assert_request_called_with(
+        mock_aioresponse,
+        "get",
+        "/proxy/network/v2/api/site/default/trafficroutes",
+    )
     assert len(traffic_routes.values()) == 0
 
 
 @pytest.mark.parametrize("traffic_route_payload", [TRAFFIC_ROUTES])
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_traffic_routes(unifi_controller, unifi_called_with):
+async def test_traffic_routes(mock_aioresponse, unifi_controller):
     """Test that we get the expected traffic route."""
     traffic_routes = unifi_controller.traffic_routes
     await traffic_routes.update()
-    assert unifi_called_with("get", "/v2/api/site/default/trafficroutes")
+    assert_request_called_with(
+        mock_aioresponse, "get", "/v2/api/site/default/trafficroutes"
+    )
     assert len(traffic_routes.values()) == 3
 
     traffic_route = traffic_routes["6468ecd4c1dd1932ad2f801c"]

@@ -12,6 +12,8 @@ import pytest
 from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
 
+from tests.helpers.request_assertions import request_called_with
+
 
 @pytest.fixture(name="mock_aioresponse")
 def aioresponse_fixture() -> aioresponses:
@@ -26,45 +28,45 @@ def is_unifi_os_fixture() -> bool:
     return False
 
 
+@pytest.fixture(name="api_key")
+def api_key_fixture() -> str | None:
+    """Return API key used by tests requiring Network API auth."""
+    return None
+
+
+@pytest.fixture(name="site_uuid")
+def site_uuid_fixture() -> str | None:
+    """Network API site UUID used by tests needing direct site selection."""
+    return None
+
+
 @pytest.fixture
 def unifi_called_with(mock_aioresponse) -> Callable[[str, str, dict[str, Any]], bool]:
     """Verify UniFi call was made with the expected parameters."""
 
     def verify_call(method: str, path: str, **kwargs: dict[str, Any]) -> bool:
         """Verify expected data was provided with a request to aioresponse."""
-        for req, call_list in mock_aioresponse.requests.items():
-            if method != req[0]:
-                continue
-
-            if not req[1].path.endswith(path):
-                continue
-
-            for call in call_list:
-                successful_match = True
-
-                for key, value in kwargs.items():
-                    if key not in call[1] or call[1][key] != value:
-                        successful_match = False
-
-                for key, value in call[1].items():
-                    if key == "allow_redirects":
-                        continue
-                    if value and key not in kwargs:
-                        successful_match = False
-
-                if successful_match:
-                    return True
-
-        return False
+        return request_called_with(mock_aioresponse, method, path, **kwargs)
 
     return verify_call
 
 
 @pytest.fixture(name="unifi_controller")
-async def unifi_controller_fixture(is_unifi_os: bool) -> Controller:
+async def unifi_controller_fixture(
+    is_unifi_os: bool,
+    api_key: str | None,
+    site_uuid: str | None,
+) -> Controller:
     """Provide a test-ready UniFi controller."""
     session = aiohttp.ClientSession()
-    config = Configuration(session, "host", username="user", password="pass")
+    config = Configuration(
+        session,
+        "host",
+        username="user",
+        password="pass",
+        api_key=api_key,
+        site_uuid=site_uuid,
+    )
     controller = Controller(config)
     controller.connectivity.is_unifi_os = is_unifi_os
     controller.ws_state_callback = Mock()

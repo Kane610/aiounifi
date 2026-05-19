@@ -3,6 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
 
+from dataclasses import dataclass
 import ssl
 
 from aiohttp import ClientSession, client_exceptions, web
@@ -29,6 +30,36 @@ from aiounifi.models.configuration import Configuration
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
+
+
+@dataclass
+class _RequestStub:
+    """Request-like stub validating connectivity duck-typing behavior."""
+
+    method: str = "get"
+    path: str = "/test"
+    data: dict[str, object] | None = None
+
+    def full_path(self, site: str, is_unifi_os: bool) -> str:
+        """Build a legacy-style API path for tests."""
+        if is_unifi_os:
+            return f"/proxy/network/api/s/{site}{self.path}"
+        return f"/api/s/{site}{self.path}"
+
+    def decode(self, raw: bytes) -> dict[str, object]:
+        """Return a legacy-shaped response for compatibility checks."""
+        return EMPTY_RESPONSE
+
+
+async def test_connectivity_request_accepts_request_like_object(
+    mock_aioresponse, unifi_controller: Controller
+) -> None:
+    """Verify connectivity works with structural request objects."""
+    mock_aioresponse.get("https://host:8443/api/s/default/test", payload=EMPTY_RESPONSE)
+
+    response = await unifi_controller.connectivity.request(_RequestStub())
+
+    assert response == EMPTY_RESPONSE
 
 
 @pytest.mark.parametrize("is_unifi_os", [True, False])
