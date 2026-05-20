@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import enum
-from typing import TYPE_CHECKING, Any, Generic, final
+from typing import TYPE_CHECKING, Any, Generic, cast, final
 
 from ..models.api import ApiItemT, ApiRequest
 
@@ -82,7 +82,7 @@ class SubscriptionHandler(ABC):
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """Base class for a map of API Items."""
 
-    obj_id_key: str
+    obj_id_key: str | tuple[str, ...]
     item_cls: type[ApiItemT]
     api_request: ApiRequest
     process_messages: tuple[MessageKey, ...] = ()
@@ -109,6 +109,18 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         for raw_item in raw:
             self.process_item(raw_item)
 
+    def _obj_id_from_raw(self, raw: dict[str, Any]) -> str | None:
+        """Return object ID from raw data."""
+        obj_id_keys = (
+            (self.obj_id_key,) if isinstance(self.obj_id_key, str) else self.obj_id_key
+        )
+        obj_id_key = next((key for key in obj_id_keys if key in raw), None)
+
+        if obj_id_key is None:
+            return None
+
+        return cast(str, raw[obj_id_key])
+
     @final
     def process_message(self, message: Message) -> None:
         """Process and forward websocket data."""
@@ -121,11 +133,10 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def process_item(self, raw: dict[str, Any]) -> None:
         """Process item data."""
-        if self.obj_id_key not in raw:
+        if (obj_id := self._obj_id_from_raw(raw)) is None:
             return
 
-        obj_id: str
-        obj_is_known = (obj_id := raw[self.obj_id_key]) in self._items
+        obj_is_known = obj_id in self._items
         self._items[obj_id] = self.item_cls(raw)
 
         self.signal_subscribers(
@@ -136,8 +147,10 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def remove_item(self, raw: dict[str, Any]) -> None:
         """Remove item."""
-        obj_id: str
-        if (obj_id := raw[self.obj_id_key]) in self._items:
+        if (obj_id := self._obj_id_from_raw(raw)) is None:
+            return
+
+        if obj_id in self._items:
             self._items.pop(obj_id)
             self.signal_subscribers(ItemEvent.DELETED, obj_id)
 
