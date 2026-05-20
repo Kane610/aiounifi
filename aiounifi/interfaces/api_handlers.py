@@ -7,11 +7,18 @@ from collections import defaultdict
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import contextlib
 import enum
+<<<<<<< HEAD
 import logging
 from typing import TYPE_CHECKING, Any, Generic, final, cast
+<<<<<<< HEAD
+=======
+=======
+from typing import TYPE_CHECKING, Any, Generic, cast, final
+>>>>>>> e0bc5bc (Add object-oriented network config support (#1022))
+>>>>>>> 435c6c1 (Add object-oriented network config support (#1022))
 
-from ..models.api import ApiItemT, ApiRequest
-
+import logging
+from typing import TYPE_CHECKING, Any, Generic, final, cast
 if TYPE_CHECKING:
     from ..controller import Controller
     from ..models.message import Message, MessageKey
