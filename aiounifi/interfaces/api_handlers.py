@@ -6,10 +6,16 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import contextlib
-
 import enum
 import logging
 from typing import TYPE_CHECKING, Any, Generic, final, cast
+from ..models.api import ApiItemT, ApiRequest
+
+if TYPE_CHECKING:
+    from ..controller import Controller
+    from ..models.message import Message, MessageKey
+
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from ..controller import Controller
     from ..models.message import Message, MessageKey
