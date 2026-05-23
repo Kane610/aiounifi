@@ -16,11 +16,6 @@ if TYPE_CHECKING:
     from ..models.message import Message, MessageKey
 
 logger = logging.getLogger(__name__)
-if TYPE_CHECKING:
-    from ..controller import Controller
-    from ..models.message import Message, MessageKey
-
-logger = logging.getLogger(__name__)
 
 
 class ItemEvent(enum.Enum):
