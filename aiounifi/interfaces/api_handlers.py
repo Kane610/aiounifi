@@ -8,7 +8,8 @@ from collections.abc import Callable, ItemsView, Iterator, ValuesView
 import contextlib
 import enum
 import logging
-from typing import TYPE_CHECKING, Any, Generic, final, cast
+from typing import TYPE_CHECKING, Any, Generic, cast, final
+
 from ..models.api import ApiItemT, ApiRequest
 
 if TYPE_CHECKING:
