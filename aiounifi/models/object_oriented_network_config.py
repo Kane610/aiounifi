@@ -154,10 +154,9 @@ class ObjectOrientedNetworkConfig(ApiItem):
         return self.raw.get("targets", [])
 
     @property
-    def secure(self) -> ObjectOrientedNetworkSecureT:
+    def secure(self) -> ObjectOrientedNetworkSecure:
         """Security configuration."""
-        default: ObjectOrientedNetworkSecureT = {"enabled": False}
-        return default | self.raw.get("secure", {})
+        return ObjectOrientedNetworkSecure.from_dict(self.raw.get("secure") or {})
 
     @property
     def qos(self) -> ObjectOrientedNetworkQos:
