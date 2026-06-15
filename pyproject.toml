@@ -30,7 +30,7 @@ dependencies    = [
 requirements = [
     "aiohttp==3.13.5",
     "orjson==3.11.9",
-    "pyotp==2.9.0",
+    "pyotp==2.10.0",
     "segno==1.6.6",
 ]
 requirements-test = [
