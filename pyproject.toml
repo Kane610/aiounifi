@@ -34,7 +34,7 @@ requirements = [
     "segno==1.6.6",
 ]
 requirements-test = [
-    "aioresponses==0.7.8",
+    "aioresponses==0.7.9",
     "mypy==2.1.0",
     "pytest==9.1.1",
     "pytest-aiohttp==1.1.1",
