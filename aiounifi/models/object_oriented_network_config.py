@@ -1,16 +1,45 @@
 """Object-oriented network configurations as part of a UniFi network."""
 
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
 
 
-class ObjectOrientedNetworkInternet(TypedDict):
+class ObjectOrientedNetworkInternetMode(StrEnum):
+    """Possible internet access modes for security configuration."""
+
+    TURN_OFF_INTERNET = "TURN_OFF_INTERNET"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> Self:
+        """Set default enum member if an unknown internet mode is provided."""
+        return cls.UNKNOWN
+
+
+class ObjectOrientedNetworkSecureInternetT(TypedDict):
     """Internet access configuration."""
 
-    mode: str
+    mode: ObjectOrientedNetworkInternetMode
     schedule: NotRequired[dict[str, str]]
+
+
+@dataclass
+class ObjectOrientedNetworkSecureInternet:
+    """Represent internet access configuration."""
+
+    mode: ObjectOrientedNetworkInternetMode
+    schedule: dict[str, str] | None = None
+
+    @classmethod
+    def from_dict(cls, data: ObjectOrientedNetworkSecureInternetT) -> Self:
+        """Create internet access configuration."""
+        return cls(
+            mode=ObjectOrientedNetworkInternetMode(data.get("mode", "unknown")),
+            schedule=data.get("schedule"),
+        )
 
 
 class ObjectOrientedNetworkTarget(TypedDict):
@@ -20,11 +49,35 @@ class ObjectOrientedNetworkTarget(TypedDict):
     value: str
 
 
-class ObjectOrientedNetworkSecure(TypedDict):
+class ObjectOrientedNetworkSecureT(TypedDict):
     """Security configuration."""
 
     enabled: NotRequired[bool]
-    internet: NotRequired[ObjectOrientedNetworkInternet]
+    internet: NotRequired[ObjectOrientedNetworkSecureInternetT]
+
+
+@dataclass
+class ObjectOrientedNetworkSecure:
+    """Represent security configuration."""
+
+    available: bool = False
+    enabled: bool = False
+    internet: ObjectOrientedNetworkSecureInternet | None = None
+
+    @classmethod
+    def from_dict(cls, data: ObjectOrientedNetworkSecureT | None) -> Self:
+        """Create security configuration."""
+        if not data:
+            return cls()
+
+        internet = data.get("internet")
+        return cls(
+            available=True,
+            enabled=data.get("enabled") is True,
+            internet=ObjectOrientedNetworkSecureInternet.from_dict(internet)
+            if internet
+            else None,
+        )
 
 
 class ObjectOrientedNetworkQos(TypedDict):
@@ -51,7 +104,7 @@ class TypedObjectOrientedNetworkConfig(TypedDict):
     targets: NotRequired[list[str | ObjectOrientedNetworkTarget]]
     qos: NotRequired[ObjectOrientedNetworkQos]
     route: NotRequired[ObjectOrientedNetworkRoute]
-    secure: NotRequired[ObjectOrientedNetworkSecure]
+    secure: NotRequired[ObjectOrientedNetworkSecureT | None]
 
 
 @dataclass
@@ -115,8 +168,7 @@ class ObjectOrientedNetworkConfig(ApiItem):
     @property
     def secure(self) -> ObjectOrientedNetworkSecure:
         """Security configuration."""
-        default: ObjectOrientedNetworkSecure = {"enabled": False}
-        return default | self.raw.get("secure", {})
+        return ObjectOrientedNetworkSecure.from_dict(self.raw.get("secure"))
 
     @property
     def qos(self) -> ObjectOrientedNetworkQos:

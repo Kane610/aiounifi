@@ -9,6 +9,7 @@ import pytest
 
 from aiounifi.models.object_oriented_network_config import (
     ObjectOrientedNetworkConfigUpdateRequest,
+    ObjectOrientedNetworkInternetMode,
 )
 
 OBJECT_ORIENTED_NETWORK_CONFIGS = [
@@ -171,7 +172,13 @@ async def test_object_oriented_network_configs(unifi_controller, unifi_called_wi
     assert config.enabled is True
     assert config.target_type == "CLIENTS"
     assert config.targets == ["98:b6:e9:b4:4c:29"]
-    assert config.secure["internet"]["mode"] == "TURN_OFF_INTERNET"
+    assert config.secure.available is True
+    assert config.secure.enabled is True
+    assert config.secure.internet is not None
+    assert (
+        config.secure.internet.mode
+        == ObjectOrientedNetworkInternetMode.TURN_OFF_INTERNET
+    )
     assert config.qos["enabled"] is False
     assert config.route["enabled"] is False
 
@@ -207,11 +214,71 @@ async def test_object_oriented_network_config_optional_section_defaults(
     config = configs["69f6b0a5e0e3ee2d4614cb5c"]
     assert config.target_type is None
     assert config.targets == []
-    assert config.secure["enabled"] is False
-    assert config.secure["internet"]["mode"] == "TURN_OFF_INTERNET"
+    assert config.secure.available is True
+    assert config.secure.enabled is False
+    assert config.secure.internet is not None
+    assert (
+        config.secure.internet.mode
+        == ObjectOrientedNetworkInternetMode.TURN_OFF_INTERNET
+    )
     assert config.qos["enabled"] is False
     assert config.route["enabled"] is False
     assert config.route["kill_switch"] is True
+
+
+@pytest.mark.parametrize(
+    "object_oriented_network_config_payload",
+    [
+        [
+            {
+                "_id": "69f6b0eae0e3ee2d4614cb91",
+                "enabled": True,
+                "name": "VPN traffic route",
+                "target_type": "NETWORKS",
+                "targets": ["6060b00f45de3905133cea14"],
+                "route": {"enabled": True},
+                "secure": None,
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_object_oriented_network_config_secure_null(unifi_controller):
+    """Test security configuration with null secure data."""
+    configs = unifi_controller.object_oriented_network_configs
+    await configs.update()
+
+    config = configs["69f6b0eae0e3ee2d4614cb91"]
+    assert config.secure.available is False
+    assert config.secure.enabled is False
+    assert config.secure.internet is None
+
+
+@pytest.mark.parametrize(
+    "object_oriented_network_config_payload",
+    [
+        [
+            {
+                "_id": "69f6b0a5e0e3ee2d4614cb5c",
+                "enabled": True,
+                "name": "Nintendo Switch - Unknown Internet Mode",
+                "secure": {
+                    "enabled": True,
+                    "internet": {"mode": "SOMETHING_ELSE"},
+                },
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_object_oriented_network_config_unknown_internet_mode(unifi_controller):
+    """Test unsupported internet mode maps to unknown."""
+    configs = unifi_controller.object_oriented_network_configs
+    await configs.update()
+
+    config = configs["69f6b0a5e0e3ee2d4614cb5c"]
+    assert config.secure.internet is not None
+    assert config.secure.internet.mode == ObjectOrientedNetworkInternetMode.UNKNOWN
 
 
 @pytest.mark.parametrize(
