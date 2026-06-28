@@ -231,6 +231,60 @@ async def test_object_oriented_network_config_optional_section_defaults(
     [
         [
             {
+                "_id": "69f6b0a5e0e3ee2d4614cb5c",
+                "enabled": True,
+                "name": "Nintendo Switch - Empty Secure",
+                "secure": {},
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_object_oriented_network_config_secure_empty(unifi_controller):
+    """Test empty security configuration is available."""
+    configs = unifi_controller.object_oriented_network_configs
+    await configs.update()
+
+    config = configs["69f6b0a5e0e3ee2d4614cb5c"]
+    assert config.secure.available is True
+    assert config.secure.enabled is False
+    assert config.secure.internet is None
+
+
+@pytest.mark.parametrize(
+    "object_oriented_network_config_payload",
+    [
+        [
+            {
+                "_id": "69f6b0a5e0e3ee2d4614cb5c",
+                "enabled": True,
+                "name": "Nintendo Switch - Empty Secure Internet",
+                "secure": {"internet": {}},
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_object_oriented_network_config_secure_internet_empty(
+    unifi_controller,
+):
+    """Test empty internet configuration uses safe defaults."""
+    configs = unifi_controller.object_oriented_network_configs
+    await configs.update()
+
+    config = configs["69f6b0a5e0e3ee2d4614cb5c"]
+    assert config.secure.available is True
+    assert config.secure.enabled is False
+    assert config.secure.internet is not None
+    assert config.secure.internet.mode == ObjectOrientedNetworkInternetMode.UNKNOWN
+    assert config.secure.internet.schedule is None
+
+
+@pytest.mark.parametrize(
+    "object_oriented_network_config_payload",
+    [
+        [
+            {
                 "_id": "69f6b0eae0e3ee2d4614cb91",
                 "enabled": True,
                 "name": "VPN traffic route",

@@ -22,7 +22,7 @@ class ObjectOrientedNetworkInternetMode(StrEnum):
 class ObjectOrientedNetworkSecureInternetT(TypedDict):
     """Internet access configuration."""
 
-    mode: ObjectOrientedNetworkInternetMode
+    mode: NotRequired[str]
     schedule: NotRequired[dict[str, str]]
 
 
@@ -67,7 +67,7 @@ class ObjectOrientedNetworkSecure:
     @classmethod
     def from_dict(cls, data: ObjectOrientedNetworkSecureT | None) -> Self:
         """Create security configuration."""
-        if not data:
+        if data is None:
             return cls()
 
         internet = data.get("internet")
@@ -75,7 +75,7 @@ class ObjectOrientedNetworkSecure:
             available=True,
             enabled=data.get("enabled") is True,
             internet=ObjectOrientedNetworkSecureInternet.from_dict(internet)
-            if internet
+            if internet is not None
             else None,
         )
 
