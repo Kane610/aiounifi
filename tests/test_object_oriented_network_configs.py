@@ -291,14 +291,13 @@ async def test_object_oriented_network_config_secure_internet_empty(
                 "target_type": "NETWORKS",
                 "targets": ["6060b00f45de3905133cea14"],
                 "route": {"enabled": True},
-                "secure": None,
             }
         ]
     ],
 )
 @pytest.mark.usefixtures("_mock_endpoints")
-async def test_object_oriented_network_config_secure_null(unifi_controller):
-    """Test security configuration with null secure data."""
+async def test_object_oriented_network_config_secure_missing(unifi_controller):
+    """Test security configuration with missing secure data."""
     configs = unifi_controller.object_oriented_network_configs
     await configs.update()
 

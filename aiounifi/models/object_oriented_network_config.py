@@ -104,7 +104,7 @@ class TypedObjectOrientedNetworkConfig(TypedDict):
     targets: NotRequired[list[str | ObjectOrientedNetworkTarget]]
     qos: NotRequired[ObjectOrientedNetworkQos]
     route: NotRequired[ObjectOrientedNetworkRoute]
-    secure: NotRequired[ObjectOrientedNetworkSecureT | None]
+    secure: NotRequired[ObjectOrientedNetworkSecureT]
 
 
 @dataclass
