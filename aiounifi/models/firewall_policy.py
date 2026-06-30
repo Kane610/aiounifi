@@ -29,7 +29,7 @@ class TypedFirewallPolicy(TypedDict):
 
     _id: str
     action: str
-    name: str
+    name: NotRequired[str]
     enabled: bool
     connection_state_type: str
     connection_states: list[str]
@@ -62,7 +62,7 @@ class FirewallPolicy(ApiItem):
     @property
     def name(self) -> str:
         """Firewall policy name."""
-        return self.raw["name"]
+        return self.raw.get("name", "")
 
     @property
     def enabled(self) -> bool:
