@@ -145,6 +145,7 @@ lint.ignore = [
     "E501",  # Checks for lines that exceed the specified maximum character length
     "ISC001",  # Implicitly concatenated string literals on one line
     "PLR0913",  # Too many arguments to function call ({c_args} > {max_args})
+    "PLR0917",  # Too many positional arguments
     "PLR0915",  # Too many statements ({statements} > {max_statements})
     "PLR2004",  # Magic value used in comparison, consider replacing {value} with a constant variable
     "UP046",  # 82 | class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
