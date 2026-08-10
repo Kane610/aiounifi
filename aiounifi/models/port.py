@@ -33,6 +33,7 @@ class PortPoEMode(StrEnum):
 
     AUTO = "auto"
     OFF = "off"
+    PASSIVE_24V = "pasv24"
     PASSTHROUGH = "passthrough"
     UNKNOWN = "unknown"
 
@@ -97,7 +98,7 @@ class Port(ApiItem):
 
     @property
     def poe_mode(self) -> PortPoEMode:
-        """PoE mode (auto, passthrough, off, or unknown)."""
+        """PoE mode (auto, pasv24, passthrough, off, or unknown)."""
         return PortPoEMode(self.raw.get("poe_mode", "unknown"))
 
     @property

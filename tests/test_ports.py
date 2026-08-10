@@ -160,6 +160,7 @@ def test_port_media_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
     [
         ("auto", PortPoEMode.AUTO),
         ("off", PortPoEMode.OFF),
+        ("pasv24", PortPoEMode.PASSIVE_24V),
         ("passthrough", PortPoEMode.PASSTHROUGH),
     ],
 )
@@ -179,7 +180,20 @@ def test_port_poe_mode_missing_fallback() -> None:
 
 def test_port_poe_mode_unknown_fallback(caplog: pytest.LogCaptureFixture) -> None:
     """Verify unknown PoE mode values map to UNKNOWN."""
-    port = Port({"poe_mode": "pasv24"})
+    port = Port({"poe_mode": "pasv54"})
     assert port.poe_mode == PortPoEMode.UNKNOWN
     assert port.poe_mode == "unknown"
-    assert "Unsupported port PoE mode pasv24" in caplog.text
+    assert "Unsupported port PoE mode pasv54" in caplog.text
+
+
+def test_port_poe_mode_passive_24v_does_not_warn(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Passive 24V is a real mode and must not reach the warning path (#1034).
+
+    Reporters cannot switch away from it -- UniFi Protect G3 cameras accept
+    nothing else -- so every poll cycle logged a warning per affected port.
+    """
+    port = Port({"poe_mode": "pasv24"})
+    assert port.poe_mode == PortPoEMode.PASSIVE_24V
+    assert not caplog.text
