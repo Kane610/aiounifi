@@ -13,6 +13,21 @@ from aiounifi.controller import Controller
 from aiounifi.models.configuration import Configuration
 
 
+def client_response_factory(*args: Any, **kwargs: Any) -> aiohttp.ClientResponse:
+    """Create a mock response compatible with aiohttp 3.14."""
+    stream_writer = Mock()
+    stream_writer.output_size = 0
+    kwargs["stream_writer"] = stream_writer
+    return aiohttp.ClientResponse(*args, **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def patch_aioresponses_client_response() -> None:
+    """Make aioresponses compatible with aiohttp 3.14."""
+    with patch("aioresponses.core.ClientResponse", client_response_factory):
+        yield
+
+
 @pytest.fixture(name="mock_aioresponse")
 def aioresponse_fixture() -> aioresponses:
     """AIOHTTP fixture."""
