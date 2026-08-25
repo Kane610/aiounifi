@@ -5,7 +5,7 @@ pytest --cov-report term-missing --cov=aiounifi.firewall_policy tests/test_firew
 
 import pytest
 
-from aiounifi.models.firewall_policy import FirewallPolicyUpdateRequest
+from aiounifi.models.firewall_policy import FirewallPolicy, FirewallPolicyUpdateRequest
 
 from .fixtures import FIREWALL_POLICIES
 
@@ -56,6 +56,13 @@ async def test_firewall_policies(unifi_controller, unifi_called_with):
         "port_matching_type": "ANY",
         "zone_id": "678c63bc2d97692f08adcdfa",
     }
+
+
+def test_firewall_policy_name_missing():
+    """A policy payload without a name should not raise KeyError."""
+    raw = {k: v for k, v in FIREWALL_POLICIES[0].items() if k != "name"}
+    policy = FirewallPolicy(raw)
+    assert policy.name is None
 
 
 @pytest.mark.parametrize("is_unifi_os", [True])

@@ -60,9 +60,9 @@ class FirewallPolicy(ApiItem):
         return self.raw["_id"]
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         """Firewall policy name."""
-        return self.raw["name"]
+        return self.raw.get("name")
 
     @property
     def enabled(self) -> bool:
