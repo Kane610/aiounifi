@@ -38,6 +38,8 @@ class EventKey(enum.Enum):
     ACCESS_POINT_UPGRADE_FAILED = "EVT_AP_UpgradeFailed"
     ACCESS_POINT_UPGRADED = "EVT_AP_Upgraded"
 
+    BUILDING_BRIDGE_CHANNEL_CHANGED = "EVT_BB_ChannelChanged"
+
     DREAM_MACHINE_CONNECTED = "EVT_DM_Connected"
     DREAM_MACHINE_LOST_CONTACT = "EVT_DM_Lost_Contact"
     DREAM_MACHINE_UPGRADED = "EVT_DM_Upgraded"
