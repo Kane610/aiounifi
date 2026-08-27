@@ -3896,6 +3896,43 @@ UPS_2U_PRO = {
     "x_has_ssh_hostkey": False,
 }
 
+UPS_2U = {
+    "device_id": "synthetic-ups-2u-id",
+    "mac": "02:00:00:00:00:02",
+    "model": "USWDA25",
+    "name": "UPS 2U",
+    "type": "usw",
+    "outlet_table": [
+        {
+            "index": index,
+            "name": f"Outlet {index}",
+            "relay_state": True,
+            "cycle_enabled": False,
+            "outlet_caps": 65549 if index <= 4 else 65541,
+        }
+        for index in range(1, 9)
+    ],
+    "vbms_table": {
+        "battpool": {
+            "batt_available_cnt": 1,
+            "batteryLevel": 90,
+            "battery_avr_time": -1,
+            "device_total_power_budget": 1000,
+            "device_total_power_output": 0,
+            "device_total_power_factor": 0,
+            "device_output_voltage": 120.30000305175781,
+            "device_bypass_voltage": 120.30000305175781,
+            "device_output_current": 0,
+            "ischarging": True,
+            "readycnt": 1,
+            "timeToRemain": 4280,
+        },
+        "bms_run_anomaly": 0,
+        "is_battery_mode": False,
+        "battery_table": [],
+    },
+}
+
 PDU_PRO = {
     "_id": "61e4a1e60bbb2d53aeb430ea",
     "_uptime": 1347471,
