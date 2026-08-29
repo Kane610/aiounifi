@@ -131,7 +131,7 @@ class TypedDeviceOutletTable(TypedDict):
     relay_state: bool
 
 
-class TypedDeviceBattpool(TypedDict, total=False):
+class TypedDeviceBatteryPool(TypedDict, total=False):
     """Device battery pool type definition."""
 
     batt_available_cnt: int
@@ -154,7 +154,7 @@ class TypedDeviceVbmsTable(TypedDict, total=False):
 
     battery_table: list[dict[str, Any]]
     bms_run_anomaly: int
-    battpool: TypedDeviceBattpool
+    battpool: TypedDeviceBatteryPool
     epo_enabled: bool
     input_thd_level: int
     is_battery_mode: bool
@@ -1139,7 +1139,7 @@ class Device(ApiItem):
         return self.raw.get("vbms_table")
 
     @property
-    def battpool(self) -> TypedDeviceBattpool | None:
+    def battery_pool(self) -> TypedDeviceBatteryPool | None:
         """Battery pool data."""
         if (vbms_table := self.vbms_table) is not None:
             return vbms_table.get("battpool")

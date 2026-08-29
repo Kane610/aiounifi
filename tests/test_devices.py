@@ -1198,31 +1198,31 @@ def test_device_type_enum() -> None:
     assert str(DeviceType.SECURITY_GATEWAY) == "ugw"
 
 
-def test_battpool() -> None:
+def test_battery_pool() -> None:
     """Verify UPS battery pool data."""
     ups_2u_pro = Device(UPS_2U_PRO)
     assert ups_2u_pro.vbms_table == UPS_2U_PRO["vbms_table"]
-    assert ups_2u_pro.battpool == UPS_2U_PRO["vbms_table"]["battpool"]
-    assert ups_2u_pro.battpool is not None
-    assert ups_2u_pro.battpool["batt_available_cnt"] == 6
-    assert ups_2u_pro.battpool["device_input_voltage"] == 121.9
-    assert "device_bypass_voltage" not in ups_2u_pro.battpool
+    assert ups_2u_pro.battery_pool == UPS_2U_PRO["vbms_table"]["battpool"]
+    assert ups_2u_pro.battery_pool is not None
+    assert ups_2u_pro.battery_pool["batt_available_cnt"] == 6
+    assert ups_2u_pro.battery_pool["device_input_voltage"] == 121.9
+    assert "device_bypass_voltage" not in ups_2u_pro.battery_pool
     assert ups_2u_pro.vbms_table["epo_enabled"] is False
     assert ups_2u_pro.vbms_table["is_battery_mode"] is False
 
     ups_2u = Device(UPS_2U)
     assert ups_2u.vbms_table == UPS_2U["vbms_table"]
-    assert ups_2u.battpool == UPS_2U["vbms_table"]["battpool"]
-    assert ups_2u.battpool is not None
-    assert ups_2u.battpool["batt_available_cnt"] == 1
-    assert ups_2u.battpool["device_bypass_voltage"] == 120.30000305175781
-    assert "device_input_voltage" not in ups_2u.battpool
+    assert ups_2u.battery_pool == UPS_2U["vbms_table"]["battpool"]
+    assert ups_2u.battery_pool is not None
+    assert ups_2u.battery_pool["batt_available_cnt"] == 1
+    assert ups_2u.battery_pool["device_bypass_voltage"] == 120.30000305175781
+    assert "device_input_voltage" not in ups_2u.battery_pool
     assert "epo_enabled" not in ups_2u.vbms_table
     assert ups_2u.vbms_table["is_battery_mode"] is False
     assert all("outlet_power" not in outlet for outlet in ups_2u.outlet_table)
 
     assert Device({"mac": "0"}).vbms_table is None
-    assert Device({"mac": "0"}).battpool is None
+    assert Device({"mac": "0"}).battery_pool is None
 
 
 @pytest.mark.parametrize(
