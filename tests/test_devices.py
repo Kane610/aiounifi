@@ -163,6 +163,28 @@ test_data = [
                         {"availability": 0.0, "target": "1.1.1.1", "type": "icmp"},
                     ]
                 },
+                "WAN3": {
+                    "monitors": [
+                        {
+                            "availability": 100.0,
+                            "latency_average": 41,
+                            "target": "www.microsoft.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 32,
+                            "target": "google.com",
+                            "type": "icmp",
+                        },
+                        {
+                            "availability": 100.0,
+                            "latency_average": 16,
+                            "target": "1.1.1.1",
+                            "type": "icmp",
+                        },
+                    ]
+                },
             },
             "user_num_sta": 20,
             "wlan_overrides": [],
@@ -1451,6 +1473,10 @@ async def test_update_stats(unifi_controller: Controller) -> None:
     assert device.uptime_stats is not None
     assert len(device.uptime_stats["WAN"].get("monitors")) == 3
     assert len(device.uptime_stats["WAN2"].get("monitors")) == 3
+    assert (wan3 := device.uptime_stats.get("WAN3")) is not None
+    assert len(wan3.get("monitors")) == 3
+    assert wan3["monitors"][1].get("target") == "google.com"
+    assert wan3["monitors"][1].get("latency_average") == 32
 
     assert device.uptime_stats["WAN"].get("monitors")[0].get("availability") == 100.0
     assert device.uptime_stats["WAN"].get("monitors")[0].get("latency_average") == 5

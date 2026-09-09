@@ -388,6 +388,7 @@ class TypedDeviceUptimeStats(TypedDict):
 
     WAN: TypedDeviceUptimeStatsWan
     WAN2: TypedDeviceUptimeStatsWan
+    WAN3: NotRequired[TypedDeviceUptimeStatsWan]
 
 
 class TypedDeviceWlanOverrides(TypedDict):
