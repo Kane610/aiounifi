@@ -139,7 +139,7 @@ async def test_network_request_wraps_client_errors(
     mock_aioresponse.get(SITES_URL, exception=aiohttp.ClientConnectionError("boom"))
 
     with pytest.raises(RequestError, match="Error requesting data"):
-        await connectivity.request(ApiRequest(method="get", path="/v1/sites"))
+        await network_connectivity.request(ApiRequest(method="get", path="/v1/sites"))
 
 
 async def test_network_request_rejects_non_json_success(
