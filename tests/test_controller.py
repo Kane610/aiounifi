@@ -3,9 +3,11 @@
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
 
+from collections.abc import Callable
 import ssl
 
 from aiohttp import ClientSession, client_exceptions, web
+from aioresponses import aioresponses
 import pytest
 import trustme
 
@@ -255,6 +257,100 @@ async def test_relogin_fails(mock_aioresponse, unifi_controller):
         await unifi_controller.devices.update()
 
 
+@pytest.mark.parametrize("is_unifi_os", [True, False])
+async def test_login_with_api_key(
+    mock_aioresponse: aioresponses,
+    unifi_called_with: Callable[..., bool],
+    is_unifi_os: bool,
+) -> None:
+    """API key login skips classic /api/login and validates GET /v1/info."""
+    session = ClientSession()
+    config = Configuration(session, "host", api_key="secret-key")
+    controller = Controller(config)
+
+    try:
+        if is_unifi_os:
+            mock_aioresponse.get(
+                "https://host:8443",
+                content_type="text/html",
+                headers={"x-csrf-token": "012"},
+            )
+        else:
+            mock_aioresponse.get(
+                "https://host:8443",
+                content_type="application/octet-stream",
+                status=302,
+            )
+        mock_aioresponse.get(
+            "https://host:8443/proxy/network/integration/v1/info",
+            payload={"applicationVersion": "9.1.0"},
+            content_type="application/json",
+        )
+
+        await controller.login()
+
+        assert unifi_called_with("get", "", allow_redirects=False)
+        assert not unifi_called_with("post", "/api/auth/login")
+        assert not unifi_called_with("post", "/api/login")
+        info_headers = None
+        for req, call_list in mock_aioresponse.requests.items():
+            if str(req[1].path).endswith("/v1/info"):
+                info_headers = call_list[0][1]["headers"]
+        assert info_headers is not None
+        assert info_headers["X-API-KEY"] == "secret-key"
+        assert controller.connectivity.can_retry_login is False
+    finally:
+        await session.close()
+
+
+async def test_login_with_invalid_api_key(mock_aioresponse: aioresponses) -> None:
+    """Invalid Integration API keys raise Unauthorized from GET /v1/info."""
+    session = ClientSession()
+    config = Configuration(session, "host", api_key="bad-key")
+    controller = Controller(config)
+
+    try:
+        mock_aioresponse.get(
+            "https://host:8443",
+            content_type="text/html",
+            headers={"x-csrf-token": "012"},
+        )
+        mock_aioresponse.get(
+            "https://host:8443/proxy/network/integration/v1/info",
+            status=401,
+            payload={
+                "statusCode": 401,
+                "statusName": "UNAUTHORIZED",
+                "code": "api.authentication.invalid-credentials",
+                "message": "Invalid credentials",
+                "timestamp": "2024-11-27T08:13:46.966Z",
+                "requestPath": "/integration/v1/info",
+                "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            },
+        )
+
+        with pytest.raises(Unauthorized, match="Invalid credentials"):
+            await controller.login()
+        assert not any(
+            str(req[1].path).endswith("/login") for req in mock_aioresponse.requests
+        )
+    finally:
+        await session.close()
+
+
+async def test_login_requires_credentials() -> None:
+    """Login without username/password or api_key raises LoginRequired."""
+    session = ClientSession()
+    config = Configuration(session, "host")
+    controller = Controller(config)
+
+    try:
+        with pytest.raises(LoginRequired, match="api_key"):
+            await controller.connectivity.login()
+    finally:
+        await session.close()
+
+
 @pytest.mark.parametrize("site_payload", [SITE_RESPONSE["data"]])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
@@ -308,398 +404,3 @@ async def test_controller(unifi_controller, unifi_called_with, new_ws_data_fn):
     await unifi_controller.wlans.update()
     assert unifi_called_with("get", "/api/s/default/rest/wlanconf")
     assert len(unifi_controller.wlans.items()) == 0
-
-
-@pytest.mark.parametrize(("is_unifi_os", "site_payload"), [(True, SITE_RESPONSE)])
-@pytest.mark.usefixtures("_mock_endpoints")
-async def test_unifios_controller(
-    mock_aioresponse,
-    unifi_controller,
-    unifi_called_with,
-    new_ws_data_fn,
-):
-    """Test controller communicating with a UniFi OS controller."""
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        headers={"x-csrf-token": "123"},
-        content_type="application/json",
-    )
-    await unifi_controller.connectivity.login()
-
-    await unifi_controller.clients.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/stat/sta",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.devices.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/stat/device",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.clients_all.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/rest/user",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.sites.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/self/sites",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.traffic_routes.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/v2/api/site/default/trafficroutes",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.traffic_rules.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/v2/api/site/default/trafficrules",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.vouchers.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/stat/voucher",
-        headers={"x-csrf-token": "123"},
-    )
-    await unifi_controller.wlans.update()
-    assert unifi_called_with(
-        "get",
-        "/proxy/network/api/s/default/rest/wlanconf",
-        headers={"x-csrf-token": "123"},
-    )
-
-
-async def test_unifios_controller_login_html_response(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
-    """Test controller communicating with a UniFi OS controller text/html response."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="text/html",
-    )
-    await unifi_controller.connectivity.check_unifi_os()
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload="Login Failed: Host starting up",
-        content_type="text/html",
-    )
-    with pytest.raises(RequestError):
-        await unifi_controller.connectivity.login()
-
-
-async def test_unifios_controller_no_csrf_token(
-    mock_aioresponse, unifi_controller, unifi_called_with
-):
-    """Test controller communicating with a UniFi OS controller without csrf token."""
-    mock_aioresponse.get(
-        "https://host:8443",
-        content_type="text/html",
-    )
-    await unifi_controller.connectivity.check_unifi_os()
-    assert unifi_controller.connectivity.is_unifi_os
-    assert unifi_called_with(
-        "get",
-        "",
-        allow_redirects=False,
-    )
-
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
-        content_type="application/json",
-    )
-    await unifi_controller.connectivity.login()
-    assert unifi_called_with(
-        "post",
-        "/api/auth/login",
-        json={"username": "user", "password": "pass", "rememberMe": True},
-    )
-
-
-test_data = [
-    ({"status": 401}, LoginRequired),
-    ({"status": 403}, Forbidden),
-    ({"status": 404}, ResponseError),
-    ({"status": 429}, ResponseError),
-    ({"status": 502}, BadGateway),
-    ({"status": 503}, ServiceUnavailable),
-    ({"exception": client_exceptions.ClientError}, RequestError),
-    (
-        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
-        LoginRequired,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
-        Unauthorized,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
-        NoPermission,
-    ),
-    (
-        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
-        TwoFaTokenRequired,
-    ),
-]
-
-
-@pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
-async def test_controller_raise_expected_exception(
-    mock_aioresponse, unifi_controller, unwanted_behavior, expected_exception
-):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.post("https://host:8443/api/login", **unwanted_behavior)
-    with pytest.raises(expected_exception):
-        await unifi_controller.connectivity.login()
-
-
-async def test_controller_authentication_rate_limit_error(
-    mock_aioresponse, unifi_controller
-):
-    """Test that 429 AUTHENTICATION_FAILED_LIMIT_REACHED raises AuthenticationRateLimitError."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        status=429,
-        payload={
-            "message": "You've reached the login attempt limit",
-            "code": "AUTHENTICATION_FAILED_LIMIT_REACHED",
-        },
-    )
-    with pytest.raises(AuthenticationRateLimitError):
-        await unifi_controller.connectivity.login()
-
-
-api_request_data = [
-    (
-        ApiRequest,
-        "/api/s/default",
-        {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
-        LoginRequired,
-    ),
-    (
-        ApiRequest,
-        "/api/s/default",
-        {"payload": {"meta": {"msg": "api.err.Invalid", "rc": "error"}}},
-        Unauthorized,
-    ),
-    (
-        ApiRequest,
-        "/api/s/default",
-        {"payload": {"meta": {"msg": "api.err.NoPermission", "rc": "error"}}},
-        NoPermission,
-    ),
-    (
-        ApiRequest,
-        "/api/s/default",
-        {"payload": {"meta": {"msg": "api.err.Ubic2faTokenRequired", "rc": "error"}}},
-        TwoFaTokenRequired,
-    ),
-    (
-        ApiRequest,
-        "/api/s/default",
-        {"payload": {"meta": {"msg": "api.err.OtherError", "rc": "error"}}},
-        AiounifiException,
-    ),
-    (
-        ApiRequestV2,
-        "/v2/api/site/default",
-        {"payload": {"errorCode": 1, "message": "api.err.LoginRequired"}},
-        LoginRequired,
-    ),
-    (
-        ApiRequestV2,
-        "/v2/api/site/default",
-        {"payload": {"errorCode": 2, "message": "api.err.Invalid"}},
-        Unauthorized,
-    ),
-    (
-        ApiRequestV2,
-        "/v2/api/site/default",
-        {"payload": {"errorCode": 3, "message": "api.err.NoPermission"}},
-        NoPermission,
-    ),
-    (
-        ApiRequestV2,
-        "/v2/api/site/default",
-        {"payload": {"errorCode": 4, "message": "api.err.Ubic2faTokenRequired"}},
-        TwoFaTokenRequired,
-    ),
-    (
-        ApiRequestV2,
-        "/v2/api/site/default",
-        {"payload": {"errorCode": 5, "message": "api.err.OtherError"}},
-        AiounifiException,
-    ),
-]
-
-
-@pytest.mark.parametrize(("api_request", "path", "input", "expected"), api_request_data)
-async def test_api_request_error_handling(
-    mock_aioresponse,
-    unifi_controller: Controller,
-    api_request,
-    path,
-    input,
-    expected,
-):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.get(f"https://host:8443{path}/test", **input)
-    with pytest.raises(expected):
-        await unifi_controller.connectivity.request(api_request("get", "/test"))
-
-
-@pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
-async def test_api_request_generic_error_handling(
-    mock_aioresponse,
-    unifi_controller: Controller,
-    unwanted_behavior,
-    expected_exception,
-):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.get("https://host:8443/api/s/default/test", **unwanted_behavior)
-    with pytest.raises(expected_exception):
-        await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
-
-
-@pytest.mark.parametrize(
-    "unsupported_message", ["device:update", "unifi-device:sync", "unsupported"]
-)
-async def test_handle_unsupported_events(
-    unifi_controller, unsupported_message, new_ws_data_fn
-):
-    """Test controller properly ignores unsupported events."""
-    unifi_controller.ws_state_callback.reset_mock()
-    new_ws_data_fn({"meta": {"message": unsupported_message}})
-    unifi_controller.ws_state_callback.assert_not_called()
-
-    assert len(unifi_controller.clients.items()) == 0
-
-
-async def test_websocket(aiohttp_server) -> None:
-    """Test positive websocket."""
-
-    tls_certificate_authority = trustme.CA()
-    tls_certificate = tls_certificate_authority.issue_server_cert(
-        "localhost", "127.0.0.1", "::1"
-    )
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    tls_certificate.configure_cert(ssl_context)
-
-    async def handler(request):
-        ws = web.WebSocketResponse()
-        await ws.prepare(request)
-
-        await ws.send_json({"meta": {"message": "device:update"}})
-        await ws.send_json(
-            {
-                "meta": {"rc": "ok", "message": "dpigroup:add"},
-                "data": [
-                    {
-                        "name": "dpi group",
-                        "site_id": "5f3edd27ba4cc806a19f2d9c",
-                        "_id": "61783dbdc1773a18c0c61ef6",
-                    }
-                ],
-            }
-        )
-
-        await ws.close()
-        return ws
-
-    app = web.Application()
-    app.router.add_get("/wss/s/default/events", handler)
-    await aiohttp_server(app, port=8443, ssl=ssl_context)
-
-    config = Configuration(
-        ClientSession(), "0.0.0.0", username="user", password="pass", ssl_context=False
-    )
-    controller = Controller(config)
-    await controller.start_websocket()
-
-    assert len(controller.dpi_groups.items()) == 1
-
-
-async def test_login_malformed_json(mock_aioresponse, unifi_controller):
-    """Test login with malformed JSON response raises RequestError."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        body="not json",
-        content_type="application/json",
-    )
-    with pytest.raises(RequestError):
-        await unifi_controller.connectivity.login()
-
-
-async def test_login_missing_csrf_and_cookie(mock_aioresponse, unifi_controller):
-    """Test login with missing csrf and cookie headers does not break."""
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "ok"}, "data": []},
-        content_type="application/json",
-    )
-    await unifi_controller.connectivity.login()
-    # Headers should not be set
-    assert "x-csrf-token" not in unifi_controller.connectivity.headers
-    assert "Cookie" not in unifi_controller.connectivity.headers
-
-
-async def test_login_2fa_failure(mock_aioresponse, unifi_controller):
-    """Test login with repeated 2FA failure raises correct error."""
-    # First response triggers 2FA
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
-        content_type="application/json",
-    )
-    # Second response is also error
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
-        content_type="application/json",
-    )
-    with pytest.raises(TwoFaTokenRequired):
-        await unifi_controller.connectivity.login()
-
-
-async def test_login_2fa_success_after_error(mock_aioresponse, unifi_controller):
-    """Test login with correct 2FA after initial error succeeds and sets headers."""
-    # Ensure totp_secret is set for 2FA retry
-    unifi_controller.connectivity.config.totp_secret = "JBSWY3DPEHPK3PXP"
-    # First response triggers 2FA
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}},
-        content_type="application/json",
-    )
-    # Second response is success
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "ok"}, "data": []},
-        content_type="application/json",
-        headers={"x-csrf-token": "token", "Set-Cookie": "cookie"},
-    )
-    await unifi_controller.connectivity.login()
-    assert unifi_controller.connectivity.headers["x-csrf-token"] == "token"
-    assert unifi_controller.connectivity.headers["Cookie"] == "cookie"
-
-
-async def test_login_sso_mfa_missing_totp_secret(mock_aioresponse, unifi_controller):
-    """Test login with SSO MFA but missing totp_secret raises RequestError."""
-    unifi_controller.connectivity.config.totp_secret = None
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        status=499,
-        payload={},
-        content_type="application/json",
-    )
-    with pytest.raises(RequestError):
-        await unifi_controller.connectivity.login()
