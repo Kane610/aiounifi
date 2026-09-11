@@ -1,1 +1,1 @@
-"""Official UniFi Network Integration API client."""
+"""Official UniFi Network Integration API."""
