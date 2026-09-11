@@ -14,12 +14,13 @@ class Configuration:
     session: ClientSession
     host: str
     _: KW_ONLY
-    username: str
-    password: str
+    username: str = ""
+    password: str = ""
     port: int = 8443
     site: str = "default"
     ssl_context: SSLContext | Literal[False] = False
     totp_secret: str | None = None
+    api_key: str = ""
 
     @property
     def url(self) -> str:

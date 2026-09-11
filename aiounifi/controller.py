@@ -27,6 +27,7 @@ from .interfaces.traffic_rules import TrafficRules
 from .interfaces.vouchers import Vouchers
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
+from .network.v1.api_client import ApiClient
 
 if TYPE_CHECKING:
     from .models.api import ApiRequest, TypedApiResponse
@@ -62,6 +63,7 @@ class Controller:
         self.traffic_routes = TrafficRoutes(self)
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
+        self.network = ApiClient(self)
 
     async def login(self) -> None:
         """Log in to controller."""
