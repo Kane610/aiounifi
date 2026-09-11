@@ -1148,6 +1148,28 @@ GATEWAY_USG3 = {
                 {"availability": 0.0, "target": "1.1.1.1", "type": "icmp"},
             ]
         },
+        "WAN3": {
+            "monitors": [
+                {
+                    "availability": 100.0,
+                    "latency_average": 41,
+                    "target": "www.microsoft.com",
+                    "type": "icmp",
+                },
+                {
+                    "availability": 100.0,
+                    "latency_average": 32,
+                    "target": "google.com",
+                    "type": "icmp",
+                },
+                {
+                    "availability": 100.0,
+                    "latency_average": 16,
+                    "target": "1.1.1.1",
+                    "type": "icmp",
+                },
+            ]
+        },
     },
     "user-num_sta": 20,
     "usg_caps": 786431,
