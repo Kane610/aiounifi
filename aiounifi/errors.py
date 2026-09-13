@@ -16,6 +16,10 @@ class ResponseError(AiounifiException):
     """Invalid response."""
 
 
+class EndpointNotFound(ResponseError):
+    """Requested API endpoint does not exist."""
+
+
 class Unauthorized(AiounifiException):
     """Username is not authorized."""
 

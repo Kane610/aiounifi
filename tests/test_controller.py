@@ -12,6 +12,7 @@ import trustme
 from aiounifi import (
     AiounifiException,
     BadGateway,
+    EndpointNotFound,
     Forbidden,
     LoginRequired,
     NoPermission,
@@ -428,7 +429,7 @@ async def test_unifios_controller_no_csrf_token(
 test_data = [
     ({"status": 401}, LoginRequired),
     ({"status": 403}, Forbidden),
-    ({"status": 404}, ResponseError),
+    ({"status": 404}, EndpointNotFound),
     ({"status": 429}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
