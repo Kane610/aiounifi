@@ -18,6 +18,7 @@ from ..errors import (
     AiounifiException,
     AuthenticationRateLimitError,
     BadGateway,
+    EndpointNotFound,
     Forbidden,
     LoginRequired,
     RequestError,
@@ -389,7 +390,7 @@ class Connectivity:
                     raise Forbidden(f"Call {url} received 403 Forbidden")
 
                 if res.status == HTTPStatus.NOT_FOUND:
-                    raise ResponseError(f"Call {url} received 404 Not Found")
+                    raise EndpointNotFound(f"Call {url} received 404 Not Found")
 
                 if res.status == HTTPStatus.BAD_GATEWAY:
                     raise BadGateway(f"Call {url} received 502 bad gateway")

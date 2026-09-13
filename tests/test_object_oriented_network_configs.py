@@ -7,7 +7,9 @@ from copy import deepcopy
 
 import pytest
 
+from aiounifi.errors import EndpointNotFound
 from aiounifi.models.object_oriented_network_config import (
+    ObjectOrientedNetworkConfig,
     ObjectOrientedNetworkConfigUpdateRequest,
     ObjectOrientedNetworkInternetMode,
 )
@@ -80,6 +82,27 @@ async def test_object_oriented_network_config_update_request(
         f"/proxy/network/v2/api/site/default/object-oriented-network-config/{config_id}",
         json=config,
     )
+
+
+@pytest.mark.parametrize("is_unifi_os", [True])
+async def test_object_oriented_network_config_update_404_propagates(
+    mock_aioresponse, unifi_controller
+):
+    """A missing endpoint must not be hidden for update requests."""
+    config = deepcopy(OBJECT_ORIENTED_NETWORK_CONFIGS[0])
+    config_id = config["_id"]
+    mock_aioresponse.put(
+        (
+            "https://host:8443/proxy/network/v2/api/site/default"
+            f"/object-oriented-network-config/{config_id}"
+        ),
+        status=404,
+    )
+
+    with pytest.raises(EndpointNotFound):
+        await unifi_controller.object_oriented_network_configs.save(
+            ObjectOrientedNetworkConfig(config), True
+        )
 
 
 @pytest.mark.parametrize(
