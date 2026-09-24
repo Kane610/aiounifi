@@ -3,11 +3,13 @@
 pytest --cov-report term-missing --cov=aiounifi.firewall_policy tests/test_firewall_policies.py
 """
 
+from copy import deepcopy
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
 
+from aiounifi.errors import AiounifiException
 from aiounifi.models.firewall_policy import (
     FirewallPolicy,
     FirewallPolicyScheduleMode,
@@ -308,3 +310,75 @@ def test_firewall_policy_is_active():
     assert disabled.is_active(_at("2026-09-23 10:00")) is False
     unknown = FirewallPolicy({**raw, "schedule": {"mode": "SUNRISE"}})
     assert unknown.is_active(_at("2026-09-23 10:00")) is None
+
+
+POLICY_URL = (
+    "https://host:8443/proxy/network/v2/api/site/default/firewall-policies/"
+    "b2b2b2b2b2b2b2b2b2b2b2b2"
+)
+POLICY_PATH = (
+    "/proxy/network/v2/api/site/default/firewall-policies/b2b2b2b2b2b2b2b2b2b2b2b2"
+)
+
+
+@pytest.mark.parametrize("is_unifi_os", [True])
+@pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_save_enabled(mock_aioresponse, unifi_controller, unifi_called_with):
+    """save(enabled=...) sends the whole policy and updates from the response."""
+    policies = unifi_controller.firewall_policies
+    await policies.update()
+    policy = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    expected = {**deepcopy(policy.raw), "enabled": False}
+    mock_aioresponse.put(POLICY_URL, payload=expected)
+
+    await policies.save(policy, enabled=False)
+
+    assert unifi_called_with("put", POLICY_PATH, json=expected)
+    assert policies["b2b2b2b2b2b2b2b2b2b2b2b2"].enabled is False
+
+
+@pytest.mark.parametrize("is_unifi_os", [True])
+@pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_save_schedule_replaces_whole_object(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """A new schedule replaces the old one; One time keys don't leak through."""
+    policies = unifi_controller.firewall_policies
+    await policies.update()
+    policy = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    new_schedule = {
+        "mode": "EVERY_DAY",
+        "time_range_start": "21:00",
+        "time_range_end": "08:00",
+    }
+    expected = {**deepcopy(policy.raw), "schedule": new_schedule}
+    mock_aioresponse.put(POLICY_URL, payload=expected)
+
+    await policies.save(policy, schedule=new_schedule)
+
+    assert unifi_called_with("put", POLICY_PATH, json=expected)
+    saved = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    assert saved.schedule == new_schedule
+    assert "date" not in saved.schedule
+
+
+@pytest.mark.parametrize("is_unifi_os", [True])
+@pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_save_failure_leaves_cache_untouched(mock_aioresponse, unifi_controller):
+    """If the controller rejects the change, the cached policy is unchanged."""
+    policies = unifi_controller.firewall_policies
+    await policies.update()
+    policy = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    before = deepcopy(policy.raw)
+    mock_aioresponse.put(
+        POLICY_URL,
+        payload={"errorCode": 400, "message": "api.err.InvalidPayload"},
+    )
+
+    with pytest.raises(AiounifiException):
+        await policies.save(policy, enabled=False, schedule={"mode": "ALWAYS"})
+
+    assert policies["b2b2b2b2b2b2b2b2b2b2b2b2"].raw == before
