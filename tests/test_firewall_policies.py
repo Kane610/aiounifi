@@ -137,12 +137,12 @@ def test_firewall_policy_schedule_mode_unknown():
     assert FirewallPolicyScheduleMode("SUNRISE") is FirewallPolicyScheduleMode.UNKNOWN
 
 
-DENVER = ZoneInfo("America/Denver")
+NEW_YORK = ZoneInfo("America/New_York")
 
 
 def _at(value: str) -> datetime:
-    """Parse 'YYYY-MM-DD HH:MM' as a Denver wall-clock time."""
-    return datetime.fromisoformat(value).replace(tzinfo=DENVER)
+    """Parse 'YYYY-MM-DD HH:MM' as a New York wall-clock time."""
+    return datetime.fromisoformat(value).replace(tzinfo=NEW_YORK)
 
 
 EVERY_DAY_OVERNIGHT = {
@@ -293,9 +293,9 @@ def test_is_schedule_active_rejects_naive_datetime():
 
 
 def test_is_schedule_active_across_fall_back():
-    """DST fall-back (2026-11-01 in Denver) doesn't break an overnight window."""
-    first_130 = datetime(2026, 11, 1, 1, 30, tzinfo=DENVER, fold=0)
-    second_130 = datetime(2026, 11, 1, 1, 30, tzinfo=DENVER, fold=1)
+    """DST fall-back (2026-11-01 in New York) doesn't break an overnight window."""
+    first_130 = datetime(2026, 11, 1, 1, 30, tzinfo=NEW_YORK, fold=0)
+    second_130 = datetime(2026, 11, 1, 1, 30, tzinfo=NEW_YORK, fold=1)
     assert is_schedule_active(EVERY_DAY_OVERNIGHT, first_130) is True
     assert is_schedule_active(EVERY_DAY_OVERNIGHT, second_130) is True
     assert is_schedule_active(EVERY_DAY_OVERNIGHT, _at("2026-11-01 08:00")) is False
@@ -382,3 +382,44 @@ async def test_save_failure_leaves_cache_untouched(mock_aioresponse, unifi_contr
         await policies.save(policy, enabled=False, schedule={"mode": "ALWAYS"})
 
     assert policies["b2b2b2b2b2b2b2b2b2b2b2b2"].raw == before
+
+
+@pytest.mark.parametrize(
+    ("schedule", "now"),
+    [
+        # The UDM stores keys a mode doesn't use; all day only counts for
+        # Every week and Custom.
+        ({**ONE_TIME_OVERNIGHT, "time_all_day": True}, "2026-09-22 10:00"),
+        ({**EVERY_DAY_MORNING, "time_all_day": True}, "2026-09-23 13:00"),
+        # A string is not an all-day flag.
+        ({**WEEKLY_AFTERNOON, "time_all_day": "true"}, "2026-09-21 10:00"),
+    ],
+)
+def test_is_schedule_active_ignores_stray_all_day(schedule, now):
+    """Leftover or mistyped time_all_day values don't widen the window."""
+    assert is_schedule_active(schedule, _at(now)) is False
+
+
+@pytest.mark.parametrize(
+    "schedule",
+    [
+        {},
+        {"mode": "EVERY_DAY", "time_range_start": 900, "time_range_end": "08:00"},
+        {
+            "mode": "ONE_TIME_ONLY",
+            "date": 20260922,
+            "time_range_start": "21:00",
+            "time_range_end": "08:00",
+        },
+        {**WEEKLY_AFTERNOON, "repeat_on_days": "mon"},
+    ],
+)
+def test_is_schedule_active_wrong_types(schedule):
+    """Missing modes and wrongly typed values give None rather than raising."""
+    assert is_schedule_active(schedule, _at("2026-09-21 15:30")) is None
+
+
+def test_firewall_policy_schedule_mode_missing():
+    """A schedule without a mode reports UNKNOWN."""
+    raw = {**FIREWALL_POLICIES[0], "schedule": {}}
+    assert FirewallPolicy(raw).schedule_mode is FirewallPolicyScheduleMode.UNKNOWN
