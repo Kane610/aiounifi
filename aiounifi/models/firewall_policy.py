@@ -1,8 +1,10 @@
 """Firewall policies as part of a UniFi network."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date, datetime, time, timedelta
 from enum import StrEnum
-from typing import NotRequired, Self, TypedDict
+from typing import Any, NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
 
@@ -37,6 +39,103 @@ class FirewallPolicySchedule(TypedDict):
     time_range_end: NotRequired[str]
     repeat_on_days: NotRequired[list[str]]
     time_all_day: NotRequired[bool]
+
+
+_WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+class _IncompleteScheduleError(Exception):
+    """A schedule lacks a key its mode needs, or has a malformed value."""
+
+
+def _schedule_value(schedule: Mapping[str, Any], key: str) -> Any:
+    """Return a schedule key or raise if it is missing.
+
+    Typed as a Mapping because mypy only allows literal keys on a TypedDict.
+    """
+    if (value := schedule.get(key)) is None:
+        raise _IncompleteScheduleError(key)
+    return value
+
+
+def _parse_date(value: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as err:
+        raise _IncompleteScheduleError(value) from err
+
+
+def _parse_time(value: str) -> time:
+    hour, _, minute = value.partition(":")
+    try:
+        return time(int(hour), int(minute))
+    except ValueError as err:
+        raise _IncompleteScheduleError(value) from err
+
+
+def _window_contains(
+    schedule: FirewallPolicySchedule, start_day: date, now: datetime
+) -> bool:
+    """Whether now falls in the window that begins on start_day.
+
+    Windows are compared on the wall clock, which is what the UDM follows.
+    """
+    wall_now = now.replace(tzinfo=None, second=0, microsecond=0, fold=0)
+    if schedule.get("time_all_day"):
+        start = datetime.combine(start_day, time())
+        return start <= wall_now < start + timedelta(days=1)
+    start = datetime.combine(
+        start_day, _parse_time(_schedule_value(schedule, "time_range_start"))
+    )
+    end = datetime.combine(
+        start_day, _parse_time(_schedule_value(schedule, "time_range_end"))
+    )
+    if end <= start:
+        end += timedelta(days=1)
+    return start <= wall_now < end
+
+
+def is_schedule_active(schedule: FirewallPolicySchedule, now: datetime) -> bool | None:
+    """Whether a firewall policy schedule applies at now.
+
+    now must be timezone-aware and already in the UDM's timezone. Windows run
+    from start (inclusive) to end (exclusive) at minute resolution; an end at
+    or before the start means the following day. Returns None for an unknown
+    mode or a schedule missing or mangling a key its mode needs.
+    """
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+
+    mode = FirewallPolicyScheduleMode(schedule["mode"])
+    if mode is FirewallPolicyScheduleMode.ALWAYS:
+        return True
+    if mode is FirewallPolicyScheduleMode.UNKNOWN:
+        return None
+
+    try:
+        if mode is FirewallPolicyScheduleMode.ONE_TIME_ONLY:
+            start_day = _parse_date(_schedule_value(schedule, "date"))
+            return _window_contains(schedule, start_day, now)
+
+        today = now.date()
+        for start_day in (today - timedelta(days=1), today):
+            if mode in (
+                FirewallPolicyScheduleMode.EVERY_WEEK,
+                FirewallPolicyScheduleMode.CUSTOM,
+            ):
+                days = _schedule_value(schedule, "repeat_on_days")
+                if _WEEKDAYS[start_day.weekday()] not in days:
+                    continue
+            if mode is FirewallPolicyScheduleMode.CUSTOM:
+                first = _parse_date(_schedule_value(schedule, "date_start"))
+                last = _parse_date(_schedule_value(schedule, "date_end"))
+                if not first <= start_day <= last:
+                    continue
+            if _window_contains(schedule, start_day, now):
+                return True
+    except _IncompleteScheduleError:
+        return None
+    return False
 
 
 class FirewallPolicyEndpoint(TypedDict):
@@ -183,6 +282,12 @@ class FirewallPolicy(ApiItem):
     def schedule_mode(self) -> FirewallPolicyScheduleMode:
         """Policy schedule mode."""
         return FirewallPolicyScheduleMode(self.raw["schedule"]["mode"])
+
+    def is_active(self, now: datetime) -> bool | None:
+        """Whether the policy applies at now (see is_schedule_active)."""
+        if not self.enabled:
+            return False
+        return is_schedule_active(self.schedule, now)
 
 
 @dataclass
