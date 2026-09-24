@@ -5,9 +5,12 @@ pytest --cov-report term-missing --cov=aiounifi.firewall_policy tests/test_firew
 
 import pytest
 
-from aiounifi.models.firewall_policy import FirewallPolicyUpdateRequest
+from aiounifi.models.firewall_policy import (
+    FirewallPolicyScheduleMode,
+    FirewallPolicyUpdateRequest,
+)
 
-from .fixtures import FIREWALL_POLICIES
+from .fixtures import FIREWALL_POLICIES, FIREWALL_POLICIES_SCHEDULE_SHAPES
 
 
 @pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES])
@@ -90,3 +93,38 @@ async def test_firewall_policy_update_request(
         f"/proxy/network/v2/api/site/default/firewall-policies/{policy_id}",
         json=policy,
     )
+
+
+@pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_firewall_policy_schedule_shapes(unifi_controller):
+    """Schedules carry only the keys their mode needs."""
+    firewall_policies = unifi_controller.firewall_policies
+    await firewall_policies.update()
+
+    always = firewall_policies["a1a1a1a1a1a1a1a1a1a1a1a1"]
+    assert always.schedule == {"mode": "ALWAYS"}
+    assert always.schedule_mode is FirewallPolicyScheduleMode.ALWAYS
+
+    one_time = firewall_policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    assert one_time.schedule_mode is FirewallPolicyScheduleMode.ONE_TIME_ONLY
+    assert one_time.schedule["date"] == "2026-09-22"
+
+    custom = firewall_policies["c3c3c3c3c3c3c3c3c3c3c3c3"]
+    assert custom.schedule_mode is FirewallPolicyScheduleMode.CUSTOM
+    assert custom.schedule["time_all_day"] is True
+
+    weekly = firewall_policies["d4d4d4d4d4d4d4d4d4d4d4d4"]
+    assert weekly.schedule_mode is FirewallPolicyScheduleMode.EVERY_WEEK
+
+    custom_timed = firewall_policies["e5e5e5e5e5e5e5e5e5e5e5e5"]
+    assert custom_timed.schedule_mode is FirewallPolicyScheduleMode.CUSTOM
+    assert custom_timed.schedule["time_range_start"] == "20:00"
+
+    every_day = FIREWALL_POLICIES[0]["schedule"]["mode"]
+    assert FirewallPolicyScheduleMode(every_day) is FirewallPolicyScheduleMode.EVERY_DAY
+
+
+def test_firewall_policy_schedule_mode_unknown():
+    """Unrecognised modes map to UNKNOWN instead of raising."""
+    assert FirewallPolicyScheduleMode("SUNRISE") is FirewallPolicyScheduleMode.UNKNOWN

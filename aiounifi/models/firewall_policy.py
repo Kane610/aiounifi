@@ -1,17 +1,42 @@
 """Firewall policies as part of a UniFi network."""
 
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import NotRequired, Self, TypedDict
 
 from .api import ApiItem, ApiRequestV2
 
 
+class FirewallPolicyScheduleMode(StrEnum):
+    """When an enabled firewall policy applies."""
+
+    ALWAYS = "ALWAYS"
+    EVERY_DAY = "EVERY_DAY"
+    EVERY_WEEK = "EVERY_WEEK"
+    ONE_TIME_ONLY = "ONE_TIME_ONLY"
+    CUSTOM = "CUSTOM"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> Self:
+        """Map modes this library doesn't know to UNKNOWN."""
+        return cls.UNKNOWN
+
+
 class FirewallPolicySchedule(TypedDict):
-    """Schedule settings for firewall policy."""
+    """Schedule settings for firewall policy.
+
+    Only "mode" is always present; the other keys depend on the mode.
+    """
 
     mode: str
-    repeat_on_days: list[str]
-    time_all_day: bool
+    date: NotRequired[str]
+    date_start: NotRequired[str]
+    date_end: NotRequired[str]
+    time_range_start: NotRequired[str]
+    time_range_end: NotRequired[str]
+    repeat_on_days: NotRequired[list[str]]
+    time_all_day: NotRequired[bool]
 
 
 class FirewallPolicyEndpoint(TypedDict):
@@ -153,6 +178,11 @@ class FirewallPolicy(ApiItem):
     def schedule(self) -> FirewallPolicySchedule:
         """Policy schedule configuration."""
         return self.raw["schedule"]
+
+    @property
+    def schedule_mode(self) -> FirewallPolicyScheduleMode:
+        """Policy schedule mode."""
+        return FirewallPolicyScheduleMode(self.raw["schedule"]["mode"])
 
 
 @dataclass
