@@ -113,6 +113,7 @@ def _endpoint_fixture(
     dpi_group_payload: list[dict[str, Any]],
     firewall_policy_payload: list[dict[str, Any]],
     firewall_zone_payload: list[dict[str, Any]],
+    network_payload: list[dict[str, Any]],
     object_oriented_network_config_payload: list[dict[str, Any]],
     port_forward_payload: list[dict[str, Any]],
     site_payload: list[dict[str, Any]],
@@ -164,6 +165,11 @@ def _endpoint_fixture(
         "/api/s/default/rest/dpigroup",
         "/proxy/network/api/s/default/rest/dpigroup",
         dpi_group_payload,
+    )
+    mock_get_request(
+        "/api/s/default/rest/networkconf",
+        "/proxy/network/api/s/default/rest/networkconf",
+        network_payload,
     )
     mock_get_request(
         "/api/s/default/rest/portforward",
@@ -251,6 +257,12 @@ def dpi_app_data_fixture() -> list[dict[str, Any]]:
 @pytest.fixture(name="dpi_group_payload")
 def dpi_group_data_fixture() -> list[dict[str, Any]]:
     """DPI group data."""
+    return []
+
+
+@pytest.fixture(name="network_payload")
+def network_data_fixture() -> list[dict[str, Any]]:
+    """Network data."""
     return []
 
 
