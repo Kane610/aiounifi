@@ -1,5 +1,7 @@
 """Fixtures for different items from UniFi controller."""
 
+from typing import Any
+
 LOGIN_UNIFIOS_JSON_RESPONSE = {
     "unique_id": "868d288b-a642-4209-a768-8425498fa928",
     "username": "Testing1",
@@ -5136,6 +5138,71 @@ FIREWALL_POLICIES = [
             "zone_id": "678c63bc2d97692f08adcdfa",
         },
     }
+]
+
+
+def _firewall_policy(
+    policy_id: str, name: str, schedule: dict[str, Any]
+) -> dict[str, Any]:
+    """Build a user-created block policy with the given schedule."""
+    return {
+        **FIREWALL_POLICIES[0],
+        "_id": policy_id,
+        "action": "BLOCK",
+        "name": name,
+        "schedule": schedule,
+    }
+
+
+# Schedule shapes as sent by a UDM Pro (UniFi OS 5.1.33). Only "mode" is always
+# present; the other keys depend on the mode.
+FIREWALL_POLICIES_SCHEDULE_SHAPES = [
+    _firewall_policy("a1a1a1a1a1a1a1a1a1a1a1a1", "Always block", {"mode": "ALWAYS"}),
+    _firewall_policy(
+        "b2b2b2b2b2b2b2b2b2b2b2b2",
+        "Evening block",
+        {
+            "date": "2026-09-22",
+            "mode": "ONE_TIME_ONLY",
+            "time_range_end": "08:30",
+            "time_range_start": "21:30",
+        },
+    ),
+    _firewall_policy(
+        "c3c3c3c3c3c3c3c3c3c3c3c3",
+        "Weekend block",
+        {
+            "date_end": "2026-08-22",
+            "date_start": "2026-08-21",
+            "mode": "CUSTOM",
+            "repeat_on_days": ["wed", "sun", "fri", "thu", "sat", "tue", "mon"],
+            "time_all_day": True,
+        },
+    ),
+    _firewall_policy(
+        "d4d4d4d4d4d4d4d4d4d4d4d4",
+        "Weekday block",
+        {
+            "mode": "EVERY_WEEK",
+            "repeat_on_days": ["mon", "wed"],
+            "time_all_day": False,
+            "time_range_end": "17:00",
+            "time_range_start": "15:00",
+        },
+    ),
+    _firewall_policy(
+        "e5e5e5e5e5e5e5e5e5e5e5e5",
+        "Term block",
+        {
+            "date_end": "2026-12-18",
+            "date_start": "2026-09-01",
+            "mode": "CUSTOM",
+            "repeat_on_days": ["mon", "fri"],
+            "time_all_day": False,
+            "time_range_end": "06:00",
+            "time_range_start": "20:00",
+        },
+    ),
 ]
 
 # uptime_stats as reported by a UDM Pro Max (Network 10.6.106, firmware 5.1.33).
