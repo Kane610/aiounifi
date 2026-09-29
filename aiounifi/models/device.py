@@ -1325,8 +1325,8 @@ class Device(ApiItem):
 
     @property
     def supports_led_brightness(self) -> bool:
-    """Check if the device supports LED brightness control."""
-    return self.supports_led_ring or self.model == "U7PRO"
+        """Check if the device supports LED brightness control."""
+        return self.supports_led_ring or self.model == "U7PRO"
 
     @property
     def supports_locating(self) -> bool:
