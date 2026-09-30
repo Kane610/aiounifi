@@ -56,5 +56,21 @@ class TwoFaTokenRequired(AiounifiException):
     """2 factor authentication token required."""
 
 
+class NetworkApiError(AiounifiException):
+    """Failed request to the Network API v1.
+
+    The attributes hold the fields of the API's error envelope when the
+    response carried one, so callers need not parse the message.
+    """
+
+    status_code: int = 0
+    status_name: str = ""
+    code: str = ""
+    detail: str = ""
+    timestamp: str = ""
+    request_path: str = ""
+    request_id: str = ""
+
+
 class WebsocketError(AiounifiException):
     """Websocket error."""

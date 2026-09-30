@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 import logging
 from typing import TYPE_CHECKING
 
@@ -27,6 +28,7 @@ from .interfaces.traffic_rules import TrafficRules
 from .interfaces.vouchers import Vouchers
 from .interfaces.wlans import Wlans
 from .models.configuration import Configuration
+from .network.v1.api_client import ApiClient
 
 if TYPE_CHECKING:
     from .models.api import ApiRequest, TypedApiResponse
@@ -62,6 +64,14 @@ class Controller:
         self.traffic_routes = TrafficRoutes(self)
         self.vouchers = Vouchers(self)
         self.wlans = Wlans(self)
+
+    @cached_property
+    def network(self) -> ApiClient:
+        """Client of the Network API v1, authenticated with `Configuration.api_key`.
+
+        Independent of `login`; a key alone is enough.
+        """
+        return ApiClient(self.connectivity.config)
 
     async def login(self) -> None:
         """Log in to controller."""
