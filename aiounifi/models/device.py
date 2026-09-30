@@ -989,24 +989,18 @@ if device.supports_led_brightness and brightness is not None:
 
 # Validate color parameter for devices supporting an RGB LED ring
 
-if device.supports_led_ring and color is not None:
-
-    if not re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
-
-        raise AttributeError(
-
-            "Color must be a valid hex color code (e.g., '#00FF00')."
-
-        )
-
-    data["led_override_color"] = color
+        if device.supports_led_ring and color is not None:
+            if not re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
+                raise AttributeError(
+                    "Color must be a valid hex color code (e.g., '#00FF00')."
+                )
+            data["led_override_color"] = color
 
         return cls(
             method="put",
             path=f"/rest/device/{device.id}",
             data=data,
         )
-
 
 class Device(ApiItem):
     """Represents a network device."""
