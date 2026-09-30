@@ -253,6 +253,23 @@ class TypedDevicePortTable(TypedDict):
     up: NotRequired[bool]
 
 
+class TypedDevicePsuTable(TypedDict):
+    """Device power supply table type definition."""
+
+    critical_state: int
+    current: float
+    fan: dict[str, int]
+    label: str
+    online: bool
+    power: float
+    power_capacity: float
+    present: bool
+    psu_caps: int
+    psu_type: int
+    temp: dict[str, float]
+    voltage: float
+
+
 class TypedDeviceRadioTable(TypedDict):
     """Device radio table type definition."""
 
@@ -553,6 +570,7 @@ class TypedDevice(TypedDict):
     provisioned_at: int
     port_overrides: list[TypedDevicePortOverrides]
     port_table: NotRequired[list[TypedDevicePortTable]]
+    psu_table: NotRequired[list[TypedDevicePsuTable]]
     radio_table: list[TypedDeviceRadioTable]
     radio_table_stats: list[TypedDeviceRadioTableStats]
     required_version: str
@@ -1160,6 +1178,11 @@ class Device(ApiItem):
     def port_table(self) -> list[TypedDevicePortTable]:
         """List of ports and data."""
         return self.raw.get("port_table", [])
+
+    @property
+    def psu_table(self) -> list[TypedDevicePsuTable]:
+        """List of built-in power supplies with their output (W, V, A)."""
+        return self.raw.get("psu_table", [])
 
     @property
     def radio_table(self) -> list[TypedDeviceRadioTable]:

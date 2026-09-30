@@ -5205,6 +5205,40 @@ FIREWALL_POLICIES_SCHEDULE_SHAPES = [
     ),
 ]
 
+# psu_table as reported by a UniFi Dream Wall (UDW, firmware 5.1.33). The first slot
+# holds the built-in 550 W supply; "power" is its DC output including PoE. The second
+# slot is empty and reports zeros with "present": false.
+UDW_PSU_TABLE = [
+    {
+        "critical_state": 0,
+        "current": 1.23,
+        "fan": {"0": 5200},
+        "label": "psu1",
+        "online": True,
+        "power": 67.0,
+        "power_capacity": 550.0,
+        "present": True,
+        "psu_caps": 6,
+        "psu_type": 131072,
+        "temp": {"0": 39.0},
+        "voltage": 54.0,
+    },
+    {
+        "critical_state": 0,
+        "current": 0,
+        "fan": {"0": 0},
+        "label": "psu2",
+        "online": False,
+        "power": 0,
+        "power_capacity": 0,
+        "present": False,
+        "psu_caps": 6,
+        "psu_type": 131072,
+        "temp": {"0": 0.0},
+        "voltage": 0,
+    },
+]
+
 # uptime_stats as reported by a UDM Pro Max (Network 10.6.106, firmware 5.1.33).
 # WAN3 is a GRE tunnelled 5G WAN and carries no "monitors" key at all, while a
 # configured but unplugged WAN2 is missing from uptime_stats entirely.
