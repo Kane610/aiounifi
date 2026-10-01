@@ -36,6 +36,7 @@ from .fixtures import (
     STRIP_UP6,
     SWITCH_16_PORT_POE,
     UDM_PRO_MAX_UPTIME_STATS,
+    UDW_PSU_TABLE,
     UPS_2U,
     UPS_2U_PRO,
 )
@@ -1556,6 +1557,40 @@ async def test_temperatures(unifi_controller: Controller) -> None:
     assert device.temperatures[0]["name"] == "CPU"
     assert device.temperatures[0]["type"] == "cpu"
     assert device.temperatures[0]["value"] == 66.0
+
+
+@pytest.mark.parametrize(
+    ("device_payload"), [[GATEWAY_USG3 | {"psu_table": UDW_PSU_TABLE}]]
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_psu_table(unifi_controller: Controller) -> None:
+    """Test device power supply table."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert len(device.psu_table) == 2
+
+    psu = device.psu_table[0]
+    assert psu["label"] == "psu1"
+    assert psu["present"] is True
+    assert psu["online"] is True
+    assert psu["power"] == 67.0
+    assert psu["power_capacity"] == 550.0
+    assert psu["voltage"] == 54.0
+    assert psu["current"] == 1.23
+
+    assert device.psu_table[1]["label"] == "psu2"
+    assert device.psu_table[1]["present"] is False
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_psu_table_missing(unifi_controller: Controller) -> None:
+    """Test device without power supply table."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.psu_table == []
 
 
 @pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
