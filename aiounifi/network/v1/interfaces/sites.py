@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ..api_handlers import APIHandler
 from ..models.site import ListSitesRequest, Site
+from .api_handlers import APIHandler
 
 
 class Sites(APIHandler[Site]):

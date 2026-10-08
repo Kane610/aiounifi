@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
 from ....interfaces.api_handlers import ItemEvent
-from ..api_handlers import APIHandler
 from ..models.client import (
     Client,
     ClientActionRequest,
@@ -16,6 +15,7 @@ from ..models.client import (
     ListClientsRequest,
     normalize_mac,
 )
+from .api_handlers import APIHandler
 
 if TYPE_CHECKING:
     from ..api_client import ApiClient

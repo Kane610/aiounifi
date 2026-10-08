@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from ..api_handlers import APIHandler
 from ..models.client import normalize_mac
 from ..models.device import (
     Device,
@@ -13,6 +12,7 @@ from ..models.device import (
     ListDevicesRequest,
     PortActionRequest,
 )
+from .api_handlers import APIHandler
 
 
 class Devices(APIHandler[Device]):
