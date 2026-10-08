@@ -11,6 +11,7 @@ from ...errors import (
     EndpointNotFound,
     Forbidden,
     NetworkApiError,
+    RequestError,
     ResponseError,
     ServiceUnavailable,
     Unauthorized,
@@ -43,3 +44,7 @@ class V1ResponseError(NetworkApiError, ResponseError):
 
 class V1AuthenticationRateLimitError(NetworkApiError, AuthenticationRateLimitError):
     """Too many failed authentication attempts."""
+
+
+class V1TooManyRequests(NetworkApiError, RequestError):
+    """The console answered 429; `retry_after` says how long to wait."""

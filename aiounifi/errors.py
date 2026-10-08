@@ -70,6 +70,8 @@ class NetworkApiError(AiounifiException):
     timestamp: str = ""
     request_path: str = ""
     request_id: str = ""
+    retry_after: int | None = None
+    """Seconds the console asked the caller to wait, from `Retry-After`."""
 
 
 class WebsocketError(AiounifiException):

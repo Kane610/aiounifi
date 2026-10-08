@@ -19,7 +19,11 @@ from aiounifi.errors import (
 from aiounifi.models.configuration import Configuration
 from aiounifi.network.v1.api_client import ApiClient
 from aiounifi.network.v1.connectivity import Connectivity
-from aiounifi.network.v1.errors import V1NotFound, V1Unauthorized
+from aiounifi.network.v1.errors import (
+    V1NotFound,
+    V1TooManyRequests,
+    V1Unauthorized,
+)
 from aiounifi.network.v1.models.api import ApiRequest
 
 from .conftest import BASE_URL, requests_to, url_pattern
@@ -176,6 +180,12 @@ async def test_structured_error_fields_are_carried(
         ),
         (403, None, Forbidden),
         (404, None, EndpointNotFound),
+        (429, None, V1TooManyRequests),
+        (
+            400,
+            structured_error(400, "TOO_MANY_REQUESTS", "api.something.else"),
+            V1TooManyRequests,
+        ),
         (502, None, BadGateway),
         (503, None, ServiceUnavailable),
         (499, None, ResponseError),
@@ -197,6 +207,33 @@ async def test_error_resolution_order(
 
     with pytest.raises(expected):
         await network_client.get_info()
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected"),
+    [
+        ({"Retry-After": "7"}, 7),
+        ({"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"}, None),
+        ({}, None),
+    ],
+)
+async def test_retry_after_is_carried(
+    mock_aioresponse,
+    network_client: ApiClient,
+    headers: dict[str, str],
+    expected: int | None,
+) -> None:
+    """A 429 says how long to wait, when the console gives seconds."""
+    mock_aioresponse.get(
+        f"{BASE_URL}/v1/info", status=429, body=b"slow down", headers=headers
+    )
+
+    with pytest.raises(RequestError) as err:
+        await network_client.get_info()
+
+    assert isinstance(err.value, V1TooManyRequests)
+    assert err.value.status_code == 429
+    assert err.value.retry_after == expected
 
 
 async def test_transport_error_becomes_request_error(

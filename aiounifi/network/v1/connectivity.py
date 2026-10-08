@@ -13,10 +13,18 @@ non-standard code from a proxy still resolves to the fallback instead of
 raising `ValueError`. A rejected API key is the case that needs step 3: the
 console answers `{"error": {"code": 401, "message": "Unauthorized"}}`, not
 the structured envelope.
+
+There is no request budget to keep. Ubiquiti documents no request-rate limit
+for the Network Integration API and its OpenAPI description declares no 429
+response; the one limit it has is on failed authentications, which no amount
+of waiting fixes. Should a console answer 429 anyway, it is raised as
+`V1TooManyRequests` with `retry_after` taken from the `Retry-After` header,
+so a polling caller can hold off for that long.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, cast
@@ -32,6 +40,7 @@ from .errors import (
     V1NotFound,
     V1ResponseError,
     V1ServiceUnavailable,
+    V1TooManyRequests,
     V1Unauthorized,
 )
 
@@ -45,6 +54,7 @@ STATUS_EXCEPTION_MAP: dict[int, type[NetworkApiError]] = {
     HTTPStatus.UNAUTHORIZED: V1Unauthorized,
     HTTPStatus.FORBIDDEN: V1Forbidden,
     HTTPStatus.NOT_FOUND: V1NotFound,
+    HTTPStatus.TOO_MANY_REQUESTS: V1TooManyRequests,
     HTTPStatus.BAD_GATEWAY: V1BadGateway,
     HTTPStatus.SERVICE_UNAVAILABLE: V1ServiceUnavailable,
 }
@@ -53,6 +63,7 @@ STATUS_NAME_EXCEPTION_MAP: dict[str, type[NetworkApiError]] = {
     "UNAUTHORIZED": V1Unauthorized,
     "FORBIDDEN": V1Forbidden,
     "NOT_FOUND": V1NotFound,
+    "TOO_MANY_REQUESTS": V1TooManyRequests,
     "BAD_GATEWAY": V1BadGateway,
     "SERVICE_UNAVAILABLE": V1ServiceUnavailable,
 }
@@ -124,7 +135,11 @@ class Connectivity:
         if response.status >= HTTPStatus.BAD_REQUEST:
             error = self._parse_error(raw)
             exception_type = self._exception_type(response.status, error)
-            raise self._build_exception(exception_type, url, response.status, error)
+            exception = self._build_exception(
+                exception_type, url, response.status, error
+            )
+            exception.retry_after = self._retry_after(response.headers)
+            raise exception
 
         try:
             return api_request.decode(raw)
@@ -155,6 +170,12 @@ class Connectivity:
             if exception_type := STATUS_NAME_EXCEPTION_MAP.get(error["statusName"]):
                 return exception_type
         return STATUS_EXCEPTION_MAP.get(status, V1ResponseError)
+
+    @staticmethod
+    def _retry_after(headers: Mapping[str, str]) -> int | None:
+        """Seconds from a `Retry-After` header, if it holds a number."""
+        value = headers.get("Retry-After", "")
+        return int(value) if value.isdigit() else None
 
     @staticmethod
     def _build_exception(
