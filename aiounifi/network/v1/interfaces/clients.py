@@ -13,7 +13,6 @@ from ..models.client import (
     ClientData,
     GetClientRequest,
     ListClientsRequest,
-    normalize_mac,
 )
 from .api_handlers import APIHandler
 
@@ -31,7 +30,8 @@ class Clients(APIHandler[Client]):
     `forget` drops one for good.
 
     VPN and Teleport clients have no MAC address, so `update` leaves them out
-    of the cache; `list_page` still returns them.
+    of the cache; `list_page` still returns them. MAC addresses are in the
+    console's format: lower case, colon separated.
     """
 
     item_cls = Client
@@ -63,11 +63,11 @@ class Clients(APIHandler[Client]):
 
     def is_connected(self, mac_address: str) -> bool:
         """Whether the client was listed by the latest `update`."""
-        return self.normalize_obj_id(mac_address) in self._connected
+        return mac_address in self._connected
 
     def last_seen(self, mac_address: str) -> datetime | None:
         """When an `update` last listed the client, in UTC."""
-        return self._last_seen.get(self.normalize_obj_id(mac_address))
+        return self._last_seen.get(mac_address)
 
     def restore(self, raw: ClientData, last_seen: datetime | None = None) -> str | None:
         """Put a client seen before this process started into the cache.
@@ -83,15 +83,10 @@ class Clients(APIHandler[Client]):
 
     def forget(self, mac_address: str) -> None:
         """Drop a client from the cache and signal `DELETED`."""
-        obj_id = self.normalize_obj_id(mac_address)
-        self._last_seen.pop(obj_id, None)
-        self._connected.discard(obj_id)
-        if self._items.pop(obj_id, None) is not None:
-            self.signal_subscribers(ItemEvent.DELETED, obj_id)
-
-    def normalize_obj_id(self, obj_id: str) -> str:
-        """Canonical MAC address."""
-        return normalize_mac(obj_id)
+        self._last_seen.pop(mac_address, None)
+        self._connected.discard(mac_address)
+        if self._items.pop(mac_address, None) is not None:
+            self.signal_subscribers(ItemEvent.DELETED, mac_address)
 
     def list_request(self, offset: int, limit: int) -> ListClientsRequest:
         """Return the list request for one page."""
@@ -121,7 +116,7 @@ class Clients(APIHandler[Client]):
     async def get_by_mac(self, mac_address: str) -> Client | None:
         """Look a client up by MAC address, filtered on the console."""
         clients = await self.list_page(
-            limit=1, filter_value=f"macAddress.eq('{normalize_mac(mac_address)}')"
+            limit=1, filter_value=f"macAddress.eq('{mac_address}')"
         )
         return clients[0] if clients else None
 

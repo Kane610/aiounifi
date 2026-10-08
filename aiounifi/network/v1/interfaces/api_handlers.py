@@ -37,10 +37,6 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def list_request(self, offset: int, limit: int) -> ApiRequest:
         """Return the list request for one page."""
 
-    def normalize_obj_id(self, obj_id: str) -> str:
-        """Canonical form of an object ID, for storage and lookup."""
-        return obj_id
-
     @final
     async def update(self) -> None:
         """Fetch every page and reconcile the cache with it."""
@@ -78,9 +74,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def _obj_id(self, raw: dict[str, Any]) -> str | None:
         """Return the ID of one raw item, or `None` if it has none."""
-        if self.obj_id_key not in raw:
-            return None
-        return self.normalize_obj_id(raw[self.obj_id_key])
+        return raw.get(self.obj_id_key)
 
     @final
     def process_item(self, raw: dict[str, Any]) -> str | None:
@@ -107,17 +101,17 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     @final
     def get(self, obj_id: str, default: Any | None = None) -> ApiItemT | None:
         """Get item value based on key, return default if no match."""
-        return self._items.get(self.normalize_obj_id(obj_id), default)
+        return self._items.get(obj_id, default)
 
     @final
     def __contains__(self, obj_id: str) -> bool:
         """Validate membership of item ID."""
-        return self.normalize_obj_id(obj_id) in self._items
+        return obj_id in self._items
 
     @final
     def __getitem__(self, obj_id: str) -> ApiItemT:
         """Get item value based on key."""
-        return self._items[self.normalize_obj_id(obj_id)]
+        return self._items[obj_id]
 
     @final
     def __iter__(self) -> Iterator[str]:

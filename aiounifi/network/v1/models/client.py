@@ -9,21 +9,6 @@ from ....models.api import ApiItem
 from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest, page_params
 
 
-def normalize_mac(mac_address: str) -> str:
-    """Return a MAC address as lower case, colon separated.
-
-    Accepts `aa:bb:cc:dd:ee:ff`, `aa-bb-cc-dd-ee-ff` and `aabbccddeeff`.
-    """
-    cleaned = mac_address.strip().lower().replace("-", "").replace(":", "")
-    if len(cleaned) != 12:
-        raise ValueError(f"Invalid MAC address {mac_address!r}")
-    try:
-        bytes.fromhex(cleaned)
-    except ValueError as err:
-        raise ValueError(f"Invalid MAC address {mac_address!r}") from err
-    return ":".join(cleaned[idx : idx + 2] for idx in range(0, 12, 2))
-
-
 class ClientAccess(TypedDict):
     """How the client was admitted to the network."""
 

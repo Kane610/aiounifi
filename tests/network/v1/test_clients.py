@@ -48,7 +48,7 @@ async def test_update_and_properties(
 
     assert len(clients.items()) == 2, "VPN clients have no MAC and are not cached"
 
-    ha = clients["20:F8:3B:03:EC:9C"]
+    ha = clients["20:f8:3b:03:ec:9c"]
     assert ha.client_id == "f9edef13-b667-369f-9556-bc36978095af"
     assert ha.name == "ha"
     assert ha.type == "WIRED"
@@ -124,7 +124,7 @@ async def test_get_by_mac(
     )
     clients = network_client_with_site.clients
 
-    found = await clients.get_by_mac("20-F8-3B-03-EC-9C")
+    found = await clients.get_by_mac("20:f8:3b:03:ec:9c")
     missing = await clients.get_by_mac("00:00:00:00:00:00")
 
     assert found is not None
@@ -244,7 +244,7 @@ async def test_forget(mock_aioresponse, network_client_with_site: ApiClient) -> 
     events: list[tuple[ItemEvent, str]] = []
     clients.subscribe(lambda event, obj_id: events.append((event, obj_id)))
 
-    clients.forget("20-F8-3B-03-EC-9C")
+    clients.forget("20:f8:3b:03:ec:9c")
     clients.forget("20:f8:3b:03:ec:9c")
 
     assert "20:f8:3b:03:ec:9c" not in clients

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from ..models.client import normalize_mac
 from ..models.device import (
     Device,
     DeviceActionRequest,
@@ -16,14 +15,13 @@ from .api_handlers import APIHandler
 
 
 class Devices(APIHandler[Device]):
-    """Devices adopted on the active site, keyed by MAC address."""
+    """Devices adopted on the active site, keyed by MAC address.
+
+    MAC addresses are in the console's format: lower case, colon separated.
+    """
 
     item_cls = Device
     obj_id_key = "macAddress"
-
-    def normalize_obj_id(self, obj_id: str) -> str:
-        """Canonical MAC address."""
-        return normalize_mac(obj_id)
 
     def list_request(self, offset: int, limit: int) -> ListDevicesRequest:
         """Return the list request for one page."""

@@ -1,7 +1,5 @@
 """Test the devices interface against captured console responses."""
 
-import pytest
-
 from aiounifi.network.v1.api_client import ApiClient
 
 from .conftest import BASE_URL, SITE_ID, envelope, requests_to, url_pattern
@@ -127,7 +125,7 @@ AP_STATISTICS = {
 async def test_update_keys_devices_by_mac(
     mock_aioresponse, network_client_with_site: ApiClient
 ) -> None:
-    """Devices are cached by MAC, in any spelling."""
+    """Devices are cached by MAC, as the console spells it."""
     mock_aioresponse.get(
         url_pattern(f"/v1/sites/{SITE_ID}/devices"),
         payload=envelope([SWITCH_SUMMARY, AP_SUMMARY, MODEM_SUMMARY]),
@@ -137,8 +135,7 @@ async def test_update_keys_devices_by_mac(
     await devices.update()
 
     assert len(devices.items()) == 3
-    switch = devices["70-A7-41-65-C0-CE"]
-    assert "70a7416 5c0ce".replace(" ", "") in devices
+    switch = devices["70:a7:41:65:c0:ce"]
     assert switch.device_id == SWITCH_ID
     assert switch.mac_address == "70:a7:41:65:c0:ce"
     assert switch.name == "USW Enterprise 8 PoE"
@@ -284,10 +281,3 @@ async def test_power_cycle_port(
 
     (call,) = requests_to(mock_aioresponse, "post", "/ports/3/actions")
     assert call.kwargs["data"] == b'{"action":"POWER_CYCLE"}'
-
-
-@pytest.mark.parametrize("mac", ["70:a7:41:65:c0", "zz:zz:zz:zz:zz:zz"])
-def test_invalid_mac_lookup(network_client: ApiClient, mac: str) -> None:
-    """A malformed MAC is a ValueError, not a silent miss."""
-    with pytest.raises(ValueError, match="Invalid MAC address"):
-        _ = mac in network_client.devices
