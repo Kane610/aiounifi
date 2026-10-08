@@ -171,18 +171,22 @@ class DeviceRadio(TypedDict):
 
 
 class DeviceStatisticsData(TypedDict):
-    """Payload of GET .../devices/{id}/statistics/latest."""
+    """Payload of GET .../devices/{id}/statistics/latest.
+
+    An offline device reports the heartbeat fields at most, and sends an
+    empty list in place of the `uplink` and `interfaces` objects.
+    """
 
     cpuUtilizationPct: NotRequired[float]
-    interfaces: NotRequired[DeviceStatisticsInterfaces]
-    lastHeartbeatAt: str
+    interfaces: NotRequired[DeviceStatisticsInterfaces | list[Any]]
+    lastHeartbeatAt: NotRequired[str]
     loadAverage1Min: NotRequired[float]
     loadAverage5Min: NotRequired[float]
     loadAverage15Min: NotRequired[float]
     memoryUtilizationPct: NotRequired[float]
-    nextHeartbeatAt: str
-    uplink: NotRequired[DeviceStatisticsUplink]
-    uptimeSec: int
+    nextHeartbeatAt: NotRequired[str]
+    uplink: NotRequired[DeviceStatisticsUplink | list[Any]]
+    uptimeSec: NotRequired[int]
 
 
 class DeviceStatisticsInterfaces(TypedDict):
@@ -195,7 +199,7 @@ class DeviceStatisticsRadio(TypedDict):
     """Per-radio statistics."""
 
     frequencyGHz: float
-    txRetriesPct: float
+    txRetriesPct: NotRequired[float]
 
 
 class DeviceStatisticsUplink(TypedDict):
@@ -373,14 +377,14 @@ class DeviceStatistics(ApiItem):
     raw: DeviceStatisticsData
 
     @property
-    def uptime_sec(self) -> int:
-        """Seconds since boot."""
-        return self.raw["uptimeSec"]
+    def uptime_sec(self) -> int | None:
+        """Seconds since boot; `None` when the device is offline."""
+        return self.raw.get("uptimeSec")
 
     @property
-    def last_heartbeat_at(self) -> str:
+    def last_heartbeat_at(self) -> str | None:
         """Last time the device reported in, ISO 8601."""
-        return self.raw["lastHeartbeatAt"]
+        return self.raw.get("lastHeartbeatAt")
 
     @property
     def cpu_utilization_pct(self) -> float | None:
@@ -401,16 +405,16 @@ class DeviceStatistics(ApiItem):
     def uplink_tx_rate_bps(self) -> int | None:
         """Uplink transmit rate, bits per second."""
         uplink = self.raw.get("uplink")
-        return uplink["txRateBps"] if uplink else None
+        return uplink.get("txRateBps") if isinstance(uplink, dict) else None
 
     @property
     def uplink_rx_rate_bps(self) -> int | None:
         """Uplink receive rate, bits per second."""
         uplink = self.raw.get("uplink")
-        return uplink["rxRateBps"] if uplink else None
+        return uplink.get("rxRateBps") if isinstance(uplink, dict) else None
 
     @property
     def radios(self) -> list[DeviceStatisticsRadio]:
         """Per-radio statistics, empty for devices without radios."""
         interfaces = self.raw.get("interfaces")
-        return interfaces.get("radios", []) if interfaces else []
+        return interfaces.get("radios", []) if isinstance(interfaces, dict) else []

@@ -1,6 +1,7 @@
 """Test the devices interface against captured console responses."""
 
 import logging
+from typing import Any
 
 import pytest
 
@@ -235,21 +236,36 @@ async def test_get_statistics(
     assert statistics.radios[1]["txRetriesPct"] == 1.5
 
 
-async def test_statistics_without_optional_blocks(
-    mock_aioresponse, network_client_with_site: ApiClient
-) -> None:
-    """A device that reports only the heartbeat."""
-    mock_aioresponse.get(
-        f"{BASE_URL}/v1/sites/{SITE_ID}/devices/{AP_ID}/statistics/latest",
-        payload={
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
             "uptimeSec": 1,
             "lastHeartbeatAt": "2026-09-24T20:04:22Z",
             "nextHeartbeatAt": "2026-09-24T20:04:44Z",
         },
+        # An offline access point, as a UCG Industrial reports it
+        {
+            "lastHeartbeatAt": "2026-09-24T20:04:22Z",
+            "nextHeartbeatAt": "2026-09-24T20:04:44Z",
+            "uplink": [],
+            "interfaces": [],
+        },
+    ],
+)
+async def test_statistics_without_optional_blocks(
+    mock_aioresponse, network_client_with_site: ApiClient, payload: dict[str, Any]
+) -> None:
+    """A device that reports the heartbeat and little else."""
+    mock_aioresponse.get(
+        f"{BASE_URL}/v1/sites/{SITE_ID}/devices/{AP_ID}/statistics/latest",
+        payload=payload,
     )
 
     statistics = await network_client_with_site.devices.get_statistics(AP_ID)
 
+    assert statistics.uptime_sec == payload.get("uptimeSec")
+    assert statistics.last_heartbeat_at == "2026-09-24T20:04:22Z"
     assert statistics.cpu_utilization_pct is None
     assert statistics.memory_utilization_pct is None
     assert statistics.load_average_1min is None
