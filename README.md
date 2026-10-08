@@ -39,6 +39,8 @@ that leaves stays cached, as in the legacy API, and signals `CHANGED`.
 whether and when it was last listed.
 Errors are `NetworkApiError` subclasses that also inherit the legacy types
 (`Unauthorized`, `Forbidden`, ...) and carry the API's structured error fields.
+A `502` from a console that cannot keep up is retried twice with a short
+backoff before `BadGateway` is raised.
 
 Try it from the command line:
 

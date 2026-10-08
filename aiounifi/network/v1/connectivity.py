@@ -1,7 +1,11 @@
 """HTTP transport for the Network API v1.
 
-One attempt per request; retrying is the caller's job. A failed response is
-mapped to an exception in this order, most specific first:
+One attempt per request, with one exception: a `502 Bad Gateway` is what
+nginx on the console answers when the Network application cannot keep up,
+so it is retried a few times with a short backoff before `V1BadGateway` is
+raised. Everything else is raised at once; retrying is the caller's job. A
+failed response is mapped to an exception in this order, most specific
+first:
 
 1. The `code` of a structured error envelope.
 2. The `statusName` of a structured error envelope.
@@ -24,6 +28,7 @@ so a polling caller can hold off for that long.
 
 from __future__ import annotations
 
+from asyncio import sleep
 from collections.abc import Mapping
 from http import HTTPStatus
 import logging
@@ -91,6 +96,11 @@ ERROR_ENVELOPE_FIELDS = frozenset(
 class Connectivity:
     """Send requests to the Network API v1 with an API key."""
 
+    bad_gateway_retries = 2
+    """How many times a 502 is retried before it is raised."""
+    bad_gateway_backoff = 0.5
+    """Seconds before the first retry of a 502; doubled for each retry after."""
+
     def __init__(self, config: Configuration) -> None:
         """Initialize."""
         self.config = config
@@ -117,18 +127,28 @@ class Connectivity:
             "sending %s %s params=%s", api_request.method, url, api_request.params
         )
 
-        try:
-            async with self.config.session.request(
-                api_request.method,
-                url,
-                params=api_request.params,
-                data=body,
-                headers=headers,
-                ssl=self.config.ssl_context,
-            ) as response:
-                raw = await response.read()
-        except client_exceptions.ClientError as err:
-            raise RequestError(f"Error requesting data from {url}: {err}") from None
+        for attempt in range(self.bad_gateway_retries + 1):
+            try:
+                async with self.config.session.request(
+                    api_request.method,
+                    url,
+                    params=api_request.params,
+                    data=body,
+                    headers=headers,
+                    ssl=self.config.ssl_context,
+                ) as response:
+                    raw = await response.read()
+            except client_exceptions.ClientError as err:
+                raise RequestError(f"Error requesting data from {url}: {err}") from None
+
+            if (
+                response.status != HTTPStatus.BAD_GATEWAY
+                or attempt == self.bad_gateway_retries
+            ):
+                break
+            delay = self.bad_gateway_backoff * 2**attempt
+            LOGGER.debug("%s answered 502, retrying in %.1fs", url, delay)
+            await sleep(delay)
 
         LOGGER.debug("data (from %s) %s", url, raw[:4000])
 

@@ -195,15 +195,17 @@ async def test_structured_error_fields_are_carried(
 async def test_error_resolution_order(
     mock_aioresponse,
     network_client: ApiClient,
+    sleeps: list[float],
     status: int,
     payload: dict[str, object] | None,
     expected: type[Exception],
 ) -> None:
     """Code beats status name beats HTTP status beats the fallback."""
-    if payload is None:
-        mock_aioresponse.get(f"{BASE_URL}/v1/info", status=status, body=b"nope")
-    else:
-        mock_aioresponse.get(f"{BASE_URL}/v1/info", status=status, payload=payload)
+    for _ in range(3):
+        if payload is None:
+            mock_aioresponse.get(f"{BASE_URL}/v1/info", status=status, body=b"nope")
+        else:
+            mock_aioresponse.get(f"{BASE_URL}/v1/info", status=status, payload=payload)
 
     with pytest.raises(expected):
         await network_client.get_info()
@@ -234,6 +236,53 @@ async def test_retry_after_is_carried(
     assert isinstance(err.value, V1TooManyRequests)
     assert err.value.status_code == 429
     assert err.value.retry_after == expected
+
+
+@pytest.fixture(name="sleeps")
+def sleeps_fixture(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """Record the backoff delays instead of waiting them out."""
+    sleeps: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    monkeypatch.setattr("aiounifi.network.v1.connectivity.sleep", fake_sleep)
+    return sleeps
+
+
+async def test_bad_gateway_is_retried(
+    mock_aioresponse, network_client: ApiClient, sleeps: list[float]
+) -> None:
+    """A saturated console answers 502; the request is tried again."""
+    mock_aioresponse.get(
+        f"{BASE_URL}/v1/info",
+        status=502,
+        payload={"error": {"code": 502, "message": "Bad Gateway"}},
+    )
+    mock_aioresponse.get(f"{BASE_URL}/v1/info", status=502, body=b"")
+    mock_aioresponse.get(
+        f"{BASE_URL}/v1/info", payload={"applicationVersion": "10.6.106"}
+    )
+
+    assert await network_client.get_info() == {"applicationVersion": "10.6.106"}
+    assert sleeps == [0.5, 1.0]
+    assert len(requests_to(mock_aioresponse, "get", "/v1/info")) == 3
+
+
+async def test_bad_gateway_gives_up(
+    mock_aioresponse, network_client: ApiClient, sleeps: list[float]
+) -> None:
+    """After the retries a 502 is raised like before."""
+    for _ in range(3):
+        mock_aioresponse.get(f"{BASE_URL}/v1/info", status=502, body=b"")
+
+    with pytest.raises(BadGateway) as err:
+        await network_client.get_info()
+
+    assert isinstance(err.value, NetworkApiError)
+    assert err.value.status_code == 502
+    assert sleeps == [0.5, 1.0]
+    assert len(requests_to(mock_aioresponse, "get", "/v1/info")) == 3
 
 
 async def test_transport_error_becomes_request_error(
