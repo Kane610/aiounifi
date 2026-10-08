@@ -59,19 +59,22 @@ class ApiRequest:
             )
 
     def decode(self, raw: bytes) -> ApiResponse:
-        """Decode a response body into the normalised envelope."""
+        """Decode a response body into the normalised envelope.
+
+        List endpoints answer with the envelope. Detail, statistics and
+        action endpoints answer with one bare object, or with nothing at
+        all, and are wrapped into the same shape, as `ApiRequestV2.decode`
+        does for the legacy v2 API.
+        """
         if not raw.strip():
             return ApiResponse(data=[])
 
-        decoded: Any = orjson.loads(raw)
-
-        if isinstance(decoded, dict) and isinstance(decoded.get("data"), list):
+        decoded = orjson.loads(raw)
+        if not isinstance(decoded, dict):
+            raise ResponseError(f"Unexpected Network API response for {self.path}")
+        if isinstance(decoded.get("data"), list):
             return cast("ApiResponse", decoded)
-
-        if isinstance(decoded, dict):
-            return ApiResponse(data=[decoded])
-
-        raise ResponseError(f"Unexpected Network API response for {self.path}")
+        return ApiResponse(data=[decoded])
 
 
 def page_params(
