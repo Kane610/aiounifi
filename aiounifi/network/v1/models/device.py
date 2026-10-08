@@ -3,10 +3,100 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
+import logging
 from typing import Any, NotRequired, TypedDict
 
 from ....models.api import ApiItem
 from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest, page_params
+
+LOGGER = logging.getLogger(__name__)
+
+
+class DeviceFeature(StrEnum):
+    """What a device does."""
+
+    ACCESS_POINT = "accessPoint"
+    GATEWAY = "gateway"
+    SWITCHING = "switching"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DeviceFeature:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device feature %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
+class DevicePortConnector(StrEnum):
+    """Physical connector of a port."""
+
+    RJ45 = "RJ45"
+    SFP = "SFP"
+    SFP_PLUS = "SFPPLUS"
+    SFP28 = "SFP28"
+    QSFP28 = "QSFP28"
+
+
+class DevicePortPoeStandard(StrEnum):
+    """IEEE PoE standard a port supports."""
+
+    POE = "802.3af"
+    POE_PLUS = "802.3at"
+    POE_PLUS_PLUS = "802.3bt"
+
+
+class DevicePortPoeState(StrEnum):
+    """Whether a port is delivering power."""
+
+    UP = "UP"
+    DOWN = "DOWN"
+    LIMITED = "LIMITED"
+    UNKNOWN = "UNKNOWN"
+
+
+class DevicePortState(StrEnum):
+    """Link state of a port."""
+
+    UP = "UP"
+    DOWN = "DOWN"
+    UNKNOWN = "UNKNOWN"
+
+
+class DeviceRadioWlanStandard(StrEnum):
+    """Newest IEEE 802.11 standard a radio supports."""
+
+    A = "802.11a"
+    B = "802.11b"
+    G = "802.11g"
+    N = "802.11n"
+    AC = "802.11ac"
+    AX = "802.11ax"
+    BE = "802.11be"
+
+
+class DeviceState(StrEnum):
+    """Connection state of a device."""
+
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+    PENDING_ADOPTION = "PENDING_ADOPTION"
+    UPDATING = "UPDATING"
+    GETTING_READY = "GETTING_READY"
+    ADOPTING = "ADOPTING"
+    DELETING = "DELETING"
+    CONNECTION_INTERRUPTED = "CONNECTION_INTERRUPTED"
+    ISOLATED = "ISOLATED"
+    U5G_INCORRECT_TOPOLOGY = "U5G_INCORRECT_TOPOLOGY"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DeviceState:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device state %s, using UNKNOWN", value)
+        return cls.UNKNOWN
 
 
 class PortPoe(TypedDict):
@@ -210,9 +300,9 @@ class Device(ApiItem):
         return self.raw["model"]
 
     @property
-    def state(self) -> str:
-        """`ONLINE`, `OFFLINE`, `PENDING_ADOPTION`, `UPDATING`, ..."""
-        return self.raw["state"]
+    def state(self) -> DeviceState:
+        """Connection state."""
+        return DeviceState(self.raw["state"])
 
     @property
     def supported(self) -> bool:
@@ -235,10 +325,9 @@ class Device(ApiItem):
         return self.raw.get("firmwareUpdatable", False)
 
     @property
-    def features(self) -> list[str]:
-        """Feature names: `switching`, `accessPoint` and `gateway`."""
-        features = self.raw.get("features", [])
-        return list(features) if isinstance(features, dict) else features
+    def features(self) -> list[DeviceFeature]:
+        """What the device does."""
+        return [DeviceFeature(feature) for feature in self.raw.get("features", [])]
 
     @property
     def ports(self) -> list[DevicePort]:

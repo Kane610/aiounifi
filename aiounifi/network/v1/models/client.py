@@ -3,10 +3,46 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
+import logging
 from typing import NotRequired, TypedDict
 
 from ....models.api import ApiItem
 from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest, page_params
+
+LOGGER = logging.getLogger(__name__)
+
+
+class ClientAccessType(StrEnum):
+    """How a client was admitted to the network."""
+
+    DEFAULT = "DEFAULT"
+    GUEST = "GUEST"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> ClientAccessType:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported client access type %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
+class ClientType(StrEnum):
+    """How a client is connected."""
+
+    WIRED = "WIRED"
+    WIRELESS = "WIRELESS"
+    VPN = "VPN"
+    TELEPORT = "TELEPORT"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> ClientType:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported client type %s, using UNKNOWN", value)
+        return cls.UNKNOWN
 
 
 class ClientAccess(TypedDict):
@@ -140,9 +176,9 @@ class Client(ApiItem):
         return self.raw["name"]
 
     @property
-    def type(self) -> str:
-        """`WIRED`, `WIRELESS`, `VPN` or `TELEPORT`."""
-        return self.raw["type"]
+    def type(self) -> ClientType:
+        """How the client is connected."""
+        return ClientType(self.raw["type"])
 
     @property
     def mac_address(self) -> str | None:
@@ -160,9 +196,9 @@ class Client(ApiItem):
         return self.raw.get("connectedAt")
 
     @property
-    def access_type(self) -> str:
-        """`DEFAULT` or `GUEST`."""
-        return self.raw["access"]["type"]
+    def access_type(self) -> ClientAccessType:
+        """How the client was admitted to the network."""
+        return ClientAccessType(self.raw["access"]["type"])
 
     @property
     def uplink_device_id(self) -> str | None:

@@ -1,9 +1,13 @@
 """Test the clients interface against captured console responses."""
 
 from datetime import UTC, datetime
+import logging
+
+import pytest
 
 from aiounifi.interfaces.api_handlers import ItemEvent
 from aiounifi.network.v1.api_client import ApiClient
+from aiounifi.network.v1.models.client import Client, ClientAccessType, ClientType
 
 from .conftest import BASE_URL, SITE_ID, envelope, requests_to, url_pattern
 
@@ -51,18 +55,18 @@ async def test_update_and_properties(
     ha = clients["20:f8:3b:03:ec:9c"]
     assert ha.client_id == "f9edef13-b667-369f-9556-bc36978095af"
     assert ha.name == "ha"
-    assert ha.type == "WIRED"
+    assert ha.type is ClientType.WIRED
     assert ha.mac_address == "20:f8:3b:03:ec:9c"
     assert ha.ip_address == "10.8.0.20"
     assert ha.connected_at == "2026-09-24T17:40:52Z"
-    assert ha.access_type == "DEFAULT"
+    assert ha.access_type is ClientAccessType.DEFAULT
     assert ha.uplink_device_id == "72cf3194-b496-3ada-877c-6764792adc4a"
 
     guest = clients["72:af:09:a5:03:bc"]
     assert guest.ip_address is None
     assert guest.connected_at is None
     assert guest.uplink_device_id is None
-    assert guest.access_type == "GUEST"
+    assert guest.access_type is ClientAccessType.GUEST
 
 
 async def test_list_page_returns_clients_without_mac(
@@ -75,7 +79,7 @@ async def test_list_page_returns_clients_without_mac(
 
     (client,) = await network_client_with_site.clients.list_page()
 
-    assert client.type == "VPN"
+    assert client.type is ClientType.VPN
     assert client.mac_address is None
     assert client.uplink_device_id is None
     assert client.ip_address == "10.8.99.2"
@@ -278,3 +282,15 @@ async def test_restore(mock_aioresponse, network_client_with_site: ApiClient) ->
     assert clients.last_seen("20:f8:3b:03:ec:9c") == seen
     assert clients.is_connected(GUEST_CLIENT["macAddress"])
     assert (ItemEvent.DELETED, "20:f8:3b:03:ec:9c") not in events
+
+
+def test_unknown_enum_values(caplog: pytest.LogCaptureFixture) -> None:
+    """A value this library does not know yet is UNKNOWN, with a warning."""
+    client = Client({**HA_CLIENT, "type": "HOLOGRAM", "access": {"type": "VIP"}})
+
+    with caplog.at_level(logging.WARNING, logger="aiounifi.network.v1.models.client"):
+        assert client.type is ClientType.UNKNOWN
+        assert client.access_type is ClientAccessType.UNKNOWN
+
+    assert "Unsupported client type HOLOGRAM" in caplog.text
+    assert "Unsupported client access type VIP" in caplog.text

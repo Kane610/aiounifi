@@ -1,6 +1,20 @@
 """Test the devices interface against captured console responses."""
 
+import logging
+
+import pytest
+
 from aiounifi.network.v1.api_client import ApiClient
+from aiounifi.network.v1.models.device import (
+    Device,
+    DeviceFeature,
+    DevicePortConnector,
+    DevicePortPoeStandard,
+    DevicePortPoeState,
+    DevicePortState,
+    DeviceRadioWlanStandard,
+    DeviceState,
+)
 
 from .conftest import BASE_URL, SITE_ID, envelope, requests_to, url_pattern
 
@@ -140,12 +154,12 @@ async def test_update_keys_devices_by_mac(
     assert switch.mac_address == "70:a7:41:65:c0:ce"
     assert switch.name == "USW Enterprise 8 PoE"
     assert switch.model == "USW Enterprise 8 PoE"
-    assert switch.state == "ONLINE"
+    assert switch.state is DeviceState.ONLINE
     assert switch.supported is True
     assert switch.ip_address == "10.8.0.188"
     assert switch.firmware_version == "7.5.15"
     assert switch.firmware_updatable is False
-    assert switch.features == ["switching"]
+    assert switch.features == [DeviceFeature.SWITCHING]
     assert switch.ports == []
     assert switch.radios == []
     assert switch.uplink_device_id is None
@@ -169,12 +183,16 @@ async def test_get_details_fills_ports_and_updates_cache(
 
     switch = await devices.get_details(SWITCH_ID)
 
-    assert switch.features == ["switching"]
+    assert switch.features == [DeviceFeature.SWITCHING]
     assert switch.uplink_device_id == "72cf3194-b496-3ada-877c-6764792adc4a"
     assert switch.adopted_at == "2026-09-23T12:33:38Z"
     assert [port["idx"] for port in switch.ports] == [1, 3, 9]
     assert switch.ports[1]["speedMbps"] == 100
-    assert switch.ports[1]["poe"]["state"] == "UP"
+    assert switch.ports[1]["state"] == DevicePortState.UP
+    assert switch.ports[1]["connector"] == DevicePortConnector.RJ45
+    assert switch.ports[1]["poe"]["state"] == DevicePortPoeState.UP
+    assert switch.ports[1]["poe"]["standard"] == DevicePortPoeStandard.POE_PLUS
+    assert switch.ports[2]["connector"] == DevicePortConnector.SFP_PLUS
     assert "poe" not in switch.ports[2]
     assert switch.radios == []
     assert devices["70:a7:41:65:c0:ce"].ports == switch.ports
@@ -191,8 +209,9 @@ async def test_get_details_radios(
     access_point = await network_client_with_site.devices.get_details(AP_ID)
 
     assert [radio.get("channel") for radio in access_point.radios] == [11, 128, None]
+    assert access_point.radios[2]["wlanStandard"] == DeviceRadioWlanStandard.BE
     assert access_point.ports == []
-    assert access_point.features == ["accessPoint"]
+    assert access_point.features == [DeviceFeature.ACCESS_POINT]
 
 
 async def test_get_statistics(
@@ -281,3 +300,15 @@ async def test_power_cycle_port(
 
     (call,) = requests_to(mock_aioresponse, "post", "/ports/3/actions")
     assert call.kwargs["data"] == b'{"action":"POWER_CYCLE"}'
+
+
+def test_unknown_enum_values(caplog: pytest.LogCaptureFixture) -> None:
+    """A value this library does not know yet is UNKNOWN, with a warning."""
+    device = Device({**SWITCH_SUMMARY, "state": "TELEPORTING", "features": ["coffee"]})
+
+    with caplog.at_level(logging.WARNING, logger="aiounifi.network.v1.models.device"):
+        assert device.state is DeviceState.UNKNOWN
+        assert device.features == [DeviceFeature.UNKNOWN]
+
+    assert "Unsupported device state TELEPORTING" in caplog.text
+    assert "Unsupported device feature coffee" in caplog.text
