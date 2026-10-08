@@ -46,46 +46,47 @@ class ClientType(StrEnum):
 
 
 class ClientAccess(TypedDict):
-    """How the client was admitted to the network."""
+    """Access block of a client. `type` is a `ClientAccessType`."""
 
     type: str
-
-
-class GuestAuthorization(TypedDict):
-    """Details of a guest authorization."""
-
-    authorizedAt: str
-    authorizationMethod: str
-    expiresAt: NotRequired[str]
-    dataUsageLimitMBytes: NotRequired[int]
-    rxRateLimitKbps: NotRequired[int]
-    txRateLimitKbps: NotRequired[int]
-    usage: NotRequired[dict[str, int]]
-
-
-class ClientData(TypedDict):
-    """One client, as returned by both the list and the detail endpoint.
-
-    `macAddress` and `uplinkDeviceId` exist for `WIRED` and `WIRELESS`
-    clients only; `VPN` and `TELEPORT` clients have neither.
-    """
-
-    type: str
-    id: str
-    name: str
-    macAddress: NotRequired[str]
-    connectedAt: NotRequired[str]
-    ipAddress: NotRequired[str]
-    access: ClientAccess
-    uplinkDeviceId: NotRequired[str]
 
 
 class ClientActionResponse(TypedDict):
     """Response to a client action."""
 
     action: str
-    grantedAuthorization: NotRequired[GuestAuthorization]
-    revokedAuthorization: NotRequired[GuestAuthorization]
+    grantedAuthorization: NotRequired[ClientGuestAuthorization]
+    revokedAuthorization: NotRequired[ClientGuestAuthorization]
+
+
+class ClientData(TypedDict):
+    """One client, as returned by both the list and the detail endpoint.
+
+    `type` is a `ClientType`. `macAddress` and `uplinkDeviceId` exist for
+    `WIRED` and `WIRELESS` clients only; `VPN` and `TELEPORT` clients have
+    neither.
+    """
+
+    access: ClientAccess
+    connectedAt: NotRequired[str]
+    id: str
+    ipAddress: NotRequired[str]
+    macAddress: NotRequired[str]
+    name: str
+    type: str
+    uplinkDeviceId: NotRequired[str]
+
+
+class ClientGuestAuthorization(TypedDict):
+    """Details of a guest authorization."""
+
+    authorizationMethod: str
+    authorizedAt: str
+    dataUsageLimitMBytes: NotRequired[int]
+    expiresAt: NotRequired[str]
+    rxRateLimitKbps: NotRequired[int]
+    txRateLimitKbps: NotRequired[int]
+    usage: NotRequired[dict[str, int]]
 
 
 @dataclass

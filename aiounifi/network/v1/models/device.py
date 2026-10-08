@@ -99,33 +99,30 @@ class DeviceState(StrEnum):
         return cls.UNKNOWN
 
 
-class PortPoe(TypedDict):
-    """PoE state of a port."""
+class DeviceData(TypedDict):
+    """One device.
 
-    standard: str
-    type: int
-    enabled: bool
+    `state` is a `DeviceState`. The list endpoint returns `features` and
+    `interfaces` as lists of names; the detail endpoint returns them as
+    objects, and adds `adoptedAt`, `provisionedAt`, `configurationId` and
+    `uplink`.
+    """
+
+    adoptedAt: NotRequired[str]
+    configurationId: NotRequired[str]
+    features: NotRequired[list[str] | dict[str, Any]]
+    firmwareUpdatable: NotRequired[bool]
+    firmwareVersion: NotRequired[str]
+    id: str
+    interfaces: NotRequired[list[str] | DeviceInterfaces]
+    ipAddress: NotRequired[str]
+    macAddress: str
+    model: str
+    name: str
+    provisionedAt: NotRequired[str]
     state: str
-
-
-class DevicePort(TypedDict):
-    """One port of a switch or gateway, from the detail endpoint."""
-
-    idx: int
-    state: str
-    connector: str
-    maxSpeedMbps: int
-    speedMbps: NotRequired[int]
-    poe: NotRequired[PortPoe]
-
-
-class DeviceRadio(TypedDict):
-    """One radio of an access point, from the detail endpoint."""
-
-    wlanStandard: str
-    frequencyGHz: float
-    channelWidthMHz: int
-    channel: NotRequired[int]
+    supported: bool
+    uplink: NotRequired[DeviceUplink]
 
 
 class DeviceInterfaces(TypedDict):
@@ -135,70 +132,83 @@ class DeviceInterfaces(TypedDict):
     radios: NotRequired[list[DeviceRadio]]
 
 
-class DeviceUplink(TypedDict):
-    """Uplink block of the detail endpoint."""
+class DevicePort(TypedDict):
+    """One port of a switch or gateway, from the detail endpoint.
 
-    deviceId: str
-
-
-class DeviceData(TypedDict):
-    """One device.
-
-    The list endpoint returns `features` and `interfaces` as lists of names.
-    The detail endpoint returns them as objects, and adds `adoptedAt`,
-    `provisionedAt`, `configurationId` and `uplink`.
+    `connector` is a `DevicePortConnector` and `state` a `DevicePortState`.
     """
 
-    id: str
-    macAddress: str
-    name: str
-    model: str
+    connector: str
+    idx: int
+    maxSpeedMbps: int
+    poe: NotRequired[DevicePortPoe]
+    speedMbps: NotRequired[int]
     state: str
-    supported: bool
-    ipAddress: NotRequired[str]
-    firmwareVersion: NotRequired[str]
-    firmwareUpdatable: NotRequired[bool]
-    features: NotRequired[list[str] | dict[str, Any]]
-    interfaces: NotRequired[list[str] | DeviceInterfaces]
-    adoptedAt: NotRequired[str]
-    provisionedAt: NotRequired[str]
-    configurationId: NotRequired[str]
-    uplink: NotRequired[DeviceUplink]
 
 
-class UplinkRates(TypedDict):
-    """Uplink throughput."""
+class DevicePortPoe(TypedDict):
+    """PoE block of a port.
 
-    txRateBps: int
-    rxRateBps: int
+    `standard` is a `DevicePortPoeStandard` and `state` a `DevicePortPoeState`.
+    """
+
+    enabled: bool
+    standard: str
+    state: str
+    type: int
 
 
-class RadioStatistics(TypedDict):
+class DeviceRadio(TypedDict):
+    """One radio of an access point, from the detail endpoint.
+
+    `wlanStandard` is a `DeviceRadioWlanStandard`.
+    """
+
+    channel: NotRequired[int]
+    channelWidthMHz: int
+    frequencyGHz: float
+    wlanStandard: str
+
+
+class DeviceStatisticsData(TypedDict):
+    """Payload of GET .../devices/{id}/statistics/latest."""
+
+    cpuUtilizationPct: NotRequired[float]
+    interfaces: NotRequired[DeviceStatisticsInterfaces]
+    lastHeartbeatAt: str
+    loadAverage1Min: NotRequired[float]
+    loadAverage5Min: NotRequired[float]
+    loadAverage15Min: NotRequired[float]
+    memoryUtilizationPct: NotRequired[float]
+    nextHeartbeatAt: str
+    uplink: NotRequired[DeviceStatisticsUplink]
+    uptimeSec: int
+
+
+class DeviceStatisticsInterfaces(TypedDict):
+    """Interfaces block of the statistics endpoint."""
+
+    radios: NotRequired[list[DeviceStatisticsRadio]]
+
+
+class DeviceStatisticsRadio(TypedDict):
     """Per-radio statistics."""
 
     frequencyGHz: float
     txRetriesPct: float
 
 
-class StatisticsInterfaces(TypedDict):
-    """Interfaces block of the statistics endpoint."""
+class DeviceStatisticsUplink(TypedDict):
+    """Uplink throughput."""
 
-    radios: NotRequired[list[RadioStatistics]]
+    rxRateBps: int
+    txRateBps: int
 
 
-class DeviceStatisticsData(TypedDict):
-    """Payload of GET .../devices/{id}/statistics/latest."""
+class DeviceUplink(TypedDict):
+    """Uplink block of the detail endpoint."""
 
-    uptimeSec: int
-    lastHeartbeatAt: str
-    nextHeartbeatAt: str
-    loadAverage1Min: NotRequired[float]
-    loadAverage5Min: NotRequired[float]
-    loadAverage15Min: NotRequired[float]
-    cpuUtilizationPct: NotRequired[float]
-    memoryUtilizationPct: NotRequired[float]
-    uplink: NotRequired[UplinkRates]
-    interfaces: NotRequired[StatisticsInterfaces]
+    deviceId: str
 
 
 @dataclass
@@ -400,7 +410,7 @@ class DeviceStatistics(ApiItem):
         return uplink["rxRateBps"] if uplink else None
 
     @property
-    def radios(self) -> list[RadioStatistics]:
+    def radios(self) -> list[DeviceStatisticsRadio]:
         """Per-radio statistics, empty for devices without radios."""
         interfaces = self.raw.get("interfaces")
         return interfaces.get("radios", []) if interfaces else []

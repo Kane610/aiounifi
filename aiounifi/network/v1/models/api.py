@@ -15,6 +15,18 @@ DEFAULT_PAGE_LIMIT = 25
 MAX_PAGE_LIMIT = 200
 
 
+class ApiErrorResponse(TypedDict):
+    """Error envelope returned with most 4xx and 5xx responses."""
+
+    code: str
+    message: str
+    requestId: str
+    requestPath: str
+    statusCode: int
+    statusName: str
+    timestamp: str
+
+
 class ApiResponse(TypedDict):
     """Normalised response.
 
@@ -23,23 +35,11 @@ class ApiResponse(TypedDict):
     so every interface reads `data` the same way.
     """
 
-    data: list[dict[str, Any]]
-    offset: NotRequired[int]
-    limit: NotRequired[int]
     count: NotRequired[int]
+    data: list[dict[str, Any]]
+    limit: NotRequired[int]
+    offset: NotRequired[int]
     totalCount: NotRequired[int]
-
-
-class ApiErrorResponse(TypedDict):
-    """Error envelope returned with most 4xx and 5xx responses."""
-
-    statusCode: int
-    statusName: str
-    code: str
-    message: str
-    timestamp: str
-    requestPath: str
-    requestId: str
 
 
 @dataclass
