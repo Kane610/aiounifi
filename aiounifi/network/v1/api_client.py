@@ -19,10 +19,8 @@ if TYPE_CHECKING:
 class ApiClient:
     """Client of the Network API v1.
 
-    Needs `Configuration.api_key` and nothing else from the legacy login.
-    Site-scoped interfaces need `assign_site` to have run once, because the
-    v1 API addresses sites by UUID while the legacy API, and callers used
-    to it, use the short site name.
+    Needs `Configuration.api_key`. Site-scoped interfaces need `assign_site`
+    to have run once, because the v1 API addresses sites by UUID.
     """
 
     def __init__(self, config: Configuration) -> None:
