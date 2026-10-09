@@ -59,7 +59,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         for raw in listed:
             self.process_item(raw)
         if self.keep_missing:
-            return
+            return None
         for obj_id in [obj_id for obj_id in self._items if obj_id not in seen]:
             self._forget(obj_id)
 
@@ -69,7 +69,7 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         Called before any item is stored or signalled, so what a subclass
         records here is in place when subscribers hear of the changes.
         """
-        return
+        return None
 
     @final
     def _forget(self, obj_id: str) -> None:
