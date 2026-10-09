@@ -19,13 +19,15 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """A cache of one resource, kept fresh by polling.
 
     The v1 API has no websocket, so `update` is the only source of change.
-    It walks every page of the list endpoint and then hands every item the
-    console no longer lists to `item_missing`, which by default drops it and
-    signals `DELETED`.
+    It walks every page of the list endpoint and then drops every item the
+    console no longer lists, signalling `DELETED`, unless `keep_missing` is
+    set. `items_listed` is the one hook a subclass may fill in.
     """
 
     item_cls: type[ApiItemT]
     obj_id_key: str
+    keep_missing = False
+    """Keep items the console no longer lists instead of dropping them."""
 
     def __init__(self, api_client: ApiClient) -> None:
         """Initialize."""
@@ -56,8 +58,10 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         self.items_listed(seen)
         for raw in listed:
             self.process_item(raw)
+        if self.keep_missing:
+            return
         for obj_id in [obj_id for obj_id in self._items if obj_id not in seen]:
-            self.item_missing(obj_id)
+            self._forget(obj_id)
 
     def items_listed(self, obj_ids: set[str]) -> None:
         """Handle the IDs a completed `update` listed.
@@ -65,11 +69,13 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
         Called before any item is stored or signalled, so what a subclass
         records here is in place when subscribers hear of the changes.
         """
+        return
 
-    def item_missing(self, obj_id: str) -> None:
-        """Handle an item the console no longer lists: forget it."""
-        self._items.pop(obj_id)
-        self.signal_subscribers(ItemEvent.DELETED, obj_id)
+    @final
+    def _forget(self, obj_id: str) -> None:
+        """Drop an item from the cache and signal `DELETED`, if it was there."""
+        if self._items.pop(obj_id, None) is not None:
+            self.signal_subscribers(ItemEvent.DELETED, obj_id)
 
     @final
     def _obj_id(self, raw: dict[str, Any]) -> str | None:

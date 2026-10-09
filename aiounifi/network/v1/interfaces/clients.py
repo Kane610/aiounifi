@@ -36,16 +36,13 @@ class Clients(APIHandler[Client]):
 
     item_cls = Client
     obj_id_key = "macAddress"
+    keep_missing = True
 
     def __init__(self, api_client: ApiClient) -> None:
         """Initialize."""
         super().__init__(api_client)
         self._last_seen: dict[str, datetime] = {}
         self._connected: set[str] = set()
-
-    def item_missing(self, obj_id: str) -> None:
-        """Keep a client that left; `items_listed` tells subscribers."""
-        return
 
     def items_listed(self, obj_ids: set[str]) -> None:
         """Record which clients are connected, and when they were seen.
@@ -86,8 +83,7 @@ class Clients(APIHandler[Client]):
         """Drop a client from the cache and signal `DELETED`."""
         self._last_seen.pop(mac_address, None)
         self._connected.discard(mac_address)
-        if self._items.pop(mac_address, None) is not None:
-            self.signal_subscribers(ItemEvent.DELETED, mac_address)
+        self._forget(mac_address)
 
     def list_request(self, offset: int, limit: int) -> ListClientsRequest:
         """Return the list request for one page."""
