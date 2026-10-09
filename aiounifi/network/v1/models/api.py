@@ -1,0 +1,96 @@
+"""Request and response types shared by all Network API v1 resources."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, NotRequired, TypedDict, cast
+
+import orjson
+
+from ....errors import ResponseError
+
+DEFAULT_PAGE_OFFSET = 0
+DEFAULT_PAGE_LIMIT = 25
+MAX_PAGE_LIMIT = 200
+
+
+class ApiErrorResponse(TypedDict):
+    """Error envelope returned with most 4xx and 5xx responses."""
+
+    code: str
+    message: str
+    requestId: str
+    requestPath: str
+    statusCode: int
+    statusName: str
+    timestamp: str
+
+
+class ApiResponse(TypedDict):
+    """Normalised response.
+
+    List endpoints return this envelope as is. Endpoints that return one
+    object, or nothing, are wrapped into the same shape by `ApiRequest.decode`
+    so every interface reads `data` the same way.
+    """
+
+    count: NotRequired[int]
+    data: list[dict[str, Any]]
+    limit: NotRequired[int]
+    offset: NotRequired[int]
+    totalCount: NotRequired[int]
+
+
+@dataclass
+class ApiRequest:
+    """One request to the Network API v1."""
+
+    method: str
+    path: str
+    params: Mapping[str, str | int] | None = None
+    data: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        """Reject paths outside the versioned API."""
+        if not self.path.startswith("/v1/"):
+            raise ValueError(
+                f"ApiRequest.path must start with '/v1/', got {self.path!r}"
+            )
+
+    def decode(self, raw: bytes) -> ApiResponse:
+        """Decode a response body into the normalised envelope.
+
+        List endpoints answer with the envelope. Detail, statistics and
+        action endpoints answer with one bare object, or with nothing at
+        all, and are wrapped into the same shape, as `ApiRequestV2.decode`
+        does for the legacy v2 API.
+        """
+        if not raw.strip():
+            return ApiResponse(data=[])
+
+        decoded = orjson.loads(raw)
+        if not isinstance(decoded, dict):
+            raise ResponseError(f"Unexpected Network API response for {self.path}")
+        if isinstance(decoded.get("data"), list):
+            return cast("ApiResponse", decoded)
+        return ApiResponse(data=[decoded])
+
+
+def page_params(
+    offset: int = DEFAULT_PAGE_OFFSET,
+    limit: int = DEFAULT_PAGE_LIMIT,
+    filter_value: str | None = None,
+) -> dict[str, str | int]:
+    """Build the query parameters of a list request.
+
+    The console clamps `limit` to 200 itself; clamping here keeps the request
+    honest about what it will get back.
+    """
+    params: dict[str, str | int] = {
+        "offset": max(offset, DEFAULT_PAGE_OFFSET),
+        "limit": max(min(limit, MAX_PAGE_LIMIT), 1),
+    }
+    if filter_value:
+        params["filter"] = filter_value
+    return params

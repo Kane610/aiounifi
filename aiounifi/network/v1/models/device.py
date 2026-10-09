@@ -1,0 +1,420 @@
+"""UniFi devices: gateways, switches and access points."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import StrEnum
+import logging
+from typing import Any, NotRequired, TypedDict
+
+from ....models.api import ApiItem
+from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest, page_params
+
+LOGGER = logging.getLogger(__name__)
+
+
+class DeviceFeature(StrEnum):
+    """What a device does."""
+
+    ACCESS_POINT = "accessPoint"
+    GATEWAY = "gateway"
+    SWITCHING = "switching"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DeviceFeature:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device feature %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
+class DevicePortConnector(StrEnum):
+    """Physical connector of a port."""
+
+    RJ45 = "RJ45"
+    SFP = "SFP"
+    SFP_PLUS = "SFPPLUS"
+    SFP28 = "SFP28"
+    QSFP28 = "QSFP28"
+
+
+class DevicePortPoeStandard(StrEnum):
+    """IEEE PoE standard a port supports."""
+
+    POE = "802.3af"
+    POE_PLUS = "802.3at"
+    POE_PLUS_PLUS = "802.3bt"
+
+
+class DevicePortPoeState(StrEnum):
+    """Whether a port is delivering power."""
+
+    UP = "UP"
+    DOWN = "DOWN"
+    LIMITED = "LIMITED"
+    UNKNOWN = "UNKNOWN"
+
+
+class DevicePortState(StrEnum):
+    """Link state of a port."""
+
+    UP = "UP"
+    DOWN = "DOWN"
+    UNKNOWN = "UNKNOWN"
+
+
+class DeviceRadioWlanStandard(StrEnum):
+    """Newest IEEE 802.11 standard a radio supports."""
+
+    A = "802.11a"
+    B = "802.11b"
+    G = "802.11g"
+    N = "802.11n"
+    AC = "802.11ac"
+    AX = "802.11ax"
+    BE = "802.11be"
+
+
+class DeviceState(StrEnum):
+    """Connection state of a device."""
+
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+    PENDING_ADOPTION = "PENDING_ADOPTION"
+    UPDATING = "UPDATING"
+    GETTING_READY = "GETTING_READY"
+    ADOPTING = "ADOPTING"
+    DELETING = "DELETING"
+    CONNECTION_INTERRUPTED = "CONNECTION_INTERRUPTED"
+    ISOLATED = "ISOLATED"
+    U5G_INCORRECT_TOPOLOGY = "U5G_INCORRECT_TOPOLOGY"
+
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> DeviceState:
+        """Set default enum member if an unknown value is provided."""
+        LOGGER.warning("Unsupported device state %s, using UNKNOWN", value)
+        return cls.UNKNOWN
+
+
+class DeviceData(TypedDict):
+    """One device.
+
+    `state` is a `DeviceState`. The list endpoint returns `features` and
+    `interfaces` as lists of names; the detail endpoint returns them as
+    objects, and adds `adoptedAt`, `provisionedAt`, `configurationId` and
+    `uplink`.
+    """
+
+    adoptedAt: NotRequired[str]
+    configurationId: NotRequired[str]
+    features: NotRequired[list[str] | dict[str, Any]]
+    firmwareUpdatable: NotRequired[bool]
+    firmwareVersion: NotRequired[str]
+    id: str
+    interfaces: NotRequired[list[str] | DeviceInterfaces]
+    ipAddress: NotRequired[str]
+    macAddress: str
+    model: str
+    name: str
+    provisionedAt: NotRequired[str]
+    state: str
+    supported: bool
+    uplink: NotRequired[DeviceUplink]
+
+
+class DeviceInterfaces(TypedDict):
+    """Interfaces block of the detail endpoint."""
+
+    ports: NotRequired[list[DevicePort]]
+    radios: NotRequired[list[DeviceRadio]]
+
+
+class DevicePort(TypedDict):
+    """One port of a switch or gateway, from the detail endpoint.
+
+    `connector` is a `DevicePortConnector` and `state` a `DevicePortState`.
+    """
+
+    connector: str
+    idx: int
+    maxSpeedMbps: int
+    poe: NotRequired[DevicePortPoe]
+    speedMbps: NotRequired[int]
+    state: str
+
+
+class DevicePortPoe(TypedDict):
+    """PoE block of a port.
+
+    `standard` is a `DevicePortPoeStandard` and `state` a `DevicePortPoeState`.
+    """
+
+    enabled: bool
+    standard: str
+    state: str
+    type: int
+
+
+class DeviceRadio(TypedDict):
+    """One radio of an access point, from the detail endpoint.
+
+    `wlanStandard` is a `DeviceRadioWlanStandard`.
+    """
+
+    channel: NotRequired[int]
+    channelWidthMHz: int
+    frequencyGHz: float
+    wlanStandard: str
+
+
+class DeviceStatisticsData(TypedDict):
+    """Payload of GET .../devices/{id}/statistics/latest.
+
+    An offline device reports the heartbeat fields at most, and sends an
+    empty list in place of the `uplink` and `interfaces` objects.
+    """
+
+    cpuUtilizationPct: NotRequired[float]
+    interfaces: NotRequired[DeviceStatisticsInterfaces | list[Any]]
+    lastHeartbeatAt: NotRequired[str]
+    loadAverage1Min: NotRequired[float]
+    loadAverage5Min: NotRequired[float]
+    loadAverage15Min: NotRequired[float]
+    memoryUtilizationPct: NotRequired[float]
+    nextHeartbeatAt: NotRequired[str]
+    uplink: NotRequired[DeviceStatisticsUplink | list[Any]]
+    uptimeSec: NotRequired[int]
+
+
+class DeviceStatisticsInterfaces(TypedDict):
+    """Interfaces block of the statistics endpoint."""
+
+    radios: NotRequired[list[DeviceStatisticsRadio]]
+
+
+class DeviceStatisticsRadio(TypedDict):
+    """Per-radio statistics."""
+
+    frequencyGHz: float
+    txRetriesPct: NotRequired[float]
+
+
+class DeviceStatisticsUplink(TypedDict):
+    """Uplink throughput."""
+
+    rxRateBps: int
+    txRateBps: int
+
+
+class DeviceUplink(TypedDict):
+    """Uplink block of the detail endpoint."""
+
+    deviceId: str
+
+
+@dataclass
+class ListDevicesRequest(ApiRequest):
+    """List the devices adopted on a site."""
+
+    @classmethod
+    def create(
+        cls,
+        site_id: str,
+        offset: int = DEFAULT_PAGE_OFFSET,
+        limit: int = DEFAULT_PAGE_LIMIT,
+        filter_value: str | None = None,
+    ) -> ListDevicesRequest:
+        """Create a request for one page of devices."""
+        return cls(
+            method="get",
+            path=f"/v1/sites/{site_id}/devices",
+            params=page_params(offset, limit, filter_value),
+        )
+
+
+@dataclass
+class GetDeviceRequest(ApiRequest):
+    """Get one device with its ports and radios."""
+
+    @classmethod
+    def create(cls, site_id: str, device_id: str) -> GetDeviceRequest:
+        """Create the request."""
+        return cls(method="get", path=f"/v1/sites/{site_id}/devices/{device_id}")
+
+
+@dataclass
+class GetDeviceStatisticsRequest(ApiRequest):
+    """Get the latest statistics of one device."""
+
+    @classmethod
+    def create(cls, site_id: str, device_id: str) -> GetDeviceStatisticsRequest:
+        """Create the request."""
+        return cls(
+            method="get",
+            path=f"/v1/sites/{site_id}/devices/{device_id}/statistics/latest",
+        )
+
+
+@dataclass
+class DeviceActionRequest(ApiRequest):
+    """Run an action on a device. The console accepts only `RESTART`."""
+
+    @classmethod
+    def create_restart(cls, site_id: str, device_id: str) -> DeviceActionRequest:
+        """Restart a device."""
+        return cls(
+            method="post",
+            path=f"/v1/sites/{site_id}/devices/{device_id}/actions",
+            data={"action": "RESTART"},
+        )
+
+
+@dataclass
+class PortActionRequest(ApiRequest):
+    """Run an action on a port. The console accepts only `POWER_CYCLE`."""
+
+    @classmethod
+    def create_power_cycle(
+        cls, site_id: str, device_id: str, port_idx: int
+    ) -> PortActionRequest:
+        """Power cycle the PoE output of a port."""
+        return cls(
+            method="post",
+            path=f"/v1/sites/{site_id}/devices/{device_id}/interfaces/ports/{port_idx}/actions",
+            data={"action": "POWER_CYCLE"},
+        )
+
+
+class Device(ApiItem):
+    """A UniFi device."""
+
+    raw: DeviceData
+
+    @property
+    def device_id(self) -> str:
+        """UUID used in device-scoped paths."""
+        return self.raw["id"]
+
+    @property
+    def mac_address(self) -> str:
+        """MAC address."""
+        return self.raw["macAddress"]
+
+    @property
+    def name(self) -> str:
+        """Display name."""
+        return self.raw["name"]
+
+    @property
+    def model(self) -> str:
+        """Model name, for example `U6 Pro`."""
+        return self.raw["model"]
+
+    @property
+    def state(self) -> DeviceState:
+        """Connection state."""
+        return DeviceState(self.raw["state"])
+
+    @property
+    def supported(self) -> bool:
+        """Whether the API supports this device."""
+        return self.raw["supported"]
+
+    @property
+    def ip_address(self) -> str | None:
+        """IP address."""
+        return self.raw.get("ipAddress")
+
+    @property
+    def firmware_version(self) -> str | None:
+        """Installed firmware version."""
+        return self.raw.get("firmwareVersion")
+
+    @property
+    def firmware_updatable(self) -> bool:
+        """Whether a firmware update is available."""
+        return self.raw.get("firmwareUpdatable", False)
+
+    @property
+    def features(self) -> list[DeviceFeature]:
+        """What the device does."""
+        return [DeviceFeature(feature) for feature in self.raw.get("features", [])]
+
+    @property
+    def ports(self) -> list[DevicePort]:
+        """Ports, known only after `get_details`."""
+        interfaces = self.raw.get("interfaces")
+        if isinstance(interfaces, dict):
+            return interfaces.get("ports", [])
+        return []
+
+    @property
+    def radios(self) -> list[DeviceRadio]:
+        """Radios, known only after `get_details`."""
+        interfaces = self.raw.get("interfaces")
+        if isinstance(interfaces, dict):
+            return interfaces.get("radios", [])
+        return []
+
+    @property
+    def uplink_device_id(self) -> str | None:
+        """UUID of the upstream device, known only after `get_details`."""
+        uplink = self.raw.get("uplink")
+        return uplink["deviceId"] if uplink else None
+
+    @property
+    def adopted_at(self) -> str | None:
+        """When the device was adopted, ISO 8601."""
+        return self.raw.get("adoptedAt")
+
+
+class DeviceStatistics(ApiItem):
+    """Latest statistics of a device."""
+
+    raw: DeviceStatisticsData
+
+    @property
+    def uptime_sec(self) -> int | None:
+        """Seconds since boot; `None` when the device is offline."""
+        return self.raw.get("uptimeSec")
+
+    @property
+    def last_heartbeat_at(self) -> str | None:
+        """Last time the device reported in, ISO 8601."""
+        return self.raw.get("lastHeartbeatAt")
+
+    @property
+    def cpu_utilization_pct(self) -> float | None:
+        """CPU load, percent."""
+        return self.raw.get("cpuUtilizationPct")
+
+    @property
+    def memory_utilization_pct(self) -> float | None:
+        """Memory use, percent."""
+        return self.raw.get("memoryUtilizationPct")
+
+    @property
+    def load_average_1min(self) -> float | None:
+        """One-minute load average."""
+        return self.raw.get("loadAverage1Min")
+
+    @property
+    def uplink_tx_rate_bps(self) -> int | None:
+        """Uplink transmit rate, bits per second."""
+        uplink = self.raw.get("uplink")
+        return uplink.get("txRateBps") if isinstance(uplink, dict) else None
+
+    @property
+    def uplink_rx_rate_bps(self) -> int | None:
+        """Uplink receive rate, bits per second."""
+        uplink = self.raw.get("uplink")
+        return uplink.get("rxRateBps") if isinstance(uplink, dict) else None
+
+    @property
+    def radios(self) -> list[DeviceStatisticsRadio]:
+        """Per-radio statistics, empty for devices without radios."""
+        interfaces = self.raw.get("interfaces")
+        return interfaces.get("radios", []) if isinstance(interfaces, dict) else []
