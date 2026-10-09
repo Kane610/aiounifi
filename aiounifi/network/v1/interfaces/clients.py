@@ -45,6 +45,7 @@ class Clients(APIHandler[Client]):
 
     def item_missing(self, obj_id: str) -> None:
         """Keep a client that left; `items_listed` tells subscribers."""
+        return
 
     def items_listed(self, obj_ids: set[str]) -> None:
         """Record which clients are connected, and when they were seen.
