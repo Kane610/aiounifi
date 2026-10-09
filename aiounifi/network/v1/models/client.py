@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 import logging
-from typing import NotRequired, TypedDict
+from typing import NotRequired, TypedDict, TypeIs
 
 from ....models.api import ApiItem
 from .api import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, ApiRequest, page_params
@@ -87,6 +87,11 @@ class ClientGuestAuthorization(TypedDict):
     rxRateLimitKbps: NotRequired[int]
     txRateLimitKbps: NotRequired[int]
     usage: NotRequired[dict[str, int]]
+
+
+def is_client_action_response(decoded: object) -> TypeIs[ClientActionResponse]:
+    """Whether a decoded body is the response to a client action."""
+    return isinstance(decoded, dict) and isinstance(decoded.get("action"), str)
 
 
 @dataclass

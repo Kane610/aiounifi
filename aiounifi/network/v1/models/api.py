@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, TypeIs
 
 import orjson
 
@@ -42,6 +42,11 @@ class ApiResponse(TypedDict):
     totalCount: NotRequired[int]
 
 
+def is_envelope(decoded: object) -> TypeIs[ApiResponse]:
+    """Whether a decoded body is the list envelope."""
+    return isinstance(decoded, dict) and isinstance(decoded.get("data"), list)
+
+
 @dataclass
 class ApiRequest:
     """One request to the Network API v1."""
@@ -70,11 +75,11 @@ class ApiRequest:
             return ApiResponse(data=[])
 
         decoded = orjson.loads(raw)
-        if not isinstance(decoded, dict):
-            raise ResponseError(f"Unexpected Network API response for {self.path}")
-        if isinstance(decoded.get("data"), list):
-            return cast("ApiResponse", decoded)
-        return ApiResponse(data=[decoded])
+        if is_envelope(decoded):
+            return decoded
+        if isinstance(decoded, dict):
+            return ApiResponse(data=[decoded])
+        raise ResponseError(f"Unexpected Network API response for {self.path}")
 
 
 def page_params(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ...errors import RequestError
 from .connectivity import Connectivity
@@ -49,7 +49,7 @@ class ApiClient:
         Also the cheapest way to check an API key.
         """
         response = await self.request(InfoRequest.create())
-        return cast("InfoData", response["data"][0])
+        return InfoData(applicationVersion=response["data"][0]["applicationVersion"])
 
     async def assign_site(self, site: str | None = None) -> str:
         """Resolve a site token to its UUID and make that the active site.
