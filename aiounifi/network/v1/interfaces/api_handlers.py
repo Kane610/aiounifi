@@ -18,10 +18,12 @@ if TYPE_CHECKING:
 class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     """A cache of one resource, kept fresh by polling.
 
-    The v1 API has no websocket, so `update` is the only source of change.
-    It walks every page of the list endpoint and then drops every item the
-    console no longer lists, signalling `DELETED`, unless `keep_missing` is
-    set. `items_listed` is the one hook a subclass may fill in.
+    The v1 API has no websocket, so `update` is the only source of change:
+    `fetch_all` walks every page of the list endpoint and `reconcile` stores
+    what came back, signalling `ADDED` and `CHANGED`, then drops every item
+    the console no longer lists, signalling `DELETED`, unless `keep_missing`
+    is set. A subclass that needs to act between the two steps composes
+    them in its own `update`.
     """
 
     item_cls: type[ApiItemT]
@@ -39,9 +41,13 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
     def list_request(self, offset: int, limit: int) -> ApiRequest:
         """Return the list request for one page."""
 
-    @final
     async def update(self) -> None:
         """Fetch every page and reconcile the cache with it."""
+        self.reconcile(await self.fetch_all())
+
+    @final
+    async def fetch_all(self) -> list[dict[str, Any]]:
+        """Return every item the console lists, walking all pages."""
         offset = 0
         listed: list[dict[str, Any]] = []
         while True:
@@ -53,23 +59,18 @@ class APIHandler(SubscriptionHandler, Generic[ApiItemT]):
             offset += len(page)
             if not page or offset >= response.get("totalCount", 0):
                 break
+        return listed
 
+    @final
+    def reconcile(self, listed: list[dict[str, Any]]) -> None:
+        """Store the listed items and drop the rest, unless `keep_missing`."""
         seen = {obj_id for raw in listed if (obj_id := self._obj_id(raw)) is not None}
-        self.items_listed(seen)
         for raw in listed:
             self.process_item(raw)
         if self.keep_missing:
             return None
         for obj_id in [obj_id for obj_id in self._items if obj_id not in seen]:
             self._forget(obj_id)
-
-    def items_listed(self, obj_ids: set[str]) -> None:
-        """Handle the IDs a completed `update` listed.
-
-        Called before any item is stored or signalled, so what a subclass
-        records here is in place when subscribers hear of the changes.
-        """
-        return None
 
     @final
     def _forget(self, obj_id: str) -> None:

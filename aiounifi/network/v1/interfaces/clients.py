@@ -44,20 +44,24 @@ class Clients(APIHandler[Client]):
         self._last_seen: dict[str, datetime] = {}
         self._connected: set[str] = set()
 
-    def items_listed(self, obj_ids: set[str]) -> None:
-        """Record which clients are connected, and when they were seen.
+    async def update(self) -> None:
+        """Fetch every page, record who is connected, then reconcile.
 
-        Runs before the listed clients are stored and signalled, so a
-        subscriber sees `is_connected` as it now is in every callback. A
-        client that has dropped off the list is signalled once, from here.
+        The bookkeeping runs before the listed clients are stored and
+        signalled, so a subscriber sees `is_connected` as it now is in every
+        callback. A client that has dropped off the list is signalled once,
+        from here.
         """
+        listed = await self.fetch_all()
         now = datetime.now(UTC)
-        left = self._connected - obj_ids
-        self._connected = set(obj_ids)
-        for obj_id in obj_ids:
-            self._last_seen[obj_id] = now
-        for obj_id in left:
-            self.signal_subscribers(ItemEvent.CHANGED, obj_id)
+        connected = {mac for raw in listed if (mac := self._obj_id(raw)) is not None}
+        left = self._connected - connected
+        self._connected = connected
+        for mac in connected:
+            self._last_seen[mac] = now
+        for mac in left:
+            self.signal_subscribers(ItemEvent.CHANGED, mac)
+        self.reconcile(listed)
 
     def is_connected(self, mac_address: str) -> bool:
         """Whether the client was listed by the latest `update`."""
