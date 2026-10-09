@@ -32,7 +32,7 @@ from asyncio import sleep
 from collections.abc import Mapping
 from http import HTTPStatus
 import logging
-from typing import TYPE_CHECKING, TypeIs
+from typing import TYPE_CHECKING, cast
 
 from aiohttp import client_exceptions
 import orjson
@@ -91,11 +91,6 @@ ERROR_ENVELOPE_FIELDS = frozenset(
         "requestId",
     }
 )
-
-
-def is_error_envelope(decoded: object) -> TypeIs[ApiErrorResponse]:
-    """Whether a decoded body is the structured error envelope."""
-    return isinstance(decoded, dict) and decoded.keys() >= ERROR_ENVELOPE_FIELDS
 
 
 class Connectivity:
@@ -180,7 +175,9 @@ class Connectivity:
             parsed = orjson.loads(raw)
         except orjson.JSONDecodeError:
             return None
-        return parsed if is_error_envelope(parsed) else None
+        if isinstance(parsed, dict) and parsed.keys() >= ERROR_ENVELOPE_FIELDS:
+            return cast("ApiErrorResponse", parsed)
+        return None
 
     @staticmethod
     def _exception_type(

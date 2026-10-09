@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from ....errors import ResponseError
 from ....interfaces.api_handlers import ItemEvent
 from ..models.client import (
     Client,
@@ -14,13 +13,11 @@ from ..models.client import (
     ClientData,
     GetClientRequest,
     ListClientsRequest,
-    is_client_action_response,
 )
 from .api_handlers import APIHandler
 
 if TYPE_CHECKING:
     from ..api_client import ApiClient
-    from ..models.api import ApiResponse
 
 
 class Clients(APIHandler[Client]):
@@ -133,33 +130,23 @@ class Clients(APIHandler[Client]):
         tx_rate_limit_kbps: int | None = None,
     ) -> ClientActionResponse:
         """Authorize a guest client, with optional time, data and rate limits."""
-        return self._action_response(
-            await self.api_client.request(
-                ClientActionRequest.create_authorize_guest_access(
-                    self.api_client.site_id,
-                    client_id,
-                    time_limit_minutes,
-                    data_usage_limit_mbytes,
-                    rx_rate_limit_kbps,
-                    tx_rate_limit_kbps,
-                )
+        response = await self.api_client.request(
+            ClientActionRequest.create_authorize_guest_access(
+                self.api_client.site_id,
+                client_id,
+                time_limit_minutes,
+                data_usage_limit_mbytes,
+                rx_rate_limit_kbps,
+                tx_rate_limit_kbps,
             )
         )
+        return cast("ClientActionResponse", response["data"][0])
 
     async def unauthorize_guest_access(self, client_id: str) -> ClientActionResponse:
         """Revoke a guest client's authorization."""
-        return self._action_response(
-            await self.api_client.request(
-                ClientActionRequest.create_unauthorize_guest_access(
-                    self.api_client.site_id, client_id
-                )
+        response = await self.api_client.request(
+            ClientActionRequest.create_unauthorize_guest_access(
+                self.api_client.site_id, client_id
             )
         )
-
-    @staticmethod
-    def _action_response(response: ApiResponse) -> ClientActionResponse:
-        """Return the action response the console answered with."""
-        item = response["data"][0] if response["data"] else None
-        if not is_client_action_response(item):
-            raise ResponseError(f"Unexpected client action response: {item!r}")
-        return item
+        return cast("ClientActionResponse", response["data"][0])

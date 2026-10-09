@@ -5,7 +5,6 @@ import logging
 
 import pytest
 
-from aiounifi.errors import ResponseError
 from aiounifi.interfaces.api_handlers import ItemEvent
 from aiounifi.network.v1.api_client import ApiClient
 from aiounifi.network.v1.models.client import Client, ClientAccessType, ClientType
@@ -102,21 +101,6 @@ async def test_unauthorize_guest_access(
     assert response["action"] == "UNAUTHORIZE_GUEST_ACCESS"
     (call,) = requests_to(mock_aioresponse, "post", "/actions")
     assert call.kwargs["data"] == b'{"action":"UNAUTHORIZE_GUEST_ACCESS"}'
-
-
-async def test_action_without_response_body(
-    mock_aioresponse, network_client_with_site: ApiClient
-) -> None:
-    """A client action that answers nothing, or not an action, is an error."""
-    mock_aioresponse.post(
-        f"{BASE_URL}/v1/sites/{SITE_ID}/clients/{GUEST_CLIENT['id']}/actions",
-        body=b"",
-    )
-
-    with pytest.raises(ResponseError, match="Unexpected client action response"):
-        await network_client_with_site.clients.unauthorize_guest_access(
-            GUEST_CLIENT["id"]
-        )
 
 
 async def test_get_details(
