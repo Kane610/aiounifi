@@ -990,29 +990,35 @@ class DeviceSetLedStatus(ApiRequest):
         """Set LED status of device."""
 
         data: dict[str, int | str] = {"led_override": status}
-        if device.supports_led_ring:
-            # Validate brightness parameter
-            if brightness is not None:
-                if not (0 <= brightness <= 100):
-                    raise AttributeError(
-                        "Brightness must be within the range [0, 100]."
-                    )
-                data["led_override_color_brightness"] = brightness
 
-            # Validate color parameter
-            if color is not None:
-                if not re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
-                    raise AttributeError(
-                        "Color must be a valid hex color code (e.g., '#00FF00')."
-                    )
-                data["led_override_color"] = color
+# Validate brightness parameter for devices supporting LED brightness control
+
+if device.supports_led_brightness and brightness is not None:
+
+    if not (0 <= brightness <= 100):
+
+        raise AttributeError(
+
+            "Brightness must be within the range [0, 100]."
+
+        )
+
+    data["led_override_color_brightness"] = brightness
+
+# Validate color parameter for devices supporting an RGB LED ring
+
+        if device.supports_led_ring and color is not None:
+            if not re.match(r"^#(?:[0-9a-fA-F]{3}){1,2}$", color):
+                raise AttributeError(
+                    "Color must be a valid hex color code (e.g., '#00FF00')."
+                )
+            data["led_override_color"] = color
 
         return cls(
             method="put",
             path=f"/rest/device/{device.id}",
             data=data,
         )
-
 
 class Device(ApiItem):
     """Represents a network device."""
@@ -1333,6 +1339,11 @@ class Device(ApiItem):
     def supports_led_ring(self) -> bool:
         """Check if the hardware supports an LED ring based on the second bit of `hw_caps`."""
         return bool(self.hw_caps & HardwareCapability.LED_RING)
+
+    @property
+    def supports_led_brightness(self) -> bool:
+        """Check if the device supports LED brightness control."""
+        return self.supports_led_ring or self.model == "U7PRO"
 
     @property
     def supports_locating(self) -> bool:
