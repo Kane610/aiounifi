@@ -25,6 +25,7 @@ class MessageKey(enum.Enum):
     DEVICE = "device:sync"
     DEVICE_ADD = "device:add"
     DEVICE_UPDATE = "device:update"
+    DEVICE_SDP_OFFER = "device:sdp-offer"
     DPI_APP_ADDED = "dpiapp:add"
     DPI_APP_REMOVED = "dpiapp:delete"
     DPI_APP_UPDATED = "dpiapp:sync"
