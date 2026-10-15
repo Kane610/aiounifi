@@ -1353,6 +1353,28 @@ def test_device_get_radio_band() -> None:
                 "led_override_color": "#ffffff",
             },
         ),
+        (
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "model": "U7PRO",
+                    "led_override": "on",
+                    "led_override_color": "#0000ff",
+                    "led_override_color_brightness": 100,
+                    "hw_caps": 53248,
+                }
+            ],
+            {
+                "status": "on",
+                "color": "#ff0000",
+                "brightness": 20,
+            },
+            {
+                "led_override": "on",
+                "led_override_color_brightness": 20,
+            },
+        ),
     ],
 )
 @pytest.mark.usefixtures("_mock_endpoints")
