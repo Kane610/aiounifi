@@ -46,6 +46,16 @@ class TypedDeviceEthernetTable(TypedDict):
     num_port: int
 
 
+class TypedDeviceIdsIpsSignature(TypedDict, total=False):
+    """Device IDS/IPS ruleset type definition."""
+
+    is_activating: bool
+    rule_count: int
+    sha_256: str
+    signature_type: str
+    update_time: int
+
+
 class TypedDeviceLastUplink(TypedDict):
     """Device last uplink type definition."""
 
@@ -520,6 +530,8 @@ class TypedDevice(TypedDict):
     hash_id: str
     hide_ch_width: str
     hw_caps: int
+    ids_ips_last_known_signature: NotRequired[str]
+    ids_ips_signature: NotRequired[TypedDeviceIdsIpsSignature]
     inform_ip: str
     inform_url: str
     internet: bool
@@ -592,6 +604,9 @@ class TypedDevice(TypedDict):
     storage: list[TypedDeviceStorage] | None
     stp_priority: str
     stp_version: str
+    supported_suricata_version: NotRequired[int]
+    suricata_upgrade_pending_target: NotRequired[int | None]
+    suricata_version: NotRequired[int]
     switch_caps: TypedDeviceSwitchCaps
     sys_error_caps: int
     sys_stats: TypedDeviceSysStats
@@ -1070,9 +1085,37 @@ class Device(ApiItem):
         return self.raw["device_id"]
 
     @property
+    def ids_ips_signature(self) -> TypedDeviceIdsIpsSignature | None:
+        """IDS/IPS ruleset information."""
+        return self.raw.get("ids_ips_signature")
+
+    @property
     def ip(self) -> str | None:
         """IP of device."""
         return self.raw.get("ip")
+
+    @property
+    def ips_rule_count(self) -> int | None:
+        """Number of rules in the loaded IDS/IPS ruleset."""
+        if (signature := self.ids_ips_signature) is not None:
+            return signature.get("rule_count")
+        return None
+
+    @property
+    def ips_signature_type(self) -> str | None:
+        """Type of the loaded IDS/IPS ruleset."""
+        if (signature := self.ids_ips_signature) is not None:
+            return signature.get("signature_type")
+        return None
+
+    @property
+    def ips_signature_updated(self) -> int | None:
+        """When the IDS/IPS ruleset was last updated, in UNIX time."""
+        if (signature := self.ids_ips_signature) is not None and (
+            update_time := signature.get("update_time")
+        ) is not None:
+            return update_time // 1000
+        return None
 
     @property
     def last_seen(self) -> int | None:
@@ -1220,6 +1263,21 @@ class Device(ApiItem):
     def storage(self) -> list[TypedDeviceStorage] | None:
         """Device storage information."""
         return self.raw.get("storage")
+
+    @property
+    def supported_suricata_version(self) -> int | None:
+        """Newest Suricata IPS engine major version supported by device."""
+        return self.raw.get("supported_suricata_version")
+
+    @property
+    def suricata_upgrade_pending_target(self) -> int | None:
+        """Suricata IPS engine major version of a queued upgrade."""
+        return self.raw.get("suricata_upgrade_pending_target")
+
+    @property
+    def suricata_version(self) -> int | None:
+        """Running Suricata IPS engine major version."""
+        return self.raw.get("suricata_version")
 
     @property
     def sys_stats(self) -> TypedDeviceSysStats:
