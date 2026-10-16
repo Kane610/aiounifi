@@ -846,9 +846,9 @@ async def test_device_requests(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
-    api_request: DeviceRestartRequest
-    | DeviceUpgradeRequest
-    | DevicePowerCyclePortRequest,
+    api_request: (
+        DeviceRestartRequest | DeviceUpgradeRequest | DevicePowerCyclePortRequest
+    ),
     data: dict[str, Any],
     command: dict[str, Any],
 ) -> None:
@@ -1061,7 +1061,16 @@ async def test_device_requests(
             ],
             DeviceSetPortEnabledRequest,
             {"port_idx": 1, "enabled": False},
-            {"port_overrides": [{"port_idx": 1, "port_security_enabled": True}]},
+            {
+                "port_overrides": [
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": True,
+                        "tagged_vlan_mgmt": "block_all",
+                        "native_networkconf_id": "",
+                    }
+                ]
+            },
         ),
         (  # Port enable with portconf_id without existing override
             [
@@ -1083,7 +1092,13 @@ async def test_device_requests(
             {"port_idx": 1, "enabled": False},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "port_security_enabled": True, "portconf_id": "123"}
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": True,
+                        "portconf_id": "123",
+                        "tagged_vlan_mgmt": "block_all",
+                        "native_networkconf_id": "",
+                    }
                 ]
             },
         ),
@@ -1106,7 +1121,13 @@ async def test_device_requests(
             {"port_idx": 1, "enabled": False},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "name": "Office", "port_security_enabled": True}
+                    {
+                        "port_idx": 1,
+                        "name": "Office",
+                        "port_security_enabled": True,
+                        "tagged_vlan_mgmt": "block_all",
+                        "native_networkconf_id": "",
+                    }
                 ]
             },
         ),
@@ -1134,8 +1155,19 @@ async def test_device_requests(
             {"targets": [(1, False), (2, True)]},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "port_security_enabled": True, "name": "Office"},
-                    {"port_idx": 2, "port_security_enabled": False},
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": True,
+                        "name": "Office",
+                        "tagged_vlan_mgmt": "block_all",
+                        "native_networkconf_id": "",
+                    },
+                    {
+                        "port_idx": 2,
+                        "port_security_enabled": False,
+                        "tagged_vlan_mgmt": "auto",
+                        "native_networkconf_id": "",
+                    },
                 ]
             },
         ),
@@ -1146,10 +1178,12 @@ async def test_sub_device_requests(
     mock_aioresponse: aioresponses,
     unifi_controller: Controller,
     unifi_called_with: Callable[[str, str, dict[str, Any]], bool],
-    api_request: DeviceSetOutletRelayRequest
-    | DeviceSetOutletCycleEnabledRequest
-    | DeviceSetPoePortModeRequest
-    | DeviceSetPortEnabledRequest,
+    api_request: (
+        DeviceSetOutletRelayRequest
+        | DeviceSetOutletCycleEnabledRequest
+        | DeviceSetPoePortModeRequest
+        | DeviceSetPortEnabledRequest
+    ),
     data: dict[str, Any],
     command: dict[str, Any],
 ) -> None:
