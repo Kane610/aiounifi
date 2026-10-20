@@ -30,6 +30,8 @@ from aiounifi.models.message import MessageKey
 
 from .fixtures import (
     ACCESS_POINT_AC_PRO,
+    GATEWAY_IPS_ENGINE_PENDING,
+    GATEWAY_IPS_ENGINE_SWAPPED,
     GATEWAY_USG3,
     PDU_PRO,
     PLUG_UP1,
@@ -1591,6 +1593,61 @@ async def test_psu_table_missing(unifi_controller: Controller) -> None:
     device = next(iter(unifi_controller.devices.values()))
 
     assert device.psu_table == []
+
+
+@pytest.mark.parametrize(
+    ("device_payload"), [[GATEWAY_USG3 | GATEWAY_IPS_ENGINE_PENDING]]
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_ips_engine_upgrade_pending(unifi_controller: Controller) -> None:
+    """Test device IPS fields with a Suricata engine upgrade queued."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.suricata_version == 6
+    assert device.supported_suricata_version == 8
+    assert device.suricata_upgrade_pending_target == 8
+    assert device.ips_rule_count == 33157
+    assert device.ips_signature_type == "ET"
+    assert device.ips_signature_updated == 1791932737
+    assert device.ids_ips_signature is not None
+    assert (
+        device.ids_ips_signature["sha_256"]
+        == "eFFy8UIdCQMfp16I2yceZfFCZUQep4bUE+Fe9YIt4js="
+    )
+
+
+@pytest.mark.parametrize(
+    ("device_payload"), [[GATEWAY_USG3 | GATEWAY_IPS_ENGINE_SWAPPED]]
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_ips_engine_swapped(unifi_controller: Controller) -> None:
+    """Test device IPS fields right after a Suricata engine swap."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.suricata_version == 8
+    assert device.supported_suricata_version == 8
+    assert device.suricata_upgrade_pending_target is None
+    assert device.ips_rule_count == 26656
+    assert device.ips_signature_type == "ET"
+    assert device.ips_signature_updated is None
+
+
+@pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_ips_engine_missing(unifi_controller: Controller) -> None:
+    """Test device without IPS fields."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.ids_ips_signature is None
+    assert device.ips_rule_count is None
+    assert device.ips_signature_type is None
+    assert device.ips_signature_updated is None
+    assert device.supported_suricata_version is None
+    assert device.suricata_upgrade_pending_target is None
+    assert device.suricata_version is None
 
 
 @pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])

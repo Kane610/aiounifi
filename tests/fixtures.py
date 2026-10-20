@@ -5304,6 +5304,36 @@ UDM_PRO_MAX_UPTIME_STATS = {
     },
 }
 
+# IPS fields as reported by a UCG-Fiber (UniFi OS 6.0.12, Network 11.0.83) running
+# Suricata 6 with an upgrade to 8 queued. "update_time" is epoch milliseconds.
+GATEWAY_IPS_ENGINE_PENDING = {
+    "ids_ips_last_known_signature": "ET",
+    "ids_ips_signature": {
+        "is_activating": False,
+        "rule_count": 33157,
+        "sha_256": "eFFy8UIdCQMfp16I2yceZfFCZUQep4bUE+Fe9YIt4js=",
+        "signature_type": "ET",
+        "update_time": 1791932737000,
+    },
+    "supported_suricata_version": 8,
+    "suricata_upgrade_pending_target": 8,
+    "suricata_version": 6,
+}
+
+# The same gateway about a minute after the engine swap to Suricata 8. The ruleset
+# has not been re-fetched yet, so "update_time" is missing and the checksum is zeroed.
+GATEWAY_IPS_ENGINE_SWAPPED = {
+    "ids_ips_signature": {
+        "is_activating": False,
+        "rule_count": 26656,
+        "sha_256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signature_type": "ET",
+    },
+    "supported_suricata_version": 8,
+    "suricata_upgrade_pending_target": None,
+    "suricata_version": 8,
+}
+
 NETWORKS = [
     {
         "_id": "678a1b2c3d4e5f6071829304",
