@@ -39,16 +39,44 @@ if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
 _REDACTED = "**REDACTED**"
+# Fields holding passwords, keys, tokens or cookies. The API prefixes most of
+# them with x_, logins, MFA, SSO and some network settings don't.
+_SECRET_KEY_PARTS = (
+    "cookie",
+    "passphrase",
+    "password",
+    "preshared",
+    "psk",
+    "secret",
+    "token",
+)
+_SECRET_KEYS = {
+    "openvpn_configuration",
+    "ssoauth",
+    "wireguard_client_configuration_file",
+}
 
 LOGGER = logging.getLogger(__name__)
 
 
+def _is_secret_key(key: object) -> bool:
+    """Return if a field holds a secret."""
+    if not isinstance(key, str):
+        return False
+    key = key.lower()
+    return (
+        key.startswith("x_")
+        or key in _SECRET_KEYS
+        or any(part in key for part in _SECRET_KEY_PARTS)
+    )
+
+
 def _redact(value: Any) -> Any:
-    """Hide the values of secret fields, which the API prefixes with x_."""
+    """Hide the values of secret fields."""
     if isinstance(value, dict):
         return {
             key: _REDACTED
-            if isinstance(key, str) and key.startswith("x_") and isinstance(item, str)
+            if _is_secret_key(key) and isinstance(item, str | dict | list)
             else _redact(item)
             for key, item in value.items()
         }
@@ -57,11 +85,11 @@ def _redact(value: Any) -> Any:
     return value
 
 
-def _redact_text(data: str | bytes) -> Any:
+def _redact_text(data: str | bytes) -> str | bytes:
     """Return JSON text for the debug log with secret values hidden."""
     try:
-        return _redact(orjson.loads(data))
-    except orjson.JSONDecodeError:
+        return orjson.dumps(_redact(orjson.loads(data))).decode()
+    except (orjson.JSONDecodeError, orjson.JSONEncodeError, RecursionError):
         return data
 
 
@@ -408,11 +436,7 @@ class Connectivity:
                 allow_redirects=allow_redirects,
             ) as res:
                 LOGGER.debug(
-                    "received (from %s) %s %s %s",
-                    url,
-                    res.status,
-                    res.content_type,
-                    res,
+                    "received (from %s) %s %s", url, res.status, res.content_type
                 )
 
                 if res.status == HTTPStatus.UNAUTHORIZED:
@@ -488,12 +512,7 @@ class Connectivity:
                 heartbeat=15,
                 compress=12,
             ) as websocket_connection:
-                LOGGER.debug(
-                    "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
-                    url,
-                    self.headers,
-                    self.config.session.cookie_jar._cookies,  # type: ignore[attr-defined]
-                )
+                LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)

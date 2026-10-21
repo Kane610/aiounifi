@@ -727,7 +727,14 @@ async def test_debug_log_hides_secrets(
         "https://host:8443/api/s/default/rest/wlanconf/123",
         payload={
             "meta": {"rc": "ok"},
-            "data": [{"_id": "123", "x_passphrase": "response-secret", "x_aes": True}],
+            "data": [
+                {
+                    "_id": "123",
+                    "x_passphrase": "response-secret",
+                    "x_aes": True,
+                    "private_preshared_keys": [{"password": "ppsk-secret"}],
+                }
+            ],
         },
     )
 
@@ -737,4 +744,41 @@ async def test_debug_log_hides_secrets(
 
     assert "request-secret" not in caplog.text
     assert "response-secret" not in caplog.text
-    assert "'x_aes': True" in caplog.text
+    assert "ppsk-secret" not in caplog.text
+    assert '"x_aes":true' in caplog.text
+
+
+async def test_debug_log_hides_login_secrets(
+    mock_aioresponse, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that credentials, tokens and cookies of a login are not logged."""
+    caplog.set_level(logging.DEBUG, logger="aiounifi")
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={
+            "meta": {"rc": "ok"},
+            "data": [
+                {
+                    "deviceToken": "device-secret",
+                    "ssoAuth": {"name": "sso", "value": "sso-secret"},
+                }
+            ],
+        },
+        headers={"x-csrf-token": "csrf-secret", "Set-Cookie": "unifises=cookie-secret"},
+    )
+    async with ClientSession() as session:
+        controller = Controller(
+            Configuration(session, "host", username="user", password="login-secret")
+        )
+        controller.connectivity.is_unifi_os = False
+        await controller.connectivity.login()
+
+    assert "Logged in to UniFi" in caplog.text
+    for secret in (
+        "login-secret",
+        "device-secret",
+        "sso-secret",
+        "csrf-secret",
+        "cookie-secret",
+    ):
+        assert secret not in caplog.text
