@@ -173,10 +173,16 @@ class TypedDeviceVbmsTable(TypedDict, total=False):
 class TypedDevicePortOverrides(TypedDict, total=False):
     """Device port overrides type definition."""
 
+    excluded_networkconf_ids: list[str]
+    forward: str
+    native_networkconf_id: str
     poe_mode: str
     port_idx: int
     port_security_enabled: bool
+    port_security_mac_address: list[str]
     portconf_id: str
+    tagged_vlan_mgmt: str
+    voice_networkconf_id: str
 
 
 class TypedDevicePortTableLldpTable(TypedDict):
@@ -954,6 +960,7 @@ class DeviceSetPortEnabledRequest(ApiRequest):
         True:  port is enabled.
         False: port is disabled.
         Make sure to not overwrite any existing configs.
+        Ports using MAC address filtering are refused, then no port is changed.
         """
         overrides: list[tuple[int, bool]] = []
         if port_idx is not None and enabled is not None:
@@ -965,23 +972,42 @@ class DeviceSetPortEnabledRequest(ApiRequest):
 
         port_overrides = deepcopy(device.port_overrides)
 
-        for override in overrides:
-            port_idx, enabled = override
+        for idx, target in overrides:
+            port_override: TypedDevicePortOverrides | None = next(
+                (item for item in port_overrides if item.get("port_idx") == idx),
+                None,
+            )
+            if port_override and port_override.get("port_security_mac_address"):
+                raise ValueError(f"Port {idx} uses MAC address filtering")
 
-            existing_override = False
-            for port_override in port_overrides:
-                if port_idx == port_override.get("port_idx"):
-                    port_override["port_security_enabled"] = not enabled
-                    existing_override = True
-                    break
+            if port_override is None:
+                port_override = {"port_idx": idx}
+                if portconf_id := next(
+                    (
+                        port.get("portconf_id")
+                        for port in device.port_table
+                        if port.get("port_idx") == idx
+                    ),
+                    None,
+                ):
+                    port_override["portconf_id"] = portconf_id
+                port_overrides.append(port_override)
 
-            if existing_override:
-                continue
+            port_override["port_security_enabled"] = not target
 
-            port_override = {"port_idx": port_idx, "port_security_enabled": not enabled}
-            if portconf_id := device.port_table[port_idx - 1].get("portconf_id"):
-                port_override["portconf_id"] = portconf_id
-            port_overrides.append(port_override)
+            if (
+                target
+                and port_override.get("native_networkconf_id") == ""
+                and port_override.get("tagged_vlan_mgmt") == "block_all"
+            ):
+                # Newer Network applications block all networks of a port with
+                # port security and no allowed MAC address. Give it the default
+                # network back, like the Network application does.
+                port_override.pop("excluded_networkconf_ids", None)
+                port_override.pop("forward", None)
+                port_override.pop("native_networkconf_id", None)
+                port_override.pop("voice_networkconf_id", None)
+                port_override["tagged_vlan_mgmt"] = "auto"
 
         return cls(
             method="put",

@@ -4,6 +4,7 @@ pytest --cov-report term-missing --cov=aiounifi.devices tests/test_devices.py
 """
 
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any
 from unittest.mock import Mock
 
@@ -1046,18 +1047,15 @@ async def test_device_requests(
                 ]
             },
         ),
-        (  # Port enable without existing override
+        (  # Port disable without existing override
             [
                 {
                     "device_id": "01",
                     "mac": "0",
                     "port_overrides": [],
                     "port_table": [
-                        {
-                            "enable": True,
-                            "name": "Port 1",
-                            "port_idx": 1,
-                        },
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
                     ],
                 }
             ],
@@ -1065,19 +1063,14 @@ async def test_device_requests(
             {"port_idx": 1, "enabled": False},
             {"port_overrides": [{"port_idx": 1, "port_security_enabled": True}]},
         ),
-        (  # Port enable with portconf_id without existing override
+        (  # Port disable with port profile without existing override
             [
                 {
                     "device_id": "01",
                     "mac": "0",
                     "port_overrides": [],
                     "port_table": [
-                        {
-                            "enable": True,
-                            "name": "Port 1",
-                            "port_idx": 1,
-                            "portconf_id": "123",
-                        },
+                        {"enable": True, "port_idx": 1, "portconf_id": "123"}
                     ],
                 }
             ],
@@ -1089,18 +1082,21 @@ async def test_device_requests(
                 ]
             },
         ),
-        (  # Port enable with existing override
+        (  # Port disable keeps existing override
             [
                 {
                     "device_id": "01",
                     "mac": "0",
-                    "port_overrides": [{"port_idx": 1, "name": "Office"}],
-                    "port_table": [
+                    "port_overrides": [
                         {
-                            "enable": True,
-                            "name": "Office",
                             "port_idx": 1,
-                        },
+                            "name": "Office",
+                            "native_networkconf_id": "iot",
+                        }
+                    ],
+                    "port_table": [
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
                     ],
                 }
             ],
@@ -1108,27 +1104,170 @@ async def test_device_requests(
             {"port_idx": 1, "enabled": False},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "name": "Office", "port_security_enabled": True}
+                    {
+                        "port_idx": 1,
+                        "name": "Office",
+                        "native_networkconf_id": "iot",
+                        "port_security_enabled": True,
+                    }
                 ]
             },
         ),
-        (  # Port enable multiple ports
+        (  # Port enable gives a blocked port the default network back
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [
+                        {
+                            "port_idx": 1,
+                            "name": "Office",
+                            "port_security_enabled": True,
+                            "native_networkconf_id": "",
+                            "voice_networkconf_id": "",
+                            "tagged_vlan_mgmt": "block_all",
+                            "forward": "disabled",
+                        }
+                    ],
+                    "port_table": [
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": True},
+            {
+                "port_overrides": [
+                    {
+                        "port_idx": 1,
+                        "name": "Office",
+                        "port_security_enabled": False,
+                        "tagged_vlan_mgmt": "auto",
+                    }
+                ]
+            },
+        ),
+        (  # Port enable of a port left blocked by an earlier enable
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [
+                        {
+                            "port_idx": 1,
+                            "port_security_enabled": False,
+                            "native_networkconf_id": "",
+                            "voice_networkconf_id": "",
+                            "tagged_vlan_mgmt": "block_all",
+                            "forward": "disabled",
+                            "excluded_networkconf_ids": ["guest"],
+                        }
+                    ],
+                    "port_table": [
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": True},
+            {
+                "port_overrides": [
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": False,
+                        "tagged_vlan_mgmt": "auto",
+                    }
+                ]
+            },
+        ),
+        (  # Port enable keeps the networks of a port that isn't blocked
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [
+                        {
+                            "port_idx": 1,
+                            "port_security_enabled": True,
+                            "native_networkconf_id": "iot",
+                            "tagged_vlan_mgmt": "block_all",
+                        }
+                    ],
+                    "port_table": [
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": True},
+            {
+                "port_overrides": [
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": False,
+                        "native_networkconf_id": "iot",
+                        "tagged_vlan_mgmt": "block_all",
+                    }
+                ]
+            },
+        ),
+        (  # Port enable with port profile
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [
+                        {
+                            "port_idx": 1,
+                            "port_security_enabled": True,
+                            "portconf_id": "123",
+                        }
+                    ],
+                    "port_table": [
+                        {"enable": False, "port_idx": 1, "portconf_id": "123"}
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": True},
+            {
+                "port_overrides": [
+                    {
+                        "port_idx": 1,
+                        "port_security_enabled": False,
+                        "portconf_id": "123",
+                    }
+                ]
+            },
+        ),
+        (  # Port enable without existing override
+            [
+                {
+                    "device_id": "01",
+                    "mac": "0",
+                    "port_overrides": [],
+                    "port_table": [
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
+                    ],
+                }
+            ],
+            DeviceSetPortEnabledRequest,
+            {"port_idx": 1, "enabled": True},
+            {"port_overrides": [{"port_idx": 1, "port_security_enabled": False}]},
+        ),
+        (  # Port enable and disable multiple ports
             [
                 {
                     "device_id": "01",
                     "mac": "0",
                     "port_overrides": [{"port_idx": 1, "name": "Office"}],
                     "port_table": [
-                        {
-                            "enable": True,
-                            "name": "Office",
-                            "port_idx": 1,
-                        },
-                        {
-                            "enable": True,
-                            "name": "Hallway",
-                            "port_idx": 2,
-                        },
+                        {"enable": True, "port_idx": 1},
+                        {"enable": True, "port_idx": 2},
                     ],
                 }
             ],
@@ -1136,7 +1275,7 @@ async def test_device_requests(
             {"targets": [(1, False), (2, True)]},
             {
                 "port_overrides": [
-                    {"port_idx": 1, "port_security_enabled": True, "name": "Office"},
+                    {"port_idx": 1, "name": "Office", "port_security_enabled": True},
                     {"port_idx": 2, "port_security_enabled": False},
                 ]
             },
@@ -1184,6 +1323,62 @@ async def test_set_port_enabled_request_raise_error(
     device = next(iter(unifi_controller.devices.values()))
     with pytest.raises(AttributeError):
         DeviceSetPortEnabledRequest.create(device)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"port_idx": 1, "enabled": True},
+        {"port_idx": 1, "enabled": False},
+        {"targets": [(2, False), (1, True)]},
+    ],
+)
+async def test_set_port_enabled_request_refuses_mac_filtering(
+    data: dict[str, Any],
+) -> None:
+    """Test ports using MAC address filtering are not switched."""
+    raw = {
+        "device_id": "01",
+        "mac": "0",
+        "port_overrides": [
+            {
+                "port_idx": 1,
+                "port_security_enabled": True,
+                "port_security_mac_address": ["00:00:00:00:00:01"],
+            }
+        ],
+        "port_table": [
+            {"port_idx": 1, "enable": True},
+            {"port_idx": 2, "enable": True},
+        ],
+    }
+    device = Device(deepcopy(raw))
+    with pytest.raises(ValueError, match="^Port 1 uses MAC address filtering$"):
+        DeviceSetPortEnabledRequest.create(device, **data)
+    assert device.raw == raw
+
+
+async def test_set_port_enabled_request_leaves_device_unchanged() -> None:
+    """Test the request does not change the device data."""
+    raw = {
+        "device_id": "01",
+        "mac": "0",
+        "port_overrides": [
+            {
+                "port_idx": 1,
+                "port_security_enabled": False,
+                "native_networkconf_id": "",
+                "tagged_vlan_mgmt": "block_all",
+            }
+        ],
+        "port_table": [
+            {"port_idx": 1, "enable": False},
+            {"port_idx": 2, "enable": True},
+        ],
+    }
+    device = Device(deepcopy(raw))
+    DeviceSetPortEnabledRequest.create(device, targets=[(1, True), (2, False)])
+    assert device.raw == raw
 
 
 async def test_device_websocket(
