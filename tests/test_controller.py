@@ -11,6 +11,7 @@ import trustme
 
 from aiounifi import (
     AiounifiException,
+    ApplicationNotReady,
     BadGateway,
     EndpointNotFound,
     Forbidden,
@@ -393,8 +394,68 @@ async def test_unifios_controller_login_html_response(
         payload="Login Failed: Host starting up",
         content_type="text/html",
     )
-    with pytest.raises(RequestError):
+    with pytest.raises(ApplicationNotReady):
         await unifi_controller.connectivity.login()
+
+
+STARTUP_PAGE = (
+    '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    "<title>UniFi Network - Server status</title>"
+    '<base href="/manage/"></head><body>'
+    '<p id="appContextStatus">Network application is starting up...</p>'
+    "</body></html>"
+)
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"body": STARTUP_PAGE, "content_type": "text/html"},
+        {"body": "not json", "content_type": "application/json"},
+    ],
+)
+async def test_api_request_not_json(
+    mock_aioresponse, unifi_controller, api_request, path, response
+):
+    """Verify a response without API data raises instead of returning nothing."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", **response)
+    with pytest.raises(ApplicationNotReady) as exc_info:
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert isinstance(exc_info.value, RequestError)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"status": 204},
+        {"status": 200, "body": b"", "content_type": "application/octet-stream"},
+    ],
+)
+async def test_api_request_no_content(mock_aioresponse, unifi_controller, response):
+    """Verify an empty response is still an empty result."""
+    mock_aioresponse.post("https://host:8443/api/s/default/test", **response)
+    assert (
+        await unifi_controller.connectivity.request(ApiRequest("post", "/test")) == {}
+    )
+
+
+async def test_handler_update_startup_page(mock_aioresponse, unifi_controller):
+    """Verify a handler update raises on the start-up page and keeps no data."""
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        body=STARTUP_PAGE,
+        content_type="text/html",
+    )
+    with pytest.raises(ApplicationNotReady):
+        await unifi_controller.system_information.update()
+    assert len(unifi_controller.system_information.items()) == 0
 
 
 async def test_unifios_controller_no_csrf_token(

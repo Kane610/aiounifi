@@ -16,6 +16,7 @@ from yarl import URL
 
 from ..errors import (
     AiounifiException,
+    ApplicationNotReady,
     AuthenticationRateLimitError,
     BadGateway,
     EndpointNotFound,
@@ -96,7 +97,7 @@ class Connectivity:
 
         if not self._is_json_response(response):
             LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
-            raise RequestError("Login Failed: Host starting up")
+            raise ApplicationNotReady("Login Failed: Host starting up")
 
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
@@ -172,7 +173,7 @@ class Connectivity:
         response, bytes_data = await self._login_local_2fa(url, auth, totp_secret)
         if not self._is_json_response(response):
             LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
-            raise RequestError("Login Failed: Host starting up")
+            raise ApplicationNotReady("Login Failed: Host starting up")
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
             LOGGER.error("Login with 2FA failed '%s'", data)
@@ -309,6 +310,7 @@ class Connectivity:
 
         Raises:
             LoginRequired: If login is required and cannot be retried.
+            ApplicationNotReady: If the response is not JSON or cannot be decoded.
             RequestError: For network or response errors.
 
         """
@@ -322,8 +324,20 @@ class Connectivity:
                 api_request.method, url, api_request.data
             )
 
-            if response.content_type == "application/json":
-                data = api_request.decode(bytes_data)
+            if response.status != HTTPStatus.NO_CONTENT and bytes_data:
+                if not self._is_json_response(response):
+                    LOGGER.debug(
+                        "Response from %s is not JSON: %r", url, bytes_data[:200]
+                    )
+                    raise ApplicationNotReady(
+                        f"Call {url} received {response.content_type}, not JSON"
+                    )
+                try:
+                    data = api_request.decode(bytes_data)
+                except orjson.JSONDecodeError as err:
+                    raise ApplicationNotReady(
+                        f"Call {url} received invalid JSON: {err}"
+                    ) from err
 
         except LoginRequired:
             if not self.can_retry_login:
