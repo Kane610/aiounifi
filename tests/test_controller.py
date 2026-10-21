@@ -3,6 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
 
+import logging
 import ssl
 
 from aiohttp import ClientSession, client_exceptions, web
@@ -26,6 +27,7 @@ from aiounifi.controller import Controller
 from aiounifi.errors import AuthenticationRateLimitError
 from aiounifi.models.api import ApiRequest, ApiRequestV2
 from aiounifi.models.configuration import Configuration
+from aiounifi.models.wlan import WlanChangePasswordRequest
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
@@ -585,8 +587,9 @@ async def test_handle_unsupported_events(
     assert len(unifi_controller.clients.items()) == 0
 
 
-async def test_websocket(aiohttp_server) -> None:
+async def test_websocket(aiohttp_server, caplog: pytest.LogCaptureFixture) -> None:
     """Test positive websocket."""
+    caplog.set_level(logging.DEBUG, logger="aiounifi")
 
     tls_certificate_authority = trustme.CA()
     tls_certificate = tls_certificate_authority.issue_server_cert(
@@ -613,6 +616,13 @@ async def test_websocket(aiohttp_server) -> None:
             }
         )
 
+        await ws.send_json(
+            {
+                "meta": {"rc": "ok", "message": "account:sync"},
+                "data": [{"name": "radius user", "x_password": "ws-secret"}],
+            }
+        )
+
         await ws.close()
         return ws
 
@@ -627,6 +637,8 @@ async def test_websocket(aiohttp_server) -> None:
     await controller.start_websocket()
 
     assert len(controller.dpi_groups.items()) == 1
+    assert "radius user" in caplog.text
+    assert "ws-secret" not in caplog.text
 
 
 async def test_login_malformed_json(mock_aioresponse, unifi_controller):
@@ -704,3 +716,25 @@ async def test_login_sso_mfa_missing_totp_secret(mock_aioresponse, unifi_control
     )
     with pytest.raises(RequestError):
         await unifi_controller.connectivity.login()
+
+
+async def test_debug_log_hides_secrets(
+    mock_aioresponse, unifi_controller, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that secret values of requests and responses are not logged."""
+    caplog.set_level(logging.DEBUG, logger="aiounifi")
+    mock_aioresponse.put(
+        "https://host:8443/api/s/default/rest/wlanconf/123",
+        payload={
+            "meta": {"rc": "ok"},
+            "data": [{"_id": "123", "x_passphrase": "response-secret", "x_aes": True}],
+        },
+    )
+
+    await unifi_controller.request(
+        WlanChangePasswordRequest.create("123", "request-secret")
+    )
+
+    assert "request-secret" not in caplog.text
+    assert "response-secret" not in caplog.text
+    assert "'x_aes': True" in caplog.text

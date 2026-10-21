@@ -38,7 +38,32 @@ if "partitioned" not in cookies.Morsel._reserved:  # type: ignore[attr-defined]
 if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
+_REDACTED = "**REDACTED**"
+
 LOGGER = logging.getLogger(__name__)
+
+
+def _redact(value: Any) -> Any:
+    """Hide the values of secret fields, which the API prefixes with x_."""
+    if isinstance(value, dict):
+        return {
+            key: _REDACTED
+            if isinstance(key, str) and key.startswith("x_") and isinstance(item, str)
+            else _redact(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    return value
+
+
+def _redact_text(data: str | bytes) -> Any:
+    """Return JSON text for the debug log with secret values hidden."""
+    try:
+        return _redact(orjson.loads(data))
+    except orjson.JSONDecodeError:
+        return data
+
 
 HTTP_STATUS_MFA_REQUIRED = 499
 
@@ -363,7 +388,14 @@ class Connectivity:
             AuthenticationRateLimitError: For 429 rate limit errors with specific code.
 
         """
-        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, allow_redirects)
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug(
+                "sending (to %s) %s, %s, %s",
+                url,
+                method,
+                _redact(json),
+                allow_redirects,
+            )
         bytes_data = b""
 
         try:
@@ -405,7 +437,8 @@ class Connectivity:
         except client_exceptions.ClientError as err:
             raise RequestError(f"Error requesting data from {url}: {err}") from None
 
-        LOGGER.debug("data (from %s) %s", url, bytes_data)
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug("data (from %s) %s", url, _redact_text(bytes_data))
 
         if res.status == HTTPStatus.TOO_MANY_REQUESTS:
             # Try to parse the response for specific rate limit error
@@ -466,7 +499,8 @@ class Connectivity:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)
 
                     if message.type is aiohttp.WSMsgType.TEXT:
-                        LOGGER.debug("Websocket '%s'", message.data)
+                        if LOGGER.isEnabledFor(logging.DEBUG):
+                            LOGGER.debug("Websocket '%s'", _redact_text(message.data))
                         callback(message.data)
 
                     elif message.type is aiohttp.WSMsgType.CLOSED:
