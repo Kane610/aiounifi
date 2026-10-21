@@ -373,7 +373,7 @@ class Connectivity:
             ResponseError: For 404, 429, or invalid responses.
             BadGateway: For 502 Bad Gateway.
             ServiceUnavailable: For 503 Service Unavailable.
-            RequestError: For network or client errors.
+            RequestError: For other 5xx responses and network or client errors.
             AuthenticationRateLimitError: For 429 rate limit errors with specific code.
 
         """
@@ -413,6 +413,9 @@ class Connectivity:
                     raise ServiceUnavailable(
                         f"Call {url} received 503 service unavailable"
                     )
+
+                if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    raise RequestError(f"Call {url} received {res.status} {res.reason}")
 
                 bytes_data = await res.read()
 

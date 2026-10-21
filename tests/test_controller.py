@@ -446,6 +446,31 @@ async def test_api_request_no_content(mock_aioresponse, unifi_controller, respon
     )
 
 
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("status", "payload"),
+    [
+        (500, {"error": {"code": 500, "message": "Internal Server Error"}}),
+        (504, {"error": {"code": 504, "message": "Gateway Time-out"}}),
+    ],
+)
+async def test_api_request_server_error_json(
+    mock_aioresponse, unifi_controller, api_request, path, status, payload
+):
+    """Verify a server error with a JSON body is not decoded as data."""
+    mock_aioresponse.get(
+        f"https://host:8443{path}/test", status=status, payload=payload
+    )
+    with pytest.raises(RequestError, match=str(status)):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
 async def test_handler_update_startup_page(mock_aioresponse, unifi_controller):
     """Verify a handler update raises on the start-up page and keeps no data."""
     mock_aioresponse.get(
@@ -494,6 +519,8 @@ test_data = [
     ({"status": 429}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
+    ({"status": 500}, RequestError),
+    ({"status": 504}, RequestError),
     ({"exception": client_exceptions.ClientError}, RequestError),
     (
         {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
