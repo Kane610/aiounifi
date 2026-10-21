@@ -970,10 +970,10 @@ class DeviceSetPortEnabledRequest(ApiRequest):
         else:
             raise AttributeError
 
-        port_overrides = cast("list[dict[str, Any]]", deepcopy(device.port_overrides))
+        port_overrides = deepcopy(device.port_overrides)
 
         for idx, target in overrides:
-            port_override: dict[str, Any] | None = next(
+            port_override: TypedDevicePortOverrides | None = next(
                 (item for item in port_overrides if item.get("port_idx") == idx),
                 None,
             )
@@ -1003,13 +1003,10 @@ class DeviceSetPortEnabledRequest(ApiRequest):
                 # Newer Network applications block all networks of a port with
                 # port security and no allowed MAC address. Give it the default
                 # network back, like the Network application does.
-                for key in (
-                    "excluded_networkconf_ids",
-                    "forward",
-                    "native_networkconf_id",
-                    "voice_networkconf_id",
-                ):
-                    port_override.pop(key, None)
+                port_override.pop("excluded_networkconf_ids", None)
+                port_override.pop("forward", None)
+                port_override.pop("native_networkconf_id", None)
+                port_override.pop("voice_networkconf_id", None)
                 port_override["tagged_vlan_mgmt"] = "auto"
 
         return cls(
