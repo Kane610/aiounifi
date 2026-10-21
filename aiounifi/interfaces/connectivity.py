@@ -38,7 +38,60 @@ if "partitioned" not in cookies.Morsel._reserved:  # type: ignore[attr-defined]
 if TYPE_CHECKING:
     from ..models.api import ApiRequest, TypedApiResponse
 
+_REDACTED = "**REDACTED**"
+# Fields holding passwords, keys, tokens or cookies. The API prefixes most of
+# them with x_, logins, MFA, SSO and some network settings don't.
+_SECRET_KEY_PARTS = (
+    "cookie",
+    "passphrase",
+    "password",
+    "preshared",
+    "psk",
+    "secret",
+    "token",
+)
+_SECRET_KEYS = {
+    "openvpn_configuration",
+    "ssoauth",
+    "wireguard_client_configuration_file",
+}
+
 LOGGER = logging.getLogger(__name__)
+
+
+def _is_secret_key(key: object) -> bool:
+    """Return if a field holds a secret."""
+    if not isinstance(key, str):
+        return False
+    key = key.lower()
+    return (
+        key.startswith("x_")
+        or key in _SECRET_KEYS
+        or any(part in key for part in _SECRET_KEY_PARTS)
+    )
+
+
+def _redact(value: Any) -> Any:
+    """Hide the values of secret fields."""
+    if isinstance(value, dict):
+        return {
+            key: _REDACTED
+            if _is_secret_key(key) and isinstance(item, str | dict | list)
+            else _redact(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    return value
+
+
+def _redact_text(data: str | bytes) -> str | bytes:
+    """Return JSON text for the debug log with secret values hidden."""
+    try:
+        return orjson.dumps(_redact(orjson.loads(data))).decode()
+    except (orjson.JSONDecodeError, orjson.JSONEncodeError, RecursionError):
+        return data
+
 
 HTTP_STATUS_MFA_REQUIRED = 499
 
@@ -363,7 +416,14 @@ class Connectivity:
             AuthenticationRateLimitError: For 429 rate limit errors with specific code.
 
         """
-        LOGGER.debug("sending (to %s) %s, %s, %s", url, method, json, allow_redirects)
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug(
+                "sending (to %s) %s, %s, %s",
+                url,
+                method,
+                _redact(json),
+                allow_redirects,
+            )
         bytes_data = b""
 
         try:
@@ -376,11 +436,7 @@ class Connectivity:
                 allow_redirects=allow_redirects,
             ) as res:
                 LOGGER.debug(
-                    "received (from %s) %s %s %s",
-                    url,
-                    res.status,
-                    res.content_type,
-                    res,
+                    "received (from %s) %s %s", url, res.status, res.content_type
                 )
 
                 if res.status == HTTPStatus.UNAUTHORIZED:
@@ -405,7 +461,8 @@ class Connectivity:
         except client_exceptions.ClientError as err:
             raise RequestError(f"Error requesting data from {url}: {err}") from None
 
-        LOGGER.debug("data (from %s) %s", url, bytes_data)
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug("data (from %s) %s", url, _redact_text(bytes_data))
 
         if res.status == HTTPStatus.TOO_MANY_REQUESTS:
             # Try to parse the response for specific rate limit error
@@ -455,18 +512,14 @@ class Connectivity:
                 heartbeat=15,
                 compress=12,
             ) as websocket_connection:
-                LOGGER.debug(
-                    "Connected to UniFi websocket %s, headers: %s, cookiejar: %s",
-                    url,
-                    self.headers,
-                    self.config.session.cookie_jar._cookies,  # type: ignore[attr-defined]
-                )
+                LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
                     self.ws_message_received = datetime.datetime.now(datetime.UTC)
 
                     if message.type is aiohttp.WSMsgType.TEXT:
-                        LOGGER.debug("Websocket '%s'", message.data)
+                        if LOGGER.isEnabledFor(logging.DEBUG):
+                            LOGGER.debug("Websocket '%s'", _redact_text(message.data))
                         callback(message.data)
 
                     elif message.type is aiohttp.WSMsgType.CLOSED:

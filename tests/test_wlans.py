@@ -3,6 +3,8 @@
 pytest --cov-report term-missing --cov=aiounifi.wlan tests/test_wlans.py
 """
 
+from copy import deepcopy
+
 import pytest
 
 from aiounifi.models.wlan import (
@@ -208,3 +210,23 @@ async def test_generate_wlan_qr_code_with_options(unifi_controller):
         wlan, dark="#ffffff", light="#000000", border=0
     )
     assert qr_custom.startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize("wlan_payload", [WLANS])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wlan_websocket_add_update_and_delete(unifi_controller, new_ws_data_fn):
+    """Test that wlanconf messages add, update and remove the WLAN."""
+    wlans = unifi_controller.wlans
+    await wlans.update()
+
+    wlan = deepcopy(WLANS[0]) | {"_id": "6ad90e488de1f9181661a0a1", "name": "IoT"}
+    new_ws_data_fn({"meta": {"message": "wlanconf:add"}, "data": [wlan]})
+    assert wlans[wlan["_id"]].name == "IoT"
+
+    wlan["name"] = "IoT 2"
+    new_ws_data_fn({"meta": {"message": "wlanconf:sync"}, "data": [wlan]})
+    assert wlans[wlan["_id"]].name == "IoT 2"
+
+    new_ws_data_fn({"meta": {"message": "wlanconf:delete"}, "data": [wlan]})
+    assert wlan["_id"] not in wlans
+    assert len(wlans.values()) == 2

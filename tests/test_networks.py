@@ -175,3 +175,27 @@ async def test_network_websocket_update(unifi_controller, new_ws_data_fn):
     new_ws_data_fn({"meta": {"message": "networkconf:sync"}, "data": [network]})
 
     assert networks[WAN1_ID].wan_failover_priority == 3
+
+
+@pytest.mark.parametrize("network_payload", [NETWORKS])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_network_websocket_add_and_delete(unifi_controller, new_ws_data_fn):
+    """Test that networkconf add and delete messages add and remove the network."""
+    networks = unifi_controller.networks
+    await networks.update()
+
+    network = {
+        "_id": "6ad90e488de1f9181661a0a0",
+        "name": "IoT",
+        "purpose": "vlan-only",
+        "vlan_enabled": True,
+        "vlan": 3999,
+        "enabled": True,
+        "site_id": "6ad84db825e214e1282a8d87",
+    }
+    new_ws_data_fn({"meta": {"message": "networkconf:add"}, "data": [network]})
+    assert networks[network["_id"]].name == "IoT"
+
+    new_ws_data_fn({"meta": {"message": "networkconf:delete"}, "data": [network]})
+    assert network["_id"] not in networks
+    assert WAN1_ID in networks

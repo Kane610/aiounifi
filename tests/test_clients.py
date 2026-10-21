@@ -11,6 +11,7 @@ from aioresponses import aioresponses
 import pytest
 
 from aiounifi.controller import Controller
+from aiounifi.interfaces.api_handlers import ItemEvent
 from aiounifi.models.message import MessageKey
 
 from .fixtures import MESSAGE_WIRELESS_CLIENT_REMOVED, WIRED_CLIENT, WIRELESS_CLIENT
@@ -224,3 +225,43 @@ async def test_message_client_removed(
 
     new_ws_data_fn(MESSAGE_WIRELESS_CLIENT_REMOVED)
     assert len(unifi_controller.clients.items()) == 0
+
+
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_clients_all_websocket(
+    unifi_controller: Controller, new_ws_data_fn: Callable[[dict[str, Any]], None]
+) -> None:
+    """Test that user messages add, update and remove the known client."""
+    clients_all = unifi_controller.clients_all
+    await clients_all.update()
+    assert len(clients_all.items()) == 0
+    clients_all.subscribe(mock_callback := Mock())
+
+    user = {
+        "_id": "6ad90e488de1f9181661a0a2",
+        "mac": "00:00:00:00:00:99",
+        "name": "Printer",
+        "oui": "",
+        "is_guest": False,
+        "is_wired": True,
+        "site_id": "6ad84db825e214e1282a8d87",
+    }
+    new_ws_data_fn({"meta": {"message": MessageKey.CLIENT_ADDED.value}, "data": [user]})
+    assert clients_all[user["mac"]].name == "Printer"
+
+    user["name"] = "Office printer"
+    new_ws_data_fn(
+        {"meta": {"message": MessageKey.CLIENT_UPDATED.value}, "data": [user]}
+    )
+    assert clients_all[user["mac"]].name == "Office printer"
+    assert len(unifi_controller.clients.items()) == 0
+
+    new_ws_data_fn(
+        {"meta": {"message": MessageKey.CLIENT_REMOVED.value}, "data": [user]}
+    )
+    assert len(clients_all.items()) == 0
+    assert [call.args for call in mock_callback.call_args_list] == [
+        (ItemEvent.ADDED, user["mac"]),
+        (ItemEvent.CHANGED, user["mac"]),
+        (ItemEvent.DELETED, user["mac"]),
+    ]
