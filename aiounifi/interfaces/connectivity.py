@@ -13,7 +13,6 @@ import aiohttp
 from aiohttp import client_exceptions
 import orjson
 import pyotp
-from yarl import URL
 
 from ..errors import (
     AiounifiException,
@@ -79,17 +78,19 @@ class Connectivity:
             ApplicationNotReady: If a standalone Network application is starting.
 
         """
-        self.is_unifi_os = False
         response, bytes_data = await self._request(
             "get", self.config.url, allow_redirects=False
         )
-        if response.status == HTTPStatus.OK:
-            if STANDALONE_PAGE_MARKER.search(bytes_data):
-                # A standalone application answers / with a redirect once started
-                raise ApplicationNotReady(
-                    f"Call {self.config.url} received the start-up page"
-                )
-            self.is_unifi_os = True
+        # Assign once, requests running meanwhile keep using the known path
+        is_unifi_os = response.status == HTTPStatus.OK
+        if is_unifi_os and STANDALONE_PAGE_MARKER.search(bytes_data):
+            self.is_unifi_os = False
+            # A standalone application answers / with a redirect once started
+            raise ApplicationNotReady(
+                f"Call {self.config.url} received the start-up page"
+            )
+        self.is_unifi_os = is_unifi_os
+        if is_unifi_os:
             self.config.session.cookie_jar.clear_domain(self.config.host)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
@@ -119,6 +120,7 @@ class Connectivity:
         if self._is_error_response(data):
             await self._handle_login_error(url, auth, data)
         else:
+            self._raise_on_error_status(response, data)
             self._update_login_headers(response)
             self.can_retry_login = True
             LOGGER.debug("Logged in to UniFi %s", url)
@@ -195,9 +197,30 @@ class Connectivity:
         if self._is_error_response(data):
             LOGGER.error("Login with 2FA failed '%s'", data)
             raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+        self._raise_on_error_status(response, data)
         self._update_login_headers(response)
         self.can_retry_login = True
         LOGGER.debug("Logged in to UniFi %s", url)
+
+    def _raise_on_error_status(
+        self, response: aiohttp.ClientResponse, data: TypedApiResponse
+    ) -> None:
+        """Raise if a login response without an error envelope failed anyway.
+
+        Args:
+            response (aiohttp.ClientResponse): The HTTP response object.
+            data (TypedApiResponse): The parsed response data.
+
+        Raises:
+            TwoFaTokenRequired: If MFA is still required after the MFA step.
+            ResponseError: For other error statuses.
+
+        """
+        if response.status == HTTP_STATUS_MFA_REQUIRED:
+            raise TwoFaTokenRequired("SSO MFA token was not accepted")
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            LOGGER.error("Login failed '%s'", data)
+            raise ResponseError(f"Login received {response.status}")
 
     def _is_json_response(self, response: aiohttp.ClientResponse) -> bool:
         """Check if the response has a JSON content type.
@@ -308,13 +331,14 @@ class Connectivity:
         if not mfa_cookie_str or "=" not in mfa_cookie_str:
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
-        cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
-        self.config.session.cookie_jar.update_cookies(
-            {cookie_name: cookie_val}, URL(url)
-        )
-
         token = pyotp.TOTP(totp_secret).now()
-        return await self._request("post", url, json={**auth, "token": token})
+        # Sent as a header, a cookie jar may drop cookies for IP address hosts
+        return await self._request(
+            "post",
+            url,
+            json={**auth, "token": token},
+            headers={"Cookie": mfa_cookie_str},
+        )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API, retrying login on failure.
@@ -375,6 +399,7 @@ class Connectivity:
         url: str,
         json: Mapping[str, Any] | None = None,
         allow_redirects: bool = True,
+        headers: Mapping[str, str] | None = None,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
         """Make a raw HTTP request to the API.
 
@@ -383,6 +408,7 @@ class Connectivity:
             url (str): The full request URL.
             json (Mapping[str, Any] | None): The JSON payload for the request, if any.
             allow_redirects (bool): Whether to allow redirects.
+            headers (Mapping[str, str] | None): Headers to send in addition.
 
         Returns:
             tuple[aiohttp.ClientResponse, bytes]: The response object and response body as bytes.
@@ -406,7 +432,7 @@ class Connectivity:
                 url,
                 json=json,
                 ssl=self.config.ssl_context,
-                headers=self.headers,
+                headers={**self.headers, **(headers or {})},
                 allow_redirects=allow_redirects,
             ) as res:
                 LOGGER.debug(

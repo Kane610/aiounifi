@@ -509,6 +509,48 @@ async def test_api_request_error_not_json(mock_aioresponse, unifi_controller):
         await unifi_controller.connectivity.request(ApiRequestV2("delete", "/test"))
 
 
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize("body", [b"null", b"1", b'"ok"'])
+async def test_api_request_bare_json_value(
+    mock_aioresponse, unifi_controller, api_request, path, body
+):
+    """Verify a JSON value that is no object or list raises ResponseError."""
+    mock_aioresponse.get(
+        f"https://host:8443{path}/test", body=body, content_type="application/json"
+    )
+    with pytest.raises(ResponseError, match="Unexpected response"):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
+async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controller):
+    """Verify a failed check does not move requests away from UniFi OS paths."""
+    unifi_controller.connectivity.is_unifi_os = True
+    mock_aioresponse.get("https://host:8443", exception=client_exceptions.ClientError)
+    with pytest.raises(RequestError):
+        await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is True
+
+
+async def test_unifios_login_error_status(mock_aioresponse, unifi_controller):
+    """Verify an error status without an error envelope fails the login."""
+    unifi_controller.connectivity.is_unifi_os = True
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        status=400,
+        payload={"code": "VALIDATION_ERROR", "message": "Invalid"},
+        content_type="application/json",
+    )
+    with pytest.raises(ResponseError, match="400"):
+        await unifi_controller.connectivity.login()
+    assert not unifi_controller.connectivity.can_retry_login
+
+
 async def test_api_request_json_charset(mock_aioresponse, unifi_controller):
     """Verify a JSON content type with parameters is decoded."""
     mock_aioresponse.get(
