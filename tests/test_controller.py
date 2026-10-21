@@ -570,7 +570,7 @@ async def test_api_request_bare_json_value(
     mock_aioresponse.get(
         f"https://host:8443{path}/test", body=body, content_type="application/json"
     )
-    with pytest.raises(ResponseError, match="Unexpected response"):
+    with pytest.raises(ResponseError, match="is not a JSON object"):
         await unifi_controller.connectivity.request(api_request("get", "/test"))
 
 
@@ -588,7 +588,7 @@ async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controlle
     [
         (
             {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "x"}},
-            "Login received 400",
+            "Login received 400: x$",
         ),
         (
             {

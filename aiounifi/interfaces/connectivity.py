@@ -50,22 +50,32 @@ STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNO
 MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
 
 
-def _error_detail(bytes_data: bytes) -> str:
-    """Return the message of a JSON error body for an exception message.
+def _error_detail(body: bytes | Mapping[str, Any]) -> str:
+    """Return the server's error message as a suffix for an exception message.
 
     The raw body is left out, a proxy could echo the request with credentials.
+
+    Args:
+        body (bytes | Mapping[str, Any]): The response body, raw or parsed.
+
+    Returns:
+        str: ": <message>" for a JSON body with an error message, else "".
+
     """
-    try:
-        data = orjson.loads(bytes_data)
-    except orjson.JSONDecodeError:
-        return ""
+    data: Any = body
+    if isinstance(body, bytes):
+        try:
+            data = orjson.loads(body)
+        except orjson.JSONDecodeError:
+            return ""
     if not isinstance(data, dict):
         return ""
     for item in (data, data.get("meta"), data.get("error")):
         if not isinstance(item, dict):
             continue
         for key in ("message", "msg"):
-            if isinstance(msg := item.get(key), str) and (msg := " ".join(msg.split())):
+            msg = item.get(key)
+            if isinstance(msg, str) and (msg := " ".join(msg.split())):
                 return f": {msg[:100]}"
     return ""
 
@@ -239,7 +249,9 @@ class Connectivity:
             raise TwoFaTokenRequired("MFA token was not accepted")
         if response.status >= HTTPStatus.BAD_REQUEST:
             LOGGER.debug("Login failed '%s'", data)
-            raise ResponseError(f"Login received {response.status}")
+            raise ResponseError(
+                f"Login received {response.status}{_error_detail(data)}"
+            )
 
     def _raise_not_json(
         self, url: str, response: aiohttp.ClientResponse, bytes_data: bytes
@@ -551,6 +563,7 @@ class Connectivity:
 
                 if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
                     body = await res.read()
+                    LOGGER.debug("data (from %s) %r", url, body[:200])
                     raise RequestError(
                         f"Call {url} received {res.status}{_error_detail(body)}"
                     )

@@ -49,7 +49,7 @@ class ApiRequest:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         data: TypedApiResponse = orjson.loads(raw)
         if not isinstance(data, dict):
-            raise ResponseError(f"Unexpected response {raw[:200]!r}")
+            raise ResponseError("Response is not a JSON object")
 
         if "meta" in data and data["meta"]["rc"] == "error":
             raise ERRORS.get(data["meta"]["msg"], AiounifiException)(data)
@@ -71,7 +71,7 @@ class ApiRequestV2(ApiRequest):
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         data = orjson.loads(raw)
         if not isinstance(data, dict | list):
-            raise ResponseError(f"Unexpected response {raw[:200]!r}")
+            raise ResponseError("Response is not a JSON object or list")
 
         if isinstance(data, dict) and "errorCode" in data:
             raise ERRORS.get(data["message"], AiounifiException)(data)
