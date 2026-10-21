@@ -95,6 +95,7 @@ class Connectivity:
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
+        self._login_count = 0
         self.ws_message_received: datetime.datetime | None = None
 
         if config.ssl_context:
@@ -114,7 +115,7 @@ class Connectivity:
             STANDALONE_PAGE_MARKER.search(bytes_data)
         )
         if self.is_unifi_os:
-            self.config.session.cookie_jar.clear_domain(self.config.host)
+            self.config.session.cookie_jar.clear_domain(self._cookie_domain)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
     async def login(self) -> None:
@@ -150,9 +151,7 @@ class Connectivity:
             await self._handle_login_error(url, auth, data)
         else:
             self._raise_on_error_status(response, data)
-            self._update_login_headers(response)
-            self.can_retry_login = True
-            LOGGER.debug("Logged in to UniFi %s", url)
+            self._logged_in(url, response)
 
     async def _handle_sso_mfa(
         self, url: str, auth: dict[str, Any], mfa_response_data: bytes
@@ -227,9 +226,7 @@ class Connectivity:
             LOGGER.error("Login with 2FA failed: %s", data["meta"].get("msg"))
             raise self._login_error(data)
         self._raise_on_error_status(response, data)
-        self._update_login_headers(response)
-        self.can_retry_login = True
-        LOGGER.debug("Logged in to UniFi %s", url)
+        self._logged_in(url, response)
 
     def _raise_on_error_status(
         self, response: aiohttp.ClientResponse, data: TypedApiResponse
@@ -340,6 +337,24 @@ class Connectivity:
             return AiounifiException
         return ERRORS.get(msg, AiounifiException)
 
+    def _logged_in(self, url: str, response: aiohttp.ClientResponse) -> None:
+        """Store the session of a successful login.
+
+        Args:
+            url (str): The login URL.
+            response (aiohttp.ClientResponse): The HTTP response object.
+
+        """
+        self._update_login_headers(response)
+        self.can_retry_login = True
+        self._login_count += 1
+        LOGGER.debug("Logged in to UniFi %s", url)
+
+    @property
+    def _cookie_domain(self) -> str:
+        """Return the host as cookie jars store it."""
+        return self.config.host.lower().rstrip(".")
+
     def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
         """Update login headers from the response after successful authentication.
 
@@ -412,7 +427,7 @@ class Connectivity:
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
         # A stale value in the jar would take precedence over the header
-        host = self.config.host
+        host = self._cookie_domain
         self.config.session.cookie_jar.clear(
             lambda morsel: (
                 morsel.key == match.group(1)
@@ -452,13 +467,16 @@ class Connectivity:
         self.can_retry_login = False
         if self.is_unifi_os:
             # A session cookie sent without its CSRF token fails the login
-            self.config.session.cookie_jar.clear_domain(self.config.host)
+            self.config.session.cookie_jar.clear_domain(self._cookie_domain)
         await self.login()
+        login_count = self._login_count
         try:
             return await self._api_request(api_request)
         except LoginRequired:
-            # Logging in did not help, leave it to the caller to log in again
-            self.can_retry_login = False
+            # Logging in did not help, leave it to the caller to log in again,
+            # unless someone logged in meanwhile
+            if self._login_count == login_count:
+                self.can_retry_login = False
             raise
 
     async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:

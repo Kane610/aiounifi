@@ -4,8 +4,10 @@ pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller
 """
 
 import ssl
+from typing import Any
 
 from aiohttp import ClientSession, client_exceptions, web
+from aioresponses import CallbackResult
 import pytest
 import trustme
 from yarl import URL
@@ -221,6 +223,47 @@ async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
         if method.upper() == "POST"
     ]
     assert len(logins) == 1
+
+
+async def test_relogin_meanwhile_keeps_retry(mock_aioresponse, unifi_controller):
+    """Verify a login by someone else during the retry keeps retries enabled."""
+    connectivity = unifi_controller.connectivity
+    connectivity.can_retry_login = True
+    url = "https://host:8443/api/s/default/test"
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        repeat=True,
+    )
+
+    async def login_meanwhile(*args: Any, **kwargs: Any) -> CallbackResult:
+        await connectivity.login()
+        return CallbackResult(status=401)
+
+    mock_aioresponse.get(url, status=401)
+    mock_aioresponse.get(url, callback=login_meanwhile)
+
+    with pytest.raises(LoginRequired):
+        await connectivity.request(ApiRequest("get", "/test"))
+    assert connectivity.can_retry_login
+
+
+@pytest.mark.parametrize("host", ["HOST", "host."])
+async def test_check_unifi_os_clears_cookies_of_host_as_typed(
+    mock_aioresponse, unifi_controller, host
+):
+    """Verify the jar is cleared for the console however its host is written."""
+    jar = unifi_controller.connectivity.config.session.cookie_jar
+    jar.update_cookies({"TOKEN": "old"}, URL("https://host:8443"))
+    unifi_controller.connectivity.config.host = host
+    mock_aioresponse.get(
+        f"https://{host}:8443", body=UNIFI_OS_PAGE, content_type="text/html"
+    )
+
+    await unifi_controller.connectivity.check_unifi_os()
+
+    assert unifi_controller.connectivity.is_unifi_os
+    assert not list(jar)
 
 
 async def test_unifios_relogin_clears_session_cookie(
