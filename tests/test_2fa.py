@@ -436,18 +436,21 @@ class TestSso2fa:
             content_type="application/json",
         )
 
-        unifi_controller_2fa.connectivity.config.session.cookie_jar.update_cookies(
-            {"UBIC_2FA": "stale"}, URL("https://host:8443")
-        )
+        jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
+        jar.update_cookies({"UBIC_2FA": "stale"}, URL("https://host:8443"))
+        jar.update_cookies({"UBIC_2FA": "other"}, URL("https://other.example"))
 
         await unifi_controller_2fa.connectivity.login()
 
         (calls,) = mock_aioresponse.requests.values()
         assert "Cookie" not in calls[0].kwargs["headers"]
         assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc123def456"
-        # A stale value in the jar would take precedence over the header
+        # A stale value in the jar would take precedence over the header,
+        # cookies of other hosts are kept
         jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
-        assert "UBIC_2FA" not in {cookie.key for cookie in jar}
+        assert {(cookie.key, cookie["domain"]) for cookie in jar} == {
+            ("UBIC_2FA", "other.example")
+        }
 
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa

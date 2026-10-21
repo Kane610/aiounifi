@@ -412,8 +412,12 @@ class Connectivity:
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
         # A stale value in the jar would take precedence over the header
+        host = self.config.host
         self.config.session.cookie_jar.clear(
-            lambda morsel: morsel.key == match.group(1)
+            lambda morsel: (
+                morsel.key == match.group(1)
+                and (host == morsel["domain"] or host.endswith(f".{morsel['domain']}"))
+            )
         )
 
         token = pyotp.TOTP(totp_secret).now()
@@ -444,10 +448,18 @@ class Connectivity:
         except LoginRequired:
             if not self.can_retry_login:
                 raise
-            # Session likely expired, try again once
-            self.can_retry_login = False
-            await self.login()
+        # Session likely expired, try again once
+        self.can_retry_login = False
+        if self.is_unifi_os:
+            # A session cookie sent without its CSRF token fails the login
+            self.config.session.cookie_jar.clear_domain(self.config.host)
+        await self.login()
+        try:
             return await self._api_request(api_request)
+        except LoginRequired:
+            # Logging in did not help, leave it to the caller to log in again
+            self.can_retry_login = False
+            raise
 
     async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API.

@@ -8,6 +8,7 @@ import ssl
 from aiohttp import ClientSession, client_exceptions, web
 import pytest
 import trustme
+from yarl import URL
 
 from aiounifi import (
     AiounifiException,
@@ -196,7 +197,10 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
 
 
 async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
-    """Verify a request that keeps getting 401 logs in again only once."""
+    """Verify a request that keeps getting 401 logs in again only once.
+
+    Later requests do not log in again until the caller does.
+    """
     unifi_controller.connectivity.can_retry_login = True
     url = "https://host:8443/api/s/default/test"
     mock_aioresponse.get(url, status=401, repeat=True)
@@ -206,8 +210,10 @@ async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
         repeat=True,
     )
 
-    with pytest.raises(LoginRequired):
-        await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
+    for _ in range(2):
+        with pytest.raises(LoginRequired):
+            await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
+    assert not unifi_controller.connectivity.can_retry_login
 
     (logins,) = [
         calls
@@ -215,6 +221,32 @@ async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
         if method.upper() == "POST"
     ]
     assert len(logins) == 1
+
+
+async def test_unifios_relogin_clears_session_cookie(
+    mock_aioresponse, unifi_controller
+):
+    """Verify a UniFi OS login retry does not send the old session cookie."""
+    connectivity = unifi_controller.connectivity
+    connectivity.is_unifi_os = True
+    connectivity.can_retry_login = True
+    jar = connectivity.config.session.cookie_jar
+    jar.update_cookies({"TOKEN": "old"}, URL("https://host:8443"))
+    jar.update_cookies({"TOKEN": "other"}, URL("https://other.example"))
+    url = "https://host:8443/proxy/network/api/s/default/test"
+    mock_aioresponse.get(url, status=401)
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
+    )
+    mock_aioresponse.get(url, payload=EMPTY_RESPONSE)
+
+    await connectivity.request(ApiRequest("get", "/test"))
+
+    assert {(cookie["domain"], cookie.value) for cookie in jar} == {
+        ("other.example", "other")
+    }
 
 
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
