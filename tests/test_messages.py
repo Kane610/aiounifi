@@ -69,6 +69,37 @@ async def test_unsupported_message_key(
     assert "secret" not in caplog.text
 
 
+@pytest.mark.parametrize(
+    "key",
+    [
+        "account:add",
+        "account:sync",
+        "account:delete",
+        "dhcpoption:add",
+        "dhcpoption:delete",
+        "firewallgroup:delete",
+        "firewallrule:delete",
+        "hotspotop:add",
+        "hotspotop:delete",
+        "portconf:add",
+        "portconf:sync",
+        "portconf:delete",
+        "radiusprofile:add",
+        "radiusprofile:sync",
+        "radiusprofile:delete",
+        "routing:add",
+        "routing:sync",
+        "routing:delete",
+        "user:add",
+        "usergroup:add",
+        "usergroup:delete",
+    ],
+)
+async def test_observed_message_keys_are_supported(key: str) -> None:
+    """Verify message keys sent by a Network application are known."""
+    assert MessageKey(key) is not MessageKey.UNKNOWN
+
+
 @patch("aiounifi.interfaces.messages.LOGGER")
 async def test_message_handler_bad_json_data(logger_mock):
     """Verify message handler catches json error."""
