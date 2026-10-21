@@ -11,7 +11,8 @@ class Wlans(APIHandler[Wlan]):
 
     obj_id_key = "_id"
     item_cls = Wlan
-    process_messages = (MessageKey.WLAN_CONF_UPDATED,)
+    process_messages = (MessageKey.WLAN_CONF_ADDED, MessageKey.WLAN_CONF_UPDATED)
+    remove_messages = (MessageKey.WLAN_CONF_DELETED,)
     api_request = WlanListRequest.create()
 
     async def enable(self, wlan: Wlan) -> TypedApiResponse:

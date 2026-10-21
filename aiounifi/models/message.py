@@ -23,6 +23,7 @@ class MessageKey(enum.Enum):
     EVENT = "events"
 
     CLIENT = "sta:sync"
+    CLIENT_ADDED = "user:add"
     CLIENT_REMOVED = "user:delete"
     CLIENT_UPDATED = "user:sync"
     DEVICE = "device:sync"
