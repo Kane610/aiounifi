@@ -51,8 +51,9 @@ HTTP_STATUS_MFA_REQUIRED = 499
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
 # Shortest time between two logins that requests make on their own
 RELOGIN_INTERVAL = 60
-# Each login attempt extends a login rate limit, wait longer after one
-RELOGIN_RATE_LIMIT_PAUSE = 300
+# Wait longer after a login rate limit, which each attempt extends, and after
+# a 403, which UniFi OS answers for wrong credentials and temporary failures
+RELOGIN_PAUSE = 300
 # Name and value of the cookie the SSO MFA challenge hands back
 MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
 
@@ -459,7 +460,7 @@ class Connectivity:
 
         Requests log in on their own at most once per RELOGIN_INTERVAL, so an
         API that keeps answering 401 does not cause a login on every request.
-        After a login rate limit they wait RELOGIN_RATE_LIMIT_PAUSE, and after
+        After a login rate limit or a 403 they wait RELOGIN_PAUSE, and after
         rejected credentials they wait for the next successful login.
 
         Args:
@@ -491,10 +492,10 @@ class Connectivity:
             self.config.session.cookie_jar.clear_domain(self._cookie_domain)
         try:
             await self.login()
-        except AuthenticationRateLimitError:
-            self._last_relogin = now + RELOGIN_RATE_LIMIT_PAUSE - RELOGIN_INTERVAL
+        except (AuthenticationRateLimitError, Forbidden):
+            self._last_relogin = now + RELOGIN_PAUSE - RELOGIN_INTERVAL
             raise
-        except (Forbidden, TwoFaTokenRequired, Unauthorized):
+        except (TwoFaTokenRequired, Unauthorized):
             # Rejected credentials, leave the next login to the caller
             self.can_retry_login = False
             raise

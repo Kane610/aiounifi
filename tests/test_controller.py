@@ -242,24 +242,38 @@ async def test_check_unifi_os_clears_cookies_of_host_as_typed(
 
 
 @pytest.mark.parametrize(
-    ("login_response", "error", "next_login"),
+    ("login_response", "error", "logins_after"),
     [
         (
             {"status": 429, "payload": {"code": "AUTHENTICATION_FAILED_LIMIT_REACHED"}},
             AuthenticationRateLimitError,
-            1300,
+            (1, 1, 2),
         ),
+        ({"status": 403}, Forbidden, (1, 1, 2)),
         (
             {"payload": {"meta": {"rc": "error", "msg": "api.err.Invalid"}}},
             Unauthorized,
-            None,
+            (1, 1, 1),
         ),
+        (
+            {
+                "payload": {
+                    "meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}
+                }
+            },
+            TwoFaTokenRequired,
+            (1, 1, 1),
+        ),
+        ({"status": 401}, LoginRequired, (2, 3, 3)),
     ],
 )
 async def test_relogin_after_failed_login(
-    mock_aioresponse, unifi_controller, login_response, error, next_login
+    mock_aioresponse, unifi_controller, login_response, error, logins_after
 ):
-    """Verify requests wait longer after a rate limit and stop on rejection."""
+    """Verify when requests log in again after their login failed.
+
+    Logins are counted after requests at 60 s, 299 s and 300 s.
+    """
     connectivity = unifi_controller.connectivity
     connectivity.can_retry_login = True
     mock_aioresponse.get(
@@ -278,11 +292,11 @@ async def test_relogin_after_failed_login(
         monotonic.return_value = 1000
         with pytest.raises(error):
             await connectivity.request(ApiRequest("get", "/test"))
-        for now in (1060, 1299, 1300):
+        for now, expected in zip((1060, 1299, 1300), logins_after, strict=True):
             monotonic.return_value = now
             with pytest.raises((error, LoginRequired)):
                 await connectivity.request(ApiRequest("get", "/test"))
-            assert logins() == 1 + (next_login is not None and now >= next_login)
+            assert logins() == expected
 
 
 async def test_unifios_relogin_clears_session_cookie(
