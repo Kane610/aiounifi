@@ -7,7 +7,7 @@ import datetime
 from http import HTTPStatus, cookies
 import logging
 import re
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -81,7 +81,7 @@ class Connectivity:
         response, bytes_data = await self._request(
             "get", self.config.url, allow_redirects=False
         )
-        # Assign once, requests running meanwhile keep using the known path
+        # Assign only after the response, requests meanwhile keep the known path
         is_unifi_os = response.status == HTTPStatus.OK
         if is_unifi_os and STANDALONE_PAGE_MARKER.search(bytes_data):
             self.is_unifi_os = False
@@ -98,7 +98,14 @@ class Connectivity:
         """Log in to the UniFi controller.
 
         Handles SSO MFA, 2FA, and error responses. Updates headers on success.
-        Raises RequestError or other custom exceptions on failure.
+
+        Raises:
+            ApplicationNotReady: If the host answers without JSON while starting.
+            TwoFaTokenRequired: If MFA is required and cannot be completed.
+            ResponseError: If the login fails with an error status.
+            RequestError: For network errors or invalid JSON.
+            AiounifiException: For other login errors.
+
         """
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
@@ -113,8 +120,7 @@ class Connectivity:
             response, bytes_data = await self._handle_sso_mfa(url, auth, bytes_data)
 
         if not self._is_json_response(response):
-            LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
-            raise ApplicationNotReady("Login Failed: Host starting up")
+            self._raise_not_json(url, response, bytes_data)
 
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
@@ -185,14 +191,15 @@ class Connectivity:
 
         Raises:
             ApplicationNotReady: If the 2FA retry response is not JSON.
+            TwoFaTokenRequired: If MFA is still required.
+            ResponseError: If the 2FA retry fails with an error status.
             RequestError: If the 2FA retry response is not valid JSON.
             AiounifiException: If the 2FA login fails due to authentication error.
 
         """
         response, bytes_data = await self._login_local_2fa(url, auth, totp_secret)
         if not self._is_json_response(response):
-            LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
-            raise ApplicationNotReady("Login Failed: Host starting up")
+            self._raise_not_json(url, response, bytes_data)
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
             LOGGER.error("Login with 2FA failed '%s'", data)
@@ -222,6 +229,30 @@ class Connectivity:
             LOGGER.error("Login failed '%s'", data)
             raise ResponseError(f"Login received {response.status}")
 
+    def _raise_not_json(
+        self, url: str, response: aiohttp.ClientResponse, bytes_data: bytes
+    ) -> NoReturn:
+        """Raise for a response that is not JSON.
+
+        Args:
+            url (str): The request URL.
+            response (aiohttp.ClientResponse): The HTTP response object.
+            bytes_data (bytes): The response body as bytes.
+
+        Raises:
+            ResponseError: If the response has an error status.
+            ApplicationNotReady: Otherwise, a starting application answers so.
+
+        """
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            raise ResponseError(
+                f"Call {url} received {response.status}: {bytes_data[:200]!r}"
+            )
+        LOGGER.debug("Response from %s is not JSON: %r", url, bytes_data[:200])
+        raise ApplicationNotReady(
+            f"Call {url} received {response.content_type}, not JSON"
+        )
+
     def _is_json_response(self, response: aiohttp.ClientResponse) -> bool:
         """Check if the response has a JSON content type.
 
@@ -245,13 +276,17 @@ class Connectivity:
 
         Raises:
             RequestError: If the data is not valid JSON.
+            ResponseError: If the data is not a JSON object.
 
         """
         try:
-            return cast("TypedApiResponse", orjson.loads(bytes_data))
+            data = orjson.loads(bytes_data)
         except orjson.JSONDecodeError as err:
             LOGGER.error("Failed to parse JSON: %s", err)
             raise RequestError("Response is not valid JSON") from err
+        if not isinstance(data, dict):
+            raise ResponseError(f"Unexpected response {bytes_data[:200]!r}")
+        return cast("TypedApiResponse", data)
 
     def _is_error_response(self, data: TypedApiResponse) -> bool:
         """Check if the response data indicates an error.
@@ -352,7 +387,8 @@ class Connectivity:
         Raises:
             LoginRequired: If login is required and cannot be retried.
             ApplicationNotReady: If a successful response is not JSON.
-            ResponseError: If an error response is not JSON.
+            ResponseError: For error statuses without a known error, or
+                JSON that is not an object or list.
             RequestError: For network or response errors, or invalid JSON.
 
         """
@@ -366,22 +402,20 @@ class Connectivity:
                 api_request.method, url, api_request.data
             )
 
+            if bytes_data and not self._is_json_response(response):
+                self._raise_not_json(url, response, bytes_data)
             if bytes_data:
-                if not self._is_json_response(response):
-                    if response.status >= HTTPStatus.BAD_REQUEST:
-                        raise ResponseError(
-                            f"Call {url} received {response.status} "
-                            f"{response.content_type}"
-                        )
-                    raise ApplicationNotReady(
-                        f"Call {url} received {response.content_type}, not JSON"
-                    )
                 try:
+                    # Raises the known error of an error envelope
                     data = api_request.decode(bytes_data)
                 except orjson.JSONDecodeError as err:
                     raise RequestError(
                         f"Call {url} received invalid JSON: {err}"
                     ) from err
+            if response.status >= HTTPStatus.BAD_REQUEST:
+                raise ResponseError(
+                    f"Call {url} received {response.status}: {bytes_data[:200]!r}"
+                )
 
         except LoginRequired:
             if not self.can_retry_login:

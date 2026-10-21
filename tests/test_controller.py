@@ -497,16 +497,32 @@ async def test_api_request_not_json(
     assert type(exc_info.value) is error
 
 
-async def test_api_request_error_not_json(mock_aioresponse, unifi_controller):
-    """Verify an error response without JSON is not taken for a starting app."""
-    mock_aioresponse.delete(
-        "https://host:8443/v2/api/site/default/test",
-        status=405,
-        body="<html><body>Method Not Allowed</body></html>",
-        content_type="text/html",
-    )
-    with pytest.raises(ResponseError, match="405"):
-        await unifi_controller.connectivity.request(ApiRequestV2("delete", "/test"))
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    "response",
+    [
+        {
+            "status": 405,
+            "body": "<html><body>Method Not Allowed</body></html>",
+            "content_type": "text/html",
+        },
+        {"status": 400, "body": b"", "content_type": "application/octet-stream"},
+        {"status": 409, "payload": {"code": "CONFLICT"}},
+    ],
+)
+async def test_api_request_error_status(
+    mock_aioresponse, unifi_controller, api_request, path, response
+):
+    """Verify an error status without a known error is not taken for data."""
+    mock_aioresponse.delete(f"https://host:8443{path}/test", **response)
+    with pytest.raises(ResponseError, match=f"received {response['status']}"):
+        await unifi_controller.connectivity.request(api_request("delete", "/test"))
 
 
 @pytest.mark.parametrize(
@@ -537,16 +553,23 @@ async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controlle
     assert unifi_controller.connectivity.is_unifi_os is True
 
 
-async def test_unifios_login_error_status(mock_aioresponse, unifi_controller):
-    """Verify an error status without an error envelope fails the login."""
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "Invalid"}},
+        {
+            "status": 405,
+            "body": "<html>Not Allowed</html>",
+            "content_type": "text/html",
+        },
+        {"status": 200, "body": b"null", "content_type": "application/json"},
+    ],
+)
+async def test_unifios_login_error_status(mock_aioresponse, unifi_controller, response):
+    """Verify a reply without an error envelope or session fails the login."""
     unifi_controller.connectivity.is_unifi_os = True
-    mock_aioresponse.post(
-        "https://host:8443/api/auth/login",
-        status=400,
-        payload={"code": "VALIDATION_ERROR", "message": "Invalid"},
-        content_type="application/json",
-    )
-    with pytest.raises(ResponseError, match="400"):
+    mock_aioresponse.post("https://host:8443/api/auth/login", **response)
+    with pytest.raises(ResponseError):
         await unifi_controller.connectivity.login()
     assert not unifi_controller.connectivity.can_retry_login
 

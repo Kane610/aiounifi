@@ -143,6 +143,26 @@ class TestLocal2fa:
         with pytest.raises(Unauthorized):
             await unifi_controller_2fa.connectivity.login()
 
+    async def test_local_2fa_login_retry_error_status(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test a 2FA retry with an error status is not taken for success."""
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload=LOCAL_2FA_ERROR_RESPONSE,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            status=400,
+            payload={"code": "VALIDATION_ERROR"},
+            content_type="application/json",
+        )
+
+        with pytest.raises(ResponseError, match="400"):
+            await unifi_controller_2fa.connectivity.login()
+        assert not unifi_controller_2fa.connectivity.can_retry_login
+
     async def test_local_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa
     ):
@@ -199,7 +219,7 @@ class TestLocal2fa:
             content_type="text/html",
         )
 
-        with pytest.raises(RequestError, match="Host starting up"):
+        with pytest.raises(RequestError, match="not JSON"):
             await unifi_controller_2fa.connectivity.login()
 
 
