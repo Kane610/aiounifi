@@ -7,12 +7,14 @@ import datetime
 from http import HTTPStatus, cookies
 import logging
 import re
+from time import monotonic
 from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import aiohttp
 from aiohttp import client_exceptions
 import orjson
 import pyotp
+from yarl import URL
 
 from ..errors import (
     AiounifiException,
@@ -46,6 +48,8 @@ HTTP_STATUS_MFA_REQUIRED = 499
 # the status page it answers every path with while it starts. A page without
 # the marker is taken for UniFi OS, as before.
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
+# Shortest time between two logins that requests make on their own
+RELOGIN_INTERVAL = 60
 # Name and value of the cookie the SSO MFA challenge hands back
 MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
 
@@ -68,10 +72,10 @@ def _error_detail(body: bytes | Mapping[str, Any]) -> str:
             data = orjson.loads(body)
         except orjson.JSONDecodeError:
             return ""
-    if not isinstance(data, dict):
+    if not isinstance(data, Mapping):
         return ""
     for item in (data, data.get("meta"), data.get("error")):
-        if not isinstance(item, dict):
+        if not isinstance(item, Mapping):
             continue
         for key in ("message", "msg"):
             msg = item.get(key)
@@ -95,7 +99,7 @@ class Connectivity:
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
-        self._login_count = 0
+        self._last_relogin: float | None = None
         self.ws_message_received: datetime.datetime | None = None
 
         if config.ssl_context:
@@ -347,13 +351,12 @@ class Connectivity:
         """
         self._update_login_headers(response)
         self.can_retry_login = True
-        self._login_count += 1
         LOGGER.debug("Logged in to UniFi %s", url)
 
     @property
     def _cookie_domain(self) -> str:
         """Return the host as cookie jars store it."""
-        return self.config.host.lower().rstrip(".")
+        return URL(self.config.url).raw_host or self.config.host
 
     def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
         """Update login headers from the response after successful authentication.
@@ -431,7 +434,11 @@ class Connectivity:
         self.config.session.cookie_jar.clear(
             lambda morsel: (
                 morsel.key == match.group(1)
-                and (host == morsel["domain"] or host.endswith(f".{morsel['domain']}"))
+                and (
+                    not morsel["domain"]
+                    or host == morsel["domain"]
+                    or host.endswith(f".{morsel['domain']}")
+                )
             )
         )
 
@@ -445,7 +452,10 @@ class Connectivity:
         )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
-        """Make a request to the API, logging in again once on an expired session.
+        """Make a request to the API, logging in again on an expired session.
+
+        Requests log in on their own at most once per RELOGIN_INTERVAL, so an
+        API that keeps answering 401 does not cause a login on every request.
 
         Args:
             api_request (ApiRequest): The API request object containing method, path, and data.
@@ -454,30 +464,28 @@ class Connectivity:
             TypedApiResponse: The parsed response data from the API.
 
         Raises:
-            LoginRequired: If login is required and cannot be retried.
-            AiounifiException: For the errors of the request, see _api_request.
+            LoginRequired: If the session expired and logging in again is not
+                allowed yet, or the request still got 401 after logging in.
+            AiounifiException: For the errors of login and the request, see
+                login and _api_request.
 
         """
         try:
             return await self._api_request(api_request)
         except LoginRequired:
-            if not self.can_retry_login:
+            now = monotonic()
+            if not self.can_retry_login or (
+                self._last_relogin is not None
+                and now - self._last_relogin < RELOGIN_INTERVAL
+            ):
                 raise
-        # Session likely expired, try again once
-        self.can_retry_login = False
+            self._last_relogin = now
+        # Session likely expired, log in again
         if self.is_unifi_os:
             # A session cookie sent without its CSRF token fails the login
             self.config.session.cookie_jar.clear_domain(self._cookie_domain)
         await self.login()
-        login_count = self._login_count
-        try:
-            return await self._api_request(api_request)
-        except LoginRequired:
-            # Logging in did not help, leave it to the caller to log in again,
-            # unless someone logged in meanwhile
-            if self._login_count == login_count:
-                self.can_retry_login = False
-            raise
+        return await self._api_request(api_request)
 
     async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:
         """Make a request to the API.

@@ -4,10 +4,9 @@ pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller
 """
 
 import ssl
-from typing import Any
+from unittest.mock import patch
 
 from aiohttp import ClientSession, client_exceptions, web
-from aioresponses import CallbackResult
 import pytest
 import trustme
 from yarl import URL
@@ -198,11 +197,8 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
     await unifi_controller.devices.update()
 
 
-async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
-    """Verify a request that keeps getting 401 logs in again only once.
-
-    Later requests do not log in again until the caller does.
-    """
+async def test_relogin_once_per_interval(mock_aioresponse, unifi_controller):
+    """Verify requests that keep getting 401 log in again once per interval."""
     unifi_controller.connectivity.can_retry_login = True
     url = "https://host:8443/api/s/default/test"
     mock_aioresponse.get(url, status=401, repeat=True)
@@ -212,40 +208,19 @@ async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
         repeat=True,
     )
 
-    for _ in range(2):
-        with pytest.raises(LoginRequired):
-            await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
-    assert not unifi_controller.connectivity.can_retry_login
+    def logins() -> int:
+        return sum(
+            len(calls)
+            for (method, _), calls in mock_aioresponse.requests.items()
+            if method.upper() == "POST"
+        )
 
-    (logins,) = [
-        calls
-        for (method, _), calls in mock_aioresponse.requests.items()
-        if method.upper() == "POST"
-    ]
-    assert len(logins) == 1
-
-
-async def test_relogin_meanwhile_keeps_retry(mock_aioresponse, unifi_controller):
-    """Verify a login by someone else during the retry keeps retries enabled."""
-    connectivity = unifi_controller.connectivity
-    connectivity.can_retry_login = True
-    url = "https://host:8443/api/s/default/test"
-    mock_aioresponse.post(
-        "https://host:8443/api/login",
-        payload={"meta": {"rc": "ok"}, "data": []},
-        repeat=True,
-    )
-
-    async def login_meanwhile(*args: Any, **kwargs: Any) -> CallbackResult:
-        await connectivity.login()
-        return CallbackResult(status=401)
-
-    mock_aioresponse.get(url, status=401)
-    mock_aioresponse.get(url, callback=login_meanwhile)
-
-    with pytest.raises(LoginRequired):
-        await connectivity.request(ApiRequest("get", "/test"))
-    assert connectivity.can_retry_login
+    with patch("aiounifi.interfaces.connectivity.monotonic") as monotonic:
+        for now, expected_logins in ((1000, 1), (1059, 1), (1060, 2)):
+            monotonic.return_value = now
+            with pytest.raises(LoginRequired):
+                await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
+            assert logins() == expected_logins
 
 
 @pytest.mark.parametrize("host", ["HOST", "host."])
@@ -254,7 +229,7 @@ async def test_check_unifi_os_clears_cookies_of_host_as_typed(
 ):
     """Verify the jar is cleared for the console however its host is written."""
     jar = unifi_controller.connectivity.config.session.cookie_jar
-    jar.update_cookies({"TOKEN": "old"}, URL("https://host:8443"))
+    jar.update_cookies({"TOKEN": "old"}, URL(f"https://{host}:8443"))
     unifi_controller.connectivity.config.host = host
     mock_aioresponse.get(
         f"https://{host}:8443", body=UNIFI_OS_PAGE, content_type="text/html"
@@ -278,15 +253,20 @@ async def test_unifios_relogin_clears_session_cookie(
     jar.update_cookies({"TOKEN": "other"}, URL("https://other.example"))
     url = "https://host:8443/proxy/network/api/s/default/test"
     mock_aioresponse.get(url, status=401)
+    sent_cookies = []
     mock_aioresponse.post(
         "https://host:8443/api/auth/login",
         payload=LOGIN_UNIFIOS_JSON_RESPONSE,
         headers={"x-csrf-token": "123"},
+        callback=lambda *args, **kwargs: sent_cookies.append(
+            dict(jar.filter_cookies(URL("https://host:8443")))
+        ),
     )
     mock_aioresponse.get(url, payload=EMPTY_RESPONSE)
 
     await connectivity.request(ApiRequest("get", "/test"))
 
+    assert sent_cookies == [{}]
     assert {(cookie["domain"], cookie.value) for cookie in jar} == {
         ("other.example", "other")
     }

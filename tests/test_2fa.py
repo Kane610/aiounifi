@@ -452,6 +452,38 @@ class TestSso2fa:
             ("UBIC_2FA", "other.example")
         }
 
+    @pytest.mark.parametrize(
+        "stale_url",
+        [URL("https://udm.example.com"), URL("https://example.com"), URL()],
+    )
+    async def test_sso_2fa_removes_stale_cookie(
+        self, mock_aioresponse, unifi_controller_2fa, stale_url
+    ):
+        """Test a stale MFA cookie the console would get is removed."""
+        connectivity = unifi_controller_2fa.connectivity
+        connectivity.config.host = "udm.example.com"
+        connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://udm.example.com:8443/api/auth/login",
+            payload=SSO_MFA_RESPONSE,
+            status=499,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://udm.example.com:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            content_type="application/json",
+        )
+        jar = connectivity.config.session.cookie_jar
+        jar.update_cookies({"UBIC_2FA": "stale"}, stale_url)
+        jar.update_cookies({"UBIC_2FA": "other"}, URL("https://other.example"))
+
+        await connectivity.login()
+
+        assert {(cookie.key, cookie["domain"]) for cookie in jar} == {
+            ("UBIC_2FA", "other.example")
+        }
+
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa
     ):
