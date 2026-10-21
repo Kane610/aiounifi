@@ -3,6 +3,7 @@
 pytest --cov-report term-missing --cov=aiounifi.interfaces.connectivity tests/test_2fa.py
 """
 
+from http import cookies
 from unittest.mock import Mock, patch
 
 import aiohttp
@@ -297,6 +298,9 @@ class TestSso2fa:
             [],
             {"data": {"mfaCookie": 1}},
             {"data": {"mfaCookie": "UBIC_2FA=abc\r\nX-Injected: 1"}},
+            {"data": {"mfaCookie": "=abc"}},
+            {"data": {"mfaCookie": "a b=c"}},
+            {"data": {"mfaCookie": "a=1; b=2"}},
         ],
     )
     async def test_sso_2fa_invalid_challenge(
@@ -312,6 +316,22 @@ class TestSso2fa:
         )
 
         with pytest.raises(RequestError, match="missing valid mfaCookie"):
+            await unifi_controller_2fa.connectivity.login()
+
+    async def test_sso_2fa_cookie_error(self, mock_aioresponse, unifi_controller_2fa):
+        """Test a cookie the parser rejects raises RequestError."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=SSO_MFA_RESPONSE,
+            status=499,
+            content_type="application/json",
+        )
+
+        with (
+            patch("http.cookies.SimpleCookie.load", side_effect=cookies.CookieError),
+            pytest.raises(RequestError, match="missing valid mfaCookie"),
+        ):
             await unifi_controller_2fa.connectivity.login()
 
     async def test_sso_2fa_cookie_attributes(

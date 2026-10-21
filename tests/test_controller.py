@@ -562,22 +562,33 @@ async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controlle
 
 
 @pytest.mark.parametrize(
-    "response",
+    ("response", "match"),
     [
-        {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "Invalid"}},
-        {
-            "status": 405,
-            "body": '<html>{"username": "user", "password": "pass"}</html>',
-            "content_type": "text/html",
-        },
-        {"status": 200, "body": b"null", "content_type": "application/json"},
+        (
+            {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "x"}},
+            "Login received 400",
+        ),
+        (
+            {
+                "status": 405,
+                "body": '<html>{"username": "user", "password": "pass"}</html>',
+                "content_type": "text/html",
+            },
+            "received 405 text/html",
+        ),
+        (
+            {"status": 200, "body": b"null", "content_type": "application/json"},
+            "not a JSON object",
+        ),
     ],
 )
-async def test_unifios_login_error_status(mock_aioresponse, unifi_controller, response):
+async def test_unifios_login_error_status(
+    mock_aioresponse, unifi_controller, response, match
+):
     """Verify a reply without an error envelope or session fails the login."""
     unifi_controller.connectivity.is_unifi_os = True
     mock_aioresponse.post("https://host:8443/api/auth/login", **response)
-    with pytest.raises(ResponseError) as exc_info:
+    with pytest.raises(ResponseError, match=match) as exc_info:
         await unifi_controller.connectivity.login()
     assert not unifi_controller.connectivity.can_retry_login
     # An echoed request must not end up in the message
@@ -652,22 +663,28 @@ async def test_api_request_no_content(mock_aioresponse, unifi_controller, respon
     ],
 )
 @pytest.mark.parametrize(
-    ("status", "payload"),
+    ("status", "payload", "detail"),
     [
-        (500, {"error": {"code": 500, "message": "Internal Server Error"}}),
-        (504, {"error": {"code": 504, "message": "Gateway Time-out"}}),
+        (
+            500,
+            {"error": {"code": 500, "message": "Internal Server Error"}},
+            ": Internal Server Error",
+        ),
+        (504, {"meta": {"rc": "error", "msg": "api.err.Busy"}}, ": api.err.Busy"),
+        (500, {"username": "user", "password": "pass"}, ""),
+        (500, ["api.err.Busy"], ""),
     ],
 )
 async def test_api_request_server_error_json(
-    mock_aioresponse, unifi_controller, api_request, path, status, payload
+    mock_aioresponse, unifi_controller, api_request, path, status, payload, detail
 ):
-    """Verify a server error with a JSON body is not decoded as data."""
+    """Verify a server error keeps the error message but not the raw body."""
     mock_aioresponse.get(
         f"https://host:8443{path}/test", status=status, payload=payload
     )
-    with pytest.raises(RequestError, match=f"received {status}") as exc_info:
+    with pytest.raises(RequestError) as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
-    assert payload["error"]["message"] in str(exc_info.value)
+    assert str(exc_info.value).endswith(f"received {status}{detail}")
 
 
 async def test_handler_update_startup_page(mock_aioresponse, unifi_controller):
@@ -830,6 +847,7 @@ api_request_data = [
 ]
 
 
+@pytest.mark.parametrize("status", [200, 400])
 @pytest.mark.parametrize(("api_request", "path", "input", "expected"), api_request_data)
 async def test_api_request_error_handling(
     mock_aioresponse,
@@ -838,11 +856,32 @@ async def test_api_request_error_handling(
     path,
     input,
     expected,
+    status,
 ):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.get(f"https://host:8443{path}/test", **input)
-    with pytest.raises(expected):
+    """Verify a known error envelope is mapped, also with an error status."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", status=status, **input)
+    with pytest.raises(expected) as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert type(exc_info.value) is expected
+
+
+async def test_api_request_relogin_on_error_status(mock_aioresponse, unifi_controller):
+    """Verify a login required envelope with an error status logs in again."""
+    unifi_controller.connectivity.can_retry_login = True
+    url = "https://host:8443/v2/api/site/default/test"
+    mock_aioresponse.get(
+        url,
+        status=400,
+        payload={"errorCode": 401, "message": "api.err.LoginRequired"},
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login", payload={"meta": {"rc": "ok"}, "data": []}
+    )
+    mock_aioresponse.get(url, payload=[{"_id": "1"}])
+
+    assert await unifi_controller.connectivity.request(
+        ApiRequestV2("get", "/test")
+    ) == {"meta": {"rc": "ok", "msg": ""}, "data": [{"_id": "1"}]}
 
 
 @pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)

@@ -49,6 +49,25 @@ HTTP_STATUS_MFA_REQUIRED = 499
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
 
 
+def _error_detail(bytes_data: bytes) -> str:
+    """Return the message of a JSON error body for an exception message.
+
+    The raw body is left out, a proxy could echo the request with credentials.
+    """
+    try:
+        data = orjson.loads(bytes_data)
+    except orjson.JSONDecodeError:
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    for item in (data, data.get("meta"), data.get("error")):
+        if isinstance(item, dict):
+            msg = item.get("message", item.get("msg"))
+            if isinstance(msg, str) and msg:
+                return f": {msg[:100]}"
+    return ""
+
+
 class Connectivity:
     """UniFi Network Application connectivity."""
 
@@ -167,7 +186,7 @@ class Connectivity:
         if error_cls is TwoFaTokenRequired and self.config.totp_secret:
             await self._attempt_2fa_retry(url, auth, self.config.totp_secret)
             return
-        LOGGER.error("Login failed '%s'", data)
+        LOGGER.error("Login failed: %s", data["meta"].get("msg"))
         raise error_cls
 
     async def _attempt_2fa_retry(
@@ -193,7 +212,7 @@ class Connectivity:
             self._raise_not_json(url, response, bytes_data)
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
-            LOGGER.error("Login with 2FA failed '%s'", data)
+            LOGGER.error("Login with 2FA failed: %s", data["meta"].get("msg"))
             raise self._login_error(data)
         self._raise_on_error_status(response, data)
         self._update_login_headers(response)
@@ -371,19 +390,18 @@ class Connectivity:
         data = body.get("data") if isinstance(body, dict) else None
         mfa_cookie_str = data.get("mfaCookie") if isinstance(data, dict) else None
 
-        if (
-            not isinstance(mfa_cookie_str, str)
-            or "=" not in mfa_cookie_str
-            or not mfa_cookie_str.isprintable()
-        ):
+        mfa_cookie = cookies.SimpleCookie()
+        if isinstance(mfa_cookie_str, str) and mfa_cookie_str.isprintable():
+            try:
+                mfa_cookie.load(mfa_cookie_str)
+            except cookies.CookieError:
+                mfa_cookie.clear()
+        if len(mfa_cookie) != 1:
             raise RequestError("SSO MFA response missing valid mfaCookie")
+        morsel = next(iter(mfa_cookie.values()))
 
-        mfa_cookie_str = mfa_cookie_str.split(";", 1)[0].strip()
-        cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
         # Replace a stale value in the jar, which takes precedence over the header
-        self.config.session.cookie_jar.update_cookies(
-            {cookie_name: cookie_val}, URL(url)
-        )
+        self.config.session.cookie_jar.update_cookies(mfa_cookie, URL(url).origin())
 
         token = pyotp.TOTP(totp_secret).now()
         # Sent as a header too, a cookie jar may drop cookies for IP address hosts
@@ -391,7 +409,7 @@ class Connectivity:
             "post",
             url,
             json={**auth, "token": token},
-            headers={"Cookie": mfa_cookie_str},
+            headers={"Cookie": f"{morsel.key}={morsel.coded_value}"},
         )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
@@ -405,9 +423,9 @@ class Connectivity:
 
         Raises:
             LoginRequired: If login is required and cannot be retried.
-            ApplicationNotReady: If a successful response is not JSON.
-            ResponseError: For error statuses without a known error, or
-                JSON that is not an object or list.
+            ApplicationNotReady: If a response without an error status is not JSON.
+            ResponseError: For error statuses without a known error, or data
+                of unexpected shape.
             RequestError: For network or response errors, or invalid JSON.
 
         """
@@ -431,13 +449,14 @@ class Connectivity:
                     raise RequestError(
                         f"Call {url} received invalid JSON: {err}"
                     ) from err
+                # Envelopes of unexpected shape, also in handler specific decoders
                 except (AttributeError, KeyError, TypeError) as err:
                     raise ResponseError(
                         f"Call {url} received unexpected data: {err!r}"
                     ) from err
             if response.status >= HTTPStatus.BAD_REQUEST:
                 raise ResponseError(
-                    f"Call {url} received {response.status}: {bytes_data[:200]!r}"
+                    f"Call {url} received {response.status}{_error_detail(bytes_data)}"
                 )
 
         except LoginRequired:
@@ -520,7 +539,7 @@ class Connectivity:
                 if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
                     body = await res.read()
                     raise RequestError(
-                        f"Call {url} received {res.status}: {body[:200]!r}"
+                        f"Call {url} received {res.status}{_error_detail(body)}"
                     )
 
                 bytes_data = await res.read()
@@ -544,7 +563,7 @@ class Connectivity:
                     f"Call {url} received 429: {data.get('message', bytes_data)!r}"
                 )
             # Fallback to old logic
-            raise ResponseError(f"Call {url} received 429: {bytes_data[:200]!r}")
+            raise ResponseError(f"Call {url} received 429{_error_detail(bytes_data)}")
 
         return res, bytes_data
 
