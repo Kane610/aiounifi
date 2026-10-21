@@ -13,7 +13,6 @@ import aiohttp
 from aiohttp import client_exceptions
 import orjson
 import pyotp
-from yarl import URL
 
 from ..errors import (
     AiounifiException,
@@ -47,6 +46,8 @@ HTTP_STATUS_MFA_REQUIRED = 499
 # the status page it answers every path with while it starts. A page without
 # the marker is taken for UniFi OS, as before.
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
+# Name and value of the cookie the SSO MFA challenge hands back
+MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
 
 
 def _error_detail(bytes_data: bytes) -> str:
@@ -61,9 +62,10 @@ def _error_detail(bytes_data: bytes) -> str:
     if not isinstance(data, dict):
         return ""
     for item in (data, data.get("meta"), data.get("error")):
-        if isinstance(item, dict):
-            msg = item.get("message", item.get("msg"))
-            if isinstance(msg, str) and msg:
+        if not isinstance(item, dict):
+            continue
+        for key in ("message", "msg"):
+            if isinstance(msg := item.get(key), str) and (msg := " ".join(msg.split())):
                 return f": {msg[:100]}"
     return ""
 
@@ -390,30 +392,29 @@ class Connectivity:
         data = body.get("data") if isinstance(body, dict) else None
         mfa_cookie_str = data.get("mfaCookie") if isinstance(data, dict) else None
 
-        mfa_cookie = cookies.SimpleCookie()
-        if isinstance(mfa_cookie_str, str) and mfa_cookie_str.isprintable():
-            try:
-                mfa_cookie.load(mfa_cookie_str)
-            except cookies.CookieError:
-                mfa_cookie.clear()
-        if len(mfa_cookie) != 1:
+        if not (
+            isinstance(mfa_cookie_str, str)
+            and mfa_cookie_str.isprintable()
+            and (match := MFA_COOKIE.fullmatch(mfa_cookie_str.split(";")[0].strip()))
+        ):
             raise RequestError("SSO MFA response missing valid mfaCookie")
-        morsel = next(iter(mfa_cookie.values()))
 
-        # Replace a stale value in the jar, which takes precedence over the header
-        self.config.session.cookie_jar.update_cookies(mfa_cookie, URL(url).origin())
+        # A stale value in the jar would take precedence over the header
+        self.config.session.cookie_jar.clear(
+            lambda morsel: morsel.key == match.group(1)
+        )
 
         token = pyotp.TOTP(totp_secret).now()
-        # Sent as a header too, a cookie jar may drop cookies for IP address hosts
+        # Sent as a header, a cookie jar may drop cookies for IP address hosts
         return await self._request(
             "post",
             url,
             json={**auth, "token": token},
-            headers={"Cookie": f"{morsel.key}={morsel.coded_value}"},
+            headers={"Cookie": match.group(0)},
         )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
-        """Make a request to the API, retrying login on failure.
+        """Make a request to the API, logging in again once on an expired session.
 
         Args:
             api_request (ApiRequest): The API request object containing method, path, and data.
@@ -423,6 +424,30 @@ class Connectivity:
 
         Raises:
             LoginRequired: If login is required and cannot be retried.
+            AiounifiException: For the errors of the request, see _api_request.
+
+        """
+        try:
+            return await self._api_request(api_request)
+        except LoginRequired:
+            if not self.can_retry_login:
+                raise
+            # Session likely expired, try again once
+            self.can_retry_login = False
+            await self.login()
+            return await self._api_request(api_request)
+
+    async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:
+        """Make a request to the API.
+
+        Args:
+            api_request (ApiRequest): The API request object containing method, path, and data.
+
+        Returns:
+            TypedApiResponse: The parsed response data from the API.
+
+        Raises:
+            LoginRequired: If the session is not logged in.
             ApplicationNotReady: If a response without an error status is not JSON.
             ResponseError: For error statuses without a known error, or data
                 of unexpected shape.
@@ -433,40 +458,28 @@ class Connectivity:
             self.config.site, self.is_unifi_os
         )
         data: TypedApiResponse = {}
+        response, bytes_data = await self._request(
+            api_request.method, url, api_request.data
+        )
 
-        try:
-            response, bytes_data = await self._request(
-                api_request.method, url, api_request.data
-            )
-
-            if bytes_data and not self._is_json_response(response):
-                self._raise_not_json(url, response, bytes_data)
-            if bytes_data:
-                try:
-                    # Raises the known error of an error envelope
-                    data = api_request.decode(bytes_data)
-                except orjson.JSONDecodeError as err:
-                    raise RequestError(
-                        f"Call {url} received invalid JSON: {err}"
-                    ) from err
-                # Envelopes of unexpected shape, also in handler specific decoders
-                except (AttributeError, KeyError, TypeError) as err:
-                    raise ResponseError(
-                        f"Call {url} received unexpected data: {err!r}"
-                    ) from err
-            if response.status >= HTTPStatus.BAD_REQUEST:
+        if bytes_data and not self._is_json_response(response):
+            self._raise_not_json(url, response, bytes_data)
+        if bytes_data:
+            try:
+                # Raises the known error of an error envelope
+                data = api_request.decode(bytes_data)
+            except orjson.JSONDecodeError as err:
+                raise RequestError(f"Call {url} received invalid JSON: {err}") from err
+            # Envelopes of unexpected shape, also in handler specific decoders
+            except (AttributeError, KeyError, TypeError) as err:
                 raise ResponseError(
-                    f"Call {url} received {response.status}{_error_detail(bytes_data)}"
-                )
-
-        except LoginRequired:
-            if not self.can_retry_login:
-                raise
-            # Session likely expired, try again
-            self.can_retry_login = False
-            await self.login()
-            return await self.request(api_request)
-
+                    f"Call {url} received {response.status} with unexpected "
+                    f"data: {err!r}"
+                ) from err
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            raise ResponseError(
+                f"Call {url} received {response.status}{_error_detail(bytes_data)}"
+            )
         return data
 
     async def _request(
@@ -560,7 +573,7 @@ class Connectivity:
                 and data.get("code") == "AUTHENTICATION_FAILED_LIMIT_REACHED"
             ):
                 raise AuthenticationRateLimitError(
-                    f"Call {url} received 429: {data.get('message', bytes_data)!r}"
+                    f"Call {url} received 429{_error_detail(bytes_data)}"
                 )
             # Fallback to old logic
             raise ResponseError(f"Call {url} received 429{_error_detail(bytes_data)}")

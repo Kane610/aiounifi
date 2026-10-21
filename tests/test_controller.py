@@ -195,6 +195,28 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
     await unifi_controller.devices.update()
 
 
+async def test_relogin_once_per_request(mock_aioresponse, unifi_controller):
+    """Verify a request that keeps getting 401 logs in again only once."""
+    unifi_controller.connectivity.can_retry_login = True
+    url = "https://host:8443/api/s/default/test"
+    mock_aioresponse.get(url, status=401, repeat=True)
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        repeat=True,
+    )
+
+    with pytest.raises(LoginRequired):
+        await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
+
+    (logins,) = [
+        calls
+        for (method, _), calls in mock_aioresponse.requests.items()
+        if method.upper() == "POST"
+    ]
+    assert len(logins) == 1
+
+
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
     """Test controller communicating with a UniFi OS controller with retries."""
     mock_aioresponse.get(
@@ -673,6 +695,8 @@ async def test_api_request_no_content(mock_aioresponse, unifi_controller, respon
         (504, {"meta": {"rc": "error", "msg": "api.err.Busy"}}, ": api.err.Busy"),
         (500, {"username": "user", "password": "pass"}, ""),
         (500, ["api.err.Busy"], ""),
+        (500, {"message": None, "msg": "api.err.Busy"}, ": api.err.Busy"),
+        (500, {"message": "line one\r\nline two"}, ": line one line two"),
     ],
 )
 async def test_api_request_server_error_json(

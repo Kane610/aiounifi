@@ -3,7 +3,6 @@
 pytest --cov-report term-missing --cov=aiounifi.interfaces.connectivity tests/test_2fa.py
 """
 
-from http import cookies
 from unittest.mock import Mock, patch
 
 import aiohttp
@@ -300,7 +299,8 @@ class TestSso2fa:
             {"data": {"mfaCookie": "UBIC_2FA=abc\r\nX-Injected: 1"}},
             {"data": {"mfaCookie": "=abc"}},
             {"data": {"mfaCookie": "a b=c"}},
-            {"data": {"mfaCookie": "a=1; b=2"}},
+            {"data": {"mfaCookie": "UBIC_2FA="}},
+            {"data": {"mfaCookie": "UBIC_2FA=a b"}},
         ],
     )
     async def test_sso_2fa_invalid_challenge(
@@ -318,22 +318,6 @@ class TestSso2fa:
         with pytest.raises(RequestError, match="missing valid mfaCookie"):
             await unifi_controller_2fa.connectivity.login()
 
-    async def test_sso_2fa_cookie_error(self, mock_aioresponse, unifi_controller_2fa):
-        """Test a cookie the parser rejects raises RequestError."""
-        unifi_controller_2fa.connectivity.is_unifi_os = True
-        mock_aioresponse.post(
-            "https://host:8443/api/auth/login",
-            payload=SSO_MFA_RESPONSE,
-            status=499,
-            content_type="application/json",
-        )
-
-        with (
-            patch("http.cookies.SimpleCookie.load", side_effect=cookies.CookieError),
-            pytest.raises(RequestError, match="missing valid mfaCookie"),
-        ):
-            await unifi_controller_2fa.connectivity.login()
-
     async def test_sso_2fa_cookie_attributes(
         self, mock_aioresponse, unifi_controller_2fa
     ):
@@ -341,7 +325,9 @@ class TestSso2fa:
         unifi_controller_2fa.connectivity.is_unifi_os = True
         mock_aioresponse.post(
             "https://host:8443/api/auth/login",
-            payload={"data": {"mfaCookie": "UBIC_2FA=abc; path=/; secure"}},
+            payload={
+                "data": {"mfaCookie": "UBIC_2FA=abc; path=/; secure; priority=high"}
+            },
             status=499,
             content_type="application/json",
         )
@@ -461,9 +447,7 @@ class TestSso2fa:
         assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc123def456"
         # A stale value in the jar would take precedence over the header
         jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
-        assert {cookie.key: cookie.value for cookie in jar}["UBIC_2FA"] == (
-            "abc123def456"
-        )
+        assert "UBIC_2FA" not in {cookie.key for cookie in jar}
 
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa
