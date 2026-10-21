@@ -9,6 +9,9 @@ from typing import Any, Self
 
 LOGGER = logging.getLogger(__name__)
 
+# Unknown keys are logged once, their data can hold credentials
+_unsupported_keys: set[str] = set()
+
 
 class MessageKey(enum.Enum):
     """Message as part of meta object of event.
@@ -65,7 +68,9 @@ class MessageKey(enum.Enum):
     @classmethod
     def _missing_(cls, value: object) -> MessageKey:
         """Set default enum member if an unknown value is provided."""
-        LOGGER.warning("Unsupported message key %s", value)
+        if (key := str(value)) not in _unsupported_keys:
+            _unsupported_keys.add(key)
+            LOGGER.warning("Unsupported message key %s", key)
         return MessageKey.UNKNOWN
 
 
@@ -98,8 +103,6 @@ class Message:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create data container instance from dict."""
         meta = Meta.from_dict(data["meta"])
-        if meta.message is MessageKey.UNKNOWN:
-            LOGGER.warning("Unsupported message %s", data)
         return cls(
             meta=meta,
             data=data["data"],
