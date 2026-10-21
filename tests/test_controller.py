@@ -424,19 +424,24 @@ async def test_check_unifi_os_html_page(mock_aioresponse, unifi_controller):
 
 @pytest.mark.parametrize(
     "base_tag",
-    ['<base href="/manage/" />', "<base href='/manage/'>", '<BASE HREF="/manage/">'],
+    [
+        '<base href="/manage/">',
+        '<base href="/manage/" />',
+        "<base href='/manage/'>",
+        '<BASE HREF="/manage/">',
+    ],
 )
-async def test_check_unifi_os_startup_page_variants(
+async def test_check_unifi_os_standalone_page(
     mock_aioresponse, unifi_controller, base_tag
 ):
-    """Verify the start-up page is recognised with other base tag spellings."""
+    """Verify a standalone application page is not taken for UniFi OS."""
+    unifi_controller.connectivity.is_unifi_os = True
     mock_aioresponse.get(
         "https://host:8443",
         body=STARTUP_PAGE.replace('<base href="/manage/">', base_tag),
         content_type="text/html",
     )
-    with pytest.raises(ApplicationNotReady):
-        await unifi_controller.connectivity.check_unifi_os()
+    await unifi_controller.connectivity.check_unifi_os()
     assert unifi_controller.connectivity.is_unifi_os is False
 
 
@@ -449,6 +454,9 @@ async def test_controller_login_standalone_startup(
         body=STARTUP_PAGE,
         content_type="text/html",
         headers={"X-Frame-Options": "DENY"},
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login", body=STARTUP_PAGE, content_type="text/html"
     )
     with pytest.raises(ApplicationNotReady):
         await unifi_controller.login()
@@ -572,6 +580,38 @@ async def test_unifios_login_error_status(mock_aioresponse, unifi_controller, re
     with pytest.raises(ResponseError):
         await unifi_controller.connectivity.login()
     assert not unifi_controller.connectivity.can_retry_login
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path", "body"),
+    [
+        (ApiRequest, "/api/s/default", {"meta": None}),
+        (ApiRequest, "/api/s/default", {"meta": {"rc": "error"}}),
+        (ApiRequestV2, "/v2/api/site/default", {"errorCode": 400}),
+        (ApiRequestV2, "/v2/api/site/default", {"errorCode": 400, "message": []}),
+    ],
+)
+async def test_api_request_unexpected_envelope(
+    mock_aioresponse, unifi_controller, api_request, path, body
+):
+    """Verify an envelope of unexpected shape raises ResponseError."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", payload=body)
+    with pytest.raises(ResponseError, match="unexpected data"):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
+@pytest.mark.parametrize(
+    "meta",
+    [{"rc": "error"}, {"rc": "error", "msg": ["api.err.Invalid"]}],
+)
+async def test_login_error_without_message(mock_aioresponse, unifi_controller, meta):
+    """Verify a login error envelope without a usable message still fails."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login", status=400, payload={"meta": meta}
+    )
+    with pytest.raises(AiounifiException) as exc_info:
+        await unifi_controller.connectivity.login()
+    assert type(exc_info.value) is AiounifiException
 
 
 async def test_api_request_json_charset(mock_aioresponse, unifi_controller):

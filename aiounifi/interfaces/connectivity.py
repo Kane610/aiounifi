@@ -13,6 +13,7 @@ import aiohttp
 from aiohttp import client_exceptions
 import orjson
 import pyotp
+from yarl import URL
 
 from ..errors import (
     AiounifiException,
@@ -43,8 +44,8 @@ LOGGER = logging.getLogger(__name__)
 
 HTTP_STATUS_MFA_REQUIRED = 499
 # The standalone Network application serves its pages below /manage/, also
-# the status page it answers every path with while it starts. If the marker
-# is missing, detection falls back to treating the page as UniFi OS.
+# the status page it answers every path with while it starts. A page without
+# the marker is taken for UniFi OS, as before.
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
 
 
@@ -73,24 +74,15 @@ class Connectivity:
 
         Sets self.is_unifi_os to True if UniFi OS is detected, otherwise False.
         Clears the cookie jar for the host if UniFi OS is detected.
-
-        Raises:
-            ApplicationNotReady: If a standalone Network application is starting.
-
         """
         response, bytes_data = await self._request(
             "get", self.config.url, allow_redirects=False
         )
-        # Assign only after the response, requests meanwhile keep the known path
-        is_unifi_os = response.status == HTTPStatus.OK
-        if is_unifi_os and STANDALONE_PAGE_MARKER.search(bytes_data):
-            self.is_unifi_os = False
-            # A standalone application answers / with a redirect once started
-            raise ApplicationNotReady(
-                f"Call {self.config.url} received the start-up page"
-            )
-        self.is_unifi_os = is_unifi_os
-        if is_unifi_os:
+        # Assigned only after the response, requests meanwhile keep the known path
+        self.is_unifi_os = response.status == HTTPStatus.OK and not (
+            STANDALONE_PAGE_MARKER.search(bytes_data)
+        )
+        if self.is_unifi_os:
             self.config.session.cookie_jar.clear_domain(self.config.host)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
@@ -171,8 +163,7 @@ class Connectivity:
             AiounifiException: For known error responses.
 
         """
-        error_msg = data["meta"]["msg"]
-        error_cls = ERRORS.get(error_msg, AiounifiException)
+        error_cls = self._login_error(data)
         if error_cls is TwoFaTokenRequired and self.config.totp_secret:
             await self._attempt_2fa_retry(url, auth, self.config.totp_secret)
             return
@@ -203,7 +194,7 @@ class Connectivity:
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
             LOGGER.error("Login with 2FA failed '%s'", data)
-            raise ERRORS.get(data["meta"]["msg"], AiounifiException)
+            raise self._login_error(data)
         self._raise_on_error_status(response, data)
         self._update_login_headers(response)
         self.can_retry_login = True
@@ -224,9 +215,9 @@ class Connectivity:
 
         """
         if response.status == HTTP_STATUS_MFA_REQUIRED:
-            raise TwoFaTokenRequired("SSO MFA token was not accepted")
+            raise TwoFaTokenRequired("MFA token was not accepted")
         if response.status >= HTTPStatus.BAD_REQUEST:
-            LOGGER.error("Login failed '%s'", data)
+            LOGGER.error("Login failed '%s'", str(data)[:200])
             raise ResponseError(f"Login received {response.status}")
 
     def _raise_not_json(
@@ -298,7 +289,23 @@ class Connectivity:
             bool: True if the response is an error, False otherwise.
 
         """
-        return data.get("meta", {}).get("rc") == "error"
+        meta = data.get("meta")
+        return isinstance(meta, dict) and meta.get("rc") == "error"
+
+    def _login_error(self, data: TypedApiResponse) -> type[AiounifiException]:
+        """Return the exception class for a login error response.
+
+        Args:
+            data (TypedApiResponse): The parsed error response data.
+
+        Returns:
+            type[AiounifiException]: The exception class to raise.
+
+        """
+        msg = data["meta"].get("msg")
+        if not isinstance(msg, str):
+            return AiounifiException
+        return ERRORS.get(msg, AiounifiException)
 
     def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
         """Update login headers from the response after successful authentication.
@@ -361,13 +368,25 @@ class Connectivity:
             body = orjson.loads(mfa_response_data)
         except orjson.JSONDecodeError as err:
             raise RequestError(f"SSO MFA response is not valid JSON: {err}") from err
-        mfa_cookie_str: str = body.get("data", {}).get("mfaCookie", "")
+        data = body.get("data") if isinstance(body, dict) else None
+        mfa_cookie_str = data.get("mfaCookie") if isinstance(data, dict) else None
 
-        if not mfa_cookie_str or "=" not in mfa_cookie_str:
+        if (
+            not isinstance(mfa_cookie_str, str)
+            or "=" not in mfa_cookie_str
+            or not mfa_cookie_str.isprintable()
+        ):
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
+        mfa_cookie_str = mfa_cookie_str.split(";", 1)[0].strip()
+        cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
+        # Replace a stale value in the jar, which takes precedence over the header
+        self.config.session.cookie_jar.update_cookies(
+            {cookie_name: cookie_val}, URL(url)
+        )
+
         token = pyotp.TOTP(totp_secret).now()
-        # Sent as a header, a cookie jar may drop cookies for IP address hosts
+        # Sent as a header too, a cookie jar may drop cookies for IP address hosts
         return await self._request(
             "post",
             url,
@@ -411,6 +430,10 @@ class Connectivity:
                 except orjson.JSONDecodeError as err:
                     raise RequestError(
                         f"Call {url} received invalid JSON: {err}"
+                    ) from err
+                except (AttributeError, KeyError, TypeError) as err:
+                    raise ResponseError(
+                        f"Call {url} received unexpected data: {err!r}"
                     ) from err
             if response.status >= HTTPStatus.BAD_REQUEST:
                 raise ResponseError(
@@ -521,7 +544,7 @@ class Connectivity:
                     f"Call {url} received 429: {data.get('message', bytes_data)!r}"
                 )
             # Fallback to old logic
-            raise ResponseError(f"Call {url} received 429: {bytes_data!r}")
+            raise ResponseError(f"Call {url} received 429: {bytes_data[:200]!r}")
 
         return res, bytes_data
 

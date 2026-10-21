@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import aiohttp
 from aioresponses import aioresponses
 import pytest
+from yarl import URL
 
 from aiounifi.controller import Controller
 from aiounifi.errors import (
@@ -289,6 +290,52 @@ class TestSso2fa:
             await unifi_controller_2fa.connectivity.login()
         assert not unifi_controller_2fa.connectivity.can_retry_login
 
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {"data": None},
+            [],
+            {"data": {"mfaCookie": 1}},
+            {"data": {"mfaCookie": "UBIC_2FA=abc\r\nX-Injected: 1"}},
+        ],
+    )
+    async def test_sso_2fa_invalid_challenge(
+        self, mock_aioresponse, unifi_controller_2fa, payload
+    ):
+        """Test an MFA challenge without a usable cookie raises RequestError."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=payload,
+            status=499,
+            content_type="application/json",
+        )
+
+        with pytest.raises(RequestError, match="missing valid mfaCookie"):
+            await unifi_controller_2fa.connectivity.login()
+
+    async def test_sso_2fa_cookie_attributes(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test cookie attributes in the MFA challenge are not sent back."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload={"data": {"mfaCookie": "UBIC_2FA=abc; path=/; secure"}},
+            status=499,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            content_type="application/json",
+        )
+
+        await unifi_controller_2fa.connectivity.login()
+
+        (calls,) = mock_aioresponse.requests.values()
+        assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc"
+
     async def test_sso_2fa_raises_without_totp_secret(self, mock_aioresponse):
         """Test SSO MFA raises TwoFaTokenRequired when no totp_secret configured."""
         session = aiohttp.ClientSession()
@@ -383,15 +430,20 @@ class TestSso2fa:
             content_type="application/json",
         )
 
+        unifi_controller_2fa.connectivity.config.session.cookie_jar.update_cookies(
+            {"UBIC_2FA": "stale"}, URL("https://host:8443")
+        )
+
         await unifi_controller_2fa.connectivity.login()
 
         (calls,) = mock_aioresponse.requests.values()
         assert "Cookie" not in calls[0].kwargs["headers"]
         assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc123def456"
-        assert "UBIC_2FA" not in {
-            cookie.key
-            for cookie in unifi_controller_2fa.connectivity.config.session.cookie_jar
-        }
+        # A stale value in the jar would take precedence over the header
+        jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
+        assert {cookie.key: cookie.value for cookie in jar}["UBIC_2FA"] == (
+            "abc123def456"
+        )
 
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa
