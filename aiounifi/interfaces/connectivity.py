@@ -437,7 +437,7 @@ class Connectivity:
                 if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
                     body = await res.read()
                     raise RequestError(
-                        f"Call {url} received {res.status} {res.reason}: {body[:200]!r}"
+                        f"Call {url} received {res.status}: {body[:200]!r}"
                     )
 
                 bytes_data = await res.read()
