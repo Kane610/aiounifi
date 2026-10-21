@@ -43,8 +43,9 @@ LOGGER = logging.getLogger(__name__)
 
 HTTP_STATUS_MFA_REQUIRED = 499
 # The standalone Network application serves its pages below /manage/, also
-# the status page it answers every path with while it starts.
-STANDALONE_PAGE_MARKER = b'<base href="/manage/">'
+# the status page it answers every path with while it starts. If the marker
+# is missing, detection falls back to treating the page as UniFi OS.
+STANDALONE_PAGE_MARKER = b'<base href="/manage/"'
 
 
 class Connectivity:
@@ -180,6 +181,7 @@ class Connectivity:
             totp_secret (str): The TOTP secret, already confirmed non-None by the caller.
 
         Raises:
+            ApplicationNotReady: If the 2FA retry response is not JSON.
             RequestError: If the 2FA retry response is not valid JSON.
             AiounifiException: If the 2FA login fails due to authentication error.
 
@@ -324,8 +326,8 @@ class Connectivity:
 
         Raises:
             LoginRequired: If login is required and cannot be retried.
-            ApplicationNotReady: If the response is not JSON or cannot be decoded.
-            RequestError: For network or response errors.
+            ApplicationNotReady: If the response is not JSON.
+            RequestError: For network or response errors, or invalid JSON.
 
         """
         url = self.config.url + api_request.full_path(
@@ -338,18 +340,15 @@ class Connectivity:
                 api_request.method, url, api_request.data
             )
 
-            if response.status != HTTPStatus.NO_CONTENT and bytes_data:
+            if bytes_data:
                 if not self._is_json_response(response):
-                    LOGGER.debug(
-                        "Response from %s is not JSON: %r", url, bytes_data[:200]
-                    )
                     raise ApplicationNotReady(
                         f"Call {url} received {response.content_type}, not JSON"
                     )
                 try:
                     data = api_request.decode(bytes_data)
                 except orjson.JSONDecodeError as err:
-                    raise ApplicationNotReady(
+                    raise RequestError(
                         f"Call {url} received invalid JSON: {err}"
                     ) from err
 
@@ -429,7 +428,10 @@ class Connectivity:
                     )
 
                 if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
-                    raise RequestError(f"Call {url} received {res.status} {res.reason}")
+                    body = await res.read()
+                    raise RequestError(
+                        f"Call {url} received {res.status} {res.reason}: {body[:200]!r}"
+                    )
 
                 bytes_data = await res.read()
 

@@ -407,6 +407,35 @@ STARTUP_PAGE = (
 )
 
 
+UNIFI_OS_PAGE = (
+    '<!DOCTYPE html><html><head><base href="/"><title>UniFi OS</title>'
+    "</head><body></body></html>"
+)
+
+
+async def test_check_unifi_os_html_page(mock_aioresponse, unifi_controller):
+    """Verify an HTML page without the standalone marker is UniFi OS."""
+    mock_aioresponse.get(
+        "https://host:8443", body=UNIFI_OS_PAGE, content_type="text/html"
+    )
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is True
+
+
+async def test_check_unifi_os_startup_page_self_closing(
+    mock_aioresponse, unifi_controller
+):
+    """Verify the start-up page is recognised with a self-closing base tag."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        body=STARTUP_PAGE.replace('"/manage/">', '"/manage/" />'),
+        content_type="text/html",
+    )
+    with pytest.raises(ApplicationNotReady):
+        await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is False
+
+
 async def test_controller_login_standalone_startup(
     mock_aioresponse, unifi_controller, unifi_called_with
 ):
@@ -448,20 +477,33 @@ async def test_controller_login_standalone_startup(
     ],
 )
 @pytest.mark.parametrize(
-    "response",
+    ("response", "error"),
     [
-        {"body": STARTUP_PAGE, "content_type": "text/html"},
-        {"body": "not json", "content_type": "application/json"},
+        ({"body": STARTUP_PAGE, "content_type": "text/html"}, ApplicationNotReady),
+        ({"body": "not json", "content_type": "application/json"}, RequestError),
     ],
 )
 async def test_api_request_not_json(
-    mock_aioresponse, unifi_controller, api_request, path, response
+    mock_aioresponse, unifi_controller, api_request, path, response, error
 ):
     """Verify a response without API data raises instead of returning nothing."""
     mock_aioresponse.get(f"https://host:8443{path}/test", **response)
-    with pytest.raises(ApplicationNotReady) as exc_info:
+    with pytest.raises(RequestError) as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
-    assert isinstance(exc_info.value, RequestError)
+    assert type(exc_info.value) is error
+
+
+async def test_api_request_json_charset(mock_aioresponse, unifi_controller):
+    """Verify a JSON content type with parameters is decoded."""
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/test",
+        body=b'{"meta": {"rc": "ok"}, "data": [{"a": 1}]}',
+        headers={"Content-Type": "application/json; charset=UTF-8"},
+    )
+    assert await unifi_controller.connectivity.request(ApiRequest("get", "/test")) == {
+        "meta": {"rc": "ok"},
+        "data": [{"a": 1}],
+    }
 
 
 @pytest.mark.parametrize(
@@ -500,8 +542,9 @@ async def test_api_request_server_error_json(
     mock_aioresponse.get(
         f"https://host:8443{path}/test", status=status, payload=payload
     )
-    with pytest.raises(RequestError, match=str(status)):
+    with pytest.raises(RequestError, match=f"received {status}") as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert payload["error"]["message"] in str(exc_info.value)
 
 
 async def test_handler_update_startup_page(mock_aioresponse, unifi_controller):
