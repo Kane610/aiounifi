@@ -236,7 +236,7 @@ class TestSso2fa:
         assert second_call_json["password"] == "pass"
 
     async def test_sso_2fa_raises_without_totp_secret(self, mock_aioresponse):
-        """Test SSO MFA raises RequestError when no totp_secret configured."""
+        """Test SSO MFA raises TwoFaTokenRequired when no totp_secret configured."""
         session = aiohttp.ClientSession()
         config = Configuration(
             session,
@@ -254,7 +254,7 @@ class TestSso2fa:
             content_type="application/json",
         )
 
-        with pytest.raises(RequestError, match="SSO MFA required"):
+        with pytest.raises(TwoFaTokenRequired, match="SSO MFA required"):
             await controller.connectivity.login()
 
         await session.close()

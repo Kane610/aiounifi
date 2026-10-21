@@ -782,13 +782,17 @@ async def test_login_2fa_success_after_error(mock_aioresponse, unifi_controller)
 
 
 async def test_login_sso_mfa_missing_totp_secret(mock_aioresponse, unifi_controller):
-    """Test login with SSO MFA but missing totp_secret raises RequestError."""
+    """Test login with SSO MFA but missing totp_secret raises TwoFaTokenRequired."""
     unifi_controller.connectivity.config.totp_secret = None
     mock_aioresponse.post(
         "https://host:8443/api/login",
         status=499,
-        payload={},
+        payload={
+            "code": "MFA_AUTH_REQUIRED",
+            "message": "MFA authentication required",
+            "data": {"mfaCookie": "UBIC_2FA=abc123"},
+        },
         content_type="application/json",
     )
-    with pytest.raises(RequestError):
+    with pytest.raises(TwoFaTokenRequired):
         await unifi_controller.connectivity.login()

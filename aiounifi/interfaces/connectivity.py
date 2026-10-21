@@ -121,11 +121,11 @@ class Connectivity:
             tuple[aiohttp.ClientResponse, bytes]: The response and data after completing SSO MFA.
 
         Raises:
-            RequestError: If no TOTP secret is configured.
+            TwoFaTokenRequired: If no TOTP secret is configured.
 
         """
         if not self.config.totp_secret:
-            raise RequestError("SSO MFA required but no totp_secret configured")
+            raise TwoFaTokenRequired("SSO MFA required but no totp_secret configured")
         return await self._login_sso_2fa(
             url, auth, mfa_response_data, self.config.totp_secret
         )
