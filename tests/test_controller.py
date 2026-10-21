@@ -567,7 +567,7 @@ async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controlle
         {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "Invalid"}},
         {
             "status": 405,
-            "body": "<html>Not Allowed</html>",
+            "body": '<html>{"username": "user", "password": "pass"}</html>',
             "content_type": "text/html",
         },
         {"status": 200, "body": b"null", "content_type": "application/json"},
@@ -577,9 +577,11 @@ async def test_unifios_login_error_status(mock_aioresponse, unifi_controller, re
     """Verify a reply without an error envelope or session fails the login."""
     unifi_controller.connectivity.is_unifi_os = True
     mock_aioresponse.post("https://host:8443/api/auth/login", **response)
-    with pytest.raises(ResponseError):
+    with pytest.raises(ResponseError) as exc_info:
         await unifi_controller.connectivity.login()
     assert not unifi_controller.connectivity.can_retry_login
+    # An echoed request must not end up in the message
+    assert "pass" not in str(exc_info.value)
 
 
 @pytest.mark.parametrize(

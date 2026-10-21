@@ -217,7 +217,7 @@ class Connectivity:
         if response.status == HTTP_STATUS_MFA_REQUIRED:
             raise TwoFaTokenRequired("MFA token was not accepted")
         if response.status >= HTTPStatus.BAD_REQUEST:
-            LOGGER.error("Login failed '%s'", str(data)[:200])
+            LOGGER.debug("Login failed '%s'", data)
             raise ResponseError(f"Login received {response.status}")
 
     def _raise_not_json(
@@ -235,11 +235,11 @@ class Connectivity:
             ApplicationNotReady: Otherwise, a starting application answers so.
 
         """
+        LOGGER.debug("Response from %s is not JSON: %r", url, bytes_data[:200])
         if response.status >= HTTPStatus.BAD_REQUEST:
             raise ResponseError(
-                f"Call {url} received {response.status}: {bytes_data[:200]!r}"
+                f"Call {url} received {response.status} {response.content_type}"
             )
-        LOGGER.debug("Response from %s is not JSON: %r", url, bytes_data[:200])
         raise ApplicationNotReady(
             f"Call {url} received {response.content_type}, not JSON"
         )
@@ -276,7 +276,7 @@ class Connectivity:
             LOGGER.error("Failed to parse JSON: %s", err)
             raise RequestError("Response is not valid JSON") from err
         if not isinstance(data, dict):
-            raise ResponseError(f"Unexpected response {bytes_data[:200]!r}")
+            raise ResponseError("Response is not a JSON object")
         return cast("TypedApiResponse", data)
 
     def _is_error_response(self, data: TypedApiResponse) -> bool:
