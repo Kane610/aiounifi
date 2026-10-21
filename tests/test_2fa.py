@@ -11,7 +11,12 @@ import pytest
 from yarl import URL
 
 from aiounifi.controller import Controller
-from aiounifi.errors import RequestError, TwoFaTokenRequired, Unauthorized
+from aiounifi.errors import (
+    RequestError,
+    ResponseError,
+    TwoFaTokenRequired,
+    Unauthorized,
+)
 from aiounifi.models.configuration import Configuration
 
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE
@@ -139,6 +144,26 @@ class TestLocal2fa:
         with pytest.raises(Unauthorized):
             await unifi_controller_2fa.connectivity.login()
 
+    async def test_local_2fa_login_retry_error_status(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test a 2FA retry with an error status is not taken for success."""
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            payload=LOCAL_2FA_ERROR_RESPONSE,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/login",
+            status=400,
+            payload={"code": "VALIDATION_ERROR"},
+            content_type="application/json",
+        )
+
+        with pytest.raises(ResponseError, match="400"):
+            await unifi_controller_2fa.connectivity.login()
+        assert not unifi_controller_2fa.connectivity.can_retry_login
+
     async def test_local_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa
     ):
@@ -195,7 +220,7 @@ class TestLocal2fa:
             content_type="text/html",
         )
 
-        with pytest.raises(RequestError, match="Host starting up"):
+        with pytest.raises(RequestError, match="not JSON"):
             await unifi_controller_2fa.connectivity.login()
 
 
@@ -235,8 +260,90 @@ class TestSso2fa:
         assert second_call_json["username"] == "user"
         assert second_call_json["password"] == "pass"
 
+    @pytest.mark.parametrize(
+        ("status", "payload", "error"),
+        [
+            (499, SSO_MFA_RESPONSE, TwoFaTokenRequired),
+            (400, {"code": "VALIDATION_ERROR", "message": "Invalid"}, ResponseError),
+        ],
+    )
+    async def test_sso_2fa_rejected(
+        self, mock_aioresponse, unifi_controller_2fa, status, payload, error
+    ):
+        """Test a rejected MFA step is not taken for a successful login."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=SSO_MFA_RESPONSE,
+            status=499,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=payload,
+            status=status,
+            content_type="application/json",
+        )
+
+        with pytest.raises(error):
+            await unifi_controller_2fa.connectivity.login()
+        assert not unifi_controller_2fa.connectivity.can_retry_login
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {"data": None},
+            [],
+            {"data": {"mfaCookie": 1}},
+            {"data": {"mfaCookie": "UBIC_2FA=abc\r\nX-Injected: 1"}},
+            {"data": {"mfaCookie": "=abc"}},
+            {"data": {"mfaCookie": "a b=c"}},
+            {"data": {"mfaCookie": "UBIC_2FA="}},
+            {"data": {"mfaCookie": "UBIC_2FA=a b"}},
+        ],
+    )
+    async def test_sso_2fa_invalid_challenge(
+        self, mock_aioresponse, unifi_controller_2fa, payload
+    ):
+        """Test an MFA challenge without a usable cookie raises RequestError."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=payload,
+            status=499,
+            content_type="application/json",
+        )
+
+        with pytest.raises(RequestError, match="missing valid mfaCookie"):
+            await unifi_controller_2fa.connectivity.login()
+
+    async def test_sso_2fa_cookie_attributes(
+        self, mock_aioresponse, unifi_controller_2fa
+    ):
+        """Test cookie attributes in the MFA challenge are not sent back."""
+        unifi_controller_2fa.connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload={
+                "data": {"mfaCookie": "UBIC_2FA=abc; path=/; secure; priority=high"}
+            },
+            status=499,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://host:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            content_type="application/json",
+        )
+
+        await unifi_controller_2fa.connectivity.login()
+
+        (calls,) = mock_aioresponse.requests.values()
+        assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc"
+
     async def test_sso_2fa_raises_without_totp_secret(self, mock_aioresponse):
-        """Test SSO MFA raises RequestError when no totp_secret configured."""
+        """Test SSO MFA raises TwoFaTokenRequired when no totp_secret configured."""
         session = aiohttp.ClientSession()
         config = Configuration(
             session,
@@ -254,7 +361,7 @@ class TestSso2fa:
             content_type="application/json",
         )
 
-        with pytest.raises(RequestError, match="SSO MFA required"):
+        with pytest.raises(TwoFaTokenRequired, match="SSO MFA required"):
             await controller.connectivity.login()
 
         await session.close()
@@ -310,10 +417,10 @@ class TestSso2fa:
         with pytest.raises(RequestError, match="not valid JSON"):
             await unifi_controller_2fa.connectivity.login()
 
-    async def test_sso_2fa_sets_cookie_on_session(
+    async def test_sso_2fa_sends_mfa_cookie(
         self, mock_aioresponse, unifi_controller_2fa
     ):
-        """Test SSO 2FA correctly sets the MFA cookie on the session."""
+        """Test SSO 2FA sends the MFA cookie without relying on the cookie jar."""
         unifi_controller_2fa.connectivity.is_unifi_os = True
 
         mock_aioresponse.post(
@@ -329,16 +436,53 @@ class TestSso2fa:
             content_type="application/json",
         )
 
-        session = unifi_controller_2fa.connectivity.config.session
-        with patch.object(
-            session.cookie_jar,
-            "update_cookies",
-            wraps=session.cookie_jar.update_cookies,
-        ) as mock_update:
-            await unifi_controller_2fa.connectivity.login()
-            mock_update.assert_called_once_with(
-                {"UBIC_2FA": "abc123def456"}, URL("https://host:8443/api/auth/login")
-            )
+        jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
+        jar.update_cookies({"UBIC_2FA": "stale"}, URL("https://host:8443"))
+        jar.update_cookies({"UBIC_2FA": "other"}, URL("https://other.example"))
+
+        await unifi_controller_2fa.connectivity.login()
+
+        (calls,) = mock_aioresponse.requests.values()
+        assert "Cookie" not in calls[0].kwargs["headers"]
+        assert calls[1].kwargs["headers"]["Cookie"] == "UBIC_2FA=abc123def456"
+        # A stale value in the jar would take precedence over the header,
+        # cookies of other hosts are kept
+        jar = unifi_controller_2fa.connectivity.config.session.cookie_jar
+        assert {(cookie.key, cookie["domain"]) for cookie in jar} == {
+            ("UBIC_2FA", "other.example")
+        }
+
+    @pytest.mark.parametrize(
+        "stale_url",
+        [URL("https://udm.example.com"), URL("https://example.com"), URL()],
+    )
+    async def test_sso_2fa_removes_stale_cookie(
+        self, mock_aioresponse, unifi_controller_2fa, stale_url
+    ):
+        """Test a stale MFA cookie the console would get is removed."""
+        connectivity = unifi_controller_2fa.connectivity
+        connectivity.config.host = "udm.example.com"
+        connectivity.is_unifi_os = True
+        mock_aioresponse.post(
+            "https://udm.example.com:8443/api/auth/login",
+            payload=SSO_MFA_RESPONSE,
+            status=499,
+            content_type="application/json",
+        )
+        mock_aioresponse.post(
+            "https://udm.example.com:8443/api/auth/login",
+            payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+            content_type="application/json",
+        )
+        jar = connectivity.config.session.cookie_jar
+        jar.update_cookies({"UBIC_2FA": "stale"}, stale_url)
+        jar.update_cookies({"UBIC_2FA": "other"}, URL("https://other.example"))
+
+        await connectivity.login()
+
+        assert {(cookie.key, cookie["domain"]) for cookie in jar} == {
+            ("UBIC_2FA", "other.example")
+        }
 
     async def test_sso_2fa_generates_valid_totp(
         self, mock_aioresponse, unifi_controller_2fa

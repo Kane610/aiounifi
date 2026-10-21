@@ -4,13 +4,16 @@ pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller
 """
 
 import ssl
+from unittest.mock import patch
 
 from aiohttp import ClientSession, client_exceptions, web
 import pytest
 import trustme
+from yarl import URL
 
 from aiounifi import (
     AiounifiException,
+    ApplicationNotReady,
     BadGateway,
     EndpointNotFound,
     Forbidden,
@@ -192,6 +195,139 @@ async def test_relogin_success(mock_aioresponse, unifi_controller):
     )
 
     await unifi_controller.devices.update()
+
+
+async def test_relogin_once_per_interval(mock_aioresponse, unifi_controller):
+    """Verify requests that keep getting 401 log in again once per interval."""
+    unifi_controller.connectivity.can_retry_login = True
+    url = "https://host:8443/api/s/default/test"
+    mock_aioresponse.get(url, status=401, repeat=True)
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        repeat=True,
+    )
+
+    def logins() -> int:
+        return sum(
+            len(calls)
+            for (method, _), calls in mock_aioresponse.requests.items()
+            if method.upper() == "POST"
+        )
+
+    with patch("aiounifi.interfaces.connectivity.monotonic") as monotonic:
+        for now, expected_logins in ((1000, 1), (1059, 1), (1060, 2)):
+            monotonic.return_value = now
+            with pytest.raises(LoginRequired):
+                await unifi_controller.connectivity.request(ApiRequest("get", "/test"))
+            assert logins() == expected_logins
+
+
+@pytest.mark.parametrize("host", ["HOST", "host."])
+async def test_check_unifi_os_clears_cookies_of_host_as_typed(
+    mock_aioresponse, unifi_controller, host
+):
+    """Verify the jar is cleared for the console however its host is written."""
+    jar = unifi_controller.connectivity.config.session.cookie_jar
+    jar.update_cookies({"TOKEN": "old"}, URL(f"https://{host}:8443"))
+    unifi_controller.connectivity.config.host = host
+    mock_aioresponse.get(
+        f"https://{host}:8443", body=UNIFI_OS_PAGE, content_type="text/html"
+    )
+
+    await unifi_controller.connectivity.check_unifi_os()
+
+    assert unifi_controller.connectivity.is_unifi_os
+    assert not list(jar)
+
+
+@pytest.mark.parametrize(
+    ("login_response", "error", "logins_after"),
+    [
+        (
+            {"status": 429, "payload": {"code": "AUTHENTICATION_FAILED_LIMIT_REACHED"}},
+            AuthenticationRateLimitError,
+            (1, 1, 2),
+        ),
+        ({"status": 403}, Forbidden, (1, 1, 2)),
+        (
+            {"payload": {"meta": {"rc": "error", "msg": "api.err.Invalid"}}},
+            Unauthorized,
+            (1, 1, 1),
+        ),
+        (
+            {
+                "payload": {
+                    "meta": {"rc": "error", "msg": "api.err.Ubic2faTokenRequired"}
+                }
+            },
+            TwoFaTokenRequired,
+            (1, 1, 1),
+        ),
+        ({"status": 401}, LoginRequired, (2, 3, 3)),
+    ],
+)
+async def test_relogin_after_failed_login(
+    mock_aioresponse, unifi_controller, login_response, error, logins_after
+):
+    """Verify when requests log in again after their login failed.
+
+    Logins are counted after requests at 60 s, 299 s and 300 s.
+    """
+    connectivity = unifi_controller.connectivity
+    connectivity.can_retry_login = True
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/test", status=401, repeat=True
+    )
+    mock_aioresponse.post("https://host:8443/api/login", **login_response, repeat=True)
+
+    def logins() -> int:
+        return sum(
+            len(calls)
+            for (method, _), calls in mock_aioresponse.requests.items()
+            if method.upper() == "POST"
+        )
+
+    with patch("aiounifi.interfaces.connectivity.monotonic") as monotonic:
+        monotonic.return_value = 1000
+        with pytest.raises(error):
+            await connectivity.request(ApiRequest("get", "/test"))
+        for now, expected in zip((1060, 1299, 1300), logins_after, strict=True):
+            monotonic.return_value = now
+            with pytest.raises((error, LoginRequired)):
+                await connectivity.request(ApiRequest("get", "/test"))
+            assert logins() == expected
+
+
+async def test_unifios_relogin_clears_session_cookie(
+    mock_aioresponse, unifi_controller
+):
+    """Verify a UniFi OS login retry does not send the old session cookie."""
+    connectivity = unifi_controller.connectivity
+    connectivity.is_unifi_os = True
+    connectivity.can_retry_login = True
+    jar = connectivity.config.session.cookie_jar
+    jar.update_cookies({"TOKEN": "old"}, URL("https://host:8443"))
+    jar.update_cookies({"TOKEN": "other"}, URL("https://other.example"))
+    url = "https://host:8443/proxy/network/api/s/default/test"
+    mock_aioresponse.get(url, status=401)
+    sent_cookies = []
+    mock_aioresponse.post(
+        "https://host:8443/api/auth/login",
+        payload=LOGIN_UNIFIOS_JSON_RESPONSE,
+        headers={"x-csrf-token": "123"},
+        callback=lambda *args, **kwargs: sent_cookies.append(
+            dict(jar.filter_cookies(URL("https://host:8443")))
+        ),
+    )
+    mock_aioresponse.get(url, payload=EMPTY_RESPONSE)
+
+    await connectivity.request(ApiRequest("get", "/test"))
+
+    assert sent_cookies == [{}]
+    assert {(cookie["domain"], cookie.value) for cookie in jar} == {
+        ("other.example", "other")
+    }
 
 
 async def test_relogin_fails(mock_aioresponse, unifi_controller):
@@ -393,8 +529,311 @@ async def test_unifios_controller_login_html_response(
         payload="Login Failed: Host starting up",
         content_type="text/html",
     )
-    with pytest.raises(RequestError):
+    with pytest.raises(ApplicationNotReady):
         await unifi_controller.connectivity.login()
+
+
+STARTUP_PAGE = (
+    '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    "<title>UniFi Network - Server status</title>"
+    '<base href="/manage/"></head><body>'
+    '<p id="appContextStatus">Network application is starting up...</p>'
+    "</body></html>"
+)
+
+
+UNIFI_OS_PAGE = (
+    '<!DOCTYPE html><html><head><base href="/"><title>UniFi OS</title>'
+    "</head><body></body></html>"
+)
+
+
+async def test_check_unifi_os_html_page(mock_aioresponse, unifi_controller):
+    """Verify an HTML page without the standalone marker is UniFi OS."""
+    mock_aioresponse.get(
+        "https://host:8443", body=UNIFI_OS_PAGE, content_type="text/html"
+    )
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is True
+
+
+@pytest.mark.parametrize(
+    "base_tag",
+    [
+        '<base href="/manage/">',
+        '<base href="/manage/" />',
+        "<base href='/manage/'>",
+        '<BASE HREF="/manage/">',
+    ],
+)
+async def test_check_unifi_os_standalone_page(
+    mock_aioresponse, unifi_controller, base_tag
+):
+    """Verify a standalone application page is not taken for UniFi OS."""
+    unifi_controller.connectivity.is_unifi_os = True
+    mock_aioresponse.get(
+        "https://host:8443",
+        body=STARTUP_PAGE.replace('<base href="/manage/">', base_tag),
+        content_type="text/html",
+    )
+    await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is False
+
+
+async def test_controller_login_standalone_startup(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """Verify the standalone start-up page is not taken for UniFi OS."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        body=STARTUP_PAGE,
+        content_type="text/html",
+        headers={"X-Frame-Options": "DENY"},
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login", body=STARTUP_PAGE, content_type="text/html"
+    )
+    with pytest.raises(ApplicationNotReady):
+        await unifi_controller.login()
+    assert unifi_controller.connectivity.is_unifi_os is False
+    assert not unifi_called_with("post", "/api/auth/login")
+
+    # Once started, the application redirects and login goes to /api/login
+    mock_aioresponse.get(
+        "https://host:8443", content_type="application/octet-stream", status=302
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        content_type="application/json",
+    )
+    await unifi_controller.login()
+    assert unifi_controller.connectivity.is_unifi_os is False
+    assert unifi_called_with(
+        "post",
+        "/api/login",
+        json={"username": "user", "password": "pass", "rememberMe": True},
+    )
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("response", "error"),
+    [
+        ({"body": STARTUP_PAGE, "content_type": "text/html"}, ApplicationNotReady),
+        ({"body": "not json", "content_type": "application/json"}, RequestError),
+    ],
+)
+async def test_api_request_not_json(
+    mock_aioresponse, unifi_controller, api_request, path, response, error
+):
+    """Verify a response without API data raises instead of returning nothing."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", **response)
+    with pytest.raises(RequestError) as exc_info:
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert type(exc_info.value) is error
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    "response",
+    [
+        {
+            "status": 405,
+            "body": "<html><body>Method Not Allowed</body></html>",
+            "content_type": "text/html",
+        },
+        {"status": 400, "body": b"", "content_type": "application/octet-stream"},
+        {"status": 409, "payload": {"code": "CONFLICT"}},
+    ],
+)
+async def test_api_request_error_status(
+    mock_aioresponse, unifi_controller, api_request, path, response
+):
+    """Verify an error status without a known error is not taken for data."""
+    mock_aioresponse.delete(f"https://host:8443{path}/test", **response)
+    with pytest.raises(ResponseError, match=f"received {response['status']}"):
+        await unifi_controller.connectivity.request(api_request("delete", "/test"))
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize("body", [b"null", b"1", b'"ok"'])
+async def test_api_request_bare_json_value(
+    mock_aioresponse, unifi_controller, api_request, path, body
+):
+    """Verify a JSON value that is no object or list raises ResponseError."""
+    mock_aioresponse.get(
+        f"https://host:8443{path}/test", body=body, content_type="application/json"
+    )
+    with pytest.raises(ResponseError, match="is not a JSON object"):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
+async def test_check_unifi_os_keeps_known_path(mock_aioresponse, unifi_controller):
+    """Verify a failed check does not move requests away from UniFi OS paths."""
+    unifi_controller.connectivity.is_unifi_os = True
+    mock_aioresponse.get("https://host:8443", exception=client_exceptions.ClientError)
+    with pytest.raises(RequestError):
+        await unifi_controller.connectivity.check_unifi_os()
+    assert unifi_controller.connectivity.is_unifi_os is True
+
+
+@pytest.mark.parametrize(
+    ("response", "match"),
+    [
+        (
+            {"status": 400, "payload": {"code": "VALIDATION_ERROR", "message": "x"}},
+            "Login received 400: x$",
+        ),
+        (
+            {
+                "status": 405,
+                "body": '<html>{"username": "user", "password": "pass"}</html>',
+                "content_type": "text/html",
+            },
+            "received 405 text/html",
+        ),
+        (
+            {"status": 200, "body": b"null", "content_type": "application/json"},
+            "not a JSON object",
+        ),
+    ],
+)
+async def test_unifios_login_error_status(
+    mock_aioresponse, unifi_controller, response, match
+):
+    """Verify a reply without an error envelope or session fails the login."""
+    unifi_controller.connectivity.is_unifi_os = True
+    mock_aioresponse.post("https://host:8443/api/auth/login", **response)
+    with pytest.raises(ResponseError, match=match) as exc_info:
+        await unifi_controller.connectivity.login()
+    assert not unifi_controller.connectivity.can_retry_login
+    # An echoed request must not end up in the message
+    assert "pass" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path", "body"),
+    [
+        (ApiRequest, "/api/s/default", {"meta": None}),
+        (ApiRequest, "/api/s/default", {"meta": {"rc": "error"}}),
+        (ApiRequestV2, "/v2/api/site/default", {"errorCode": 400}),
+        (ApiRequestV2, "/v2/api/site/default", {"errorCode": 400, "message": []}),
+    ],
+)
+async def test_api_request_unexpected_envelope(
+    mock_aioresponse, unifi_controller, api_request, path, body
+):
+    """Verify an envelope of unexpected shape raises ResponseError."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", payload=body)
+    with pytest.raises(ResponseError, match="unexpected data"):
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+
+
+@pytest.mark.parametrize(
+    "meta",
+    [{"rc": "error"}, {"rc": "error", "msg": ["api.err.Invalid"]}],
+)
+async def test_login_error_without_message(mock_aioresponse, unifi_controller, meta):
+    """Verify a login error envelope without a usable message still fails."""
+    mock_aioresponse.post(
+        "https://host:8443/api/login", status=400, payload={"meta": meta}
+    )
+    with pytest.raises(AiounifiException) as exc_info:
+        await unifi_controller.connectivity.login()
+    assert type(exc_info.value) is AiounifiException
+
+
+async def test_api_request_json_charset(mock_aioresponse, unifi_controller):
+    """Verify a JSON content type with parameters is decoded."""
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/test",
+        body=b'{"meta": {"rc": "ok"}, "data": [{"a": 1}]}',
+        headers={"Content-Type": "application/json; charset=UTF-8"},
+    )
+    assert await unifi_controller.connectivity.request(ApiRequest("get", "/test")) == {
+        "meta": {"rc": "ok"},
+        "data": [{"a": 1}],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"status": 204},
+        {"status": 200, "body": b"", "content_type": "application/octet-stream"},
+    ],
+)
+async def test_api_request_no_content(mock_aioresponse, unifi_controller, response):
+    """Verify an empty response is still an empty result."""
+    mock_aioresponse.post("https://host:8443/api/s/default/test", **response)
+    assert (
+        await unifi_controller.connectivity.request(ApiRequest("post", "/test")) == {}
+    )
+
+
+@pytest.mark.parametrize(
+    ("api_request", "path"),
+    [
+        (ApiRequest, "/api/s/default"),
+        (ApiRequestV2, "/v2/api/site/default"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("status", "payload", "detail"),
+    [
+        (
+            500,
+            {"error": {"code": 500, "message": "Internal Server Error"}},
+            ": Internal Server Error",
+        ),
+        (504, {"meta": {"rc": "error", "msg": "api.err.Busy"}}, ": api.err.Busy"),
+        (500, {"username": "user", "password": "pass"}, ""),
+        (500, ["api.err.Busy"], ""),
+        (500, {"message": None, "msg": "api.err.Busy"}, ": api.err.Busy"),
+        (500, {"message": "line one\r\nline two"}, ": line one line two"),
+    ],
+)
+async def test_api_request_server_error_json(
+    mock_aioresponse, unifi_controller, api_request, path, status, payload, detail
+):
+    """Verify a server error keeps the error message but not the raw body."""
+    mock_aioresponse.get(
+        f"https://host:8443{path}/test", status=status, payload=payload
+    )
+    with pytest.raises(RequestError) as exc_info:
+        await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert str(exc_info.value).endswith(f"received {status}{detail}")
+
+
+async def test_handler_update_startup_page(mock_aioresponse, unifi_controller):
+    """Verify a handler update raises on the start-up page and keeps no data."""
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/stat/sysinfo",
+        body=STARTUP_PAGE,
+        content_type="text/html",
+    )
+    with pytest.raises(ApplicationNotReady):
+        await unifi_controller.system_information.update()
+    assert len(unifi_controller.system_information.items()) == 0
 
 
 async def test_unifios_controller_no_csrf_token(
@@ -433,6 +872,8 @@ test_data = [
     ({"status": 429}, ResponseError),
     ({"status": 502}, BadGateway),
     ({"status": 503}, ServiceUnavailable),
+    ({"status": 500}, RequestError),
+    ({"status": 504}, RequestError),
     ({"exception": client_exceptions.ClientError}, RequestError),
     (
         {"payload": {"meta": {"msg": "api.err.LoginRequired", "rc": "error"}}},
@@ -543,6 +984,7 @@ api_request_data = [
 ]
 
 
+@pytest.mark.parametrize("status", [200, 400])
 @pytest.mark.parametrize(("api_request", "path", "input", "expected"), api_request_data)
 async def test_api_request_error_handling(
     mock_aioresponse,
@@ -551,11 +993,32 @@ async def test_api_request_error_handling(
     path,
     input,
     expected,
+    status,
 ):
-    """Verify request raise login required on a 401."""
-    mock_aioresponse.get(f"https://host:8443{path}/test", **input)
-    with pytest.raises(expected):
+    """Verify a known error envelope is mapped, also with an error status."""
+    mock_aioresponse.get(f"https://host:8443{path}/test", status=status, **input)
+    with pytest.raises(expected) as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
+    assert type(exc_info.value) is expected
+
+
+async def test_api_request_relogin_on_error_status(mock_aioresponse, unifi_controller):
+    """Verify a login required envelope with an error status logs in again."""
+    unifi_controller.connectivity.can_retry_login = True
+    url = "https://host:8443/v2/api/site/default/test"
+    mock_aioresponse.get(
+        url,
+        status=400,
+        payload={"errorCode": 401, "message": "api.err.LoginRequired"},
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login", payload={"meta": {"rc": "ok"}, "data": []}
+    )
+    mock_aioresponse.get(url, payload=[{"_id": "1"}])
+
+    assert await unifi_controller.connectivity.request(
+        ApiRequestV2("get", "/test")
+    ) == {"meta": {"rc": "ok", "msg": ""}, "data": [{"_id": "1"}]}
 
 
 @pytest.mark.parametrize(("unwanted_behavior", "expected_exception"), test_data)
@@ -694,13 +1157,17 @@ async def test_login_2fa_success_after_error(mock_aioresponse, unifi_controller)
 
 
 async def test_login_sso_mfa_missing_totp_secret(mock_aioresponse, unifi_controller):
-    """Test login with SSO MFA but missing totp_secret raises RequestError."""
+    """Test login with SSO MFA but missing totp_secret raises TwoFaTokenRequired."""
     unifi_controller.connectivity.config.totp_secret = None
     mock_aioresponse.post(
         "https://host:8443/api/login",
         status=499,
-        payload={},
+        payload={
+            "code": "MFA_AUTH_REQUIRED",
+            "message": "MFA authentication required",
+            "data": {"mfaCookie": "UBIC_2FA=abc123"},
+        },
         content_type="application/json",
     )
-    with pytest.raises(RequestError):
+    with pytest.raises(TwoFaTokenRequired):
         await unifi_controller.connectivity.login()

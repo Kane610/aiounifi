@@ -11,6 +11,7 @@ from ..errors import (
     AiounifiException,
     LoginRequired,
     NoPermission,
+    ResponseError,
     TwoFaTokenRequired,
     Unauthorized,
 )
@@ -47,6 +48,8 @@ class ApiRequest:
     def decode(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         data: TypedApiResponse = orjson.loads(raw)
+        if not isinstance(data, dict):
+            raise ResponseError("Response is not a JSON object")
 
         if "meta" in data and data["meta"]["rc"] == "error":
             raise ERRORS.get(data["meta"]["msg"], AiounifiException)(data)
@@ -67,8 +70,10 @@ class ApiRequestV2(ApiRequest):
     def decode(self, raw: bytes) -> TypedApiResponse:
         """Put data, received from the unifi controller, into a TypedApiResponse."""
         data = orjson.loads(raw)
+        if not isinstance(data, dict | list):
+            raise ResponseError("Response is not a JSON object or list")
 
-        if "errorCode" in data:
+        if isinstance(data, dict) and "errorCode" in data:
             raise ERRORS.get(data["message"], AiounifiException)(data)
 
         return TypedApiResponse(
