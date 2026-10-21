@@ -241,6 +241,50 @@ async def test_check_unifi_os_clears_cookies_of_host_as_typed(
     assert not list(jar)
 
 
+@pytest.mark.parametrize(
+    ("login_response", "error", "next_login"),
+    [
+        (
+            {"status": 429, "payload": {"code": "AUTHENTICATION_FAILED_LIMIT_REACHED"}},
+            AuthenticationRateLimitError,
+            1300,
+        ),
+        (
+            {"payload": {"meta": {"rc": "error", "msg": "api.err.Invalid"}}},
+            Unauthorized,
+            None,
+        ),
+    ],
+)
+async def test_relogin_after_failed_login(
+    mock_aioresponse, unifi_controller, login_response, error, next_login
+):
+    """Verify requests wait longer after a rate limit and stop on rejection."""
+    connectivity = unifi_controller.connectivity
+    connectivity.can_retry_login = True
+    mock_aioresponse.get(
+        "https://host:8443/api/s/default/test", status=401, repeat=True
+    )
+    mock_aioresponse.post("https://host:8443/api/login", **login_response, repeat=True)
+
+    def logins() -> int:
+        return sum(
+            len(calls)
+            for (method, _), calls in mock_aioresponse.requests.items()
+            if method.upper() == "POST"
+        )
+
+    with patch("aiounifi.interfaces.connectivity.monotonic") as monotonic:
+        monotonic.return_value = 1000
+        with pytest.raises(error):
+            await connectivity.request(ApiRequest("get", "/test"))
+        for now in (1060, 1299, 1300):
+            monotonic.return_value = now
+            with pytest.raises((error, LoginRequired)):
+                await connectivity.request(ApiRequest("get", "/test"))
+            assert logins() == 1 + (next_login is not None and now >= next_login)
+
+
 async def test_unifios_relogin_clears_session_cookie(
     mock_aioresponse, unifi_controller
 ):

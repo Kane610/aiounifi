@@ -28,6 +28,7 @@ from ..errors import (
     ResponseError,
     ServiceUnavailable,
     TwoFaTokenRequired,
+    Unauthorized,
     WebsocketError,
 )
 from ..models.api import ERRORS
@@ -50,6 +51,8 @@ HTTP_STATUS_MFA_REQUIRED = 499
 STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
 # Shortest time between two logins that requests make on their own
 RELOGIN_INTERVAL = 60
+# Each login attempt extends a login rate limit, wait longer after one
+RELOGIN_RATE_LIMIT_PAUSE = 300
 # Name and value of the cookie the SSO MFA challenge hands back
 MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
 
@@ -456,6 +459,8 @@ class Connectivity:
 
         Requests log in on their own at most once per RELOGIN_INTERVAL, so an
         API that keeps answering 401 does not cause a login on every request.
+        After a login rate limit they wait RELOGIN_RATE_LIMIT_PAUSE, and after
+        rejected credentials they wait for the next successful login.
 
         Args:
             api_request (ApiRequest): The API request object containing method, path, and data.
@@ -484,7 +489,15 @@ class Connectivity:
         if self.is_unifi_os:
             # A session cookie sent without its CSRF token fails the login
             self.config.session.cookie_jar.clear_domain(self._cookie_domain)
-        await self.login()
+        try:
+            await self.login()
+        except AuthenticationRateLimitError:
+            self._last_relogin = now + RELOGIN_RATE_LIMIT_PAUSE - RELOGIN_INTERVAL
+            raise
+        except (Forbidden, TwoFaTokenRequired, Unauthorized):
+            # Rejected credentials, leave the next login to the caller
+            self.can_retry_login = False
+            raise
         return await self._api_request(api_request)
 
     async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:
