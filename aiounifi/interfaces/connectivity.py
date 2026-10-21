@@ -42,6 +42,9 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 HTTP_STATUS_MFA_REQUIRED = 499
+# The standalone Network application serves its pages below /manage/, also
+# the status page it answers every path with while it starts.
+STANDALONE_PAGE_MARKER = b'<base href="/manage/">'
 
 
 class Connectivity:
@@ -69,10 +72,21 @@ class Connectivity:
 
         Sets self.is_unifi_os to True if UniFi OS is detected, otherwise False.
         Clears the cookie jar for the host if UniFi OS is detected.
+
+        Raises:
+            ApplicationNotReady: If a standalone Network application is starting.
+
         """
         self.is_unifi_os = False
-        response, _ = await self._request("get", self.config.url, allow_redirects=False)
+        response, bytes_data = await self._request(
+            "get", self.config.url, allow_redirects=False
+        )
         if response.status == HTTPStatus.OK:
+            if STANDALONE_PAGE_MARKER in bytes_data:
+                # A standalone application answers / with a redirect once started
+                raise ApplicationNotReady(
+                    f"Call {self.config.url} received the start-up page"
+                )
             self.is_unifi_os = True
             self.config.session.cookie_jar.clear_domain(self.config.host)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)

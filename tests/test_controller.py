@@ -407,6 +407,39 @@ STARTUP_PAGE = (
 )
 
 
+async def test_controller_login_standalone_startup(
+    mock_aioresponse, unifi_controller, unifi_called_with
+):
+    """Verify the standalone start-up page is not taken for UniFi OS."""
+    mock_aioresponse.get(
+        "https://host:8443",
+        body=STARTUP_PAGE,
+        content_type="text/html",
+        headers={"X-Frame-Options": "DENY"},
+    )
+    with pytest.raises(ApplicationNotReady):
+        await unifi_controller.login()
+    assert unifi_controller.connectivity.is_unifi_os is False
+    assert not unifi_called_with("post", "/api/auth/login")
+
+    # Once started, the application redirects and login goes to /api/login
+    mock_aioresponse.get(
+        "https://host:8443", content_type="application/octet-stream", status=302
+    )
+    mock_aioresponse.post(
+        "https://host:8443/api/login",
+        payload={"meta": {"rc": "ok"}, "data": []},
+        content_type="application/json",
+    )
+    await unifi_controller.login()
+    assert unifi_controller.connectivity.is_unifi_os is False
+    assert unifi_called_with(
+        "post",
+        "/api/login",
+        json={"username": "user", "password": "pass", "rememberMe": True},
+    )
+
+
 @pytest.mark.parametrize(
     ("api_request", "path"),
     [
