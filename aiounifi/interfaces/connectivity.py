@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 import datetime
 from http import HTTPStatus, cookies
 import logging
+import re
 from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
@@ -45,7 +46,7 @@ HTTP_STATUS_MFA_REQUIRED = 499
 # The standalone Network application serves its pages below /manage/, also
 # the status page it answers every path with while it starts. If the marker
 # is missing, detection falls back to treating the page as UniFi OS.
-STANDALONE_PAGE_MARKER = b'<base href="/manage/"'
+STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
 
 
 class Connectivity:
@@ -83,7 +84,7 @@ class Connectivity:
             "get", self.config.url, allow_redirects=False
         )
         if response.status == HTTPStatus.OK:
-            if STANDALONE_PAGE_MARKER in bytes_data:
+            if STANDALONE_PAGE_MARKER.search(bytes_data):
                 # A standalone application answers / with a redirect once started
                 raise ApplicationNotReady(
                     f"Call {self.config.url} received the start-up page"
@@ -326,7 +327,8 @@ class Connectivity:
 
         Raises:
             LoginRequired: If login is required and cannot be retried.
-            ApplicationNotReady: If the response is not JSON.
+            ApplicationNotReady: If a successful response is not JSON.
+            ResponseError: If an error response is not JSON.
             RequestError: For network or response errors, or invalid JSON.
 
         """
@@ -342,6 +344,11 @@ class Connectivity:
 
             if bytes_data:
                 if not self._is_json_response(response):
+                    if response.status >= HTTPStatus.BAD_REQUEST:
+                        raise ResponseError(
+                            f"Call {url} received {response.status} "
+                            f"{response.content_type}"
+                        )
                     raise ApplicationNotReady(
                         f"Call {url} received {response.content_type}, not JSON"
                     )

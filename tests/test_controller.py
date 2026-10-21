@@ -422,13 +422,17 @@ async def test_check_unifi_os_html_page(mock_aioresponse, unifi_controller):
     assert unifi_controller.connectivity.is_unifi_os is True
 
 
-async def test_check_unifi_os_startup_page_self_closing(
-    mock_aioresponse, unifi_controller
+@pytest.mark.parametrize(
+    "base_tag",
+    ['<base href="/manage/" />', "<base href='/manage/'>", '<BASE HREF="/manage/">'],
+)
+async def test_check_unifi_os_startup_page_variants(
+    mock_aioresponse, unifi_controller, base_tag
 ):
-    """Verify the start-up page is recognised with a self-closing base tag."""
+    """Verify the start-up page is recognised with other base tag spellings."""
     mock_aioresponse.get(
         "https://host:8443",
-        body=STARTUP_PAGE.replace('"/manage/">', '"/manage/" />'),
+        body=STARTUP_PAGE.replace('<base href="/manage/">', base_tag),
         content_type="text/html",
     )
     with pytest.raises(ApplicationNotReady):
@@ -491,6 +495,18 @@ async def test_api_request_not_json(
     with pytest.raises(RequestError) as exc_info:
         await unifi_controller.connectivity.request(api_request("get", "/test"))
     assert type(exc_info.value) is error
+
+
+async def test_api_request_error_not_json(mock_aioresponse, unifi_controller):
+    """Verify an error response without JSON is not taken for a starting app."""
+    mock_aioresponse.delete(
+        "https://host:8443/v2/api/site/default/test",
+        status=405,
+        body="<html><body>Method Not Allowed</body></html>",
+        content_type="text/html",
+    )
+    with pytest.raises(ResponseError, match="405"):
+        await unifi_controller.connectivity.request(ApiRequestV2("delete", "/test"))
 
 
 async def test_api_request_json_charset(mock_aioresponse, unifi_controller):
