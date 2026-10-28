@@ -70,7 +70,7 @@ def _error_detail(body: bytes | Mapping[str, Any]) -> str:
         str: ": <message>" for a JSON body with an error message, else "".
 
     """
-    data: Any = body
+    data: object = body
     if isinstance(body, bytes):
         try:
             data = orjson.loads(body)
