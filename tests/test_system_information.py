@@ -3,7 +3,10 @@
 import pytest
 
 from aiounifi.controller import Controller
-from aiounifi.models.system_information import SystemInformationRequest
+from aiounifi.models.system_information import (
+    SystemInformation,
+    SystemInformationRequest,
+)
 
 from .fixtures import SYSTEM_INFORMATION
 
@@ -31,6 +34,12 @@ async def test_system_information(unifi_controller: Controller) -> None:
     assert sys_info.is_cloud_console is False
     assert sys_info.name == "UDMP"
     assert sys_info.previous_version == "7.4.156"
+    assert sys_info.timezone == "Europe/Stockholm"
     assert sys_info.update_available is False
     assert sys_info.uptime == 1196290
     assert sys_info.version == "7.4.162"
+
+
+async def test_system_information_without_timezone() -> None:
+    """Test a system information payload that has no time zone."""
+    assert SystemInformation({}).timezone is None
