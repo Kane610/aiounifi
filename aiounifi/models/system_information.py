@@ -107,6 +107,11 @@ class SystemInformation(ApiItem):
         return self.raw["previous_version"]
 
     @property
+    def timezone(self) -> str | None:
+        """Time zone name the application runs in."""
+        return self.raw.get("timezone")
+
+    @property
     def update_available(self) -> bool:
         """Application update available."""
         return self.raw["update_available"]
