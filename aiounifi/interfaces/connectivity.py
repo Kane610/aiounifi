@@ -6,7 +6,9 @@ from collections.abc import Callable, Mapping
 import datetime
 from http import HTTPStatus, cookies
 import logging
-from typing import TYPE_CHECKING, Any, cast
+import re
+from time import monotonic
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -16,6 +18,7 @@ from yarl import URL
 
 from ..errors import (
     AiounifiException,
+    ApplicationNotReady,
     AuthenticationRateLimitError,
     BadGateway,
     EndpointNotFound,
@@ -25,6 +28,7 @@ from ..errors import (
     ResponseError,
     ServiceUnavailable,
     TwoFaTokenRequired,
+    Unauthorized,
     WebsocketError,
 )
 from ..models.api import ERRORS
@@ -41,6 +45,47 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 HTTP_STATUS_MFA_REQUIRED = 499
+# The standalone Network application serves its pages below /manage/, also
+# the status page it answers every path with while it starts. A page without
+# the marker is taken for UniFi OS, as before.
+STANDALONE_PAGE_MARKER = re.compile(rb"<base\s+href=[\"']/manage/[\"']", re.IGNORECASE)
+# Shortest time between two logins that requests make on their own
+RELOGIN_INTERVAL = 60
+# Wait longer after a login rate limit, which each attempt extends, and after
+# a 403, which UniFi OS answers for wrong credentials and temporary failures
+RELOGIN_PAUSE = 300
+# Name and value of the cookie the SSO MFA challenge hands back
+MFA_COOKIE = re.compile(r"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)=([^;\s]+)")
+
+
+def _error_detail(body: bytes | Mapping[str, Any]) -> str:
+    """Return the server's error message as a suffix for an exception message.
+
+    The raw body is left out, a proxy could echo the request with credentials.
+
+    Args:
+        body (bytes | Mapping[str, Any]): The response body, raw or parsed.
+
+    Returns:
+        str: ": <message>" for a JSON body with an error message, else "".
+
+    """
+    data: object = body
+    if isinstance(body, bytes):
+        try:
+            data = orjson.loads(body)
+        except orjson.JSONDecodeError:
+            return ""
+    if not isinstance(data, Mapping):
+        return ""
+    for item in (data, data.get("meta"), data.get("error")):
+        if not isinstance(item, Mapping):
+            continue
+        for key in ("message", "msg"):
+            msg = item.get(key)
+            if isinstance(msg, str) and (msg := " ".join(msg.split())):
+                return f": {msg[:100]}"
+    return ""
 
 
 class Connectivity:
@@ -58,6 +103,7 @@ class Connectivity:
         self.is_unifi_os = False
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
+        self._last_relogin: float | None = None
         self.ws_message_received: datetime.datetime | None = None
 
         if config.ssl_context:
@@ -69,18 +115,29 @@ class Connectivity:
         Sets self.is_unifi_os to True if UniFi OS is detected, otherwise False.
         Clears the cookie jar for the host if UniFi OS is detected.
         """
-        self.is_unifi_os = False
-        response, _ = await self._request("get", self.config.url, allow_redirects=False)
-        if response.status == HTTPStatus.OK:
-            self.is_unifi_os = True
-            self.config.session.cookie_jar.clear_domain(self.config.host)
+        response, bytes_data = await self._request(
+            "get", self.config.url, allow_redirects=False
+        )
+        # Assigned only after the response, requests meanwhile keep the known path
+        self.is_unifi_os = response.status == HTTPStatus.OK and not (
+            STANDALONE_PAGE_MARKER.search(bytes_data)
+        )
+        if self.is_unifi_os:
+            self.config.session.cookie_jar.clear_domain(self._cookie_domain)
         LOGGER.debug("Talking to UniFi OS device: %s", self.is_unifi_os)
 
     async def login(self) -> None:
         """Log in to the UniFi controller.
 
         Handles SSO MFA, 2FA, and error responses. Updates headers on success.
-        Raises RequestError or other custom exceptions on failure.
+
+        Raises:
+            ApplicationNotReady: If the host answers without JSON while starting.
+            TwoFaTokenRequired: If MFA is required and cannot be completed.
+            ResponseError: If the login fails with an error status.
+            RequestError: For network errors or invalid JSON.
+            AiounifiException: For other login errors.
+
         """
         self.headers.clear()
         url = f"{self.config.url}/api{'/auth/login' if self.is_unifi_os else '/login'}"
@@ -95,16 +152,14 @@ class Connectivity:
             response, bytes_data = await self._handle_sso_mfa(url, auth, bytes_data)
 
         if not self._is_json_response(response):
-            LOGGER.debug("Login Failed not JSON: '%s'", bytes_data)
-            raise RequestError("Login Failed: Host starting up")
+            self._raise_not_json(url, response, bytes_data)
 
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
             await self._handle_login_error(url, auth, data)
         else:
-            self._update_login_headers(response)
-            self.can_retry_login = True
-            LOGGER.debug("Logged in to UniFi %s", url)
+            self._raise_on_error_status(response, data)
+            self._logged_in(url, response)
 
     async def _handle_sso_mfa(
         self, url: str, auth: dict[str, Any], mfa_response_data: bytes
@@ -120,11 +175,11 @@ class Connectivity:
             tuple[aiohttp.ClientResponse, bytes]: The response and data after completing SSO MFA.
 
         Raises:
-            RequestError: If no TOTP secret is configured.
+            TwoFaTokenRequired: If no TOTP secret is configured.
 
         """
         if not self.config.totp_secret:
-            raise RequestError("SSO MFA required but no totp_secret configured")
+            raise TwoFaTokenRequired("SSO MFA required but no totp_secret configured")
         return await self._login_sso_2fa(
             url, auth, mfa_response_data, self.config.totp_secret
         )
@@ -146,12 +201,11 @@ class Connectivity:
             AiounifiException: For known error responses.
 
         """
-        error_msg = data["meta"]["msg"]
-        error_cls = ERRORS.get(error_msg, AiounifiException)
+        error_cls = self._login_error(data)
         if error_cls is TwoFaTokenRequired and self.config.totp_secret:
             await self._attempt_2fa_retry(url, auth, self.config.totp_secret)
             return
-        LOGGER.error("Login failed '%s'", data)
+        LOGGER.error("Login failed: %s", data["meta"].get("msg"))
         raise error_cls
 
     async def _attempt_2fa_retry(
@@ -165,21 +219,68 @@ class Connectivity:
             totp_secret (str): The TOTP secret, already confirmed non-None by the caller.
 
         Raises:
+            ApplicationNotReady: If the 2FA retry response is not JSON.
+            TwoFaTokenRequired: If MFA is still required.
+            ResponseError: If the 2FA retry fails with an error status.
             RequestError: If the 2FA retry response is not valid JSON.
             AiounifiException: If the 2FA login fails due to authentication error.
 
         """
         response, bytes_data = await self._login_local_2fa(url, auth, totp_secret)
         if not self._is_json_response(response):
-            LOGGER.debug("Login 2FA retry not JSON: '%s'", bytes_data)
-            raise RequestError("Login Failed: Host starting up")
+            self._raise_not_json(url, response, bytes_data)
         data = self._parse_json(bytes_data)
         if self._is_error_response(data):
-            LOGGER.error("Login with 2FA failed '%s'", data)
-            raise ERRORS.get(data["meta"]["msg"], AiounifiException)
-        self._update_login_headers(response)
-        self.can_retry_login = True
-        LOGGER.debug("Logged in to UniFi %s", url)
+            LOGGER.error("Login with 2FA failed: %s", data["meta"].get("msg"))
+            raise self._login_error(data)
+        self._raise_on_error_status(response, data)
+        self._logged_in(url, response)
+
+    def _raise_on_error_status(
+        self, response: aiohttp.ClientResponse, data: TypedApiResponse
+    ) -> None:
+        """Raise if a login response without an error envelope failed anyway.
+
+        Args:
+            response (aiohttp.ClientResponse): The HTTP response object.
+            data (TypedApiResponse): The parsed response data.
+
+        Raises:
+            TwoFaTokenRequired: If MFA is still required after the MFA step.
+            ResponseError: For other error statuses.
+
+        """
+        if response.status == HTTP_STATUS_MFA_REQUIRED:
+            raise TwoFaTokenRequired("MFA token was not accepted")
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            LOGGER.debug("Login failed '%s'", data)
+            raise ResponseError(
+                f"Login received {response.status}{_error_detail(data)}"
+            )
+
+    def _raise_not_json(
+        self, url: str, response: aiohttp.ClientResponse, bytes_data: bytes
+    ) -> NoReturn:
+        """Raise for a response that is not JSON.
+
+        Args:
+            url (str): The request URL.
+            response (aiohttp.ClientResponse): The HTTP response object.
+            bytes_data (bytes): The response body as bytes.
+
+        Raises:
+            ResponseError: If the response has an error status.
+            ApplicationNotReady: Otherwise, a starting application answers so.
+
+        """
+        LOGGER.debug("Response from %s is not JSON: %r", url, bytes_data[:200])
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            raise ResponseError(
+                f"Call {url} received {response.status} {response.content_type}"
+            )
+        raise ApplicationNotReady(
+            f"Call {url} received {response.content_type}, not JSON"
+        )
 
     def _is_json_response(self, response: aiohttp.ClientResponse) -> bool:
         """Check if the response has a JSON content type.
@@ -204,13 +305,17 @@ class Connectivity:
 
         Raises:
             RequestError: If the data is not valid JSON.
+            ResponseError: If the data is not a JSON object.
 
         """
         try:
-            return cast("TypedApiResponse", orjson.loads(bytes_data))
+            data = orjson.loads(bytes_data)
         except orjson.JSONDecodeError as err:
             LOGGER.error("Failed to parse JSON: %s", err)
             raise RequestError("Response is not valid JSON") from err
+        if not isinstance(data, dict):
+            raise ResponseError("Response is not a JSON object")
+        return cast("TypedApiResponse", data)
 
     def _is_error_response(self, data: TypedApiResponse) -> bool:
         """Check if the response data indicates an error.
@@ -222,7 +327,40 @@ class Connectivity:
             bool: True if the response is an error, False otherwise.
 
         """
-        return data.get("meta", {}).get("rc") == "error"
+        meta = data.get("meta")
+        return isinstance(meta, dict) and meta.get("rc") == "error"
+
+    def _login_error(self, data: TypedApiResponse) -> type[AiounifiException]:
+        """Return the exception class for a login error response.
+
+        Args:
+            data (TypedApiResponse): The parsed error response data.
+
+        Returns:
+            type[AiounifiException]: The exception class to raise.
+
+        """
+        msg = data["meta"].get("msg")
+        if not isinstance(msg, str):
+            return AiounifiException
+        return ERRORS.get(msg, AiounifiException)
+
+    def _logged_in(self, url: str, response: aiohttp.ClientResponse) -> None:
+        """Store the session of a successful login.
+
+        Args:
+            url (str): The login URL.
+            response (aiohttp.ClientResponse): The HTTP response object.
+
+        """
+        self._update_login_headers(response)
+        self.can_retry_login = True
+        LOGGER.debug("Logged in to UniFi %s", url)
+
+    @property
+    def _cookie_domain(self) -> str:
+        """Return the host as cookie jars store it."""
+        return URL(self.config.url).raw_host or self.config.host
 
     def _update_login_headers(self, response: aiohttp.ClientResponse) -> None:
         """Update login headers from the response after successful authentication.
@@ -285,21 +423,45 @@ class Connectivity:
             body = orjson.loads(mfa_response_data)
         except orjson.JSONDecodeError as err:
             raise RequestError(f"SSO MFA response is not valid JSON: {err}") from err
-        mfa_cookie_str: str = body.get("data", {}).get("mfaCookie", "")
+        data = body.get("data") if isinstance(body, dict) else None
+        mfa_cookie_str = data.get("mfaCookie") if isinstance(data, dict) else None
 
-        if not mfa_cookie_str or "=" not in mfa_cookie_str:
+        if not (
+            isinstance(mfa_cookie_str, str)
+            and mfa_cookie_str.isprintable()
+            and (match := MFA_COOKIE.fullmatch(mfa_cookie_str.split(";")[0].strip()))
+        ):
             raise RequestError("SSO MFA response missing valid mfaCookie")
 
-        cookie_name, cookie_val = mfa_cookie_str.split("=", 1)
-        self.config.session.cookie_jar.update_cookies(
-            {cookie_name: cookie_val}, URL(url)
+        # A stale value in the jar would take precedence over the header
+        host = self._cookie_domain
+        self.config.session.cookie_jar.clear(
+            lambda morsel: (
+                morsel.key == match.group(1)
+                and (
+                    not morsel["domain"]
+                    or host == morsel["domain"]
+                    or host.endswith(f".{morsel['domain']}")
+                )
+            )
         )
 
         token = pyotp.TOTP(totp_secret).now()
-        return await self._request("post", url, json={**auth, "token": token})
+        # Sent as a header, a cookie jar may drop cookies for IP address hosts
+        return await self._request(
+            "post",
+            url,
+            json={**auth, "token": token},
+            headers={"Cookie": match.group(0)},
+        )
 
     async def request(self, api_request: ApiRequest) -> TypedApiResponse:
-        """Make a request to the API, retrying login on failure.
+        """Make a request to the API, logging in again on an expired session.
+
+        Requests log in on their own at most once per RELOGIN_INTERVAL, so an
+        API that keeps answering 401 does not cause a login on every request.
+        After a login rate limit or a 403 they wait RELOGIN_PAUSE, and after
+        rejected credentials they wait for the next successful login.
 
         Args:
             api_request (ApiRequest): The API request object containing method, path, and data.
@@ -308,31 +470,80 @@ class Connectivity:
             TypedApiResponse: The parsed response data from the API.
 
         Raises:
-            LoginRequired: If login is required and cannot be retried.
-            RequestError: For network or response errors.
+            LoginRequired: If the session expired and logging in again is not
+                allowed yet, or the request still got 401 after logging in.
+            AiounifiException: For the errors of login and the request, see
+                login and _api_request.
+
+        """
+        try:
+            return await self._api_request(api_request)
+        except LoginRequired:
+            now = monotonic()
+            if not self.can_retry_login or (
+                self._last_relogin is not None
+                and now - self._last_relogin < RELOGIN_INTERVAL
+            ):
+                raise
+            self._last_relogin = now
+        # Session likely expired, log in again
+        if self.is_unifi_os:
+            # A session cookie sent without its CSRF token fails the login
+            self.config.session.cookie_jar.clear_domain(self._cookie_domain)
+        try:
+            await self.login()
+        except (AuthenticationRateLimitError, Forbidden):
+            self._last_relogin = now + RELOGIN_PAUSE - RELOGIN_INTERVAL
+            raise
+        except (TwoFaTokenRequired, Unauthorized):
+            # Rejected credentials, leave the next login to the caller
+            self.can_retry_login = False
+            raise
+        return await self._api_request(api_request)
+
+    async def _api_request(self, api_request: ApiRequest) -> TypedApiResponse:
+        """Make a request to the API.
+
+        Args:
+            api_request (ApiRequest): The API request object containing method, path, and data.
+
+        Returns:
+            TypedApiResponse: The parsed response data from the API.
+
+        Raises:
+            LoginRequired: If the session is not logged in.
+            ApplicationNotReady: If a response without an error status is not JSON.
+            ResponseError: For error statuses without a known error, or data
+                of unexpected shape.
+            RequestError: For network or response errors, or invalid JSON.
 
         """
         url = self.config.url + api_request.full_path(
             self.config.site, self.is_unifi_os
         )
         data: TypedApiResponse = {}
+        response, bytes_data = await self._request(
+            api_request.method, url, api_request.data
+        )
 
-        try:
-            response, bytes_data = await self._request(
-                api_request.method, url, api_request.data
-            )
-
-            if response.content_type == "application/json":
+        if bytes_data and not self._is_json_response(response):
+            self._raise_not_json(url, response, bytes_data)
+        if bytes_data:
+            try:
+                # Raises the known error of an error envelope
                 data = api_request.decode(bytes_data)
-
-        except LoginRequired:
-            if not self.can_retry_login:
-                raise
-            # Session likely expired, try again
-            self.can_retry_login = False
-            await self.login()
-            return await self.request(api_request)
-
+            except orjson.JSONDecodeError as err:
+                raise RequestError(f"Call {url} received invalid JSON: {err}") from err
+            # Envelopes of unexpected shape, also in handler specific decoders
+            except (AttributeError, KeyError, TypeError) as err:
+                raise ResponseError(
+                    f"Call {url} received {response.status} with unexpected "
+                    f"data: {err!r}"
+                ) from err
+        if response.status >= HTTPStatus.BAD_REQUEST:
+            raise ResponseError(
+                f"Call {url} received {response.status}{_error_detail(bytes_data)}"
+            )
         return data
 
     async def _request(
@@ -341,6 +552,7 @@ class Connectivity:
         url: str,
         json: Mapping[str, Any] | None = None,
         allow_redirects: bool = True,
+        headers: Mapping[str, str] | None = None,
     ) -> tuple[aiohttp.ClientResponse, bytes]:
         """Make a raw HTTP request to the API.
 
@@ -349,6 +561,7 @@ class Connectivity:
             url (str): The full request URL.
             json (Mapping[str, Any] | None): The JSON payload for the request, if any.
             allow_redirects (bool): Whether to allow redirects.
+            headers (Mapping[str, str] | None): Headers to send in addition.
 
         Returns:
             tuple[aiohttp.ClientResponse, bytes]: The response object and response body as bytes.
@@ -359,7 +572,7 @@ class Connectivity:
             ResponseError: For 404, 429, or invalid responses.
             BadGateway: For 502 Bad Gateway.
             ServiceUnavailable: For 503 Service Unavailable.
-            RequestError: For network or client errors.
+            RequestError: For other 5xx responses and network or client errors.
             AuthenticationRateLimitError: For 429 rate limit errors with specific code.
 
         """
@@ -372,7 +585,7 @@ class Connectivity:
                 url,
                 json=json,
                 ssl=self.config.ssl_context,
-                headers=self.headers,
+                headers={**self.headers, **(headers or {})},
                 allow_redirects=allow_redirects,
             ) as res:
                 LOGGER.debug(
@@ -400,6 +613,13 @@ class Connectivity:
                         f"Call {url} received 503 service unavailable"
                     )
 
+                if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    body = await res.read()
+                    LOGGER.debug("data (from %s) %r", url, body[:200])
+                    raise RequestError(
+                        f"Call {url} received {res.status}{_error_detail(body)}"
+                    )
+
                 bytes_data = await res.read()
 
         except client_exceptions.ClientError as err:
@@ -418,10 +638,10 @@ class Connectivity:
                 and data.get("code") == "AUTHENTICATION_FAILED_LIMIT_REACHED"
             ):
                 raise AuthenticationRateLimitError(
-                    f"Call {url} received 429: {data.get('message', bytes_data)!r}"
+                    f"Call {url} received 429{_error_detail(bytes_data)}"
                 )
             # Fallback to old logic
-            raise ResponseError(f"Call {url} received 429: {bytes_data!r}")
+            raise ResponseError(f"Call {url} received 429{_error_detail(bytes_data)}")
 
         return res, bytes_data
 

@@ -47,6 +47,13 @@ class BadGateway(RequestError):
     """Invalid response from the upstream server."""
 
 
+class ApplicationNotReady(ServiceUnavailable):
+    """The application answered, but not with API data.
+
+    A starting Network application answers every path with an HTML page.
+    """
+
+
 # Raised when login attempt limit is reached (HTTP 429 AUTHENTICATION_FAILED_LIMIT_REACHED)
 class AuthenticationRateLimitError(AiounifiException):
     """Raised when login attempt limit is reached (HTTP 429)."""
