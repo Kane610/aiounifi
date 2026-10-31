@@ -16,7 +16,11 @@ class Networks(APIHandler[Network]):
 
     obj_id_key = "_id"
     item_cls = Network
-    process_messages = (MessageKey.NETWORK_CONF_UPDATED,)
+    process_messages = (
+        MessageKey.NETWORK_CONF_ADDED,
+        MessageKey.NETWORK_CONF_UPDATED,
+    )
+    remove_messages = (MessageKey.NETWORK_CONF_DELETED,)
     api_request = NetworkListRequest.create()
 
     async def save(

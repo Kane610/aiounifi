@@ -46,18 +46,58 @@ async def test_message_handler(message_filter, expected):
     assert len(message_handler) == 0
 
 
-async def test_unsupported_message_key():
+async def test_unsupported_message_key(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Validate unsupported message key handling."""
-    message = Message.from_dict(
-        {
-            "meta": {
-                "rc": "ok",
-                "message": "Unsupported",
-            },
-            "data": [{}],
-        }
-    )
-    assert message.meta.message == MessageKey.UNKNOWN
+    monkeypatch.setattr("aiounifi.models.message._unsupported_keys", set())
+    for _ in range(2):
+        message = Message.from_dict(
+            {
+                "meta": {
+                    "rc": "ok",
+                    "message": "unsupported:sync",
+                },
+                "data": {"x_password": "secret"},
+            }
+        )
+        assert message.meta.message == MessageKey.UNKNOWN
+
+    assert [record.getMessage() for record in caplog.records] == [
+        "Unsupported message key unsupported:sync"
+    ]
+    assert "secret" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "account:add",
+        "account:sync",
+        "account:delete",
+        "dhcpoption:add",
+        "dhcpoption:delete",
+        "firewallgroup:delete",
+        "firewallrule:delete",
+        "hotspotop:add",
+        "hotspotop:delete",
+        "portconf:add",
+        "portconf:sync",
+        "portconf:delete",
+        "radiusprofile:add",
+        "radiusprofile:sync",
+        "radiusprofile:delete",
+        "routing:add",
+        "routing:sync",
+        "routing:delete",
+        "user:add",
+        "usergroup:add",
+        "usergroup:delete",
+    ],
+)
+async def test_observed_message_keys_are_supported(key: str) -> None:
+    """Verify message keys sent by a Network application are known."""
+    assert MessageKey(key) is not MessageKey.UNKNOWN
 
 
 @patch("aiounifi.interfaces.messages.LOGGER")
