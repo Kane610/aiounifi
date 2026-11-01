@@ -62,6 +62,15 @@ _SECRET_KEYS = {
 
 LOGGER = logging.getLogger(__name__)
 
+# Statuses that end a request with an error of their own, and how to say it
+STATUS_ERRORS: dict[int, tuple[type[Exception], str]] = {
+    HTTPStatus.UNAUTHORIZED: (LoginRequired, "401 Unauthorized"),
+    HTTPStatus.FORBIDDEN: (Forbidden, "403 Forbidden"),
+    HTTPStatus.NOT_FOUND: (EndpointNotFound, "404 Not Found"),
+    HTTPStatus.BAD_GATEWAY: (BadGateway, "502 bad gateway"),
+    HTTPStatus.SERVICE_UNAVAILABLE: (ServiceUnavailable, "503 service unavailable"),
+}
+
 
 def _is_secret_key(key: object) -> bool:
     """Return if a field holds a secret."""
@@ -652,22 +661,9 @@ class Connectivity:
                     "received (from %s) %s %s", url, res.status, res.content_type
                 )
 
-                if res.status == HTTPStatus.UNAUTHORIZED:
-                    raise LoginRequired(f"Call {url} received 401 Unauthorized")
-
-                if res.status == HTTPStatus.FORBIDDEN:
-                    raise Forbidden(f"Call {url} received 403 Forbidden")
-
-                if res.status == HTTPStatus.NOT_FOUND:
-                    raise EndpointNotFound(f"Call {url} received 404 Not Found")
-
-                if res.status == HTTPStatus.BAD_GATEWAY:
-                    raise BadGateway(f"Call {url} received 502 bad gateway")
-
-                if res.status == HTTPStatus.SERVICE_UNAVAILABLE:
-                    raise ServiceUnavailable(
-                        f"Call {url} received 503 service unavailable"
-                    )
+                if (error := STATUS_ERRORS.get(res.status)) is not None:
+                    error_type, description = error
+                    raise error_type(f"Call {url} received {description}")
 
                 if res.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
                     body = await res.read()
