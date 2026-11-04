@@ -1865,17 +1865,46 @@ async def test_wan_interfaces(unifi_controller: Controller) -> None:
     assert device.wan1["ifname"] == "eth0"
     assert device.wan1["up"] is True
     assert device.wan1["speed"] == 1000
+    assert device.wan1["rx_bytes"] == 1107294012155
+    assert device.wan1["tx_bytes"] == 96813272238
 
     assert device.wan2 is not None
     assert device.wan2["ip"] == "10.0.0.2"
     assert device.wan2["mac"] == "78:8a:20:33:44:56"
     assert device.wan2["ifname"] == "eth1"
     assert device.wan2["up"] is True
+    assert device.wan2["rx_bytes"] == 500000000
+    assert device.wan2["tx_bytes"] == 200000000
+    assert "is_uplink" not in device.wan1
 
     assert device.wan3 is None
     assert device.wan4 is None
     assert device.wan5 is None
     assert device.wan6 is None
+
+
+@pytest.mark.parametrize(
+    ("device_payload"),
+    [
+        [
+            GATEWAY_USG3
+            | {
+                "wan1": GATEWAY_USG3["wan1"] | {"is_uplink": True},
+                "wan2": GATEWAY_USG3["wan2"] | {"is_uplink": False},
+            }
+        ]
+    ],
+)
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_wan_interface_is_uplink(unifi_controller: Controller) -> None:
+    """Test which WAN interface currently carries the traffic."""
+    await unifi_controller.devices.update()
+    device = next(iter(unifi_controller.devices.values()))
+
+    assert device.wan1 is not None
+    assert device.wan1["is_uplink"] is True
+    assert device.wan2 is not None
+    assert device.wan2["is_uplink"] is False
 
 
 @pytest.mark.parametrize(("device_payload"), [[GATEWAY_USG3]])
