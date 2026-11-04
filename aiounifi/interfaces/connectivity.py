@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-import datetime
+import datetime as dt
 from http import HTTPStatus, cookies
 import logging
 import re
@@ -166,7 +166,7 @@ class Connectivity:
         self.headers: dict[str, str] = {}
         self.can_retry_login = False
         self._last_relogin: float | None = None
-        self.ws_message_received: datetime.datetime | None = None
+        self.ws_message_received: dt.datetime | None = None
 
         if config.ssl_context:
             LOGGER.warning("Using SSL context %s", config.ssl_context)
@@ -731,7 +731,7 @@ class Connectivity:
                 LOGGER.debug("Connected to UniFi websocket %s", url)
 
                 async for message in websocket_connection:
-                    self.ws_message_received = datetime.datetime.now(datetime.UTC)
+                    self.ws_message_received = dt.datetime.now(dt.UTC)
 
                     if message.type is aiohttp.WSMsgType.TEXT:
                         if LOGGER.isEnabledFor(logging.DEBUG):
