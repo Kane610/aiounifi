@@ -1,8 +1,7 @@
 """Tests for the command-line entry point."""
 
 import asyncio
-from collections.abc import Callable
-from runpy import run_module
+from runpy import run_path
 import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -208,15 +207,11 @@ def test_cli_script_guard(
 ) -> None:
     """Parse CLI arguments and handle a keyboard interrupt from asyncio.run."""
     monkeypatch.setattr(sys, "argv", ["aiounifi", *arguments])
-    run_side_effect: Callable[[object], None]
-    if interrupt:
-        run_side_effect = Mock(side_effect=KeyboardInterrupt())
-    else:
 
-        def close_coroutine(coroutine: object) -> None:
-            coroutine.close()  # type: ignore[attr-defined]
-
-        run_side_effect = close_coroutine
+    def run_side_effect(coroutine: object) -> None:
+        coroutine.close()  # type: ignore[attr-defined]
+        if interrupt:
+            raise KeyboardInterrupt
 
     with patch.object(asyncio, "run", side_effect=run_side_effect):
-        run_module("aiounifi.__main__", run_name="__main__")
+        run_path(cli.__file__, run_name="__main__")

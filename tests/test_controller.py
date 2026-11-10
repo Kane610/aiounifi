@@ -1085,7 +1085,7 @@ async def test_websocket(aiohttp_server, caplog: pytest.LogCaptureFixture) -> No
     tls_certificate = tls_certificate_authority.issue_server_cert(
         "localhost", "127.0.0.1", "::1"
     )
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     tls_certificate.configure_cert(ssl_context)
 
     async def handler(request):
