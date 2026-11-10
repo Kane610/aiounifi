@@ -3,11 +3,13 @@
 pytest --cov-report term-missing --cov=aiounifi.controller tests/test_controller.py
 """
 
+from collections.abc import AsyncIterator
 import logging
 import ssl
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from aiohttp import ClientSession, client_exceptions, web
+from aiohttp import ClientSession, WSMessage, WSMsgType, client_exceptions, web
+from aiohttp.client_reqrep import ConnectionKey
 import pytest
 import trustme
 from yarl import URL
@@ -27,7 +29,8 @@ from aiounifi import (
     Unauthorized,
 )
 from aiounifi.controller import Controller
-from aiounifi.errors import AuthenticationRateLimitError
+from aiounifi.errors import AuthenticationRateLimitError, WebsocketError
+from aiounifi.interfaces.connectivity import Connectivity, _redact
 from aiounifi.models.api import ApiRequest, ApiRequestV2
 from aiounifi.models.configuration import Configuration
 from aiounifi.models.wlan import WlanChangePasswordRequest
@@ -35,6 +38,30 @@ from aiounifi.models.wlan import WlanChangePasswordRequest
 from .fixtures import LOGIN_UNIFIOS_JSON_RESPONSE, SITE_RESPONSE
 
 EMPTY_RESPONSE = {"meta": {"rc": "ok"}, "data": []}
+
+
+class MockWebSocketConnection:
+    """Async context manager and iterator for websocket messages."""
+
+    def __init__(self, messages: list[WSMessage]) -> None:
+        """Store the messages to yield."""
+        self.messages = messages
+
+    async def __aenter__(self) -> "MockWebSocketConnection":
+        """Return this connection as a context manager."""
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        """Finish the websocket context."""
+        return None
+
+    def __aiter__(self) -> AsyncIterator[WSMessage]:
+        """Return an asynchronous iterator over the messages."""
+        return self._iterate_messages()
+
+    async def _iterate_messages(self) -> AsyncIterator[WSMessage]:
+        for message in self.messages:
+            yield message
 
 
 @pytest.mark.parametrize("is_unifi_os", [True, False])
@@ -1078,6 +1105,7 @@ async def test_websocket(aiohttp_server, caplog: pytest.LogCaptureFixture) -> No
                 ],
             }
         )
+        await ws.send_bytes(b"unexpected binary message")
 
         await ws.send_json(
             {
@@ -1102,6 +1130,89 @@ async def test_websocket(aiohttp_server, caplog: pytest.LogCaptureFixture) -> No
     assert len(controller.dpi_groups.items()) == 1
     assert "radius user" in caplog.text
     assert "ws-secret" not in caplog.text
+
+
+async def test_websocket_error_message(unifi_controller: Controller) -> None:
+    """Raise WebsocketError when the websocket yields an error message."""
+    connection = MockWebSocketConnection(
+        [WSMessage(WSMsgType.ERROR, "socket failed", "")]
+    )
+    with (
+        patch.object(
+            unifi_controller.connectivity.config.session,
+            "ws_connect",
+            return_value=connection,
+        ),
+        pytest.raises(WebsocketError, match="socket failed"),
+    ):
+        await unifi_controller.connectivity.websocket(Mock())
+
+
+async def test_websocket_closed_message(unifi_controller: Controller) -> None:
+    """Stop processing when the websocket yields a closed message."""
+    connection = MockWebSocketConnection(
+        [WSMessage(WSMsgType.CLOSED, "connection closed", "")]
+    )
+    with patch.object(
+        unifi_controller.connectivity.config.session,
+        "ws_connect",
+        return_value=connection,
+    ):
+        await unifi_controller.connectivity.websocket(Mock())
+
+
+@pytest.mark.parametrize("error_type", ["connector", "handshake", "other"])
+async def test_websocket_connection_errors(
+    unifi_controller: Controller, error_type: str
+) -> None:
+    """Preserve expected connection errors and wrap unexpected failures."""
+    if error_type == "connector":
+        connection_key = ConnectionKey("host", 8443, True, None, None, None, None)
+        error = client_exceptions.ClientConnectorError(
+            connection_key, OSError("connection failed")
+        )
+        expected_exception = client_exceptions.ClientConnectorError
+    elif error_type == "handshake":
+        error = client_exceptions.WSServerHandshakeError(
+            Mock(real_url="https://host:8443"), (), status=401, message="rejected"
+        )
+        expected_exception = client_exceptions.WSServerHandshakeError
+    else:
+        error = RuntimeError("unexpected failure")
+        expected_exception = WebsocketError
+
+    with (
+        patch.object(
+            unifi_controller.connectivity.config.session,
+            "ws_connect",
+            side_effect=error,
+        ),
+        pytest.raises(expected_exception) as raised,
+    ):
+        await unifi_controller.connectivity.websocket(Mock())
+
+    if error_type == "other":
+        assert raised.value.__cause__ is error
+    else:
+        assert raised.value.__notes__
+
+
+async def test_connectivity_logs_ssl_context(
+    unifi_controller: Controller, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Warn when an explicit SSL context is configured."""
+    config = unifi_controller.connectivity.config
+    config.ssl_context = ssl.create_default_context()
+
+    with caplog.at_level("WARNING", logger="aiounifi.interfaces.connectivity"):
+        Connectivity(config)
+
+    assert "Using SSL context" in caplog.text
+
+
+def test_log_redaction_preserves_non_string_keys() -> None:
+    """Leave values unchanged when a mapping key is not a string."""
+    assert _redact({1: "value"}) == {1: "value"}
 
 
 async def test_login_malformed_json(mock_aioresponse, unifi_controller):

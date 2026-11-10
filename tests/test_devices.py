@@ -45,7 +45,14 @@ from .fixtures import (
 )
 
 test_data = [
-    ([{"mac": "0", "disabled": True}], {"mac": "0", "disabled": True}),
+    (
+        [{"mac": "0", "disabled": True}],
+        {
+            "mac": "0",
+            "disabled": True,
+            "led_override_color_brightness": None,
+        },
+    ),
     (
         [ACCESS_POINT_AC_PRO],
         {

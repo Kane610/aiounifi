@@ -57,7 +57,7 @@ requirements-dev = [
 aiounifi = "aiounifi.__main__:main"
 
 [tool.coverage.report]
-fail_under = 95
+fail_under = 100
 exclude_also = [
     "if TYPE_CHECKING:"
 ]
