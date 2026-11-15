@@ -48,5 +48,26 @@ Try it from the command line:
 aiounifi 10.0.0.1 -p 443 -k <api-key>
 ```
 
+## Publishing
+
+The GitHub release workflow publishes to PyPI using Trusted Publishing and
+generates PEP 740 publish attestations for each distribution.
+
+Before the first release with this workflow:
+
+1. In GitHub, create the `pypi` environment under repository settings and
+   configure any desired deployment protection rules, such as required
+   reviewers or allowed release tags.
+2. In [PyPI's project settings](https://pypi.org/manage/project/aiounifi/settings/publishing/),
+   add a GitHub Actions trusted publisher with owner `Kane610`, repository
+   `aiounifi`, workflow `pythonpublish.yml`, and environment `pypi`.
+3. Merge this workflow before publishing a GitHub release. After the first
+   successful trusted release, verify the attestations on PyPI's release
+   file details, then revoke the old PyPI API token and remove the
+   `PYPI_TOKEN` GitHub secret if no other workflow uses it.
+
+See [PyPI's attestation documentation](https://docs.pypi.org/attestations/)
+for details. These are publish attestations, not build provenance.
+
 ## Acknowledgements
 * Paulus Schoutsen (balloob) creator of aiohue which most of this code repository is modeled after.
