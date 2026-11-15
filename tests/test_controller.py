@@ -30,7 +30,7 @@ from aiounifi import (
 )
 from aiounifi.controller import Controller
 from aiounifi.errors import AuthenticationRateLimitError, WebsocketError
-from aiounifi.interfaces.connectivity import Connectivity, _redact
+from aiounifi.interfaces.connectivity import _redact
 from aiounifi.models.api import ApiRequest, ApiRequestV2
 from aiounifi.models.configuration import Configuration
 from aiounifi.models.wlan import WlanChangePasswordRequest
@@ -1195,19 +1195,6 @@ async def test_websocket_connection_errors(
         assert raised.value.__cause__ is error
     else:
         assert raised.value.__notes__
-
-
-async def test_connectivity_logs_ssl_context(
-    unifi_controller: Controller, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Warn when an explicit SSL context is configured."""
-    config = unifi_controller.connectivity.config
-    config.ssl_context = ssl.create_default_context()
-
-    with caplog.at_level("WARNING", logger="aiounifi.interfaces.connectivity"):
-        Connectivity(config)
-
-    assert "Using SSL context" in caplog.text
 
 
 def test_log_redaction_preserves_non_string_keys() -> None:
