@@ -168,9 +168,6 @@ class Connectivity:
         self._last_relogin: float | None = None
         self.ws_message_received: dt.datetime | None = None
 
-        if config.ssl_context:
-            LOGGER.warning("Using SSL context %s", config.ssl_context)
-
     async def check_unifi_os(self) -> None:
         """Check if the controller is running UniFi OS.
 
