@@ -469,6 +469,9 @@ class TypedDeviceWanInterface(TypedDict):
     availability: NotRequired[float]
     gateway: NotRequired[str]
     dns: NotRequired[list[str]]
+    rx_bytes: NotRequired[int]
+    tx_bytes: NotRequired[int]
+    is_uplink: NotRequired[bool]
 
 
 class TypedDeviceWanInterfaceSummary(TypedDict, total=False):
