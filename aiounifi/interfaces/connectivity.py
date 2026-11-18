@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 import aiohttp
 from aiohttp import client_exceptions
 import orjson
-import pyotp
+from pyotp.totp import TOTP
 from yarl import URL
 
 from ..errors import (
@@ -451,7 +451,7 @@ class Connectivity:
 
         """
         LOGGER.debug("Local 2FA required, retrying with TOTP token")
-        token = pyotp.TOTP(totp_secret).now()
+        token = TOTP(totp_secret).now()
         return await self._request("post", url, json={**auth, "ubic_2fa_token": token})
 
     async def _login_sso_2fa(
@@ -505,7 +505,7 @@ class Connectivity:
             )
         )
 
-        token = pyotp.TOTP(totp_secret).now()
+        token = TOTP(totp_secret).now()
         # Sent as a header, a cookie jar may drop cookies for IP address hosts
         return await self._request(
             "post",
