@@ -132,6 +132,18 @@ async def test_firewall_policy_schedule_shapes(unifi_controller):
     assert FirewallPolicyScheduleMode(every_day) is FirewallPolicyScheduleMode.EVERY_DAY
 
 
+def test_firewall_policy_without_schedule():
+    """A policy the controller sends without a schedule reads as UNKNOWN."""
+    raw = deepcopy(FIREWALL_POLICIES[0])
+    del raw["schedule"]
+    policy = FirewallPolicy(raw)
+
+    assert policy.schedule is None
+    assert policy.schedule_mode is FirewallPolicyScheduleMode.UNKNOWN
+    assert policy.schedule_settings.mode is FirewallPolicyScheduleMode.UNKNOWN
+    assert policy.is_active(datetime(2026, 9, 21, 15, 30, tzinfo=NEW_YORK)) is None
+
+
 def test_firewall_policy_schedule_mode_unknown():
     """Unrecognised modes map to UNKNOWN instead of raising."""
     assert FirewallPolicyScheduleMode("SUNRISE") is FirewallPolicyScheduleMode.UNKNOWN

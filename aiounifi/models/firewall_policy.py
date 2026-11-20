@@ -401,7 +401,7 @@ class TypedFirewallPolicy(TypedDict):
     match_opposite_protocol: bool
     predefined: bool
     protocol: str
-    schedule: FirewallPolicySchedule
+    schedule: NotRequired[FirewallPolicySchedule]
 
 
 class FirewallPolicy(ApiItem):
@@ -505,28 +505,37 @@ class FirewallPolicy(ApiItem):
         return self.raw["match_opposite_protocol"]
 
     @property
-    def schedule(self) -> FirewallPolicySchedule:
-        """Policy schedule configuration."""
-        return self.raw["schedule"]
+    def schedule(self) -> FirewallPolicySchedule | None:
+        """Policy schedule configuration, or None if the policy has none."""
+        return self.raw.get("schedule")
 
     @property
     def schedule_mode(self) -> FirewallPolicyScheduleMode:
-        """Policy schedule mode."""
-        return FirewallPolicyScheduleMode(self.raw["schedule"].get("mode"))
+        """Policy schedule mode; UNKNOWN if the policy has no schedule."""
+        if (schedule := self.schedule) is None:
+            return FirewallPolicyScheduleMode.UNKNOWN
+        return FirewallPolicyScheduleMode(schedule.get("mode"))
 
     @property
     def schedule_settings(self) -> FirewallPolicyScheduleSettings:
-        """The settings the policy's schedule mode uses."""
-        # A policy without a schedule reads as an UNKNOWN mode.
+        """The settings the policy's schedule mode uses.
+
+        A policy without a schedule has the UNKNOWN mode and no settings.
+        """
         return FirewallPolicyScheduleSettings.from_schedule(
             self.raw.get("schedule", {})
         )
 
     def is_active(self, now: datetime) -> bool | None:
-        """Whether the policy applies at now (see is_schedule_active)."""
+        """Whether the policy applies at now (see is_schedule_active).
+
+        None if the policy has no schedule.
+        """
         if not self.enabled:
             return False
-        return is_schedule_active(self.schedule, now)
+        if (schedule := self.schedule) is None:
+            return None
+        return is_schedule_active(schedule, now)
 
 
 @dataclass
