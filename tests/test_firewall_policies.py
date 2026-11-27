@@ -378,6 +378,32 @@ async def test_save_schedule_replaces_whole_object(
 
 @pytest.mark.parametrize("is_unifi_os", [True])
 @pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
+@pytest.mark.parametrize("body", ["", "[]"])
+@pytest.mark.usefixtures("_mock_endpoints")
+async def test_save_without_policy_in_response_caches_what_was_sent(
+    mock_aioresponse, unifi_controller, unifi_called_with, body
+):
+    """An accepted change the controller doesn't echo back is still cached."""
+    policies = unifi_controller.firewall_policies
+    await policies.update()
+    policy = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    new_schedule = {"mode": "ALWAYS"}
+    expected = {**deepcopy(policy.raw), "enabled": False, "schedule": new_schedule}
+    mock_aioresponse.put(
+        POLICY_URL, body=body, headers={"Content-Type": "application/json"}
+    )
+
+    await policies.save(policy, enabled=False, schedule=new_schedule)
+
+    assert unifi_called_with("put", POLICY_PATH, json=expected)
+    saved = policies["b2b2b2b2b2b2b2b2b2b2b2b2"]
+    assert saved.raw == expected
+    assert saved.enabled is False
+    assert saved.schedule == new_schedule
+
+
+@pytest.mark.parametrize("is_unifi_os", [True])
+@pytest.mark.parametrize("firewall_policy_payload", [FIREWALL_POLICIES_SCHEDULE_SHAPES])
 @pytest.mark.usefixtures("_mock_endpoints")
 async def test_save_failure_leaves_cache_untouched(mock_aioresponse, unifi_controller):
     """If the controller rejects the change, the cached policy is unchanged."""

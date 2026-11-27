@@ -1,6 +1,7 @@
 """Firewall policies as part of a UniFi network."""
 
 from copy import deepcopy
+from typing import Any, cast
 
 from ..models.api import TypedApiResponse
 from ..models.firewall_policy import (
@@ -28,9 +29,11 @@ class FirewallPolicies(APIHandler[FirewallPolicy]):
     ) -> TypedApiResponse:
         """Save changes to a firewall policy.
 
-        The schedule, if given, replaces the current one wholesale. The cached
-        policy is only updated from the controller's response, so a rejected
-        change leaves it as it was.
+        The schedule, if given, replaces the current one wholesale. A rejected
+        change raises and leaves the cached policy as it was. An accepted one
+        updates the cache from the controller's response, or, when the
+        controller sends no policy back, with what was sent, so the next
+        change builds on it.
         """
         raw = deepcopy(policy.raw)
         if enabled is not None:
@@ -40,5 +43,5 @@ class FirewallPolicies(APIHandler[FirewallPolicy]):
         response = await self.controller.request(
             FirewallPolicyUpdateRequest.create(raw)
         )
-        self.process_raw(response.get("data", []))
+        self.process_raw(response.get("data") or [cast(dict[str, Any], raw)])
         return response
